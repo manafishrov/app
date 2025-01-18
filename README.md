@@ -1,7 +1,5 @@
 # Cyberfish App
 
-## Development Setup
-
 Make sure to have [Bun](https://bun.sh) and [Rust](https://www.rust-lang.org/tools/install) installed.
 
 Install the dependencies with:
@@ -10,7 +8,17 @@ Install the dependencies with:
 bun install
 ```
 
-Then start the app in development mode with:
+## Build
+
+To build the app and create an executable file, run:
+
+```bash
+bun run tauri build
+```
+
+## Development Setup
+
+Start the app in development mode with:
 
 ```bash
 bun run tauri dev
