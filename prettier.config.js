@@ -5,6 +5,12 @@ const config = {
   tabWidth: 2,
   useTabs: false,
   jsxSingleQuote: true,
+  importOrder: [
+    '^[./]',
+    '^@/pages/(.*)$',
+    '^@/components/(.*)$',
+    '^@/lib/(.*)$',
+  ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
   tailwindFunctions: ['cx', 'cva'],
