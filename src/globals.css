@@ -61,8 +61,4 @@
   * {
     @apply min-w-0 border-border;
   }
-
-  ::selection {
-    @apply bg-primary/50;
-  }
 }
