@@ -5,7 +5,6 @@ const config: Config = {
   content: {
     files: ['./index.html', './src/**/*.tsx'],
   },
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {

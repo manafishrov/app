@@ -13,7 +13,7 @@ function ControlsDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant='ghost' size='icon'>
+        <Button variant='outline' size='icon'>
           <SettingsIcon className='h-[1.2rem] w-[1.2rem]' />
           <span className='sr-only'>Show controls</span>
         </Button>
