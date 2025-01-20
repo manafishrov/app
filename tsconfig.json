@@ -31,7 +31,13 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js"],
+  "include": [
+    "postcss.config.js",
+    "prettier.config.js",
+    "eslint.config.js",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": ["vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

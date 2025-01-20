@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 
-export function VideoStream() {
+function VideoStream() {
   const [streamUrl, setStreamUrl] = useState<string>('');
 
   useEffect(() => {
@@ -25,3 +25,5 @@ export function VideoStream() {
     </div>
   );
 }
+
+export { VideoStream };
