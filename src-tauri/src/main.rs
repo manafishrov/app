@@ -4,10 +4,8 @@
 use std::net::TcpStream;
 use std::time::Duration;
 
-const ROV_IP: &str = "192.168.1.139";
-const ROV_PORT: &str = "5009";
-const ROV_ADDRESS: &str = const_str::concat!(ROV_IP, ":", ROV_PORT);
-const VIDEO_STREAM_URL: &str = const_str::concat!("http://", ROV_IP, ":", ROV_PORT, "/video_feed");
+const ROV_ADDRESS: &str = "192.168.1.139:5009";
+const VIDEO_STREAM_URL: &str = "http://192.168.1.139:5009/video_feed";
 
 #[tauri::command]
 fn get_video_stream() -> Result<String, String> {
