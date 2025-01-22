@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/Card';
 function App() {
   return (
     <main className='mx-auto flex h-full w-full flex-col p-4'>
-      <Card className='relative w-full bg-black'>
+      <Card className='relative w-full overflow-hidden bg-black'>
         <VideoStream />
-        <div className='absolute right-2 top-2'>
+        <div className='absolute bottom-2 right-2'>
           <ControlsDialog />
         </div>
       </Card>

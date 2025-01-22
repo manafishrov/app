@@ -1,4 +1,4 @@
-import { SettingsIcon } from 'lucide-react';
+import { KeyboardIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import {
@@ -14,7 +14,7 @@ function ControlsDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant='outline' size='icon'>
-          <SettingsIcon className='h-[1.2rem] w-[1.2rem]' />
+          <KeyboardIcon className='h-[1.2rem] w-[1.2rem]' />
           <span className='sr-only'>Show controls</span>
         </Button>
       </DialogTrigger>
