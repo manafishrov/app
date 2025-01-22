@@ -4,8 +4,8 @@
 use std::net::TcpStream;
 use std::time::Duration;
 
-const ROV_ADDRESS: &str = "169.254.0.2:5009";
-const VIDEO_STREAM_URL: &str = "http://169.254.0.2:5009/video_feed";
+const ROV_ADDRESS: &str = "rasberrypi.local:5009";
+const VIDEO_STREAM_URL: &str = "http://rasberrypi.local:5009/video_feed";
 
 #[tauri::command]
 fn get_video_stream() -> Result<String, String> {
