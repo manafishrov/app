@@ -15,8 +15,10 @@ export function ConnectionStatus() {
 
   const checkConnection = useCallback(async () => {
     try {
-      const status = await invoke('get_connection_status');
-      setIsConnected(status as boolean);
+      console.log('Checking connection status...');
+      const status = await invoke<boolean>('get_connection_status');
+      console.log('Connection status:', status);
+      setIsConnected(status);
     } catch (e) {
       console.error('Failed to get connection status:', e);
       toast.warning('Failed to get connection status');
@@ -37,6 +39,7 @@ export function ConnectionStatus() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger
+          className='cursor-default'
           aria-label={`Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`}
         >
           {isConnected ? (
