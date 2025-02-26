@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::{command, Window};
 
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -11,8 +10,8 @@ struct Config {
 }
 
 fn get_config_path() -> PathBuf {
-  let config_dir = tauri::api::path::app_config_dir(&tauri::Config::default()).unwrap();
-  config_dir.join("config.json")
+  let base_dir = dirs::config_dir().expect("Failed to get config directory");
+  base_dir.join("cyberfish").join("config.json")
 }
 
 #[tauri::command]
@@ -53,6 +52,7 @@ fn save_config(ip: String, stream_port: u16, control_port: u16) -> Result<(), St
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
+    .plugin(tauri_plugin_gamepad::init())
     .invoke_handler(tauri::generate_handler![get_config, save_config])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
