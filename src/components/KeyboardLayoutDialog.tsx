@@ -1,3 +1,4 @@
+import { useConfigStore } from '@/stores/configStore';
 import { KeyboardIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -9,7 +10,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/Dialog';
 
+function formatKey(key: string): string {
+  if (key === 'arrowup') return '↑';
+  if (key === 'arrowdown') return '↓';
+  if (key === 'arrowleft') return '←';
+  if (key === 'arrowright') return '→';
+
+  return key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+}
+
 function KeyboardLayoutDialog() {
+  const config = useConfigStore((state) => state.config);
+
+  if (!config) return null;
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -30,37 +44,37 @@ function KeyboardLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  W
+                  {formatKey(config.keyboard.moveForward)}
                 </span>{' '}
                 Move Forward
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  S
+                  {formatKey(config.keyboard.moveBackward)}
                 </span>{' '}
                 Move Backward
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  A
+                  {formatKey(config.keyboard.moveLeft)}
                 </span>{' '}
                 Move Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  D
+                  {formatKey(config.keyboard.moveRight)}
                 </span>{' '}
                 Move Right
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  Q
+                  {formatKey(config.keyboard.rotateLeft)}
                 </span>{' '}
                 Rotate Left{' '}
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  E
+                  {formatKey(config.keyboard.rotateRight)}
                 </span>{' '}
                 Rotate Right{' '}
               </li>
@@ -73,13 +87,13 @@ function KeyboardLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  Space
+                  {formatKey(config.keyboard.moveUp)}
                 </span>{' '}
                 Move Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  Shift
+                  {formatKey(config.keyboard.moveDown)}
                 </span>{' '}
                 Move Down
               </li>
@@ -90,25 +104,25 @@ function KeyboardLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  I
+                  {formatKey(config.keyboard.tiltUp)}
                 </span>{' '}
                 Tilt Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  K
+                  {formatKey(config.keyboard.tiltDown)}
                 </span>{' '}
                 Tilt Down
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  J
+                  {formatKey(config.keyboard.tiltDiagonalLeft)}
                 </span>{' '}
                 Tilt Diagonally Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  L
+                  {formatKey(config.keyboard.tiltDiagonalRight)}
                 </span>{' '}
                 Tilt Diagonally Right
               </li>

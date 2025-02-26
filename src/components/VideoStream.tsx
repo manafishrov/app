@@ -1,3 +1,4 @@
+import { useConfigStore } from '@/stores/configStore';
 import { useEffect, useRef, useState } from 'react';
 
 const RETRY_DELAY = 5000;
@@ -8,9 +9,12 @@ function VideoStream() {
   const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const config = useConfigStore((state) => state.config);
 
   const setupWebRTCConnection = async () => {
     try {
+      if (!config) return;
+
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
@@ -50,13 +54,16 @@ function VideoStream() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const response = await fetch('http://10.10.10.10:8889/cam/whep', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/sdp',
+      const response = await fetch(
+        `http://${config.ip}:${config.streamPort}/cam/whep`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/sdp',
+          },
+          body: offer.sdp,
         },
-        body: offer.sdp,
-      });
+      );
 
       if (!response.ok) throw new Error('Failed to connect to stream');
 
@@ -94,7 +101,7 @@ function VideoStream() {
         peerConnectionRef.current.close();
       }
     };
-  }, []);
+  }, [config?.ip, config?.streamPort]);
 
   return (
     <div className='relative aspect-video w-full'>

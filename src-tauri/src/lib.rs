@@ -3,10 +3,54 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct KeyboardBindings {
+  move_forward: String,
+  move_backward: String,
+  move_left: String,
+  move_right: String,
+  move_up: String,
+  move_down: String,
+  rotate_left: String,
+  rotate_right: String,
+  tilt_up: String,
+  tilt_down: String,
+  tilt_diagonal_left: String,
+  tilt_diagonal_right: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StickAxis {
+  x_axis: i32,
+  y_axis: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ControllerButtons {
+  move_up: i32,
+  move_down: i32,
+  rotate_left: i32,
+  rotate_right: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ControllerBindings {
+  left_stick: StickAxis,
+  right_stick: StickAxis,
+  buttons: ControllerButtons,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Config {
   ip: String,
   stream_port: u16,
   control_port: u16,
+  keyboard: KeyboardBindings,
+  controller: ControllerBindings,
 }
 
 fn get_config_path() -> PathBuf {
@@ -25,17 +69,42 @@ fn get_config() -> Result<Config, String> {
       ip: "10.10.10.10".to_string(),
       stream_port: 8889,
       control_port: 5000,
+      keyboard: KeyboardBindings {
+        move_forward: "w".to_string(),
+        move_backward: "s".to_string(),
+        move_left: "a".to_string(),
+        move_right: "d".to_string(),
+        move_up: "space".to_string(),
+        move_down: "shift".to_string(),
+        rotate_left: "q".to_string(),
+        rotate_right: "e".to_string(),
+        tilt_up: "i".to_string(),
+        tilt_down: "k".to_string(),
+        tilt_diagonal_left: "j".to_string(),
+        tilt_diagonal_right: "l".to_string(),
+      },
+      controller: ControllerBindings {
+        left_stick: StickAxis {
+          x_axis: 0,
+          y_axis: 1,
+        },
+        right_stick: StickAxis {
+          x_axis: 2,
+          y_axis: 3,
+        },
+        buttons: ControllerButtons {
+          move_up: 4,
+          move_down: 6,
+          rotate_left: 14,
+          rotate_right: 15,
+        },
+      },
     })
   }
 }
 
 #[tauri::command]
-fn save_config(ip: String, stream_port: u16, control_port: u16) -> Result<(), String> {
-  let config = Config {
-    ip,
-    stream_port,
-    control_port,
-  };
+fn save_config(config: Config) -> Result<(), String> {
   let config_path = get_config_path();
 
   if let Some(parent) = config_path.parent() {

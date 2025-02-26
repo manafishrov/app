@@ -24,4 +24,4 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-gamepad = "0.0.5"
-dirs = "5.0"
+dirs = "6.0"
