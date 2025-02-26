@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { ControllerLayoutDialog } from '@/components/ControllerLayoutDialog';
 import { KeyboardLayoutDialog } from '@/components/KeyboardLayoutDialog';
+import { SettingsDialog } from '@/components/SettingsDialog';
 import { VideoStream } from '@/components/VideoStream';
 import { Card } from '@/components/ui/Card';
 
@@ -19,6 +20,7 @@ function App() {
         <VideoStream />
       </Card>
       <div className='flex gap-2'>
+        <SettingsDialog />
         <KeyboardLayoutDialog />
         <ControllerLayoutDialog />
       </div>

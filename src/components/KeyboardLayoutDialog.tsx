@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -36,6 +37,9 @@ function KeyboardLayoutDialog() {
         <DialogHeader>
           <DialogTitle>Keyboard layout</DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          Configure your keyboard bindings for controlling the drone.
+        </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
           <div className='mx-4'>
             <h3 className='text-md mb-2 mt-4 font-semibold'>

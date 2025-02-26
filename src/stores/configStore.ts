@@ -44,7 +44,11 @@ type Config = {
 type ConfigStore = {
   config: Config | null;
   loadConfig: () => Promise<void>;
-  updateServerSettings: (ip: string, port: number) => Promise<void>;
+  updateServerSettings: (
+    ip: string,
+    streamPort: number,
+    controlPort: number,
+  ) => Promise<void>;
   updateKeyboardBindings: (bindings: KeyboardBindings) => Promise<void>;
   updateControllerBindings: (bindings: ControllerBindings) => Promise<void>;
 };
@@ -55,38 +59,43 @@ const useConfigStore = create<ConfigStore>((set) => ({
     const config = await invoke<Config>('get_config');
     set({ config });
   },
-  updateServerSettings: async (ip: string, port: number) => {
+  updateServerSettings: async (
+    ip: string,
+    streamPort: number,
+    controlPort: number,
+  ) => {
     set((state) => {
       if (!state.config) return state;
-      const newConfig = {
+      const config = {
         ...state.config,
         ip,
-        port,
+        streamPort,
+        controlPort,
       };
-      void invoke('save_config', { newConfig });
-      return { config: newConfig };
+      void invoke('save_config', { config });
+      return { config };
     });
   },
   updateKeyboardBindings: async (bindings: KeyboardBindings) => {
     set((state) => {
       if (!state.config) return state;
-      const newConfig = {
+      const config = {
         ...state.config,
         keyboard: bindings,
       };
-      void invoke('save_config', { newConfig });
-      return { config: newConfig };
+      void invoke('save_config', { config });
+      return { config };
     });
   },
   updateControllerBindings: async (bindings: ControllerBindings) => {
     set((state) => {
       if (!state.config) return state;
-      const newConfig = {
+      const config = {
         ...state.config,
         controller: bindings,
       };
-      void invoke('save_config', { newConfig });
-      return { config: newConfig };
+      void invoke('save_config', { config });
+      return { config };
     });
   },
 }));
