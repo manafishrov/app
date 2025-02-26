@@ -50,3 +50,43 @@ pub struct Config {
   pub keyboard: KeyboardBindings,
   pub controller: ControllerBindings,
 }
+
+impl Default for Config {
+  fn default() -> Self {
+    Config {
+      ip: "10.10.10.10".to_string(),
+      stream_port: 8889,
+      control_port: 5000,
+      keyboard: KeyboardBindings {
+        move_forward: "W".to_string(),
+        move_backward: "S".to_string(),
+        move_left: "A".to_string(),
+        move_right: "D".to_string(),
+        move_up: "Space".to_string(),
+        move_down: "LShift".to_string(),
+        rotate_left: "Q".to_string(),
+        rotate_right: "E".to_string(),
+        tilt_up: "I".to_string(),
+        tilt_down: "K".to_string(),
+        tilt_diagonal_left: "J".to_string(),
+        tilt_diagonal_right: "L".to_string(),
+      },
+      controller: ControllerBindings {
+        left_stick: StickAxis {
+          x_axis: 0,
+          y_axis: 1,
+        },
+        right_stick: StickAxis {
+          x_axis: 2,
+          y_axis: 3,
+        },
+        buttons: ControllerButtons {
+          move_up: 4,
+          move_down: 6,
+          rotate_left: 14,
+          rotate_right: 15,
+        },
+      },
+    }
+  }
+}
