@@ -6,6 +6,7 @@ import { KeyboardLayoutDialog } from '@/components/KeyboardLayoutDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { VideoStream } from '@/components/VideoStream';
 import { Card } from '@/components/ui/Card';
+import { Toaster } from '@/components/ui/Toaster';
 
 function App() {
   const loadConfig = useConfigStore((state) => state.loadConfig);
@@ -24,6 +25,7 @@ function App() {
         <KeyboardLayoutDialog />
         <ControllerLayoutDialog />
       </div>
+      <Toaster />
     </main>
   );
 }

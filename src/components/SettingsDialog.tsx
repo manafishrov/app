@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/Form';
 import { Input } from '@/components/ui/Input';
+import { toast } from '@/components/ui/Toaster';
 
 const formSchema = z.object({
   ip: z.string(),
@@ -54,8 +55,10 @@ function SettingsDialog() {
         values.streamPort,
         values.controlPort,
       );
+      toast.success('Settings updated');
     } catch (error) {
       console.error('Failed to update settings:', error);
+      toast.error('Failed to update settings');
     }
   }
 
@@ -144,7 +147,7 @@ function SettingsDialog() {
                 </FormItem>
               )}
             />
-            <Button type='submit'>Submit</Button>
+            <Button type='submit'>Save</Button>
           </form>
         </Form>
       </DialogContent>
