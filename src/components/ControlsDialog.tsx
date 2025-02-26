@@ -22,9 +22,11 @@ function ControlsDialog() {
         <DialogHeader>
           <DialogTitle>Controls</DialogTitle>
         </DialogHeader>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <div>
-            <h3 className='mb-2 text-lg font-semibold'>Movement</h3>
+        <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
+          <div className='mx-4'>
+            <h3 className='mb-2 mt-4 text-lg font-semibold'>
+              Horizontal Movement
+            </h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
@@ -50,34 +52,65 @@ function ControlsDialog() {
                 </span>{' '}
                 Move Right
               </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  Q
+                </span>{' '}
+                Rotate Left{' '}
+              </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  E
+                </span>{' '}
+                Rotate Right{' '}
+              </li>
             </ul>
           </div>
-          <div>
-            <h3 className='mb-2 text-lg font-semibold'>Rotation</h3>
+          <div className='mx-4'>
+            <h3 className='mb-2 mt-4 text-lg font-semibold'>
+              Vertical Movement
+            </h3>
+            <ul className='space-y-2'>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  Space
+                </span>{' '}
+                Move Up
+              </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  Shift
+                </span>{' '}
+                Move Down
+              </li>
+            </ul>
+            <h3 className='mb-2 mt-4 text-lg font-semibold'>
+              Angle Adjustment
+            </h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   I
                 </span>{' '}
-                Pitch Up
+                Tilt Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   K
                 </span>{' '}
-                Pitch Down
+                Tilt Down
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   J
                 </span>{' '}
-                Yaw Left
+                Tilt Diagonally Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   L
                 </span>{' '}
-                Yaw Right
+                Tilt Diagonally Right
               </li>
             </ul>
           </div>
