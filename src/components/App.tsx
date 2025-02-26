@@ -2,7 +2,6 @@ import { useConfigStore } from '@/stores/configStore';
 import { useEffect } from 'react';
 
 import { ControllerLayoutDialog } from '@/components/ControllerLayoutDialog';
-import { InputController } from '@/components/InputController';
 import { KeyboardLayoutDialog } from '@/components/KeyboardLayoutDialog';
 import { VideoStream } from '@/components/VideoStream';
 import { Card } from '@/components/ui/Card';
@@ -19,7 +18,6 @@ function App() {
       <Card className='relative w-full overflow-hidden bg-black'>
         <VideoStream />
       </Card>
-      <InputController />
       <div className='flex gap-2'>
         <KeyboardLayoutDialog />
         <ControllerLayoutDialog />
