@@ -1,6 +1,7 @@
 import { useConfigStore } from '@/stores/configStore';
 import { useEffect } from 'react';
 
+import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { ControllerLayoutDialog } from '@/components/ControllerLayoutDialog';
 import { KeyboardLayoutDialog } from '@/components/KeyboardLayoutDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
@@ -20,10 +21,15 @@ function App() {
       <Card className='relative w-full overflow-hidden bg-black'>
         <VideoStream />
       </Card>
-      <div className='flex gap-2'>
-        <SettingsDialog />
-        <KeyboardLayoutDialog />
-        <ControllerLayoutDialog />
+      <div className='flex justify-between'>
+        <div className='flex gap-2'>
+          <SettingsDialog />
+          <KeyboardLayoutDialog />
+          <ControllerLayoutDialog />
+        </div>
+        <div>
+          <ConnectionStatus />
+        </div>
       </div>
       <Toaster />
     </main>
