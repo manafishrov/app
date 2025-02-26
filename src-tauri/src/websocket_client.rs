@@ -104,6 +104,10 @@ impl WebSocketClient {
     write.send(Message::Text(json)).await?;
     Ok(())
   }
+
+  pub fn is_connected(&self) -> bool {
+    self.is_connected.load(Ordering::SeqCst)
+  }
 }
 
 pub fn spawn_websocket_client(

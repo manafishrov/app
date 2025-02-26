@@ -1,9 +1,13 @@
 use crate::commands::config::get_config;
 use crate::models::config::Config;
+use crate::websocket_client::WebSocketClient;
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use once_cell::sync::Lazy;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::sync::Mutex;
+use tauri::WebviewWindow;
+use tokio::runtime::Handle;
 
 static DEVICE_STATE: Lazy<DeviceState> = Lazy::new(|| DeviceState::new());
 static CURRENT_CONFIG: Lazy<Mutex<Config>> =
@@ -87,6 +91,28 @@ pub fn get_input_array() -> Result<[f32; 6], String> {
   ];
 
   Ok(control_array)
+}
+
+pub fn spawn_input_handler(
+  window: WebviewWindow,
+  ws_client: Arc<tokio::sync::Mutex<Option<WebSocketClient>>>,
+  rt: Handle,
+) -> std::thread::JoinHandle<()> {
+  std::thread::spawn(move || loop {
+    if window.is_focused().unwrap_or(false) {
+      if let Ok(array) = get_input_array() {
+        let ws_client = ws_client.clone();
+        rt.spawn(async move {
+          if let Some(client) = ws_client.lock().await.as_ref() {
+            if let Err(e) = client.send_input(array).await {
+              eprintln!("Failed to send input: {}", e);
+            }
+          }
+        });
+      }
+    }
+    std::thread::sleep(std::time::Duration::from_millis(16));
+  })
 }
 
 pub fn update_config(new_config: Config) {
