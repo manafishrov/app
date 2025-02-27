@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/Dialog';
 
-function KeyboardLayoutDialog() {
+function KeyboardControlsDialog() {
   const config = useConfigStore((state) => state.config);
 
   if (!config) return null;
@@ -129,4 +129,4 @@ function KeyboardLayoutDialog() {
   );
 }
 
-export { KeyboardLayoutDialog };
+export { KeyboardControlsDialog };

@@ -13,34 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/Dialog';
 
-function formatAxis(axisNumber: number): string {
-  const axisLabels = ['LS-X', 'LS-Y', 'RS-X', 'RS-Y'];
-  return axisLabels[axisNumber] ?? `Axis ${axisNumber}`;
-}
-
-function formatButton(button: number): string {
-  const buttonLabels: Record<number, string> = {
-    0: 'A',
-    1: 'B',
-    2: 'X',
-    3: 'Y',
-    4: 'LB',
-    5: 'RB',
-    6: 'LT',
-    7: 'RT',
-    8: 'Back',
-    9: 'Start',
-    10: 'LS',
-    11: 'RS',
-    12: 'D-Up',
-    13: 'D-Down',
-    14: 'D-Left',
-    15: 'D-Right',
-  };
-  return buttonLabels[button] ?? `Button ${button}`;
-}
-
-function ControllerLayoutDialog() {
+function GamepadControlsDialog() {
   const config = useConfigStore((state) => state.config);
   const [isControllerConnected, setIsControllerConnected] = useState(false);
 
@@ -95,37 +68,19 @@ function ControllerLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.leftStick.yAxis)}
+                  {config.controller.movement}
                 </span>{' '}
-                Move Forward
+                Movement
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.leftStick.yAxis)}
-                </span>{' '}
-                Move Backward
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.leftStick.xAxis)}
-                </span>{' '}
-                Move Left
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.leftStick.xAxis)}
-                </span>{' '}
-                Move Right
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatButton(config.controller.buttons.rotateLeft)}
+                  {config.controller.rotateLeft}
                 </span>{' '}
                 Rotate Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatButton(config.controller.buttons.rotateRight)}
+                  {config.controller.rotateRight}
                 </span>{' '}
                 Rotate Right
               </li>
@@ -138,13 +93,13 @@ function ControllerLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatButton(config.controller.buttons.moveUp)}
+                  {config.controller.moveUp}
                 </span>{' '}
                 Move Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatButton(config.controller.buttons.moveDown)}
+                  {config.controller.moveDown}
                 </span>{' '}
                 Move Down
               </li>
@@ -155,27 +110,9 @@ function ControllerLayoutDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.rightStick.yAxis)}
+                  {config.controller.tilt}
                 </span>{' '}
-                Tilt Up
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.rightStick.yAxis)}
-                </span>{' '}
-                Tilt Down
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.rightStick.xAxis)}
-                </span>{' '}
-                Tilt Diagonally Left
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {formatAxis(config.controller.rightStick.xAxis)}
-                </span>{' '}
-                Tilt Diagonally Right
+                Tilt
               </li>
             </ul>
           </div>
@@ -185,4 +122,4 @@ function ControllerLayoutDialog() {
   );
 }
 
-export { ControllerLayoutDialog };
+export { GamepadControlsDialog };

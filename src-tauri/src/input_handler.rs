@@ -1,5 +1,5 @@
 use crate::commands::config::get_config;
-use crate::models::config::Config;
+use crate::models::config::{Config, ControlSource};
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use gilrs::{Axis, Button, Gilrs};
 use once_cell::sync::Lazy;
@@ -154,17 +154,18 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
       }
     }
 
-    control_array[2] = if gamepad.is_pressed(Button::from_u32(config.controller.move_up)) {
+    control_array[2] = if gamepad.is_pressed(Button::South) {
+      // Example using standard button mappings
       1.0
-    } else if gamepad.is_pressed(Button::from_u32(config.controller.move_down)) {
+    } else if gamepad.is_pressed(Button::North) {
       -1.0
     } else {
       0.0
     };
 
-    control_array[3] = if gamepad.is_pressed(Button::from_u32(config.controller.rotate_right)) {
+    control_array[3] = if gamepad.is_pressed(Button::RightTrigger) {
       1.0
-    } else if gamepad.is_pressed(Button::from_u32(config.controller.rotate_left)) {
+    } else if gamepad.is_pressed(Button::LeftTrigger) {
       -1.0
     } else {
       0.0
@@ -190,7 +191,7 @@ pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6
   let mut interval = time::interval(Duration::from_millis(16));
   let mut gilrs = Gilrs::new().unwrap_or_else(|_| {
     println!("Failed to initialize gamepad support");
-    Gilrs::new_dummy()
+    Gilrs::new().expect("Failed to create dummy gamepad instance")
   });
   let device_state = DeviceState::new();
 
@@ -199,7 +200,6 @@ pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6
 
     if !window.is_focused().unwrap_or(false) {
       let zero_input = [0.0; 6];
-      println!("Window not focused: {:?}", zero_input);
       let _ = input_tx.send(zero_input).await;
       continue;
     }

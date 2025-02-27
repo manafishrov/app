@@ -2,8 +2,8 @@ import { useConfigStore } from '@/stores/configStore';
 import { useEffect } from 'react';
 
 import { ConnectionStatus } from '@/components/ConnectionStatus';
-import { ControllerLayoutDialog } from '@/components/ControllerLayoutDialog';
-import { KeyboardLayoutDialog } from '@/components/KeyboardLayoutDialog';
+import { GamepadControlsDialog } from '@/components/GamepadControlsDialog';
+import { KeyboardControlsDialog } from '@/components/KeyboardControlsDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { VideoStream } from '@/components/VideoStream';
 import { Card } from '@/components/ui/Card';
@@ -24,8 +24,8 @@ function App() {
       <div className='flex justify-between'>
         <div className='flex gap-2'>
           <SettingsDialog />
-          <KeyboardLayoutDialog />
-          <ControllerLayoutDialog />
+          <KeyboardControlsDialog />
+          <GamepadControlsDialog />
         </div>
         <div>
           <ConnectionStatus />

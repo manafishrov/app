@@ -30,10 +30,10 @@ pub enum ControlSource {
 pub struct ControllerBindings {
   pub movement: ControlSource,
   pub tilt: ControlSource,
-  pub move_up: u32,
-  pub move_down: u32,
-  pub rotate_left: u32,
-  pub rotate_right: u32,
+  pub move_up: u8,
+  pub move_down: u8,
+  pub rotate_left: u8,
+  pub rotate_right: u8,
 }
 
 #[derive(Serialize, Deserialize)]

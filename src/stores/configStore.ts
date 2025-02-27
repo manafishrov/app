@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
 
+import { toast } from '@/components/ui/Toaster';
+
 type KeyboardBindings = {
   moveForward: string;
   moveBackward: string;
@@ -17,20 +19,12 @@ type KeyboardBindings = {
 };
 
 type ControllerBindings = {
-  leftStick: {
-    xAxis: number;
-    yAxis: number;
-  };
-  rightStick: {
-    xAxis: number;
-    yAxis: number;
-  };
-  buttons: {
-    moveUp: number;
-    moveDown: number;
-    rotateLeft: number;
-    rotateRight: number;
-  };
+  movement: number;
+  tilt: number;
+  moveUp: number;
+  moveDown: number;
+  rotateLeft: number;
+  rotateRight: number;
 };
 
 type Config = {
@@ -56,8 +50,13 @@ type ConfigStore = {
 const useConfigStore = create<ConfigStore>((set) => ({
   config: null,
   loadConfig: async () => {
-    const config = await invoke<Config>('get_config');
-    set({ config });
+    try {
+      const config = await invoke<Config>('get_config');
+      set({ config });
+    } catch (error) {
+      console.error('Failed to load config:', error);
+      toast.error('Failed to load config');
+    }
   },
   updateServerSettings: async (
     ip: string,

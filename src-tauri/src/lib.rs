@@ -12,6 +12,7 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::connection::get_connection_status;
+use tauri::Manager;
 
 pub fn run() {
   let (input_tx, input_rx) = websocket_client::create_input_channel();
@@ -25,7 +26,7 @@ pub fn run() {
       get_connection_status,
     ])
     .setup(|app| {
-      let window = app.get_window("main").unwrap();
+      let window = app.get_webview_window("main").unwrap();
 
       tauri::async_runtime::spawn(async move {
         input_handler::start_input_handler(window, input_tx).await;
