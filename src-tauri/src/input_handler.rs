@@ -1,11 +1,15 @@
 use crate::commands::config::get_config;
 use crate::models::config::Config;
 use device_query::{DeviceQuery, DeviceState, Keycode};
+use gilrs::{Axis, Button, Gilrs};
 use once_cell::sync::Lazy;
 use std::str::FromStr;
 use std::sync::Mutex;
+use std::time::Duration;
+use tauri::WebviewWindow;
+use tokio::sync::mpsc::Sender;
+use tokio::time;
 
-static DEVICE_STATE: Lazy<DeviceState> = Lazy::new(|| DeviceState::new());
 static CURRENT_CONFIG: Lazy<Mutex<Config>> =
   Lazy::new(|| Mutex::new(get_config().unwrap_or_default()));
 
@@ -33,9 +37,9 @@ fn process_key_pair(positive: bool, negative: bool) -> f32 {
   }
 }
 
-pub fn get_keyboard_input() -> Result<[f32; 6], String> {
+fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
   let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
-  let keys: Vec<Keycode> = DEVICE_STATE.get_keys();
+  let keys: Vec<Keycode> = device_state.get_keys();
   let mut states = KeyStates::default();
 
   for key in keys {
@@ -89,86 +93,83 @@ pub fn get_keyboard_input() -> Result<[f32; 6], String> {
   Ok(control_array)
 }
 
-pub fn get_gamepad_input() -> Result<[f32; 6], String> {
+fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
   let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
-  let gamepads = DEVICE_STATE.get_gamepad();
-
-  if gamepads.is_empty() {
-    return Ok([0.0; 6]);
-  }
-
-  let gamepad = &gamepads[0];
   let mut control_array = [0.0; 6];
 
-  match config.controller.movement {
-    ControlSource::LeftStick => {
-      control_array[0] = gamepad.axes[1] as f32;
-      control_array[1] = gamepad.axes[0] as f32;
+  while let Some(_) = gilrs.next_event() {}
+
+  if let Some((_id, gamepad)) = gilrs.gamepads().next() {
+    match config.controller.movement {
+      ControlSource::LeftStick => {
+        control_array[0] = gamepad.value(Axis::LeftStickY);
+        control_array[1] = gamepad.value(Axis::LeftStickX);
+      }
+      ControlSource::RightStick => {
+        control_array[0] = gamepad.value(Axis::RightStickY);
+        control_array[1] = gamepad.value(Axis::RightStickX);
+      }
+      ControlSource::DPad => {
+        control_array[0] = if gamepad.is_pressed(Button::DPadUp) {
+          1.0
+        } else if gamepad.is_pressed(Button::DPadDown) {
+          -1.0
+        } else {
+          0.0
+        };
+        control_array[1] = if gamepad.is_pressed(Button::DPadRight) {
+          1.0
+        } else if gamepad.is_pressed(Button::DPadLeft) {
+          -1.0
+        } else {
+          0.0
+        };
+      }
     }
-    ControlSource::RightStick => {
-      control_array[0] = gamepad.axes[3] as f32;
-      control_array[1] = gamepad.axes[2] as f32;
+
+    match config.controller.tilt {
+      ControlSource::LeftStick => {
+        control_array[4] = -gamepad.value(Axis::LeftStickY);
+        control_array[5] = gamepad.value(Axis::LeftStickX);
+      }
+      ControlSource::RightStick => {
+        control_array[4] = -gamepad.value(Axis::RightStickY);
+        control_array[5] = gamepad.value(Axis::RightStickX);
+      }
+      ControlSource::DPad => {
+        control_array[4] = if gamepad.is_pressed(Button::DPadUp) {
+          1.0
+        } else if gamepad.is_pressed(Button::DPadDown) {
+          -1.0
+        } else {
+          0.0
+        };
+        control_array[5] = if gamepad.is_pressed(Button::DPadRight) {
+          1.0
+        } else if gamepad.is_pressed(Button::DPadLeft) {
+          -1.0
+        } else {
+          0.0
+        };
+      }
     }
-    ControlSource::DPad => {
-      control_array[0] = if gamepad.dpad_up {
-        1.0
-      } else if gamepad.dpad_down {
-        -1.0
-      } else {
-        0.0
-      };
-      control_array[1] = if gamepad.dpad_right {
-        1.0
-      } else if gamepad.dpad_left {
-        -1.0
-      } else {
-        0.0
-      };
-    }
+
+    control_array[2] = if gamepad.is_pressed(Button::from_u32(config.controller.move_up)) {
+      1.0
+    } else if gamepad.is_pressed(Button::from_u32(config.controller.move_down)) {
+      -1.0
+    } else {
+      0.0
+    };
+
+    control_array[3] = if gamepad.is_pressed(Button::from_u32(config.controller.rotate_right)) {
+      1.0
+    } else if gamepad.is_pressed(Button::from_u32(config.controller.rotate_left)) {
+      -1.0
+    } else {
+      0.0
+    };
   }
-
-  match config.controller.tilt {
-    ControlSource::LeftStick => {
-      control_array[4] = -gamepad.axes[1] as f32;
-      control_array[5] = gamepad.axes[0] as f32;
-    }
-    ControlSource::RightStick => {
-      control_array[4] = -gamepad.axes[3] as f32;
-      control_array[5] = gamepad.axes[2] as f32;
-    }
-    ControlSource::DPad => {
-      control_array[4] = if gamepad.dpad_up {
-        1.0
-      } else if gamepad.dpad_down {
-        -1.0
-      } else {
-        0.0
-      };
-      control_array[5] = if gamepad.dpad_right {
-        1.0
-      } else if gamepad.dpad_left {
-        -1.0
-      } else {
-        0.0
-      };
-    }
-  }
-
-  control_array[2] = if gamepad.buttons[config.controller.move_up as usize] {
-    1.0
-  } else if gamepad.buttons[config.controller.move_down as usize] {
-    -1.0
-  } else {
-    0.0
-  };
-
-  control_array[3] = if gamepad.buttons[config.controller.rotate_right as usize] {
-    1.0
-  } else if gamepad.buttons[config.controller.rotate_left as usize] {
-    -1.0
-  } else {
-    0.0
-  };
 
   control_array
     .iter_mut()
@@ -177,12 +178,40 @@ pub fn get_gamepad_input() -> Result<[f32; 6], String> {
   Ok(control_array)
 }
 
-pub fn merge_inputs(first: [f32; 6], second: [f32; 6]) -> [f32; 6] {
+pub fn merge_inputs(keyboard: [f32; 6], gamepad: [f32; 6]) -> [f32; 6] {
   let mut result = [0.0; 6];
   for i in 0..6 {
-    result[i] = (first[i] + second[i]).clamp(-1.0, 1.0);
+    result[i] = (keyboard[i] + gamepad[i]).clamp(-1.0, 1.0);
   }
   result
+}
+
+pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6]>) {
+  let mut interval = time::interval(Duration::from_millis(16));
+  let mut gilrs = Gilrs::new().unwrap_or_else(|_| {
+    println!("Failed to initialize gamepad support");
+    Gilrs::new_dummy()
+  });
+  let device_state = DeviceState::new();
+
+  loop {
+    interval.tick().await;
+
+    if !window.is_focused().unwrap_or(false) {
+      let zero_input = [0.0; 6];
+      println!("Window not focused: {:?}", zero_input);
+      let _ = input_tx.send(zero_input).await;
+      continue;
+    }
+
+    let keyboard_input = get_keyboard_input(&device_state).unwrap_or([0.0; 6]);
+    let gamepad_input = get_gamepad_input(&mut gilrs).unwrap_or([0.0; 6]);
+
+    let final_input = merge_inputs(keyboard_input, gamepad_input);
+    println!("Input: {:?}", final_input);
+
+    let _ = input_tx.send(final_input).await;
+  }
 }
 
 pub fn update_config(new_config: Config) {
