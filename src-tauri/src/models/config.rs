@@ -19,26 +19,21 @@ pub struct KeyboardBindings {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct StickAxis {
-  pub x_axis: i32,
-  pub y_axis: i32,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ControllerButtons {
-  pub move_up: i32,
-  pub move_down: i32,
-  pub rotate_left: i32,
-  pub rotate_right: i32,
+pub enum ControlSource {
+  LeftStick,
+  RightStick,
+  DPad,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ControllerBindings {
-  pub left_stick: StickAxis,
-  pub right_stick: StickAxis,
-  pub buttons: ControllerButtons,
+  pub movement: ControlSource,
+  pub tilt: ControlSource,
+  pub move_up: u32,
+  pub move_down: u32,
+  pub rotate_left: u32,
+  pub rotate_right: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,20 +67,12 @@ impl Default for Config {
         tilt_diagonal_right: "L".to_string(),
       },
       controller: ControllerBindings {
-        left_stick: StickAxis {
-          x_axis: 0,
-          y_axis: 1,
-        },
-        right_stick: StickAxis {
-          x_axis: 2,
-          y_axis: 3,
-        },
-        buttons: ControllerButtons {
-          move_up: 4,
-          move_down: 6,
-          rotate_left: 14,
-          rotate_right: 15,
-        },
+        movement: ControlSource::LeftStick,
+        tilt: ControlSource::RightStick,
+        move_up: 4,
+        move_down: 6,
+        rotate_left: 14,
+        rotate_right: 15,
       },
     }
   }
