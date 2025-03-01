@@ -10,21 +10,21 @@ type KeyboardBindings = {
   moveRight: string;
   moveUp: string;
   moveDown: string;
-  rotateLeft: string;
-  rotateRight: string;
-  tiltUp: string;
-  tiltDown: string;
-  tiltDiagonalLeft: string;
-  tiltDiagonalRight: string;
+  pitchUp: string;
+  pitchDown: string;
+  yawLeft: string;
+  yawRight: string;
+  rollLeft: string;
+  rollRight: string;
 };
 
 type ControllerBindings = {
-  movement: number;
-  tilt: number;
-  moveUp: number;
-  moveDown: number;
-  rotateLeft: number;
-  rotateRight: number;
+  moveHorizontal: string;
+  moveUp: string;
+  moveDown: string;
+  pitchYaw: string;
+  rollLeft: string;
+  rollRight: string;
 };
 
 type Config = {

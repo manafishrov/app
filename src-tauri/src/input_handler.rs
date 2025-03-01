@@ -21,12 +21,12 @@ struct KeyStates {
   move_right: bool,
   move_up: bool,
   move_down: bool,
-  rotate_left: bool,
-  rotate_right: bool,
-  tilt_up: bool,
-  tilt_down: bool,
-  tilt_left: bool,
-  tilt_right: bool,
+  pitch_up: bool,
+  pitch_down: bool,
+  yaw_left: bool,
+  yaw_right: bool,
+  roll_left: bool,
+  roll_right: bool,
 }
 
 fn process_key_pair(positive: bool, negative: bool) -> f32 {
@@ -61,23 +61,23 @@ fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
     if key == Keycode::from_str(&config.keyboard.move_down).unwrap_or(Keycode::LShift) {
       states.move_down = true;
     }
-    if key == Keycode::from_str(&config.keyboard.rotate_left).unwrap_or(Keycode::Q) {
-      states.rotate_left = true;
+    if key == Keycode::from_str(&config.keyboard.pitch_up).unwrap_or(Keycode::I) {
+      states.pitch_up = true;
     }
-    if key == Keycode::from_str(&config.keyboard.rotate_right).unwrap_or(Keycode::E) {
-      states.rotate_right = true;
+    if key == Keycode::from_str(&config.keyboard.pitch_down).unwrap_or(Keycode::K) {
+      states.pitch_down = true;
     }
-    if key == Keycode::from_str(&config.keyboard.tilt_up).unwrap_or(Keycode::I) {
-      states.tilt_up = true;
+    if key == Keycode::from_str(&config.keyboard.yaw_left).unwrap_or(Keycode::J) {
+      states.yaw_left = true;
     }
-    if key == Keycode::from_str(&config.keyboard.tilt_down).unwrap_or(Keycode::K) {
-      states.tilt_down = true;
+    if key == Keycode::from_str(&config.keyboard.yaw_right).unwrap_or(Keycode::L) {
+      states.yaw_right = true;
     }
-    if key == Keycode::from_str(&config.keyboard.tilt_diagonal_left).unwrap_or(Keycode::J) {
-      states.tilt_left = true;
+    if key == Keycode::from_str(&config.keyboard.roll_left).unwrap_or(Keycode::Q) {
+      states.roll_left = true;
     }
-    if key == Keycode::from_str(&config.keyboard.tilt_diagonal_right).unwrap_or(Keycode::L) {
-      states.tilt_right = true;
+    if key == Keycode::from_str(&config.keyboard.roll_right).unwrap_or(Keycode::E) {
+      states.roll_right = true;
     }
   }
 
@@ -85,9 +85,9 @@ fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
     process_key_pair(states.move_forward, states.move_backward),
     process_key_pair(states.move_right, states.move_left),
     process_key_pair(states.move_up, states.move_down),
-    process_key_pair(states.rotate_right, states.rotate_left),
-    process_key_pair(states.tilt_up, states.tilt_down),
-    process_key_pair(states.tilt_right, states.tilt_left),
+    process_key_pair(states.pitch_up, states.pitch_down),
+    process_key_pair(states.yaw_right, states.yaw_left),
+    process_key_pair(states.roll_right, states.roll_left),
   ];
 
   Ok(control_array)
@@ -100,7 +100,7 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
   while let Some(_) = gilrs.next_event() {}
 
   if let Some((_id, gamepad)) = gilrs.gamepads().next() {
-    match config.controller.movement {
+    match config.controller.move_horizontal {
       ControlSource::LeftStick => {
         control_array[0] = gamepad.value(Axis::LeftStickY);
         control_array[1] = gamepad.value(Axis::LeftStickX);
@@ -125,28 +125,60 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
           0.0
         };
       }
+      ControlSource::FaceButtons => {
+        control_array[0] = if gamepad.is_pressed(Button::North) {
+          1.0
+        } else if gamepad.is_pressed(Button::South) {
+          -1.0
+        } else {
+          0.0
+        };
+        control_array[1] = if gamepad.is_pressed(Button::East) {
+          1.0
+        } else if gamepad.is_pressed(Button::West) {
+          -1.0
+        } else {
+          0.0
+        };
+      }
     }
 
-    match config.controller.tilt {
+    match config.controller.pitch_yaw {
       ControlSource::LeftStick => {
-        control_array[4] = -gamepad.value(Axis::LeftStickY);
-        control_array[5] = gamepad.value(Axis::LeftStickX);
+        control_array[3] = -gamepad.value(Axis::LeftStickY); // Pitch
+        control_array[4] = gamepad.value(Axis::LeftStickX); // Yaw
       }
       ControlSource::RightStick => {
-        control_array[4] = -gamepad.value(Axis::RightStickY);
-        control_array[5] = gamepad.value(Axis::RightStickX);
+        control_array[3] = -gamepad.value(Axis::RightStickY); // Pitch
+        control_array[4] = gamepad.value(Axis::RightStickX); // Yaw
       }
       ControlSource::DPad => {
-        control_array[4] = if gamepad.is_pressed(Button::DPadUp) {
+        control_array[3] = if gamepad.is_pressed(Button::DPadUp) {
           1.0
         } else if gamepad.is_pressed(Button::DPadDown) {
           -1.0
         } else {
           0.0
         };
-        control_array[5] = if gamepad.is_pressed(Button::DPadRight) {
+        control_array[4] = if gamepad.is_pressed(Button::DPadRight) {
           1.0
         } else if gamepad.is_pressed(Button::DPadLeft) {
+          -1.0
+        } else {
+          0.0
+        };
+      }
+      ControlSource::FaceButtons => {
+        control_array[3] = if gamepad.is_pressed(Button::North) {
+          1.0
+        } else if gamepad.is_pressed(Button::South) {
+          -1.0
+        } else {
+          0.0
+        };
+        control_array[4] = if gamepad.is_pressed(Button::East) {
+          1.0
+        } else if gamepad.is_pressed(Button::West) {
           -1.0
         } else {
           0.0
@@ -155,7 +187,7 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
     }
 
     control_array[2] = if gamepad.is_pressed(Button::South) {
-      // Example using standard button mappings
+      // TODO: Need to switch to config inputs
       1.0
     } else if gamepad.is_pressed(Button::North) {
       -1.0
@@ -163,7 +195,7 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
       0.0
     };
 
-    control_array[3] = if gamepad.is_pressed(Button::RightTrigger) {
+    control_array[5] = if gamepad.is_pressed(Button::RightTrigger) {
       1.0
     } else if gamepad.is_pressed(Button::LeftTrigger) {
       -1.0
@@ -201,6 +233,7 @@ pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6
     if !window.is_focused().unwrap_or(false) {
       let zero_input = [0.0; 6];
       let _ = input_tx.send(zero_input).await;
+      println!("Input: {:?}", zero_input);
       continue;
     }
 

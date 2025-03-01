@@ -62,35 +62,14 @@ function GamepadControlsDialog() {
         </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Horizontal Movement
-            </h3>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Movement</h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.movement}
+                  {config.controller.moveHorizontal}
                 </span>{' '}
-                Movement
+                Move Horizontal
               </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.rotateLeft}
-                </span>{' '}
-                Rotate Left
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.rotateRight}
-                </span>{' '}
-                Rotate Right
-              </li>
-            </ul>
-          </div>
-          <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Vertical Movement
-            </h3>
-            <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   {config.controller.moveUp}
@@ -104,15 +83,30 @@ function GamepadControlsDialog() {
                 Move Down
               </li>
             </ul>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Angle Adjustment
-            </h3>
+          </div>
+          <div className='mx-4'>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Pitch & Yaw</h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.tilt}
+                  {config.controller.pitchYaw}
                 </span>{' '}
-                Tilt
+                Pitch/Yaw
+              </li>
+            </ul>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Roll</h3>
+            <ul className='space-y-2'>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  {config.controller.rollLeft}
+                </span>{' '}
+                Roll Left
+              </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  {config.controller.rollRight}
+                </span>{' '}
+                Roll Right
               </li>
             </ul>
           </div>

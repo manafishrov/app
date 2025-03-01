@@ -33,9 +33,7 @@ function KeyboardControlsDialog() {
         </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Horizontal Movement
-            </h3>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Movement</h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
@@ -45,15 +43,15 @@ function KeyboardControlsDialog() {
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.moveBackward}
-                </span>{' '}
-                Move Backward
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   {config.keyboard.moveLeft}
                 </span>{' '}
                 Move Left
+              </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  {config.keyboard.moveBackward}
+                </span>{' '}
+                Move Backward
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
@@ -61,25 +59,6 @@ function KeyboardControlsDialog() {
                 </span>{' '}
                 Move Right
               </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.rotateLeft}
-                </span>{' '}
-                Rotate Left{' '}
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.rotateRight}
-                </span>{' '}
-                Rotate Right{' '}
-              </li>
-            </ul>
-          </div>
-          <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Vertical Movement
-            </h3>
-            <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
                   {config.keyboard.moveUp}
@@ -93,33 +72,48 @@ function KeyboardControlsDialog() {
                 Move Down
               </li>
             </ul>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>
-              Angle Adjustment
-            </h3>
+          </div>
+          <div className='mx-4'>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Pitch & Yaw</h3>
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.tiltUp}
+                  {config.keyboard.pitchUp}
                 </span>{' '}
-                Tilt Up
+                Pitch Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.tiltDown}
+                  {config.keyboard.yawLeft}
                 </span>{' '}
-                Tilt Down
+                Yaw Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.tiltDiagonalLeft}
+                  {config.keyboard.pitchDown}
                 </span>{' '}
-                Tilt Diagonally Left
+                Pitch Down
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.keyboard.tiltDiagonalRight}
+                  {config.keyboard.yawRight}
                 </span>{' '}
-                Tilt Diagonally Right
+                Yaw Right
+              </li>
+            </ul>
+            <h3 className='text-md mb-2 mt-4 font-semibold'>Roll</h3>
+            <ul className='space-y-2'>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  {config.keyboard.rollLeft}
+                </span>{' '}
+                Roll Left
+              </li>
+              <li>
+                <span className='rounded bg-secondary px-2 py-1 font-mono'>
+                  {config.keyboard.rollRight}
+                </span>{' '}
+                Roll Right
               </li>
             </ul>
           </div>

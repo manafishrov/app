@@ -9,12 +9,12 @@ pub struct KeyboardBindings {
   pub move_right: String,
   pub move_up: String,
   pub move_down: String,
-  pub rotate_left: String,
-  pub rotate_right: String,
-  pub tilt_up: String,
-  pub tilt_down: String,
-  pub tilt_diagonal_left: String,
-  pub tilt_diagonal_right: String,
+  pub yaw_left: String,
+  pub yaw_right: String,
+  pub pitch_up: String,
+  pub pitch_down: String,
+  pub roll_left: String,
+  pub roll_right: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -23,17 +23,18 @@ pub enum ControlSource {
   LeftStick,
   RightStick,
   DPad,
+  FaceButtons,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ControllerBindings {
-  pub movement: ControlSource,
-  pub tilt: ControlSource,
+  pub move_horizontal: ControlSource,
   pub move_up: u8,
   pub move_down: u8,
-  pub rotate_left: u8,
-  pub rotate_right: u8,
+  pub pitch_yaw: ControlSource,
+  pub roll_left: u8,
+  pub roll_right: u8,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -59,20 +60,20 @@ impl Default for Config {
         move_right: "D".to_string(),
         move_up: "Space".to_string(),
         move_down: "LShift".to_string(),
-        rotate_left: "Q".to_string(),
-        rotate_right: "E".to_string(),
-        tilt_up: "I".to_string(),
-        tilt_down: "K".to_string(),
-        tilt_diagonal_left: "J".to_string(),
-        tilt_diagonal_right: "L".to_string(),
+        pitch_up: "I".to_string(),
+        pitch_down: "K".to_string(),
+        yaw_left: "J".to_string(),
+        yaw_right: "L".to_string(),
+        roll_left: "Q".to_string(),
+        roll_right: "E".to_string(),
       },
       controller: ControllerBindings {
-        movement: ControlSource::LeftStick,
-        tilt: ControlSource::RightStick,
+        move_horizontal: ControlSource::LeftStick,
         move_up: 4,
         move_down: 6,
-        rotate_left: 14,
-        rotate_right: 15,
+        pitch_yaw: ControlSource::RightStick,
+        roll_left: 14,
+        roll_right: 15,
       },
     }
   }
