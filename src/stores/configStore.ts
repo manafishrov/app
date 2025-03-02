@@ -18,7 +18,7 @@ type KeyboardBindings = {
   rollRight: string;
 };
 
-type ControllerBindings = {
+type GamepadBindings = {
   moveHorizontal: string;
   moveUp: string;
   moveDown: string;
@@ -32,7 +32,7 @@ type Config = {
   streamPort: number;
   controlPort: number;
   keyboard: KeyboardBindings;
-  controller: ControllerBindings;
+  gamepad: GamepadBindings;
 };
 
 type ConfigStore = {
@@ -44,7 +44,7 @@ type ConfigStore = {
     controlPort: number,
   ) => Promise<void>;
   updateKeyboardBindings: (bindings: KeyboardBindings) => Promise<void>;
-  updateControllerBindings: (bindings: ControllerBindings) => Promise<void>;
+  updateControllerBindings: (bindings: GamepadBindings) => Promise<void>;
 };
 
 const useConfigStore = create<ConfigStore>((set) => ({
@@ -86,12 +86,12 @@ const useConfigStore = create<ConfigStore>((set) => ({
       return { config };
     });
   },
-  updateControllerBindings: async (bindings: ControllerBindings) => {
+  updateControllerBindings: async (bindings: GamepadBindings) => {
     set((state) => {
       if (!state.config) return state;
       const config = {
         ...state.config,
-        controller: bindings,
+        gamepad: bindings,
       };
       void invoke('save_config', { config });
       return { config };
@@ -103,5 +103,5 @@ export {
   useConfigStore,
   type Config,
   type KeyboardBindings,
-  type ControllerBindings,
+  type GamepadBindings,
 };

@@ -7,6 +7,7 @@ mod models {
   pub mod config;
 }
 
+mod gamepad;
 mod input_handler;
 mod websocket_client;
 
@@ -19,7 +20,6 @@ pub fn run() {
 
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
-    .plugin(tauri_plugin_gamepad::init())
     .invoke_handler(tauri::generate_handler![
       get_config,
       save_config,
@@ -27,9 +27,10 @@ pub fn run() {
     ])
     .setup(|app| {
       let window = app.get_webview_window("main").unwrap();
+      let app_handle = app.app_handle().clone();
 
       tauri::async_runtime::spawn(async move {
-        input_handler::start_input_handler(window, input_tx).await;
+        input_handler::start_input_handler(window, input_tx, &app_handle).await;
       });
 
       tauri::async_runtime::spawn(async {

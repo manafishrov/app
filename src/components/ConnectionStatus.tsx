@@ -51,8 +51,8 @@ export function ConnectionStatus() {
         <TooltipContent>
           <p>
             {isConnected
-              ? 'Connected to controls'
-              : 'Disconnected from controls'}
+              ? 'Connected to device controls'
+              : 'Disconnected from device conrols'}
           </p>
         </TooltipContent>
       </Tooltip>

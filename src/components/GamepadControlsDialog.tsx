@@ -49,16 +49,16 @@ function GamepadControlsDialog() {
               isControllerConnected && 'text-primary'
             }`}
           />
-          <span className='sr-only'>Show controller layout</span>
+          <span className='sr-only'>Show gamepad layout</span>
         </Button>
       </DialogTrigger>
       <DialogContent className='max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Controller Layout</DialogTitle>
+          <DialogTitle>Gamepad Layout</DialogTitle>
         </DialogHeader>
 
         <DialogDescription>
-          Configure your controller bindings for controlling the drone.
+          Configure your gamepad bindings for controlling the drone.
         </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
           <div className='mx-4'>
@@ -66,19 +66,19 @@ function GamepadControlsDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.moveHorizontal}
+                  {config.gamepad.moveHorizontal}
                 </span>{' '}
                 Move Horizontal
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.moveUp}
+                  {config.gamepad.moveUp}
                 </span>{' '}
                 Move Up
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.moveDown}
+                  {config.gamepad.moveDown}
                 </span>{' '}
                 Move Down
               </li>
@@ -89,7 +89,7 @@ function GamepadControlsDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.pitchYaw}
+                  {config.gamepad.pitchYaw}
                 </span>{' '}
                 Pitch/Yaw
               </li>
@@ -98,13 +98,13 @@ function GamepadControlsDialog() {
             <ul className='space-y-2'>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.rollLeft}
+                  {config.gamepad.rollLeft}
                 </span>{' '}
                 Roll Left
               </li>
               <li>
                 <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.controller.rollRight}
+                  {config.gamepad.rollRight}
                 </span>{' '}
                 Roll Right
               </li>

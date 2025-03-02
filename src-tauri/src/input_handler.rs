@@ -1,4 +1,5 @@
 use crate::commands::config::get_config;
+use crate::gamepad::{button_from_u16, gamepad_to_json};
 use crate::models::config::{Config, ControlSource};
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use gilrs::{Axis, Button, Gilrs};
@@ -6,7 +7,7 @@ use once_cell::sync::Lazy;
 use std::str::FromStr;
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::WebviewWindow;
+use tauri::{AppHandle, Emitter, Runtime, WebviewWindow};
 use tokio::sync::mpsc::Sender;
 use tokio::time;
 
@@ -37,10 +38,17 @@ fn process_key_pair(positive: bool, negative: bool) -> f32 {
   }
 }
 
-fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
+fn get_keyboard_input<R: Runtime>(
+  device_state: &DeviceState,
+  app_handle: &AppHandle<R>,
+) -> Result<[f32; 6], String> {
   let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
   let keys: Vec<Keycode> = device_state.get_keys();
   let mut states = KeyStates::default();
+
+  if !keys.is_empty() {
+    let _ = app_handle.emit("keyboard_event", true);
+  }
 
   for key in keys {
     if key == Keycode::from_str(&config.keyboard.move_forward).unwrap_or(Keycode::W) {
@@ -93,14 +101,21 @@ fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
   Ok(control_array)
 }
 
-fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
+fn get_gamepad_input<R: Runtime>(
+  gilrs: &mut Gilrs,
+  app_handle: &AppHandle<R>,
+) -> Result<[f32; 6], String> {
   let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
   let mut control_array = [0.0; 6];
 
-  while let Some(_) = gilrs.next_event() {}
+  while let Some(event) = gilrs.next_event() {
+    let gamepad = gilrs.gamepad(event.id);
+    let payload = gamepad_to_json(gamepad, event.event, event.time);
+    let _ = app_handle.emit("gamepad_event", payload);
+  }
 
   if let Some((_id, gamepad)) = gilrs.gamepads().next() {
-    match config.controller.move_horizontal {
+    match config.gamepad.move_horizontal {
       ControlSource::LeftStick => {
         control_array[0] = gamepad.value(Axis::LeftStickY);
         control_array[1] = gamepad.value(Axis::LeftStickX);
@@ -143,14 +158,14 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
       }
     }
 
-    match config.controller.pitch_yaw {
+    match config.gamepad.pitch_yaw {
       ControlSource::LeftStick => {
-        control_array[3] = -gamepad.value(Axis::LeftStickY); // Pitch
-        control_array[4] = gamepad.value(Axis::LeftStickX); // Yaw
+        control_array[3] = -gamepad.value(Axis::LeftStickY);
+        control_array[4] = gamepad.value(Axis::LeftStickX);
       }
       ControlSource::RightStick => {
-        control_array[3] = -gamepad.value(Axis::RightStickY); // Pitch
-        control_array[4] = gamepad.value(Axis::RightStickX); // Yaw
+        control_array[3] = -gamepad.value(Axis::RightStickY);
+        control_array[4] = gamepad.value(Axis::RightStickX);
       }
       ControlSource::DPad => {
         control_array[3] = if gamepad.is_pressed(Button::DPadUp) {
@@ -186,18 +201,17 @@ fn get_gamepad_input(gilrs: &mut Gilrs) -> Result<[f32; 6], String> {
       }
     }
 
-    control_array[2] = if gamepad.is_pressed(Button::South) {
-      // TODO: Need to switch to config inputs
+    control_array[2] = if gamepad.is_pressed(button_from_u16(config.gamepad.move_up)) {
       1.0
-    } else if gamepad.is_pressed(Button::North) {
+    } else if gamepad.is_pressed(button_from_u16(config.gamepad.move_down)) {
       -1.0
     } else {
       0.0
     };
 
-    control_array[5] = if gamepad.is_pressed(Button::RightTrigger) {
+    control_array[5] = if gamepad.is_pressed(button_from_u16(config.gamepad.roll_right)) {
       1.0
-    } else if gamepad.is_pressed(Button::LeftTrigger) {
+    } else if gamepad.is_pressed(button_from_u16(config.gamepad.roll_left)) {
       -1.0
     } else {
       0.0
@@ -219,7 +233,11 @@ pub fn merge_inputs(keyboard: [f32; 6], gamepad: [f32; 6]) -> [f32; 6] {
   result
 }
 
-pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6]>) {
+pub async fn start_input_handler<R: Runtime>(
+  window: WebviewWindow,
+  input_tx: Sender<[f32; 6]>,
+  app_handle: &AppHandle<R>,
+) {
   let mut interval = time::interval(Duration::from_millis(16));
   let mut gilrs = Gilrs::new().unwrap_or_else(|_| {
     println!("Failed to initialize gamepad support");
@@ -237,8 +255,8 @@ pub async fn start_input_handler(window: WebviewWindow, input_tx: Sender<[f32; 6
       continue;
     }
 
-    let keyboard_input = get_keyboard_input(&device_state).unwrap_or([0.0; 6]);
-    let gamepad_input = get_gamepad_input(&mut gilrs).unwrap_or([0.0; 6]);
+    let keyboard_input = get_keyboard_input(&device_state, &app_handle).unwrap_or([0.0; 6]);
+    let gamepad_input = get_gamepad_input(&mut gilrs, &app_handle).unwrap_or([0.0; 6]);
 
     let final_input = merge_inputs(keyboard_input, gamepad_input);
     println!("Input: {:?}", final_input);

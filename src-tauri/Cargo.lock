@@ -676,10 +676,10 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
- "tauri-plugin-gamepad",
  "tauri-plugin-opener",
  "tokio",
  "tokio-tungstenite",
+ "uuid",
 ]
 
 [[package]]
@@ -892,26 +892,6 @@ name = "endi"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3d8a32ae18130a3c84dd492d4215c3d913c3b07c6b63c2eb3eb7ff1101ab7bf"
-
-[[package]]
-name = "enum-iterator"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c280b9e6b3ae19e152d8e31cf47f18389781e119d4013a2a2bb0180e5facc635"
-dependencies = [
- "enum-iterator-derive",
-]
-
-[[package]]
-name = "enum-iterator-derive"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1ab991c1362ac86c61ab6f556cff143daa22e5a15e4e189df818b2fd19fe65b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.96",
-]
 
 [[package]]
 name = "enumflags2"
@@ -1316,7 +1296,6 @@ dependencies = [
  "fnv",
  "gilrs-core",
  "log",
- "serde",
  "uuid",
  "vec_map",
 ]
@@ -1335,7 +1314,6 @@ dependencies = [
  "libudev-sys",
  "log",
  "nix",
- "serde",
  "uuid",
  "vec_map",
  "wasm-bindgen",
@@ -3973,22 +3951,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-gamepad"
-version = "0.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da2cabe60f9c36a3fa85323b56be22074f7dd5fa691dc17467e09882cd8d10d2"
-dependencies = [
- "enum-iterator",
- "gilrs",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.11",
- "uuid",
-]
-
-[[package]]
 name = "tauri-plugin-opener"
 version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4579,11 +4541,11 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "uuid"
-version = "1.12.0"
+version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744018581f9a3454a9e15beb8a33b017183f1e7c0cd170232a2d1453b23a51c4"
+checksum = "e0f540e3240398cce6128b64ba83fdbdd86129c16a3aa1a3a252efd66eb3d587"
 dependencies = [
- "getrandom 0.2.15",
+ "getrandom 0.3.1",
  "serde",
 ]
 

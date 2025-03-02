@@ -28,13 +28,13 @@ pub enum ControlSource {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ControllerBindings {
+pub struct GamepadBindings {
   pub move_horizontal: ControlSource,
-  pub move_up: u8,
-  pub move_down: u8,
+  pub move_up: u16,
+  pub move_down: u16,
   pub pitch_yaw: ControlSource,
-  pub roll_left: u8,
-  pub roll_right: u8,
+  pub roll_left: u16,
+  pub roll_right: u16,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -44,7 +44,7 @@ pub struct Config {
   pub stream_port: u16,
   pub control_port: u16,
   pub keyboard: KeyboardBindings,
-  pub controller: ControllerBindings,
+  pub gamepad: GamepadBindings,
 }
 
 impl Default for Config {
@@ -67,13 +67,13 @@ impl Default for Config {
         roll_left: "Q".to_string(),
         roll_right: "E".to_string(),
       },
-      controller: ControllerBindings {
+      gamepad: GamepadBindings {
         move_horizontal: ControlSource::LeftStick,
-        move_up: 4,
-        move_down: 6,
+        move_up: 9,
+        move_down: 10,
         pitch_yaw: ControlSource::RightStick,
-        roll_left: 14,
-        roll_right: 15,
+        roll_left: 7,
+        roll_right: 8,
       },
     }
   }
