@@ -42,13 +42,9 @@ function GamepadControlsDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild disabled={!isControllerConnected}>
         <Button variant='outline' size='icon'>
-          <Gamepad2Icon
-            className={`h-[1.2rem] w-[1.2rem] ${
-              isControllerConnected && 'text-primary'
-            }`}
-          />
+          <Gamepad2Icon className='h-[1.2rem] w-[1.2rem]' />
           <span className='sr-only'>Show gamepad layout</span>
         </Button>
       </DialogTrigger>

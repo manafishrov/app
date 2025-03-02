@@ -38,17 +38,10 @@ fn process_key_pair(positive: bool, negative: bool) -> f32 {
   }
 }
 
-fn get_keyboard_input<R: Runtime>(
-  device_state: &DeviceState,
-  app_handle: &AppHandle<R>,
-) -> Result<[f32; 6], String> {
+fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
   let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
   let keys: Vec<Keycode> = device_state.get_keys();
   let mut states = KeyStates::default();
-
-  if !keys.is_empty() {
-    let _ = app_handle.emit("keyboard_event", true);
-  }
 
   for key in keys {
     if key == Keycode::from_str(&config.keyboard.move_forward).unwrap_or(Keycode::W) {
@@ -255,7 +248,7 @@ pub async fn start_input_handler<R: Runtime>(
       continue;
     }
 
-    let keyboard_input = get_keyboard_input(&device_state, &app_handle).unwrap_or([0.0; 6]);
+    let keyboard_input = get_keyboard_input(&device_state).unwrap_or([0.0; 6]);
     let gamepad_input = get_gamepad_input(&mut gilrs, &app_handle).unwrap_or([0.0; 6]);
 
     let final_input = merge_inputs(keyboard_input, gamepad_input);

@@ -10,14 +10,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-export function ConnectionStatus() {
+function DeviceControlsConnection() {
   const [isConnected, setIsConnected] = useState(false);
 
   const checkConnection = useCallback(async () => {
     try {
-      console.log('Checking connection status...');
       const status = await invoke<boolean>('get_connection_status');
-      console.log('Connection status:', status);
       setIsConnected(status);
     } catch (e) {
       console.error('Failed to get connection status:', e);
@@ -36,7 +34,7 @@ export function ConnectionStatus() {
   }, [checkConnection]);
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger
           className='cursor-default'
@@ -48,7 +46,7 @@ export function ConnectionStatus() {
             <UnlinkIcon className='h-[1.2rem] w-[1.2rem] text-destructive' />
           )}
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent sideOffset={10} collisionPadding={8}>
           <p>
             {isConnected
               ? 'Connected to device controls'
@@ -59,3 +57,5 @@ export function ConnectionStatus() {
     </TooltipProvider>
   );
 }
+
+export { DeviceControlsConnection };

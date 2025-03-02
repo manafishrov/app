@@ -1,11 +1,11 @@
 import { useConfigStore } from '@/stores/configStore';
 import { useEffect } from 'react';
 
-import { ConnectionStatus } from '@/components/ConnectionStatus';
-import { GamepadControlsDialog } from '@/components/GamepadControlsDialog';
-import { KeyboardControlsDialog } from '@/components/KeyboardControlsDialog';
-import { SettingsDialog } from '@/components/SettingsDialog';
 import { VideoStream } from '@/components/VideoStream';
+import { GamepadControlsDialog } from '@/components/settings/GamepadControlsDialog';
+import { KeyboardControlsDialog } from '@/components/settings/KeyboardControlsDialog';
+import { SettingsDialog } from '@/components/settings/SettingsDialog';
+import { DeviceControlsConnection } from '@/components/status/DeviceControlsConnection';
 import { Card } from '@/components/ui/Card';
 import { Toaster } from '@/components/ui/Toaster';
 
@@ -27,9 +27,9 @@ function App() {
           <KeyboardControlsDialog />
           <GamepadControlsDialog />
         </div>
-        <div>
-          <ConnectionStatus />
-        </div>
+        <Card className='flex items-center justify-center gap-2 rounded-full bg-muted px-2'>
+          <DeviceControlsConnection />
+        </Card>
       </div>
       <Toaster />
     </main>
