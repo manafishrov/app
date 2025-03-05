@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/Dialog';
-import { ScrollArea } from '@/components/ui/ScrollArea';
 import { toast } from '@/components/ui/Toaster';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
