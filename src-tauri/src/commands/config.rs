@@ -14,7 +14,7 @@ pub fn get_config() -> Result<Config, String> {
   if let Ok(content) = fs::read_to_string(&config_path) {
     match serde_json::from_str(&content) {
       Ok(config) => Ok(config),
-      Err(e) => {
+      Err(_e) => {
         if let Err(delete_err) = fs::remove_file(&config_path) {
           return Err(format!("Failed to delete corrupted config: {}", delete_err));
         }

@@ -46,7 +46,15 @@ function DeviceControlsConnection() {
             <UnlinkIcon className='h-[1.2rem] w-[1.2rem] text-destructive' />
           )}
         </TooltipTrigger>
-        <TooltipContent sideOffset={10} collisionPadding={8}>
+        <TooltipContent
+          sideOffset={10}
+          collisionPadding={8}
+          className={
+            isConnected
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-destructive text-destructive-foreground'
+          }
+        >
           <p>
             {isConnected
               ? 'Connected to device controls'

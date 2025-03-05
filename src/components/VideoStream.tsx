@@ -24,9 +24,9 @@ function VideoStream() {
 
       if (videoRef.current) {
         pc.ontrack = (event) => {
+          setIsLoading(true);
           const stream = event.streams[0];
           if (stream && videoRef.current) {
-            setIsLoading(true);
             videoRef.current.srcObject = stream;
 
             videoRef.current.onplaying = () => {

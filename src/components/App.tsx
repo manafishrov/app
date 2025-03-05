@@ -6,6 +6,7 @@ import { GamepadControlsDialog } from '@/components/settings/GamepadControlsDial
 import { KeyboardControlsDialog } from '@/components/settings/KeyboardControlsDialog';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { DeviceControlsConnection } from '@/components/status/DeviceControlsConnection';
+import { WaterSensor } from '@/components/status/WaterSensor';
 import { Card } from '@/components/ui/Card';
 import { Toaster } from '@/components/ui/Toaster';
 
@@ -28,6 +29,7 @@ function App() {
           <GamepadControlsDialog />
         </div>
         <Card className='flex h-9 items-center justify-center gap-2 rounded-full bg-muted px-2'>
+          <WaterSensor />
           <DeviceControlsConnection />
         </Card>
       </div>

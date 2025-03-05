@@ -1,6 +1,6 @@
 mod commands {
   pub mod config;
-  pub mod connection;
+  pub mod status;
 }
 
 mod models {
@@ -12,7 +12,7 @@ mod input_handler;
 mod websocket_client;
 
 use commands::config::{get_config, save_config};
-use commands::connection::get_connection_status;
+use commands::status::{get_connection_status, get_water_sensor_status};
 use tauri::Manager;
 
 pub fn run() {
@@ -24,6 +24,7 @@ pub fn run() {
       get_config,
       save_config,
       get_connection_status,
+      get_water_sensor_status
     ])
     .setup(|app| {
       let window = app.get_webview_window("main").unwrap();
