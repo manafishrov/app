@@ -37,7 +37,7 @@ function DeviceControlsConnection() {
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger
-          className='cursor-default'
+          className='cursor-default rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
           aria-label={`Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`}
         >
           {isConnected ? (

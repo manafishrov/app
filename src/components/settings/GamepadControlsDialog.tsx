@@ -86,11 +86,10 @@ function GamepadControlsDialog() {
           <span className='sr-only'>Show gamepad layout</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className='max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] overflow-y-auto focus-visible:outline-none'>
         <DialogHeader>
           <DialogTitle>Gamepad Layout</DialogTitle>
         </DialogHeader>
-
         <DialogDescription>
           Configure your gamepad bindings for controlling the drone.
         </DialogDescription>

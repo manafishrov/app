@@ -102,11 +102,11 @@ function KeyboardBindInput({
   useEffect(() => {
     if (!isRecording) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    function handleClickOutside(e: MouseEvent) {
       if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
         setIsRecording(false);
       }
-    };
+    }
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {

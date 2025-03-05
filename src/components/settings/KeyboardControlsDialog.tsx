@@ -70,7 +70,7 @@ function KeyboardControlsDialog() {
           <span className='sr-only'>Show keyboard layout</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className='max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] overflow-y-auto focus-visible:outline-none'>
         <DialogHeader>
           <DialogTitle>Keyboard layout</DialogTitle>
         </DialogHeader>

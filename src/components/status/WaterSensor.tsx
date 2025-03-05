@@ -40,7 +40,7 @@ function WaterSensor() {
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger
-          className='cursor-default'
+          className='cursor-default rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
           aria-label={`Water sensor: ${waterDetected ? 'Water detected!' : 'No water detected'}`}
         >
           {waterDetected ? (
