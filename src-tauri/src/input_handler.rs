@@ -350,8 +350,8 @@ pub async fn start_input_handler<R: Runtime>(
   }
 }
 
-pub fn update_config(new_config: Config) {
+pub fn update_config(new_config: &Config) {
   if let Ok(mut config) = CURRENT_CONFIG.lock() {
-    *config = new_config;
+    *config = new_config.clone();
   }
 }

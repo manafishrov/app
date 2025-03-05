@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyboardBindings {
   pub move_forward: String,
@@ -17,7 +17,7 @@ pub struct KeyboardBindings {
   pub roll_right: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum ControlSource {
   LeftStick,
@@ -26,7 +26,7 @@ pub enum ControlSource {
   FaceButtons,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
   pub move_horizontal: ControlSource,
@@ -37,7 +37,7 @@ pub struct GamepadBindings {
   pub roll_right: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
   pub ip: String,
