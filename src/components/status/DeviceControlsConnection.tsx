@@ -1,8 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
+import { useDeviceStatusStore } from '@/stores/deviceStatusStore';
 import { LinkIcon, UnlinkIcon } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
 
-import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -11,27 +9,7 @@ import {
 } from '@/components/ui/Tooltip';
 
 function DeviceControlsConnection() {
-  const [isConnected, setIsConnected] = useState(false);
-
-  const checkConnection = useCallback(async () => {
-    try {
-      const status = await invoke<boolean>('get_connection_status');
-      setIsConnected(status);
-    } catch (e) {
-      console.error('Failed to get connection status:', e);
-      toast.warning('Failed to get connection status');
-      setIsConnected(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void checkConnection();
-    const interval = window.setInterval(() => {
-      void checkConnection();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [checkConnection]);
+  const isConnected = useDeviceStatusStore((state) => state.isConnected);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -58,7 +36,7 @@ function DeviceControlsConnection() {
           <p>
             {isConnected
               ? 'Connected to device controls'
-              : 'Disconnected from device conrols'}
+              : 'Disconnected from device controls'}
           </p>
         </TooltipContent>
       </Tooltip>

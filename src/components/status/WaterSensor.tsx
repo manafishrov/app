@@ -1,8 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
+import { useDeviceStatusStore } from '@/stores/deviceStatusStore';
 import { DropletIcon, DropletsIcon } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
 
-import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -11,30 +9,12 @@ import {
 } from '@/components/ui/Tooltip';
 
 function WaterSensor() {
-  const [waterDetected, setWaterDetected] = useState(false);
+  const isConnected = useDeviceStatusStore((state) => state.isConnected);
+  const waterDetected = useDeviceStatusStore((state) => state.waterDetected);
 
-  const checkWaterSensor = useCallback(async () => {
-    try {
-      const status = await invoke<boolean>('get_water_sensor_status');
-      setWaterDetected(status);
-
-      if (status) {
-        toast.error('ALERT: Water detected inside ROV!');
-      }
-    } catch (e) {
-      console.error('Failed to get water sensor status:', e);
-      toast.warning('Failed to get water sensor status');
-    }
-  }, []);
-
-  useEffect(() => {
-    void checkWaterSensor();
-    const interval = window.setInterval(() => {
-      void checkWaterSensor();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [checkWaterSensor]);
+  if (!isConnected) {
+    return null;
+  }
 
   return (
     <TooltipProvider delayDuration={200}>
