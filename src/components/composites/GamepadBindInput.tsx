@@ -13,24 +13,52 @@ type GamepadBindInputProps = {
   isJoystick?: boolean;
 };
 
+const gamepadMappings: Record<string, string> = {
+  '0': '1',
+  '1': '2',
+  '2': '5',
+  '3': '4',
+  '4': '7',
+  '5': '8',
+  '6': '9',
+  '7': '10',
+  '8': '11',
+  '9': '12',
+  '10': '14',
+  '11': '15',
+  '12': '16',
+  '13': '17',
+  '14': '18',
+  '15': '19',
+  '16': '13',
+  '17': '3',
+  '18': '6',
+  leftStick: 'leftStick',
+  rightStick: 'rightStick',
+  dPad: 'dPad',
+  faceButtons: 'faceButtons',
+};
+
 const displayMappings: Record<string, string> = {
-  0: 'A / ×',
-  1: 'B / ○',
-  2: 'X / □',
-  3: 'Y / △',
-  4: 'LB / L1',
-  5: 'RB / R1',
-  6: 'LT / L2',
-  7: 'RT / R2',
-  8: 'Back / Share',
-  9: 'Start / Options',
-  10: 'L3',
-  11: 'R3',
-  12: 'DPad Up',
-  13: 'DPad Down',
-  14: 'DPad Left',
-  15: 'DPad Right',
-  16: 'Xbox / PS Button',
+  '1': 'A / ×',
+  '2': 'B / ○',
+  '3': 'C',
+  '4': 'Y / △',
+  '5': 'X / □',
+  '6': 'Z',
+  '7': 'LB / L1',
+  '8': 'RB / R1',
+  '9': 'LT / L2',
+  '10': 'RT / R2',
+  '11': 'Back / Share',
+  '12': 'Start / Options',
+  '13': 'Xbox / PS Button',
+  '14': 'L3',
+  '15': 'R3',
+  '16': 'DPad Up',
+  '17': 'DPad Down',
+  '18': 'DPad Left',
+  '19': 'DPad Right',
   leftStick: 'Left Stick',
   rightStick: 'Right Stick',
   dPad: 'D-Pad',
@@ -103,9 +131,10 @@ function GamepadBindInput({
                 return;
               }
             } else {
-              setCurrentBind(String(i));
+              const rustKeyName = gamepadMappings[String(i)] ?? String(i);
+              setCurrentBind(rustKeyName);
               setIsRecording(false);
-              onBindChange(String(i));
+              onBindChange(rustKeyName);
               return;
             }
           }

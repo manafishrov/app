@@ -43,41 +43,113 @@ fn get_keyboard_input(device_state: &DeviceState) -> Result<[f32; 6], String> {
   let keys: Vec<Keycode> = device_state.get_keys();
   let mut states = KeyStates::default();
 
-  for key in keys {
-    if key == Keycode::from_str(&config.keyboard.move_forward).unwrap_or(Keycode::W) {
+  fn check_modifier(key: &Keycode, config_key: &str) -> bool {
+    match config_key {
+      "Control" => matches!(key, Keycode::LControl | Keycode::RControl),
+      "Shift" => matches!(key, Keycode::LShift | Keycode::RShift),
+      "Alt" => matches!(
+        key,
+        Keycode::LAlt | Keycode::RAlt | Keycode::LOption | Keycode::ROption
+      ),
+      "Meta" => matches!(key, Keycode::LMeta | Keycode::RMeta | Keycode::Command),
+      _ => false,
+    }
+  }
+
+  for key in &keys {
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_forward) {
+      if *key == config_key {
+        states.move_forward = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_forward) {
       states.move_forward = true;
     }
-    if key == Keycode::from_str(&config.keyboard.move_backward).unwrap_or(Keycode::S) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_backward) {
+      if *key == config_key {
+        states.move_backward = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_backward) {
       states.move_backward = true;
     }
-    if key == Keycode::from_str(&config.keyboard.move_left).unwrap_or(Keycode::A) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_left) {
+      if *key == config_key {
+        states.move_left = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_left) {
       states.move_left = true;
     }
-    if key == Keycode::from_str(&config.keyboard.move_right).unwrap_or(Keycode::D) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_right) {
+      if *key == config_key {
+        states.move_right = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_right) {
       states.move_right = true;
     }
-    if key == Keycode::from_str(&config.keyboard.move_up).unwrap_or(Keycode::Space) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_up) {
+      if *key == config_key {
+        states.move_up = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_up) {
       states.move_up = true;
     }
-    if key == Keycode::from_str(&config.keyboard.move_down).unwrap_or(Keycode::LShift) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.move_down) {
+      if *key == config_key {
+        states.move_down = true;
+      }
+    } else if check_modifier(key, &config.keyboard.move_down) {
       states.move_down = true;
     }
-    if key == Keycode::from_str(&config.keyboard.pitch_up).unwrap_or(Keycode::I) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.pitch_up) {
+      if *key == config_key {
+        states.pitch_up = true;
+      }
+    } else if check_modifier(key, &config.keyboard.pitch_up) {
       states.pitch_up = true;
     }
-    if key == Keycode::from_str(&config.keyboard.pitch_down).unwrap_or(Keycode::K) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.pitch_down) {
+      if *key == config_key {
+        states.pitch_down = true;
+      }
+    } else if check_modifier(key, &config.keyboard.pitch_down) {
       states.pitch_down = true;
     }
-    if key == Keycode::from_str(&config.keyboard.yaw_left).unwrap_or(Keycode::J) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.yaw_left) {
+      if *key == config_key {
+        states.yaw_left = true;
+      }
+    } else if check_modifier(key, &config.keyboard.yaw_left) {
       states.yaw_left = true;
     }
-    if key == Keycode::from_str(&config.keyboard.yaw_right).unwrap_or(Keycode::L) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.yaw_right) {
+      if *key == config_key {
+        states.yaw_right = true;
+      }
+    } else if check_modifier(key, &config.keyboard.yaw_right) {
       states.yaw_right = true;
     }
-    if key == Keycode::from_str(&config.keyboard.roll_left).unwrap_or(Keycode::Q) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.roll_left) {
+      if *key == config_key {
+        states.roll_left = true;
+      }
+    } else if check_modifier(key, &config.keyboard.roll_left) {
       states.roll_left = true;
     }
-    if key == Keycode::from_str(&config.keyboard.roll_right).unwrap_or(Keycode::E) {
+
+    if let Ok(config_key) = Keycode::from_str(&config.keyboard.roll_right) {
+      if *key == config_key {
+        states.roll_right = true;
+      }
+    } else if check_modifier(key, &config.keyboard.roll_right) {
       states.roll_right = true;
     }
   }
@@ -194,28 +266,42 @@ fn get_gamepad_input<R: Runtime>(
       }
     }
 
-    control_array[2] = if gamepad.is_pressed(button_from_u16(
-      config.gamepad.move_up.parse::<u16>().unwrap_or(0),
-    )) {
-      1.0
-    } else if gamepad.is_pressed(button_from_u16(
-      config.gamepad.move_down.parse::<u16>().unwrap_or(0),
-    )) {
-      -1.0
-    } else {
-      0.0
+    let mut up_pressed = false;
+    let mut down_pressed = false;
+
+    if let Ok(btn_code) = config.gamepad.move_up.parse::<u16>() {
+      let button = button_from_u16(btn_code);
+      up_pressed = gamepad.is_pressed(button);
+    }
+
+    if let Ok(btn_code) = config.gamepad.move_down.parse::<u16>() {
+      let button = button_from_u16(btn_code);
+      down_pressed = gamepad.is_pressed(button);
+    }
+
+    control_array[2] = match (up_pressed, down_pressed) {
+      (true, false) => 1.0,
+      (false, true) => -1.0,
+      _ => 0.0,
     };
 
-    control_array[5] = if gamepad.is_pressed(button_from_u16(
-      config.gamepad.roll_right.parse::<u16>().unwrap_or(0),
-    )) {
-      1.0
-    } else if gamepad.is_pressed(button_from_u16(
-      config.gamepad.roll_left.parse::<u16>().unwrap_or(0),
-    )) {
-      -1.0
-    } else {
-      0.0
+    let mut roll_right_pressed = false;
+    let mut roll_left_pressed = false;
+
+    if let Ok(btn_code) = config.gamepad.roll_right.parse::<u16>() {
+      let button = button_from_u16(btn_code);
+      roll_right_pressed = gamepad.is_pressed(button);
+    }
+
+    if let Ok(btn_code) = config.gamepad.roll_left.parse::<u16>() {
+      let button = button_from_u16(btn_code);
+      roll_left_pressed = gamepad.is_pressed(button);
+    }
+
+    control_array[5] = match (roll_right_pressed, roll_left_pressed) {
+      (true, false) => 1.0,
+      (false, true) => -1.0,
+      _ => 0.0,
     };
   }
 
@@ -252,7 +338,6 @@ pub async fn start_input_handler<R: Runtime>(
     if !window.is_focused().unwrap_or(false) {
       let zero_input = [0.0; 6];
       let _ = input_tx.send(zero_input).await;
-      println!("Input: {:?}", zero_input);
       continue;
     }
 
@@ -260,7 +345,6 @@ pub async fn start_input_handler<R: Runtime>(
     let gamepad_input = get_gamepad_input(&mut gilrs, &app_handle).unwrap_or([0.0; 6]);
 
     let final_input = merge_inputs(keyboard_input, gamepad_input);
-    println!("Input: {:?}", final_input);
 
     let _ = input_tx.send(final_input).await;
   }

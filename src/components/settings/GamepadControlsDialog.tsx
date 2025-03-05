@@ -12,15 +12,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/Dialog';
+import { ScrollArea } from '@/components/ui/ScrollArea';
 import { toast } from '@/components/ui/Toaster';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   moveHorizontal: 'leftStick',
-  moveUp: '6',
-  moveDown: '7',
+  moveUp: '9',
+  moveDown: '10',
   pitchYaw: 'rightStick',
-  rollLeft: '4',
-  rollRight: '5',
+  rollLeft: '7',
+  rollRight: '8',
 };
 
 function GamepadControlsDialog() {

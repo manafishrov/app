@@ -20,7 +20,7 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   moveLeft: 'A',
   moveRight: 'D',
   moveUp: 'Space',
-  moveDown: 'LShift',
+  moveDown: 'Shift',
   pitchUp: 'I',
   pitchDown: 'K',
   yawLeft: 'J',
