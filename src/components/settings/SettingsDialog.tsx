@@ -1,6 +1,7 @@
 import { useConfigStore } from '@/stores/configStore';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SettingsIcon } from 'lucide-react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -45,6 +46,16 @@ function SettingsDialog() {
       controlPort: config?.controlPort,
     },
   });
+
+  useEffect(() => {
+    if (config) {
+      form.reset({
+        ip: config.ip,
+        streamPort: config.streamPort,
+        controlPort: config.controlPort,
+      });
+    }
+  }, [config, form]);
 
   if (!config) return null;
 
