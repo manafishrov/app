@@ -55,7 +55,7 @@ function VideoStream() {
       await pc.setLocalDescription(offer);
 
       const response = await fetch(
-        `http://${config.ip}:${config.streamPort}/cam/whep`,
+        `http://${config.ipAddress}:${config.cameraStreamPort}/cam/whep`,
         {
           method: 'POST',
           headers: {
@@ -101,7 +101,7 @@ function VideoStream() {
         peerConnectionRef.current.close();
       }
     };
-  }, [config?.ip, config?.streamPort]);
+  }, [config?.ipAddress, config?.cameraStreamPort]);
 
   return (
     <div className='relative aspect-video w-full'>
