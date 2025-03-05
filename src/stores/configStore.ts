@@ -30,9 +30,9 @@ type GamepadBindings = {
 };
 
 type Config = {
-  ip: string;
-  streamPort: number;
-  controlPort: number;
+  ipAddress: string;
+  cameraStreamPort: number;
+  deviceControlsPort: number;
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
 };
@@ -41,9 +41,9 @@ type ConfigStore = {
   config: Config | null;
   loadConfig: () => Promise<void>;
   updateServerSettings: (
-    ip: string,
-    streamPort: number,
-    controlPort: number,
+    ipAddress: string,
+    cameraStreamPort: number,
+    deviceControlsPort: number,
   ) => Promise<void>;
   updateKeyboardBindings: (bindings: KeyboardBindings) => Promise<void>;
   updateGamepadBindings: (bindings: GamepadBindings) => Promise<void>;
@@ -61,17 +61,17 @@ const useConfigStore = create<ConfigStore>((set) => ({
     }
   },
   updateServerSettings: async (
-    ip: string,
-    streamPort: number,
-    controlPort: number,
+    ipAddress: string,
+    cameraStreamPort: number,
+    deviceControlsPort: number,
   ) => {
     set((state) => {
       if (!state.config) return state;
       const config = {
         ...state.config,
-        ip,
-        streamPort,
-        controlPort,
+        ipAddress,
+        cameraStreamPort,
+        deviceControlsPort,
       };
       void invoke('save_config', { config });
       return { config };

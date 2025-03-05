@@ -64,7 +64,7 @@ async fn connect_and_handle(
 ) -> Result<(), Box<dyn std::error::Error>> {
   let url = {
     let config = CURRENT_CONFIG.lock().map_err(|e| e.to_string())?;
-    format!("ws://{}:{}", config.ip, config.control_port)
+    format!("ws://{}:{}", config.ip_address, config.device_controls_port)
   };
 
   println!("Connecting to Cyberfish WebSocket server at {}", url);

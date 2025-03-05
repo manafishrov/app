@@ -27,9 +27,9 @@ import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toaster';
 
 const formSchema = z.object({
-  ip: z.string(),
-  streamPort: z.number(),
-  controlPort: z.number(),
+  ipAddress: z.string(),
+  cameraStreamPort: z.number(),
+  deviceControlsPort: z.number(),
 });
 
 function SettingsDialog() {
@@ -41,18 +41,18 @@ function SettingsDialog() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ip: config?.ip,
-      streamPort: config?.streamPort,
-      controlPort: config?.controlPort,
+      ipAddress: config?.ipAddress,
+      cameraStreamPort: config?.cameraStreamPort,
+      deviceControlsPort: config?.deviceControlsPort,
     },
   });
 
   useEffect(() => {
     if (config) {
       form.reset({
-        ip: config.ip,
-        streamPort: config.streamPort,
-        controlPort: config.controlPort,
+        ipAddress: config.ipAddress,
+        cameraStreamPort: config.cameraStreamPort,
+        deviceControlsPort: config.deviceControlsPort,
       });
     }
   }, [config, form]);
@@ -62,9 +62,9 @@ function SettingsDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await updateServerSettings(
-        values.ip,
-        values.streamPort,
-        values.controlPort,
+        values.ipAddress,
+        values.cameraStreamPort,
+        values.deviceControlsPort,
       );
       toast.success('Settings updated');
     } catch (error) {
@@ -92,15 +92,15 @@ function SettingsDialog() {
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
             <FormField
               control={form.control}
-              name='ip'
+              name='ipAddress'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>IP Address</FormLabel>
+                  <FormLabel>IP address</FormLabel>
                   <FormControl>
                     <Input placeholder='10.10.10.10' {...field} />
                   </FormControl>
                   <FormDescription>
-                    The IP Address of your Cyberfish Raspberry Pi.
+                    The IP address of your Cyberfish Raspberry Pi.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -108,10 +108,10 @@ function SettingsDialog() {
             />
             <FormField
               control={form.control}
-              name='streamPort'
+              name='cameraStreamPort'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Stream Port</FormLabel>
+                  <FormLabel>Camera stream port</FormLabel>
                   <FormControl>
                     <Input
                       type='text'
@@ -126,7 +126,7 @@ function SettingsDialog() {
                     />
                   </FormControl>
                   <FormDescription>
-                    The port number for video streaming.
+                    The port number for the camera stream.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -134,10 +134,10 @@ function SettingsDialog() {
             />
             <FormField
               control={form.control}
-              name='controlPort'
+              name='deviceControlsPort'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Control Port</FormLabel>
+                  <FormLabel>Device controls port</FormLabel>
                   <FormControl>
                     <Input
                       type='text'
@@ -152,7 +152,8 @@ function SettingsDialog() {
                     />
                   </FormControl>
                   <FormDescription>
-                    The port number for control commands.
+                    The port number for controlling the ROV and obtaining
+                    statuses.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

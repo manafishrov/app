@@ -40,9 +40,9 @@ pub struct GamepadBindings {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-  pub ip: String,
-  pub stream_port: u16,
-  pub control_port: u16,
+  pub ip_address: String,
+  pub camera_stream_port: u16,
+  pub device_controls_port: u16,
   pub keyboard: KeyboardBindings,
   pub gamepad: GamepadBindings,
 }
@@ -50,9 +50,9 @@ pub struct Config {
 impl Default for Config {
   fn default() -> Self {
     Config {
-      ip: "10.10.10.10".to_string(),
-      stream_port: 8889,
-      control_port: 5000,
+      ip_address: "10.10.10.10".to_string(),
+      camera_stream_port: 8889,
+      device_controls_port: 5000,
       keyboard: KeyboardBindings {
         move_forward: "W".to_string(),
         move_backward: "S".to_string(),
