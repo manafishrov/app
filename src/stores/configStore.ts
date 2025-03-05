@@ -18,11 +18,13 @@ type KeyboardBindings = {
   rollRight: string;
 };
 
+type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
+
 type GamepadBindings = {
-  moveHorizontal: string;
+  moveHorizontal: ControlSource;
   moveUp: string;
   moveDown: string;
-  pitchYaw: string;
+  pitchYaw: ControlSource;
   rollLeft: string;
   rollRight: string;
 };
@@ -44,7 +46,7 @@ type ConfigStore = {
     controlPort: number,
   ) => Promise<void>;
   updateKeyboardBindings: (bindings: KeyboardBindings) => Promise<void>;
-  updateControllerBindings: (bindings: GamepadBindings) => Promise<void>;
+  updateGamepadBindings: (bindings: GamepadBindings) => Promise<void>;
 };
 
 const useConfigStore = create<ConfigStore>((set) => ({
@@ -86,7 +88,7 @@ const useConfigStore = create<ConfigStore>((set) => ({
       return { config };
     });
   },
-  updateControllerBindings: async (bindings: GamepadBindings) => {
+  updateGamepadBindings: async (bindings: GamepadBindings) => {
     set((state) => {
       if (!state.config) return state;
       const config = {

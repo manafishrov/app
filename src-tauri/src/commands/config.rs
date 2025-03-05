@@ -11,8 +11,16 @@ fn get_config_path() -> PathBuf {
 pub fn get_config() -> Result<Config, String> {
   let config_path = get_config_path();
 
-  if let Ok(content) = fs::read_to_string(config_path) {
-    serde_json::from_str(&content).map_err(|e| e.to_string())
+  if let Ok(content) = fs::read_to_string(&config_path) {
+    match serde_json::from_str(&content) {
+      Ok(config) => Ok(config),
+      Err(e) => {
+        if let Err(delete_err) = fs::remove_file(&config_path) {
+          return Err(format!("Failed to delete corrupted config: {}", delete_err));
+        }
+        Ok(Config::default())
+      }
+    }
   } else {
     Ok(Config::default())
   }

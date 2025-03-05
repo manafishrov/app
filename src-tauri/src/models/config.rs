@@ -30,11 +30,11 @@ pub enum ControlSource {
 #[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
   pub move_horizontal: ControlSource,
-  pub move_up: u16,
-  pub move_down: u16,
+  pub move_up: String,
+  pub move_down: String,
   pub pitch_yaw: ControlSource,
-  pub roll_left: u16,
-  pub roll_right: u16,
+  pub roll_left: String,
+  pub roll_right: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -69,11 +69,11 @@ impl Default for Config {
       },
       gamepad: GamepadBindings {
         move_horizontal: ControlSource::LeftStick,
-        move_up: 9,
-        move_down: 10,
+        move_up: "6".to_string(),
+        move_down: "7".to_string(),
         pitch_yaw: ControlSource::RightStick,
-        roll_left: 7,
-        roll_right: 8,
+        roll_left: "4".to_string(),
+        roll_right: "5".to_string(),
       },
     }
   }

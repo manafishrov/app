@@ -10,10 +10,10 @@ type GamepadBindInputProps = {
   bind: string;
   defaultBind: string;
   onBindChange: (newBind: string) => void;
-  className?: string;
+  isJoystick?: boolean;
 };
 
-const BUTTON_NAMES: Record<number, string> = {
+const displayMappings: Record<string, string> = {
   0: 'A / ×',
   1: 'B / ○',
   2: 'X / □',
@@ -31,6 +31,10 @@ const BUTTON_NAMES: Record<number, string> = {
   14: 'DPad Left',
   15: 'DPad Right',
   16: 'Xbox / PS Button',
+  leftStick: 'Left Stick',
+  rightStick: 'Right Stick',
+  dPad: 'D-Pad',
+  faceButtons: 'Face Buttons',
 };
 
 function GamepadBindInput({
@@ -38,7 +42,7 @@ function GamepadBindInput({
   bind,
   defaultBind,
   onBindChange,
-  className,
+  isJoystick = false,
 }: GamepadBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
@@ -51,13 +55,13 @@ function GamepadBindInput({
       return;
     }
 
-    const checkGamepads = () => {
+    function checkGamepads() {
       const gamepads = navigator.getGamepads();
       const hasConnectedGamepad = Array.from(gamepads).some(
         (gamepad) => gamepad !== null,
       );
       setGamepadConnected(hasConnectedGamepad);
-    };
+    }
 
     checkGamepads();
 
@@ -78,7 +82,7 @@ function GamepadBindInput({
   useEffect(() => {
     if (!isRecording || !gamepadConnected) return;
 
-    const checkGamepadInput = () => {
+    function checkGamepadInput() {
       const gamepads = navigator.getGamepads();
 
       for (const gamepad of gamepads) {
@@ -86,30 +90,51 @@ function GamepadBindInput({
 
         for (let i = 0; i < gamepad.buttons.length; i++) {
           if (gamepad.buttons[i]?.pressed) {
-            const buttonName = BUTTON_NAMES[i] ?? `Button ${i}`;
-            setCurrentBind(buttonName);
-            setIsRecording(false);
-            onBindChange(buttonName);
-            return;
+            if (isJoystick) {
+              if (i >= 0 && i <= 3) {
+                setCurrentBind('faceButtons');
+                setIsRecording(false);
+                onBindChange('faceButtons');
+                return;
+              } else if (i >= 12 && i <= 15) {
+                setCurrentBind('dPad');
+                setIsRecording(false);
+                onBindChange('dPad');
+                return;
+              }
+            } else {
+              setCurrentBind(String(i));
+              setIsRecording(false);
+              onBindChange(String(i));
+              return;
+            }
           }
         }
 
-        // TODO: this needs to be changed to be a seperate binding for joysticks/dpad/userbuttons
-        for (let i = 0; i < gamepad.axes.length; i++) {
-          const axisValue = gamepad.axes[i];
-          if (Math.abs(axisValue!) > 0.7) {
-            const direction = axisValue! > 0 ? '+' : '-';
-            const axisName = `Axis ${i}${direction}`;
-            setCurrentBind(axisName);
+        if (isJoystick && gamepad.axes.length >= 4) {
+          const leftX = gamepad.axes[0] ?? 0;
+          const leftY = gamepad.axes[1] ?? 0;
+          const rightX = gamepad.axes[2] ?? 0;
+          const rightY = gamepad.axes[3] ?? 0;
+
+          if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
+            setCurrentBind('leftStick');
             setIsRecording(false);
-            onBindChange(axisName);
+            onBindChange('leftStick');
+            return;
+          }
+
+          if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
+            setCurrentBind('rightStick');
+            setIsRecording(false);
+            onBindChange('rightStick');
             return;
           }
         }
       }
 
       animationRef.current = requestAnimationFrame(checkGamepadInput);
-    };
+    }
 
     animationRef.current = requestAnimationFrame(checkGamepadInput);
 
@@ -118,7 +143,7 @@ function GamepadBindInput({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRecording, gamepadConnected, onBindChange]);
+  }, [isRecording, gamepadConnected, onBindChange, isJoystick]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -146,22 +171,25 @@ function GamepadBindInput({
     onBindChange(defaultBind);
   };
 
+  const displayBind = displayMappings[currentBind] ?? currentBind;
+
   return (
-    <div className={cx('flex items-center justify-between', className)}>
-      <div className='font-medium'>{label}</div>
+    <div className='space-y-2'>
+      <div>{label}</div>
       <div className='flex items-center gap-2'>
         <Button
           ref={buttonRef}
           variant={isRecording ? 'destructive' : 'outline'}
           className={cx(
-            'flex min-w-[100px] items-center gap-2',
+            'flex w-40 items-center justify-between gap-2',
             isRecording && 'animate-pulse',
           )}
           onClick={startRecording}
-          disabled={!gamepadConnected}
         >
           <Gamepad2Icon className='h-4 w-4' />
-          {isRecording ? 'Press a button...' : currentBind}
+          <span className='truncate'>
+            {isRecording ? 'Press a key...' : displayBind}
+          </span>
         </Button>
         <Button
           variant='ghost'

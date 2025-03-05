@@ -1,8 +1,8 @@
-import { useConfigStore } from '@/stores/configStore';
+import { type GamepadBindings, useConfigStore } from '@/stores/configStore';
 import { Gamepad2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import 'tauri-plugin-gamepad-api';
 
+import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
 import { Button } from '@/components/ui/Button';
 import {
   Dialog,
@@ -12,9 +12,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/Dialog';
+import { toast } from '@/components/ui/Toaster';
+
+const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
+  moveHorizontal: 'leftStick',
+  moveUp: '6',
+  moveDown: '7',
+  pitchYaw: 'rightStick',
+  rollLeft: '4',
+  rollRight: '5',
+};
 
 function GamepadControlsDialog() {
   const config = useConfigStore((state) => state.config);
+  const updateGamepadBindings = useConfigStore(
+    (state) => state.updateGamepadBindings,
+  );
+  const [localBindings, setLocalBindings] = useState<GamepadBindings | null>(
+    null,
+  );
   const [isControllerConnected, setIsControllerConnected] = useState(false);
 
   useEffect(() => {
@@ -40,6 +56,28 @@ function GamepadControlsDialog() {
 
   if (!config) return null;
 
+  const currentBindings = localBindings ?? config.gamepad;
+
+  async function handleBindingChange(
+    key: keyof GamepadBindings,
+    value: string,
+  ) {
+    const newBindings = {
+      ...currentBindings,
+      [key]: value,
+    };
+
+    setLocalBindings(newBindings);
+
+    try {
+      await updateGamepadBindings(newBindings);
+      toast.success('Gamepad binding updated');
+    } catch (error) {
+      console.error('Failed to update gamepad binding:', error);
+      toast.error('Failed to update gamepad binding');
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild disabled={!isControllerConnected}>
@@ -56,55 +94,69 @@ function GamepadControlsDialog() {
         <DialogDescription>
           Configure your gamepad bindings for controlling the drone.
         </DialogDescription>
-        <div className='mx-auto grid max-w-2xl grid-cols-1 px-4 sm:grid-cols-2'>
+        <div className='mx-auto grid max-w-2xl grid-cols-1 sm:grid-cols-2'>
           <div className='mx-4'>
             <h3 className='text-md mb-2 mt-4 font-semibold'>Movement</h3>
-            <ul className='space-y-2'>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.moveHorizontal}
-                </span>{' '}
-                Move Horizontal
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.moveUp}
-                </span>{' '}
-                Move Up
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.moveDown}
-                </span>{' '}
-                Move Down
-              </li>
-            </ul>
+            <div className='space-y-2'>
+              <GamepadBindInput
+                label='Move Horizontal'
+                bind={currentBindings.moveHorizontal}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveHorizontal}
+                onBindChange={(newBind) =>
+                  handleBindingChange('moveHorizontal', newBind)
+                }
+                isJoystick
+              />
+              <GamepadBindInput
+                label='Move Up'
+                bind={currentBindings.moveUp}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveUp}
+                onBindChange={(newBind) =>
+                  handleBindingChange('moveUp', newBind)
+                }
+              />
+              <GamepadBindInput
+                label='Move Down'
+                bind={currentBindings.moveDown}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveDown}
+                onBindChange={(newBind) =>
+                  handleBindingChange('moveDown', newBind)
+                }
+              />
+            </div>
           </div>
           <div className='mx-4'>
             <h3 className='text-md mb-2 mt-4 font-semibold'>Pitch & Yaw</h3>
-            <ul className='space-y-2'>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.pitchYaw}
-                </span>{' '}
-                Pitch/Yaw
-              </li>
-            </ul>
+            <div className='space-y-2'>
+              <GamepadBindInput
+                label='Pitch/Yaw'
+                bind={currentBindings.pitchYaw}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchYaw}
+                onBindChange={(newBind) =>
+                  handleBindingChange('pitchYaw', newBind)
+                }
+                isJoystick
+              />
+            </div>
             <h3 className='text-md mb-2 mt-4 font-semibold'>Roll</h3>
-            <ul className='space-y-2'>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.rollLeft}
-                </span>{' '}
-                Roll Left
-              </li>
-              <li>
-                <span className='rounded bg-secondary px-2 py-1 font-mono'>
-                  {config.gamepad.rollRight}
-                </span>{' '}
-                Roll Right
-              </li>
-            </ul>
+            <div className='space-y-2'>
+              <GamepadBindInput
+                label='Roll Left'
+                bind={currentBindings.rollLeft}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
+                onBindChange={(newBind) =>
+                  handleBindingChange('rollLeft', newBind)
+                }
+              />
+              <GamepadBindInput
+                label='Roll Right'
+                bind={currentBindings.rollRight}
+                defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
+                onBindChange={(newBind) =>
+                  handleBindingChange('rollRight', newBind)
+                }
+              />
+            </div>
           </div>
         </div>
       </DialogContent>

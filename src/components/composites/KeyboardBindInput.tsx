@@ -114,14 +114,14 @@ function KeyboardBindInput({
     };
   }, [isRecording]);
 
-  const startRecording = () => {
+  function startRecording() {
     setIsRecording(true);
-  };
+  }
 
-  const resetToDefault = () => {
+  function resetToDefault() {
     setCurrentBind(defaultBind);
     onBindChange(defaultBind);
-  };
+  }
 
   const displayBind = displayMappings[currentBind] ?? currentBind;
 

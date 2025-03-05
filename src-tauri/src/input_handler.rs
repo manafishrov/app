@@ -194,17 +194,25 @@ fn get_gamepad_input<R: Runtime>(
       }
     }
 
-    control_array[2] = if gamepad.is_pressed(button_from_u16(config.gamepad.move_up)) {
+    control_array[2] = if gamepad.is_pressed(button_from_u16(
+      config.gamepad.move_up.parse::<u16>().unwrap_or(0),
+    )) {
       1.0
-    } else if gamepad.is_pressed(button_from_u16(config.gamepad.move_down)) {
+    } else if gamepad.is_pressed(button_from_u16(
+      config.gamepad.move_down.parse::<u16>().unwrap_or(0),
+    )) {
       -1.0
     } else {
       0.0
     };
 
-    control_array[5] = if gamepad.is_pressed(button_from_u16(config.gamepad.roll_right)) {
+    control_array[5] = if gamepad.is_pressed(button_from_u16(
+      config.gamepad.roll_right.parse::<u16>().unwrap_or(0),
+    )) {
       1.0
-    } else if gamepad.is_pressed(button_from_u16(config.gamepad.roll_left)) {
+    } else if gamepad.is_pressed(button_from_u16(
+      config.gamepad.roll_left.parse::<u16>().unwrap_or(0),
+    )) {
       -1.0
     } else {
       0.0

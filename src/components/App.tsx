@@ -27,7 +27,7 @@ function App() {
           <KeyboardControlsDialog />
           <GamepadControlsDialog />
         </div>
-        <Card className='flex items-center justify-center gap-2 rounded-full bg-muted px-2'>
+        <Card className='flex h-9 items-center justify-center gap-2 rounded-full bg-muted px-2'>
           <DeviceControlsConnection />
         </Card>
       </div>
