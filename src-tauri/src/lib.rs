@@ -9,6 +9,7 @@ mod models {
 
 mod gamepad;
 mod input_handler;
+mod keyboard;
 mod websocket_client;
 
 use commands::config::{get_config, save_config};
