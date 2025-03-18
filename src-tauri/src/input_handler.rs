@@ -30,60 +30,97 @@ pub async fn start_input_handler<R: Runtime>(
   let input_tx_clone = input_tx.clone();
 
   if let Err(e) = thread::spawn(move || -> Result<(), String> {
-    let sdl_context = sdl2::init()?;
-    let _video_subsystem = sdl_context.video()?;
-    let controller_subsystem = sdl_context.game_controller()?;
+    // Use std::panic::catch_unwind for the SDL initialization
+    match std::panic::catch_unwind(|| {
+      let sdl_context = sdl2::init()?;
+      let _video_subsystem = sdl_context.video()?;
+      let controller_subsystem = sdl_context.game_controller()?;
 
-    let available = controller_subsystem.num_joysticks()?;
-    let mut game_controller = None;
+      let available = controller_subsystem.num_joysticks()?;
+      let mut game_controller = None;
 
-    for id in 0..available {
-      if controller_subsystem.is_game_controller(id) {
-        match controller_subsystem.open(id) {
-          Ok(controller) => {
-            println!("Found game controller: {}", controller.name());
-            game_controller = Some(controller);
-            break;
+      for id in 0..available {
+        if controller_subsystem.is_game_controller(id) {
+          match controller_subsystem.open(id) {
+            Ok(controller) => {
+              println!("Found game controller: {}", controller.name());
+              game_controller = Some(controller);
+              break;
+            }
+            Err(e) => println!("Failed to open controller {}: {}", id, e),
           }
-          Err(e) => println!("Failed to open controller {}: {}", id, e),
         }
       }
-    }
 
-    let mut event_pump = sdl_context.event_pump()?;
+      let mut event_pump = sdl_context.event_pump()?;
 
-    loop {
-      thread::sleep(Duration::from_millis(16));
+      // Main loop
+      loop {
+        thread::sleep(Duration::from_millis(16));
 
-      event_pump.pump_events();
+        // Safely pump events with error handling
+        match std::panic::catch_unwind(|| {
+          event_pump.pump_events();
+        }) {
+          Ok(_) => {}
+          Err(_) => {
+            println!("Caught panic while pumping events");
+            let zero_input = [0.0; 6];
+            let _ = tokio::runtime::Handle::current().block_on(input_tx_clone.send(zero_input));
+            continue;
+          }
+        }
 
-      let is_focused = match window_clone.is_focused() {
-        Ok(focused) => focused,
-        Err(_) => false,
-      };
+        let is_focused = match window_clone.is_focused() {
+          Ok(focused) => focused,
+          Err(_) => false,
+        };
 
-      if !is_focused {
-        let zero_input = [0.0; 6];
-        let _ = tokio::runtime::Handle::current().block_on(input_tx_clone.send(zero_input));
-        continue;
+        if !is_focused {
+          let zero_input = [0.0; 6];
+          let _ = tokio::runtime::Handle::current().block_on(input_tx_clone.send(zero_input));
+          continue;
+        }
+
+        let config = match CURRENT_CONFIG.lock() {
+          Ok(config) => config.clone(),
+          Err(_) => Config::default(),
+        };
+
+        // Wrap keyboard input handling in catch_unwind
+        let keyboard_input = match std::panic::catch_unwind(|| {
+          get_keyboard_input(&event_pump.keyboard_state(), &config)
+        }) {
+          Ok(Ok(input)) => input,
+          _ => [0.0; 6],
+        };
+
+        // Wrap gamepad input handling in catch_unwind
+        let gamepad_input = match &game_controller {
+          Some(controller) => {
+            match std::panic::catch_unwind(|| {
+              get_gamepad_input(Some(controller), &config, &app_handle_clone)
+            }) {
+              Ok(input) => input,
+              Err(_) => [0.0; 6],
+            }
+          }
+          None => [0.0; 6],
+        };
+
+        let final_input = merge_inputs(keyboard_input, gamepad_input);
+
+        let _ = tokio::runtime::Handle::current().block_on(input_tx_clone.send(final_input));
       }
-
-      let config = match CURRENT_CONFIG.lock() {
-        Ok(config) => config.clone(),
-        Err(_) => Config::default(),
-      };
-
-      let keyboard_input =
-        get_keyboard_input(&event_pump.keyboard_state(), &config).unwrap_or([0.0; 6]);
-
-      let gamepad_input = match &game_controller {
-        Some(controller) => get_gamepad_input(Some(controller), &config, &app_handle_clone),
-        None => [0.0; 6],
-      };
-
-      let final_input = merge_inputs(keyboard_input, gamepad_input);
-
-      let _ = tokio::runtime::Handle::current().block_on(input_tx_clone.send(final_input));
+    }) {
+      Ok(result) => result,
+      Err(e) => {
+        if let Some(s) = e.downcast_ref::<&str>() {
+          Err(s.to_string())
+        } else {
+          Err("SDL2 initialization panicked with unknown error".to_string())
+        }
+      }
     }
   })
   .join()
