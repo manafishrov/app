@@ -16,10 +16,33 @@ use commands::config::{get_config, save_config};
 use commands::status::{get_connection_status, get_water_sensor_status};
 use input_handler::shutdown_input_handler;
 use tauri::{Manager, RunEvent};
+use websocket_client::shutdown_websocket_client;
 
-pub fn run() {
+fn handle_shutdown() {
+  println!("Shutting down handlers...");
+  shutdown_websocket_client();
+  shutdown_input_handler();
+}
+
+fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+  let window = app
+    .get_webview_window("main")
+    .expect("Failed to get window");
+  let app_handle = app.app_handle().clone();
   let (input_tx, input_rx) = websocket_client::create_input_channel();
 
+  tauri::async_runtime::spawn(async move {
+    input_handler::start_input_handler(window, input_tx, app_handle);
+  });
+
+  tauri::async_runtime::spawn(async move {
+    websocket_client::start_websocket_client(input_rx).await;
+  });
+
+  Ok(())
+}
+
+pub fn run() {
   let builder = tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
     .invoke_handler(tauri::generate_handler![
@@ -28,35 +51,13 @@ pub fn run() {
       get_connection_status,
       get_water_sensor_status
     ])
-    .setup(|app| {
-      let window = app
-        .get_webview_window("main")
-        .expect("Failed to get main window");
-      let app_handle = app.app_handle().clone();
-
-      tauri::async_runtime::spawn(async move {
-        input_handler::start_input_handler(window, input_tx, app_handle);
-      });
-
-      tauri::async_runtime::spawn(async move {
-        websocket_client::start_websocket_client(input_rx).await;
-      });
-
-      Ok(())
-    });
+    .setup(setup_handlers);
 
   builder
     .build(tauri::generate_context!())
     .expect("error while building tauri application")
     .run(|_app_handle, event| match event {
-      RunEvent::ExitRequested { .. } => {
-        println!("Exit requested, shutting down input handler...");
-        shutdown_input_handler();
-      }
-      RunEvent::Exit => {
-        println!("Exiting application.");
-        shutdown_input_handler();
-      }
+      RunEvent::ExitRequested { .. } | RunEvent::Exit => handle_shutdown(),
       _ => {}
     });
 }
