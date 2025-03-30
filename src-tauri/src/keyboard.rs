@@ -3,11 +3,9 @@ use once_cell::sync::Lazy;
 use sdl2::keyboard::Scancode;
 use std::collections::HashMap;
 
-// Convert JavaScript key.code string to SDL2 Scancode
-pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
-  static KEY_MAP: Lazy<HashMap<&'static str, Scancode>> = Lazy::new(|| {
+pub fn keycode_to_sdl2_scancode(key_str: &str) -> Option<Scancode> {
+  static MAP: Lazy<HashMap<&'static str, Scancode>> = Lazy::new(|| {
     let mut map = HashMap::new();
-    // Letters
     map.insert("KeyA", Scancode::A);
     map.insert("KeyB", Scancode::B);
     map.insert("KeyC", Scancode::C);
@@ -34,8 +32,6 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("KeyX", Scancode::X);
     map.insert("KeyY", Scancode::Y);
     map.insert("KeyZ", Scancode::Z);
-
-    // Numbers (top row)
     map.insert("Digit1", Scancode::Num1);
     map.insert("Digit2", Scancode::Num2);
     map.insert("Digit3", Scancode::Num3);
@@ -46,8 +42,6 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("Digit8", Scancode::Num8);
     map.insert("Digit9", Scancode::Num9);
     map.insert("Digit0", Scancode::Num0);
-
-    // Function keys
     map.insert("F1", Scancode::F1);
     map.insert("F2", Scancode::F2);
     map.insert("F3", Scancode::F3);
@@ -60,8 +54,6 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("F10", Scancode::F10);
     map.insert("F11", Scancode::F11);
     map.insert("F12", Scancode::F12);
-
-    // Special keys
     map.insert("Enter", Scancode::Return);
     map.insert("Escape", Scancode::Escape);
     map.insert("Backspace", Scancode::Backspace);
@@ -79,14 +71,10 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("Period", Scancode::Period);
     map.insert("Slash", Scancode::Slash);
     map.insert("CapsLock", Scancode::CapsLock);
-
-    // Arrow keys
     map.insert("ArrowRight", Scancode::Right);
     map.insert("ArrowLeft", Scancode::Left);
     map.insert("ArrowDown", Scancode::Down);
     map.insert("ArrowUp", Scancode::Up);
-
-    // Modifiers
     map.insert("ControlLeft", Scancode::LCtrl);
     map.insert("ShiftLeft", Scancode::LShift);
     map.insert("AltLeft", Scancode::LAlt);
@@ -95,8 +83,6 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("ShiftRight", Scancode::RShift);
     map.insert("AltRight", Scancode::RAlt);
     map.insert("MetaRight", Scancode::RGui);
-
-    // Navigation
     map.insert("PrintScreen", Scancode::PrintScreen);
     map.insert("ScrollLock", Scancode::ScrollLock);
     map.insert("Pause", Scancode::Pause);
@@ -106,8 +92,6 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("Delete", Scancode::Delete);
     map.insert("End", Scancode::End);
     map.insert("PageDown", Scancode::PageDown);
-
-    // Numpad
     map.insert("NumLock", Scancode::NumLockClear);
     map.insert("NumpadDivide", Scancode::KpDivide);
     map.insert("NumpadMultiply", Scancode::KpMultiply);
@@ -125,11 +109,10 @@ pub fn keyboard_string_to_sdl2(key_str: &str) -> Option<Scancode> {
     map.insert("Numpad9", Scancode::Kp9);
     map.insert("Numpad0", Scancode::Kp0);
     map.insert("NumpadDecimal", Scancode::KpPeriod);
-
     map
   });
 
-  KEY_MAP.get(key_str).cloned()
+  MAP.get(key_str).cloned()
 }
 
 #[derive(Default)]
@@ -162,51 +145,51 @@ pub fn get_keyboard_input(
 ) -> Result<[f32; 6], String> {
   let mut states = KeyStates::default();
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_forward) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_forward) {
     states.move_forward = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_backward) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_backward) {
     states.move_backward = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_left) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_left) {
     states.move_left = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_right) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_right) {
     states.move_right = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_up) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_up) {
     states.move_up = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_down) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.move_down) {
     states.move_down = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_up) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.pitch_up) {
     states.pitch_up = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_down) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.pitch_down) {
     states.pitch_down = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_left) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.yaw_left) {
     states.yaw_left = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_right) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.yaw_right) {
     states.yaw_right = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_left) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.roll_left) {
     states.roll_left = keyboard_state.is_scancode_pressed(scancode);
   }
 
-  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_right) {
+  if let Some(scancode) = keycode_to_sdl2_scancode(&config.keyboard.roll_right) {
     states.roll_right = keyboard_state.is_scancode_pressed(scancode);
   }
 

@@ -161,17 +161,12 @@ pub fn start_input_handler<R: Runtime>(
   });
 }
 
-// Function to signal shutdown (call this from your Tauri app's exit logic)
 pub fn shutdown_input_handler() {
   SHUTDOWN_SIGNAL.store(true, Ordering::Relaxed);
 }
 
-// Update config function needs to use the Arc<Mutex<>>
 pub fn update_config(new_config: &Config) {
   if let Ok(mut config_guard) = CURRENT_CONFIG.lock() {
     *config_guard = new_config.clone();
-    println!("Config updated."); // Debug update
-  } else {
-    eprintln!("Failed to acquire config lock for update.");
   }
 }

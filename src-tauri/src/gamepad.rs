@@ -12,8 +12,12 @@ pub enum ControllerInput {
   Axis(GameControllerAxis),
 }
 
-pub fn str_to_button(button_str: &str) -> Option<ControllerInput> {
-  static BUTTON_MAP: Lazy<HashMap<&'static str, ControllerInput>> = Lazy::new(|| {
+fn normalize_axis(value: i16) -> f32 {
+  value as f32 / 32767.0
+}
+
+pub fn gamepad_api_to_sdl2_controllerinput(button_str: &str) -> Option<ControllerInput> {
+  static MAP: Lazy<HashMap<&'static str, ControllerInput>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("0", ControllerInput::Button(GameControllerButton::A));
     map.insert("1", ControllerInput::Button(GameControllerButton::B));
@@ -56,36 +60,39 @@ pub fn str_to_button(button_str: &str) -> Option<ControllerInput> {
     map
   });
 
-  BUTTON_MAP.get(button_str).cloned()
+  MAP.get(button_str).cloned()
 }
 
-pub fn is_input_pressed(controller: &GameController, input: &str) -> bool {
-  if let Some(controller_input) = str_to_button(input) {
+pub fn get_input_value(controller: &GameController, input_str: &str) -> f32 {
+  if let Some(controller_input) = gamepad_api_to_sdl2_controllerinput(input_str) {
     match controller_input {
-      ControllerInput::Button(btn) => controller.button(btn),
+      ControllerInput::Button(btn) => {
+        if controller.button(btn) {
+          1.0
+        } else {
+          0.0
+        }
+      }
       ControllerInput::Axis(axis @ GameControllerAxis::TriggerLeft)
       | ControllerInput::Axis(axis @ GameControllerAxis::TriggerRight) => {
-        (controller.axis(axis) as f32 / 32767.0) > 0.1
+        let raw_value = controller.axis(axis);
+        ((raw_value as i32 + 32768) as f32 / 65535.0).clamp(0.0, 1.0)
       }
-      ControllerInput::Axis(_) => false,
+      ControllerInput::Axis(axis) => 0.0,
     }
   } else {
-    false
+    0.0
   }
 }
 
 pub fn gamepad_to_json(controller: &GameController) -> serde_json::Value {
-  fn normalize_axis(value: i16) -> f32 {
-    value as f32 / 32767.0
-  }
-
   fn create_button_json(pressed: bool) -> serde_json::Value {
     json!({"pressed": pressed, "value": if pressed { 1.0 } else { 0.0 }})
   }
 
   fn create_trigger_json(value: i16) -> serde_json::Value {
-    let normalized = normalize_axis(value);
-    json!({"pressed": value > 3277, "value": normalized})
+    let normalized = ((value as i32 + 32768) as f32 / 65535.0).clamp(0.0, 1.0);
+    json!({"pressed": normalized > 0.1, "value": normalized})
   }
 
   let id = controller.name().clone();
@@ -147,7 +154,7 @@ pub fn get_gamepad_input(controller: Option<&GameController>, config: &Config) -
   let mut control_array = [0.0; 6];
 
   if let Some(controller) = controller {
-    let norm = |v: i16| v as f32 / 32767.0;
+    let norm = normalize_axis;
 
     match config.gamepad.move_horizontal {
       ControlSource::LeftStick => {
@@ -235,23 +242,13 @@ pub fn get_gamepad_input(controller: Option<&GameController>, config: &Config) -
       }
     }
 
-    let up_pressed = is_input_pressed(controller, &config.gamepad.move_up);
-    let down_pressed = is_input_pressed(controller, &config.gamepad.move_down);
+    let up_value = get_input_value(controller, &config.gamepad.move_up);
+    let down_value = get_input_value(controller, &config.gamepad.move_down);
+    control_array[2] = up_value - down_value;
 
-    control_array[2] = match (up_pressed, down_pressed) {
-      (true, false) => 1.0,
-      (false, true) => -1.0,
-      _ => 0.0,
-    };
-
-    let roll_right_pressed = is_input_pressed(controller, &config.gamepad.roll_right);
-    let roll_left_pressed = is_input_pressed(controller, &config.gamepad.roll_left);
-
-    control_array[5] = match (roll_right_pressed, roll_left_pressed) {
-      (true, false) => 1.0,
-      (false, true) => -1.0,
-      _ => 0.0,
-    };
+    let roll_right_value = get_input_value(controller, &config.gamepad.roll_right);
+    let roll_left_value = get_input_value(controller, &config.gamepad.roll_left);
+    control_array[5] = roll_right_value - roll_left_value;
   }
 
   const DEADZONE: f32 = 0.05;

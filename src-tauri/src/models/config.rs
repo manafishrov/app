@@ -69,11 +69,11 @@ impl Default for Config {
       },
       gamepad: GamepadBindings {
         move_horizontal: ControlSource::LeftStick,
-        move_up: "9".to_string(),
-        move_down: "10".to_string(),
+        move_up: "7".to_string(),
+        move_down: "6".to_string(),
         pitch_yaw: ControlSource::RightStick,
-        roll_left: "7".to_string(),
-        roll_right: "8".to_string(),
+        roll_left: "4".to_string(),
+        roll_right: "5".to_string(),
       },
     }
   }
