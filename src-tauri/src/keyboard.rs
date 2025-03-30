@@ -160,72 +160,64 @@ pub fn get_keyboard_input(
   keyboard_state: &sdl2::keyboard::KeyboardState,
   config: &Config,
 ) -> Result<[f32; 6], String> {
-  match panic::catch_unwind(|| {
-    let mut states = KeyStates::default();
+  let mut states = KeyStates::default();
 
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_forward) {
-      states.move_forward = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_backward) {
-      states.move_backward = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_left) {
-      states.move_left = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_right) {
-      states.move_right = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_up) {
-      states.move_up = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_down) {
-      states.move_down = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_up) {
-      states.pitch_up = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_down) {
-      states.pitch_down = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_left) {
-      states.yaw_left = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_right) {
-      states.yaw_right = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_left) {
-      states.roll_left = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_right) {
-      states.roll_right = keyboard_state.is_scancode_pressed(scancode);
-    }
-
-    let control_array = [
-      process_key_pair(states.move_forward, states.move_backward),
-      process_key_pair(states.move_right, states.move_left),
-      process_key_pair(states.move_up, states.move_down),
-      process_key_pair(states.pitch_up, states.pitch_down),
-      process_key_pair(states.yaw_right, states.yaw_left),
-      process_key_pair(states.roll_right, states.roll_left),
-    ];
-
-    Ok(control_array)
-  }) {
-    Ok(result) => result,
-    Err(e) => {
-      println!("Caught panic in keyboard handling: {:?}", e);
-      Ok([0.0; 6]) // Return neutral inputs in case of panic
-    }
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_forward) {
+    states.move_forward = keyboard_state.is_scancode_pressed(scancode);
   }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_backward) {
+    states.move_backward = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_left) {
+    states.move_left = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_right) {
+    states.move_right = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_up) {
+    states.move_up = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.move_down) {
+    states.move_down = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_up) {
+    states.pitch_up = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.pitch_down) {
+    states.pitch_down = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_left) {
+    states.yaw_left = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.yaw_right) {
+    states.yaw_right = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_left) {
+    states.roll_left = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  if let Some(scancode) = keyboard_string_to_sdl2(&config.keyboard.roll_right) {
+    states.roll_right = keyboard_state.is_scancode_pressed(scancode);
+  }
+
+  let control_array = [
+    process_key_pair(states.move_forward, states.move_backward),
+    process_key_pair(states.move_right, states.move_left),
+    process_key_pair(states.move_up, states.move_down),
+    process_key_pair(states.pitch_up, states.pitch_down),
+    process_key_pair(states.yaw_right, states.yaw_left),
+    process_key_pair(states.roll_right, states.roll_left),
+  ];
+
+  Ok(control_array)
 }
