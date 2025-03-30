@@ -3,8 +3,8 @@ use once_cell::sync::Lazy;
 use sdl2::controller::{
   Axis as GameControllerAxis, Button as GameControllerButton, GameController,
 };
+use serde_json::json;
 use std::collections::HashMap;
-use tauri::{AppHandle, Emitter, Runtime};
 
 #[derive(Clone)]
 pub enum ControllerInput {
@@ -63,7 +63,11 @@ pub fn is_input_pressed(controller: &GameController, input: &str) -> bool {
   if let Some(controller_input) = str_to_button(input) {
     match controller_input {
       ControllerInput::Button(btn) => controller.button(btn),
-      ControllerInput::Axis(axis) => controller.axis(axis) as f32 / 32767.0 > 0.1,
+      ControllerInput::Axis(axis @ GameControllerAxis::TriggerLeft)
+      | ControllerInput::Axis(axis @ GameControllerAxis::TriggerRight) => {
+        (controller.axis(axis) as f32 / 32767.0) > 0.1
+      }
+      ControllerInput::Axis(_) => false,
     }
   } else {
     false
@@ -71,144 +75,88 @@ pub fn is_input_pressed(controller: &GameController, input: &str) -> bool {
 }
 
 pub fn gamepad_to_json(controller: &GameController) -> serde_json::Value {
-  let id = controller.instance_id();
+  fn normalize_axis(value: i16) -> f32 {
+    value as f32 / 32767.0
+  }
+
+  fn create_button_json(pressed: bool) -> serde_json::Value {
+    json!({"pressed": pressed, "value": if pressed { 1.0 } else { 0.0 }})
+  }
+
+  fn create_trigger_json(value: i16) -> serde_json::Value {
+    let normalized = normalize_axis(value);
+    json!({"pressed": value > 3277, "value": normalized})
+  }
+
+  let id = controller.name().clone();
+  let index = controller.instance_id();
+  let connected = controller.attached();
+  let mapping = controller.mapping();
+
+  let axes: Vec<f32> = vec![
+    normalize_axis(controller.axis(GameControllerAxis::LeftX)),
+    normalize_axis(controller.axis(GameControllerAxis::LeftY)),
+    normalize_axis(controller.axis(GameControllerAxis::RightX)),
+    normalize_axis(controller.axis(GameControllerAxis::RightY)),
+  ];
+
+  let buttons: Vec<serde_json::Value> = vec![
+    create_button_json(controller.button(GameControllerButton::A)),
+    create_button_json(controller.button(GameControllerButton::B)),
+    create_button_json(controller.button(GameControllerButton::X)),
+    create_button_json(controller.button(GameControllerButton::Y)),
+    create_button_json(controller.button(GameControllerButton::LeftShoulder)),
+    create_button_json(controller.button(GameControllerButton::RightShoulder)),
+    create_trigger_json(controller.axis(GameControllerAxis::TriggerLeft)),
+    create_trigger_json(controller.axis(GameControllerAxis::TriggerRight)),
+    create_button_json(controller.button(GameControllerButton::Back)),
+    create_button_json(controller.button(GameControllerButton::Start)),
+    create_button_json(controller.button(GameControllerButton::LeftStick)),
+    create_button_json(controller.button(GameControllerButton::RightStick)),
+    create_button_json(controller.button(GameControllerButton::DPadUp)),
+    create_button_json(controller.button(GameControllerButton::DPadDown)),
+    create_button_json(controller.button(GameControllerButton::DPadLeft)),
+    create_button_json(controller.button(GameControllerButton::DPadRight)),
+    create_button_json(controller.button(GameControllerButton::Guide)),
+  ];
+
   let timestamp = std::time::SystemTime::now()
     .duration_since(std::time::UNIX_EPOCH)
     .unwrap()
     .as_millis();
-  let name = controller.name();
-  let connected = true;
-  let vibration = controller.has_rumble();
 
-  let mapping = if controller.attached() {
-    "standard"
+  let vibration_actuator = if controller.has_rumble() {
+    json!({"type": "dual-rumble"})
   } else {
-    ""
+    serde_json::Value::Null
   };
 
-  let axes: Vec<f32> = vec![
-    controller.axis(GameControllerAxis::LeftX) as f32 / 32768.0,
-    controller.axis(GameControllerAxis::LeftY) as f32 / 32768.0,
-    controller.axis(GameControllerAxis::RightX) as f32 / 32768.0,
-    controller.axis(GameControllerAxis::RightY) as f32 / 32768.0,
-  ];
-
-  let left_trigger_pressed =
-    controller.axis(GameControllerAxis::TriggerLeft) as f32 / 32767.0 > 0.1;
-  let right_trigger_pressed =
-    controller.axis(GameControllerAxis::TriggerRight) as f32 / 32767.0 > 0.1;
-
-  let buttons: Vec<f32> = vec![
-    if controller.button(GameControllerButton::A) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::B) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::X) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::Y) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::LeftShoulder) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::RightShoulder) {
-      1.0
-    } else {
-      0.0
-    },
-    if left_trigger_pressed { 1.0 } else { 0.0 },
-    if right_trigger_pressed { 1.0 } else { 0.0 },
-    if controller.button(GameControllerButton::Back) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::Start) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::Guide) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::LeftStick) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::RightStick) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::DPadUp) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::DPadDown) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::DPadLeft) {
-      1.0
-    } else {
-      0.0
-    },
-    if controller.button(GameControllerButton::DPadRight) {
-      1.0
-    } else {
-      0.0
-    },
-  ];
-
   serde_json::json!({
-      "id": id.to_string(),
+      "id": id,
+      "index": index,
       "connected": connected,
-      "vibration": vibration,
-      "timestamp": timestamp,
-      "name": name,
-      "buttons": buttons,
-      "axes": axes,
       "mapping": mapping,
+      "axes": axes,
+      "buttons": buttons,
+      "timestamp": timestamp,
+      "vibrationActuator": vibration_actuator,
   })
 }
 
-pub fn get_gamepad_input<R: Runtime>(
-  controller: Option<&GameController>,
-  config: &Config,
-  app_handle: &AppHandle<R>,
-) -> [f32; 6] {
+pub fn get_gamepad_input(controller: Option<&GameController>, config: &Config) -> [f32; 6] {
   let mut control_array = [0.0; 6];
 
   if let Some(controller) = controller {
-    let payload = gamepad_to_json(controller);
-    let _ = app_handle.emit("gamepad_event", payload);
+    let norm = |v: i16| v as f32 / 32767.0;
 
     match config.gamepad.move_horizontal {
       ControlSource::LeftStick => {
-        control_array[0] = -controller.axis(GameControllerAxis::LeftY) as f32 / 32768.0;
-        control_array[1] = controller.axis(GameControllerAxis::LeftX) as f32 / 32768.0;
+        control_array[0] = -norm(controller.axis(GameControllerAxis::LeftY));
+        control_array[1] = norm(controller.axis(GameControllerAxis::LeftX));
       }
       ControlSource::RightStick => {
-        control_array[0] = -controller.axis(GameControllerAxis::RightY) as f32 / 32768.0;
-        control_array[1] = controller.axis(GameControllerAxis::RightX) as f32 / 32768.0;
+        control_array[0] = -norm(controller.axis(GameControllerAxis::RightY));
+        control_array[1] = norm(controller.axis(GameControllerAxis::RightX));
       }
       ControlSource::DPad => {
         control_array[0] = if controller.button(GameControllerButton::DPadUp) {
@@ -246,12 +194,12 @@ pub fn get_gamepad_input<R: Runtime>(
 
     match config.gamepad.pitch_yaw {
       ControlSource::LeftStick => {
-        control_array[3] = controller.axis(GameControllerAxis::LeftY) as f32 / -32768.0;
-        control_array[4] = controller.axis(GameControllerAxis::LeftX) as f32 / 32768.0;
+        control_array[3] = -norm(controller.axis(GameControllerAxis::LeftY));
+        control_array[4] = norm(controller.axis(GameControllerAxis::LeftX));
       }
       ControlSource::RightStick => {
-        control_array[3] = controller.axis(GameControllerAxis::RightY) as f32 / -32768.0;
-        control_array[4] = controller.axis(GameControllerAxis::RightX) as f32 / 32768.0;
+        control_array[3] = -norm(controller.axis(GameControllerAxis::RightY));
+        control_array[4] = norm(controller.axis(GameControllerAxis::RightX));
       }
       ControlSource::DPad => {
         control_array[3] = if controller.button(GameControllerButton::DPadUp) {
@@ -306,9 +254,11 @@ pub fn get_gamepad_input<R: Runtime>(
     };
   }
 
-  control_array
-    .iter_mut()
-    .for_each(|v| *v = v.clamp(-1.0, 1.0));
+  const DEADZONE: f32 = 0.05;
+  control_array.iter_mut().for_each(|v| {
+    *v = if v.abs() < DEADZONE { 0.0 } else { *v };
+    *v = v.clamp(-1.0, 1.0);
+  });
 
   control_array
 }
