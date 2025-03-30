@@ -215,7 +215,6 @@ async fn connect_and_handle(
                 payload: input,
             };
             let msg_json = serde_json::to_string(&control_msg)?;
-            // println!("Sending ControlInput: {}", msg_json); // Can be spammy
             if let Err(e) = write.send(Message::Text(msg_json)).await {
                 eprintln!("WebSocket write error: {}", e);
                 break;
