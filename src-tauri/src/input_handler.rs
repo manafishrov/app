@@ -58,7 +58,6 @@ pub fn start_input_handler<R: Runtime>(
   window.on_window_event(move |event| {
     if let WindowEvent::Focused(focused) = event {
       focus_flag_for_event_handler.store(*focused, Ordering::Relaxed);
-      println!("Window focus changed: {}", focused);
     }
   });
 
@@ -147,6 +146,7 @@ pub fn start_input_handler<R: Runtime>(
       };
 
       let final_input = merge_inputs(keyboard_input, gamepad_input);
+      println!("Input: {:?}", final_input);
       if input_tx_clone.blocking_send(final_input).is_err() {
         eprintln!("Input channel closed, shutting down input handler.");
         shutdown_clone.store(true, Ordering::Relaxed);

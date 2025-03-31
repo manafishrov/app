@@ -131,9 +131,8 @@ async fn connect_and_handle(
   };
   let handshake_json = serde_json::to_string(&handshake)?;
   println!("Sending handshake: {}", handshake_json);
-  write.send(Message::Text(handshake_json)).await?;
+  write.send(Message::Text(handshake_json.into())).await?;
 
-  let heartbeat_shutdown_signal = Arc::clone(&shutdown_signal);
   let heartbeat_monitor = tokio::spawn(async move {
     let check_interval = Duration::from_secs(1);
     let timeout_duration: i64 = 10;
@@ -184,7 +183,7 @@ async fn connect_and_handle(
                                     payload: HeartbeatPayload { timestamp: None },
                                 };
                                 let response_json = serde_json::to_string(&response)?;
-                                if let Err(e) = write.send(Message::Text(response_json)).await {
+                                if let Err(e) = write.send(Message::Text(response_json.into())).await {
                                     eprintln!("Failed to send heartbeat response: {}", e);
                                     break;
                                 }
@@ -215,7 +214,7 @@ async fn connect_and_handle(
                 payload: input,
             };
             let msg_json = serde_json::to_string(&control_msg)?;
-            if let Err(e) = write.send(Message::Text(msg_json)).await {
+            if let Err(e) = write.send(Message::Text(msg_json.into())).await {
                 eprintln!("WebSocket write error: {}", e);
                 break;
             }

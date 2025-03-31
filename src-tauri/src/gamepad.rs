@@ -78,7 +78,7 @@ pub fn get_input_value(controller: &GameController, input_str: &str) -> f32 {
         let raw_value = controller.axis(axis);
         ((raw_value as i32 + 32768) as f32 / 65535.0).clamp(0.0, 1.0)
       }
-      ControllerInput::Axis(axis) => 0.0,
+      ControllerInput::Axis(_axis) => 0.0,
     }
   } else {
     0.0
