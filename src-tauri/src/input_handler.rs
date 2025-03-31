@@ -11,14 +11,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, Runtime, WebviewWindow, WindowEvent};
+use tauri::{AppHandle, Runtime, WebviewWindow, WindowEvent};
 use tokio::sync::mpsc::Sender;
 
 static CURRENT_CONFIG: Lazy<Arc<Mutex<Config>>> =
   Lazy::new(|| Arc::new(Mutex::new(get_config().unwrap_or_default())));
 
 static IS_FOCUSED: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(true)));
-static SHUTDOWN_SIGNAL: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
 
 pub fn merge_inputs(keyboard: [f32; 6], gamepad: [f32; 6]) -> [f32; 6] {
   let mut result = [0.0; 6];
@@ -50,7 +49,6 @@ pub fn start_input_handler<R: Runtime>(
 ) {
   let config_clone = Arc::clone(&CURRENT_CONFIG);
   let focused_clone = Arc::clone(&IS_FOCUSED);
-  let shutdown_clone = Arc::clone(&SHUTDOWN_SIGNAL);
   let input_tx_clone = input_tx.clone();
   let app_handle_clone = app_handle.clone();
 
@@ -64,7 +62,6 @@ pub fn start_input_handler<R: Runtime>(
   let focus_flag_for_initial_check = Arc::clone(&IS_FOCUSED);
   if let Ok(focused) = window.is_focused() {
     focus_flag_for_initial_check.store(focused, Ordering::Relaxed);
-    println!("Initial window focus: {}", focused);
   }
 
   thread::spawn(move || -> Result<(), String> {
@@ -75,13 +72,9 @@ pub fn start_input_handler<R: Runtime>(
 
     println!("Starting SDL input loop...");
 
-    while !shutdown_clone.load(Ordering::Relaxed) {
+    loop {
       for event in event_pump.poll_iter() {
         match event {
-          Event::Quit { .. } => {
-            shutdown_clone.store(true, Ordering::Relaxed);
-            break;
-          }
           Event::ControllerDeviceAdded { which, .. } => {
             if game_controller.is_none() {
               println!("Controller added: {}", which);
@@ -109,15 +102,10 @@ pub fn start_input_handler<R: Runtime>(
         }
       }
 
-      if shutdown_clone.load(Ordering::Relaxed) {
-        break;
-      }
-
       if !focused_clone.load(Ordering::Relaxed) {
         let zero_input = [0.0; 6];
         if input_tx_clone.blocking_send(zero_input).is_err() {
           eprintln!("Input channel closed, shutting down input handler.");
-          shutdown_clone.store(true, Ordering::Relaxed);
           break;
         }
         thread::sleep(Duration::from_millis(100));
@@ -139,17 +127,14 @@ pub fn start_input_handler<R: Runtime>(
         Some(controller) => {
           let payload = gamepad_to_json(controller);
           let _ = app_handle_clone.emit("gamepad_event", payload);
-
           get_gamepad_input(Some(controller), &config)
         }
         None => [0.0; 6],
       };
 
       let final_input = merge_inputs(keyboard_input, gamepad_input);
-      println!("Input: {:?}", final_input);
       if input_tx_clone.blocking_send(final_input).is_err() {
         eprintln!("Input channel closed, shutting down input handler.");
-        shutdown_clone.store(true, Ordering::Relaxed);
         break;
       }
 
@@ -159,10 +144,6 @@ pub fn start_input_handler<R: Runtime>(
     println!("SDL input loop finished.");
     Ok(())
   });
-}
-
-pub fn shutdown_input_handler() {
-  SHUTDOWN_SIGNAL.store(true, Ordering::Relaxed);
 }
 
 pub fn update_config(new_config: &Config) {

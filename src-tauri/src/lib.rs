@@ -14,20 +14,12 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::status::{get_connection_status, get_water_sensor_status};
-use input_handler::shutdown_input_handler;
-use tauri::{Manager, RunEvent};
-use websocket_client::shutdown_websocket_client;
-
-fn handle_shutdown() {
-  println!("Shutting down handlers...");
-  shutdown_websocket_client();
-  shutdown_input_handler();
-}
+use tauri::Manager;
 
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
   let window = app
     .get_webview_window("main")
-    .expect("Failed to get window");
+    .expect("Failed to get main window");
   let app_handle = app.app_handle().clone();
   let (input_tx, input_rx) = websocket_client::create_input_channel();
 
@@ -56,8 +48,5 @@ pub fn run() {
   builder
     .build(tauri::generate_context!())
     .expect("error while building tauri application")
-    .run(|_app_handle, event| match event {
-      RunEvent::ExitRequested { .. } | RunEvent::Exit => handle_shutdown(),
-      _ => {}
-    });
+    .run(|_app_handle, _event| {});
 }

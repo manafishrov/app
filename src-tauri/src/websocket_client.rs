@@ -18,8 +18,6 @@ pub static LAST_HEARTBEAT: AtomicI64 = AtomicI64::new(0);
 static CURRENT_CONFIG: Lazy<Arc<Mutex<Config>>> =
   Lazy::new(|| Arc::new(Mutex::new(get_config().unwrap_or_default())));
 
-static SHUTDOWN_SIGNAL: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
-
 #[derive(Serialize, Deserialize, Debug)]
 enum MessageType {
   Command,
@@ -50,9 +48,8 @@ pub fn create_input_channel() -> (Sender<[f32; 6]>, Receiver<[f32; 6]>) {
 
 pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
   println!("WebSocket client starting...");
-  let shutdown_clone = Arc::clone(&SHUTDOWN_SIGNAL);
 
-  while !shutdown_clone.load(Ordering::Relaxed) {
+  loop {
     CONNECTION_STATUS.store(false, Ordering::Relaxed);
     let config = {
       match CURRENT_CONFIG.lock() {
@@ -67,7 +64,7 @@ pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
     let url = format!("ws://{}:{}", config.ip_address, config.device_controls_port);
     println!("Attempting to connect to WebSocket: {}", url);
 
-    match connect_and_handle(&mut input_rx, &url, Arc::clone(&shutdown_clone)).await {
+    match connect_and_handle(&mut input_rx, &url).await {
       Ok(_) => {
         println!("WebSocket connection closed gracefully.");
       }
@@ -86,20 +83,9 @@ pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
       }
     }
 
-    if shutdown_clone.load(Ordering::Relaxed) {
-      break;
-    }
-
     println!("WebSocket disconnected. Retrying in 3 seconds...");
     tokio::time::sleep(Duration::from_secs(3)).await;
   }
-
-  println!("WebSocket client finished.");
-}
-
-pub fn shutdown_websocket_client() {
-  println!("Signaling WebSocket client to shut down...");
-  SHUTDOWN_SIGNAL.store(true, Ordering::Relaxed);
 }
 
 pub fn update_config(new_config: &Config) {
@@ -108,10 +94,10 @@ pub fn update_config(new_config: &Config) {
     input_handler::update_config(new_config);
   }
 }
+
 async fn connect_and_handle(
   input_rx: &mut Receiver<[f32; 6]>,
   url: &str,
-  shutdown_signal: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let connect_timeout = Duration::from_secs(5);
   let (ws_stream, _) = timeout(connect_timeout, connect_async(url)).await??;
@@ -154,18 +140,7 @@ async fn connect_and_handle(
   });
 
   loop {
-    if shutdown_signal.load(Ordering::Relaxed) {
-      println!("Shutdown signal received in connect_and_handle.");
-      break;
-    }
-
     tokio::select! {
-        biased;
-        _ = tokio::time::sleep(Duration::from_millis(1)), if shutdown_signal.load(Ordering::Relaxed) => {
-            println!("Shutdown detected during select.");
-            break;
-        }
-
         Some(message) = read.next() => {
             match message {
                 Ok(msg) => {
