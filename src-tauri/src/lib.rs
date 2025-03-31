@@ -8,8 +8,6 @@ mod models {
   pub mod config;
 }
 
-mod gamepad;
-mod gamepad_event_handler;
 mod websocket_client;
 
 use commands::config::{get_config, save_config};
@@ -23,18 +21,9 @@ pub struct ControlChannelState {
 }
 
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-  let window = app
-    .get_webview_window("main")
-    .expect("Failed to get main window");
-  let app_handle = app.app_handle().clone();
-
   let (control_tx, control_rx) = websocket_client::create_control_channel();
 
   app.manage(ControlChannelState { tx: control_tx });
-
-  tauri::async_runtime::spawn(async move {
-    gamepad_event_handler::start_gamepad_event_handler(window, app_handle);
-  });
 
   tauri::async_runtime::spawn(async move {
     websocket_client::start_websocket_client(control_rx).await;
