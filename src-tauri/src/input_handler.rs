@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, Runtime, WebviewWindow, WindowEvent};
+use tauri::{AppHandle, Emitter, Runtime, WebviewWindow, WindowEvent};
 use tokio::sync::mpsc::Sender;
 
 static CURRENT_CONFIG: Lazy<Arc<Mutex<Config>>> =
