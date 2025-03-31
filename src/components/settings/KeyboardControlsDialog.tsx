@@ -15,18 +15,18 @@ import {
 import { toast } from '@/components/ui/Toaster';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
-  moveForward: 'W',
-  moveBackward: 'S',
-  moveLeft: 'A',
-  moveRight: 'D',
+  moveForward: 'KeyW',
+  moveBackward: 'KeyS',
+  moveLeft: 'KeyA',
+  moveRight: 'KeyD',
   moveUp: 'Space',
-  moveDown: 'Shift',
-  pitchUp: 'I',
-  pitchDown: 'K',
-  yawLeft: 'J',
-  yawRight: 'L',
-  rollLeft: 'Q',
-  rollRight: 'E',
+  moveDown: 'ShiftLeft',
+  pitchUp: 'KeyI',
+  pitchDown: 'KeyK',
+  yawLeft: 'KeyJ',
+  yawRight: 'KeyL',
+  rollLeft: 'KeyQ',
+  rollRight: 'KeyE',
 };
 
 function KeyboardControlsDialog() {

@@ -15,12 +15,12 @@ import {
 import { toast } from '@/components/ui/Toaster';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
-  moveHorizontal: 'leftStick',
-  moveUp: '9',
-  moveDown: '10',
-  pitchYaw: 'rightStick',
-  rollLeft: '7',
-  rollRight: '8',
+  moveHorizontal: 'LeftStick',
+  moveUp: '7',
+  moveDown: '6',
+  pitchYaw: 'RightStick',
+  rollLeft: '4',
+  rollRight: '5',
 };
 
 function GamepadControlsDialog() {

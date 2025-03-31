@@ -18,7 +18,7 @@ type KeyboardBindings = {
   rollRight: string;
 };
 
-type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
+type ControlSource = 'LeftStick' | 'RightStick' | 'DPad' | 'FaceButtons';
 
 type GamepadBindings = {
   moveHorizontal: ControlSource;

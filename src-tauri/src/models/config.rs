@@ -18,7 +18,6 @@ pub struct KeyboardBindings {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub enum ControlSource {
   LeftStick,
   RightStick,
