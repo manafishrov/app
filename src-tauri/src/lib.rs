@@ -6,6 +6,7 @@ mod commands {
 
 mod models {
   pub mod config;
+  pub mod status;
 }
 
 mod websocket_client;
@@ -38,9 +39,9 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       get_config,
       save_config,
+      send_control_input,
       get_connection_status,
       get_water_sensor_status,
-      send_control_input
     ])
     .setup(setup_handlers);
 

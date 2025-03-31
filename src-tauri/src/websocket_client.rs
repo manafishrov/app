@@ -1,23 +1,22 @@
 use crate::commands::config::get_config;
 use crate::models::config::Config;
+use crate::models::status::Status;
 use futures_util::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
-pub static CONNECTION_STATUS: AtomicBool = AtomicBool::new(false);
-pub static WATER_SENSOR_STATUS: AtomicBool = AtomicBool::new(false);
-pub static LAST_HEARTBEAT: AtomicI64 = AtomicI64::new(0);
+static CURRENT_STATUS: Lazy<Arc<Mutex<Status>>> =
+  Lazy::new(|| Arc::new(Mutex::new(Status::default())));
 
 static CURRENT_CONFIG: Lazy<Arc<Mutex<Config>>> =
   Lazy::new(|| Arc::new(Mutex::new(get_config().unwrap_or_default())));
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 enum MessageType {
   Command,
   Heartbeat,
@@ -25,20 +24,32 @@ enum MessageType {
   Status,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 struct WebSocketMessage<T> {
   message_type: MessageType,
   payload: T,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 struct StatusPayload {
-  water_sensor_status: bool,
+  water_sensor: bool,
+  pitch: f32,
+  roll: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 struct HeartbeatPayload {
   timestamp: Option<i64>,
+}
+
+pub fn get_current_status() -> Status {
+  CURRENT_STATUS
+    .lock()
+    .map(|guard| guard.clone())
+    .unwrap_or_else(|e| {
+      eprintln!("Failed to lock status mutex for reading: {}", e);
+      Status::default()
+    })
 }
 
 pub fn create_control_channel() -> (Sender<[f32; 6]>, Receiver<[f32; 6]>) {
@@ -49,7 +60,15 @@ pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
   println!("WebSocket client starting...");
 
   loop {
-    CONNECTION_STATUS.store(false, Ordering::Relaxed);
+    {
+      if let Ok(mut status) = CURRENT_STATUS.lock() {
+        *status = Status::default();
+      } else {
+        eprintln!("Failed to lock status mutex for reset.");
+        *CURRENT_STATUS.lock().unwrap() = Status::default();
+      }
+    }
+
     let config = {
       match CURRENT_CONFIG.lock() {
         Ok(guard) => guard.clone(),
@@ -63,7 +82,9 @@ pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
     let url = format!("ws://{}:{}", config.ip_address, config.device_controls_port);
     println!("Attempting to connect to WebSocket: {}", url);
 
-    match connect_and_handle(&mut control_rx, &url).await {
+    let last_heartbeat_time = Arc::new(Mutex::new(0i64));
+
+    match connect_and_handle(&mut control_rx, &url, last_heartbeat_time.clone()).await {
       Ok(_) => {
         println!("WebSocket connection closed gracefully.");
       }
@@ -77,8 +98,6 @@ pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
         {
           eprintln!("WebSocket error: {}", e);
         }
-        CONNECTION_STATUS.store(false, Ordering::Relaxed);
-        WATER_SENSOR_STATUS.store(false, Ordering::Relaxed);
       }
     }
 
@@ -96,16 +115,27 @@ pub fn update_config(new_config: &Config) {
 async fn connect_and_handle(
   control_rx: &mut Receiver<[f32; 6]>,
   url: &str,
+  last_heartbeat_time: Arc<Mutex<i64>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let connect_timeout = Duration::from_secs(5);
   let (ws_stream, _) = timeout(connect_timeout, connect_async(url)).await??;
   println!("WebSocket connected successfully to {}", url);
-  CONNECTION_STATUS.store(true, Ordering::Relaxed);
 
-  LAST_HEARTBEAT.store(
-    SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-    Ordering::Relaxed,
-  );
+  let connect_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
+  {
+    if let Ok(mut status) = CURRENT_STATUS.lock() {
+      status.connected = true;
+      status.water_detected = false;
+      status.pitch = 0.0;
+      status.roll = 0.0;
+    } else {
+      eprintln!("Failed to lock status mutex on connect.");
+      return Err("Failed to update status on connect".into());
+    }
+    if let Ok(mut lh_time) = last_heartbeat_time.lock() {
+      *lh_time = connect_time;
+    }
+  }
 
   let (mut write, mut read) = ws_stream.split();
 
@@ -117,13 +147,19 @@ async fn connect_and_handle(
   println!("Sending handshake: {}", handshake_json);
   write.send(Message::Text(handshake_json.into())).await?;
 
+  let last_heartbeat_time_monitor = last_heartbeat_time.clone();
   let heartbeat_monitor = tokio::spawn(async move {
     let check_interval = Duration::from_secs(1);
     let timeout_duration: i64 = 10;
 
     loop {
       tokio::time::sleep(check_interval).await;
-      let last_heartbeat = LAST_HEARTBEAT.load(Ordering::Relaxed);
+      let last_heartbeat = {
+        match last_heartbeat_time_monitor.lock() {
+          Ok(guard) => *guard,
+          Err(_) => 0,
+        }
+      };
       let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
         Ok(d) => d.as_secs() as i64,
         Err(_) => 0,
@@ -131,7 +167,13 @@ async fn connect_and_handle(
 
       if now > 0 && now.saturating_sub(last_heartbeat) > timeout_duration {
         println!("Heartbeat timeout detected ({}s)", timeout_duration);
-        CONNECTION_STATUS.store(false, Ordering::Relaxed);
+        if let Ok(mut status) = CURRENT_STATUS.lock() {
+          if status.connected {
+            status.connected = false;
+          }
+        } else {
+          eprintln!("Failed to lock status mutex on heartbeat timeout.");
+        }
         break;
       }
     }
@@ -144,13 +186,19 @@ async fn connect_and_handle(
                 Ok(msg) => {
                     if msg.is_text() {
                         let text = msg.into_text()?;
-
                         if let Ok(heartbeat_msg) = serde_json::from_str::<WebSocketMessage<HeartbeatPayload>>(&text) {
                             if matches!(heartbeat_msg.message_type, MessageType::Heartbeat) {
-                                LAST_HEARTBEAT.store(
-                                    SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-                                    Ordering::Relaxed
-                                );
+                                let received_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
+                                if let Ok(mut lh_time) = last_heartbeat_time.lock() {
+                                    *lh_time = received_time;
+                                }
+                                if let Ok(mut status) = CURRENT_STATUS.lock() {
+                                    if !status.connected {
+                                        println!("Re-established connection via heartbeat.");
+                                        status.connected = true;
+                                    }
+                                }
+
                                 let response = WebSocketMessage {
                                     message_type: MessageType::Heartbeat,
                                     payload: HeartbeatPayload { timestamp: None },
@@ -161,10 +209,15 @@ async fn connect_and_handle(
                                     break;
                                 }
                             }
-                        }
-                        else if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<StatusPayload>>(&text) {
+                        } else if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<StatusPayload>>(&text) {
                             if matches!(status_msg.message_type, MessageType::Status) {
-                                WATER_SENSOR_STATUS.store(status_msg.payload.water_sensor_status, Ordering::Relaxed);
+                                if let Ok(mut status) = CURRENT_STATUS.lock() {
+                                    status.water_detected = status_msg.payload.water_sensor;
+                                    status.pitch = status_msg.payload.pitch;
+                                    status.roll = status_msg.payload.roll;
+                                } else {
+                                    eprintln!("Failed to lock status mutex for status update.");
+                                }
                             }
                         } else {
                             println!("Received unhandled text message: {}", text);
@@ -200,7 +253,18 @@ async fn connect_and_handle(
   }
 
   heartbeat_monitor.abort();
-  CONNECTION_STATUS.store(false, Ordering::Relaxed);
+
+  {
+    if let Ok(mut status) = CURRENT_STATUS.lock() {
+      if status.connected {
+        println!("Setting connection status to false in connect_and_handle exit.");
+        status.connected = false;
+      }
+    } else {
+      eprintln!("Failed to lock status mutex during disconnect handling.");
+    }
+  }
+
   println!("Exiting connect_and_handle for {}", url);
   Ok(())
 }

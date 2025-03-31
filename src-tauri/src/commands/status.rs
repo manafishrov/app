@@ -1,12 +1,7 @@
-use crate::websocket_client::{CONNECTION_STATUS, WATER_SENSOR_STATUS};
-use std::sync::atomic::Ordering;
+use crate::models::status::Status;
+use crate::websocket_client;
 
 #[tauri::command]
-pub async fn get_connection_status() -> Result<bool, String> {
-  Ok(CONNECTION_STATUS.load(Ordering::Relaxed))
-}
-
-#[tauri::command]
-pub async fn get_water_sensor_status() -> Result<bool, String> {
-  Ok(WATER_SENSOR_STATUS.load(Ordering::Relaxed))
+pub async fn get_status() -> Result<Status, String> {
+  Ok(websocket_client::get_current_status())
 }
