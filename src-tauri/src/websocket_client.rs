@@ -1,5 +1,4 @@
 use crate::commands::config::get_config;
-use crate::input_handler;
 use crate::models::config::Config;
 use futures_util::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
@@ -42,11 +41,11 @@ struct HeartbeatPayload {
   timestamp: Option<i64>,
 }
 
-pub fn create_input_channel() -> (Sender<[f32; 6]>, Receiver<[f32; 6]>) {
+pub fn create_control_channel() -> (Sender<[f32; 6]>, Receiver<[f32; 6]>) {
   channel(1)
 }
 
-pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
+pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
   println!("WebSocket client starting...");
 
   loop {
@@ -64,7 +63,7 @@ pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
     let url = format!("ws://{}:{}", config.ip_address, config.device_controls_port);
     println!("Attempting to connect to WebSocket: {}", url);
 
-    match connect_and_handle(&mut input_rx, &url).await {
+    match connect_and_handle(&mut control_rx, &url).await {
       Ok(_) => {
         println!("WebSocket connection closed gracefully.");
       }
@@ -91,12 +90,11 @@ pub async fn start_websocket_client(mut input_rx: Receiver<[f32; 6]>) {
 pub fn update_config(new_config: &Config) {
   if let Ok(mut config_guard) = CURRENT_CONFIG.lock() {
     *config_guard = new_config.clone();
-    input_handler::update_config(new_config);
   }
 }
 
 async fn connect_and_handle(
-  input_rx: &mut Receiver<[f32; 6]>,
+  control_rx: &mut Receiver<[f32; 6]>,
   url: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let connect_timeout = Duration::from_secs(5);
@@ -183,7 +181,7 @@ async fn connect_and_handle(
             }
         }
 
-        Some(input) = input_rx.recv() => {
+        Some(input) = control_rx.recv() => {
             let control_msg = WebSocketMessage {
                 message_type: MessageType::ControlInput,
                 payload: input,
@@ -195,7 +193,7 @@ async fn connect_and_handle(
             }
         }
         else => {
-            println!("Input channel closed, exiting WebSocket handler.");
+            println!("Control channel closed, exiting WebSocket handler.");
             break;
         }
     }
