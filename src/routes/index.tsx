@@ -1,13 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { VideoStream } from '@/components/VideoStream';
+import { GamepadControlsDialog } from '@/components/settings/GamepadControlsDialog';
+import { KeyboardControlsDialog } from '@/components/settings/KeyboardControlsDialog';
+import { SettingsDialog } from '@/components/settings/SettingsDialog';
+import { DeviceControlsConnection } from '@/components/status/DeviceControlsConnection';
+import { WaterSensor } from '@/components/status/WaterSensor';
+import { Card } from '@/components/ui/Card';
+
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
   return (
-    <div className='p-2'>
-      <h3>Welcome Home!</h3>
-    </div>
+    <main className='mx-auto flex h-full w-full flex-col gap-2 p-4'>
+      <Card className='relative w-full overflow-hidden bg-black'>
+        <VideoStream />
+      </Card>
+      <div className='flex justify-between'>
+        <div className='flex gap-2'>
+          <SettingsDialog />
+          {/* <KeyboardControlsDialog /> */}
+          {/* <GamepadControlsDialog /> */}
+        </div>
+        <Card className='bg-muted flex h-9 items-center justify-center gap-2 rounded-full px-2'>
+          {/* <WaterSensor /> */}
+          {/* <DeviceControlsConnection /> */}
+        </Card>
+      </div>
+    </main>
   );
 }
