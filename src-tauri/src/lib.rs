@@ -13,7 +13,7 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::control::send_control_input;
-use commands::status::{get_connection_status, get_water_sensor_status};
+use commands::status::get_status;
 use tauri::Manager;
 use tokio::sync::mpsc::Sender;
 
@@ -40,8 +40,7 @@ pub fn run() {
       get_config,
       save_config,
       send_control_input,
-      get_connection_status,
-      get_water_sensor_status,
+      get_status,
     ])
     .setup(setup_handlers);
 
