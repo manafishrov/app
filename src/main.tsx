@@ -5,7 +5,22 @@ import { createRoot } from 'react-dom/client';
 
 import '@/styles/app.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      gcTime: 1000 * 60,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      staleTime: 500,
+      refetchInterval: false,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 const router = createRouter({
   routeTree,
@@ -13,7 +28,7 @@ const router = createRouter({
     queryClient,
   },
   defaultPreload: 'intent',
-  defaultPreloadStaleTime: 0,
+  defaultPreloadStaleTime: 1000 * 5,
   scrollRestoration: true,
 });
 
