@@ -7,9 +7,12 @@ const config = {
   jsxSingleQuote: true,
   importOrder: [
     '^[./]',
-    '^@/pages/(.*)$',
     '^@/components/(.*)$',
+    '^@/hooks/(.*)$',
     '^@/lib/(.*)$',
+    '^@/stores/(.*)$',
+    '^@/routes/(.*)$',
+    '^@/styles/(.*)$',
   ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
