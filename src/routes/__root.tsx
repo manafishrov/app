@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -25,7 +27,9 @@ function RootComponent() {
   return (
     <>
       <div className='text-background'>HELLO</div>
-      <Outlet />
+      <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+        <Outlet />
+      </ThemeProvider>
       <ReactQueryDevtools buttonPosition='bottom-left' />
       <TanStackRouterDevtools position='bottom-right' />
     </>
