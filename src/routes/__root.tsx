@@ -24,9 +24,9 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <>
-      <div>HELLO</div>
+      <div className='text-background'>HELLO</div>
       <Outlet />
-      <ReactQueryDevtools buttonPosition='top-right' />
+      <ReactQueryDevtools buttonPosition='bottom-left' />
       <TanStackRouterDevtools position='bottom-right' />
     </>
   );
