@@ -1,4 +1,4 @@
-import { type KeyboardBindings, useConfigStore } from '@/stores/configStore';
+import { useStore } from '@tanstack/react-store';
 import { KeyboardIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,6 +13,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/Dialog';
 import { toast } from '@/components/ui/Toaster';
+
+import {
+  type KeyboardBindings,
+  configStore,
+  updateKeyboardBindings,
+} from '@/stores/configStore';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   moveForward: 'KeyW',
@@ -29,11 +35,8 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   rollRight: 'KeyE',
 };
 
-function KeyboardControlsDialog() {
-  const config = useConfigStore((state) => state.config);
-  const updateKeyboardBindings = useConfigStore(
-    (state) => state.updateKeyboardBindings,
-  );
+function KeyboardBindingsDialog() {
+  const config = useStore(configStore, (state) => state);
   const [localBindings, setLocalBindings] = useState<KeyboardBindings | null>(
     null,
   );
@@ -79,7 +82,7 @@ function KeyboardControlsDialog() {
         </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 sm:grid-cols-2'>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Movement</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Movement</h3>
             <div className='space-y-2'>
               <KeyboardBindInput
                 label='Move Forward'
@@ -132,7 +135,7 @@ function KeyboardControlsDialog() {
             </div>
           </div>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Pitch & Yaw</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Pitch & Yaw</h3>
             <div className='space-y-2'>
               <KeyboardBindInput
                 label='Pitch Up'
@@ -167,7 +170,7 @@ function KeyboardControlsDialog() {
                 }
               />
             </div>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Roll</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Roll</h3>
             <div className='space-y-2'>
               <KeyboardBindInput
                 label='Roll Left'
@@ -193,4 +196,4 @@ function KeyboardControlsDialog() {
   );
 }
 
-export { KeyboardControlsDialog };
+export { KeyboardBindingsDialog };

@@ -47,35 +47,36 @@ function GamepadBindInput({
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
   const [gamepadConnected, setGamepadConnected] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const animationRef = useRef<number>();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const animationRef = useRef<number | undefined>(undefined);
+
+  const updateGamepadConnection = () => {
+    if (!navigator.getGamepads) return;
+
+    const gamepads = navigator.getGamepads();
+    const hasConnectedGamepad = Array.from(gamepads).some(
+      (gamepad) => gamepad !== null,
+    );
+    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+    setGamepadConnected(hasConnectedGamepad);
+  };
 
   useEffect(() => {
     if (!navigator.getGamepads) {
       return;
     }
 
-    function checkGamepads() {
-      const gamepads = navigator.getGamepads();
-      const hasConnectedGamepad = Array.from(gamepads).some(
-        (gamepad) => gamepad !== null,
-      );
-      setGamepadConnected(hasConnectedGamepad);
-    }
+    updateGamepadConnection();
 
-    checkGamepads();
-
-    window.addEventListener('gamepadconnected', () => {
-      setGamepadConnected(true);
-    });
-
-    window.addEventListener('gamepaddisconnected', checkGamepads);
+    window.addEventListener('gamepadconnected', updateGamepadConnection);
+    window.addEventListener('gamepaddisconnected', updateGamepadConnection);
 
     return () => {
-      window.removeEventListener('gamepadconnected', () => {
-        setGamepadConnected(true);
-      });
-      window.removeEventListener('gamepaddisconnected', checkGamepads);
+      window.removeEventListener('gamepadconnected', updateGamepadConnection);
+      window.removeEventListener(
+        'gamepaddisconnected',
+        updateGamepadConnection,
+      );
     };
   }, []);
 
@@ -173,10 +174,10 @@ function GamepadBindInput({
 
   return (
     <div className='space-y-2'>
-      <div>{label}</div>
+      <span>{label}</span>
       <div className='flex items-center gap-2'>
         <Button
-          ref={buttonRef}
+          ref={buttonRef as React.RefObject<HTMLButtonElement>}
           variant={isRecording ? 'destructive' : 'outline'}
           className={cx(
             'flex w-40 items-center justify-between gap-2',

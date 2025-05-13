@@ -126,7 +126,7 @@ function KeyboardBindInput({
 }: KeyboardBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -176,10 +176,10 @@ function KeyboardBindInput({
 
   return (
     <div className='space-y-2'>
-      <div>{label}</div>
+      <span>{label}</span>
       <div className='flex items-center gap-2'>
         <Button
-          ref={buttonRef}
+          ref={buttonRef as React.RefObject<HTMLButtonElement>}
           variant={isRecording ? 'destructive' : 'outline'}
           className={cx(
             'flex w-40 items-center justify-between gap-2',

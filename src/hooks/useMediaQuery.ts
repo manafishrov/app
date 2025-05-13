@@ -10,6 +10,7 @@ function useMediaQuery(query: string) {
 
     const result = matchMedia(query);
     result.addEventListener('change', onChange);
+    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
     setValue(result.matches);
 
     return () => result.removeEventListener('change', onChange);
