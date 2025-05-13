@@ -1,4 +1,3 @@
-import { useDeviceStatusStore } from '@/stores/deviceStatusStore';
 import { LinkIcon, UnlinkIcon } from 'lucide-react';
 
 import {
@@ -8,33 +7,37 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-function DeviceControlsConnection() {
-  const isConnected = useDeviceStatusStore((state) => state.isConnected);
+import { useStatus } from '@/hooks/useStatus';
+
+function ConnectionStatus() {
+  const { data: status } = useStatus();
 
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger
-          className='cursor-default rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-          aria-label={`Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`}
+          className='focus-visible:ring-ring cursor-default rounded-md bg-black/50 p-2 transition-colors focus-visible:ring-1 focus-visible:outline-none'
+          aria-label={`Connection status: ${
+            status?.isConnected ? 'Connected' : 'Disconnected'
+          }`}
         >
-          {isConnected ? (
-            <LinkIcon className='h-[1.2rem] w-[1.2rem] text-primary' />
+          {status?.isConnected ? (
+            <LinkIcon className='text-primary h-[1.2rem] w-[1.2rem]' />
           ) : (
-            <UnlinkIcon className='h-[1.2rem] w-[1.2rem] text-destructive' />
+            <UnlinkIcon className='text-destructive h-[1.2rem] w-[1.2rem]' />
           )}
         </TooltipTrigger>
         <TooltipContent
           sideOffset={10}
           collisionPadding={8}
           className={
-            isConnected
+            status?.isConnected
               ? 'bg-primary text-primary-foreground'
               : 'bg-destructive text-destructive-foreground'
           }
         >
           <p>
-            {isConnected
+            {status?.isConnected
               ? 'Connected to device controls'
               : 'Disconnected from device controls'}
           </p>
@@ -44,4 +47,4 @@ function DeviceControlsConnection() {
   );
 }
 
-export { DeviceControlsConnection };
+export { ConnectionStatus };

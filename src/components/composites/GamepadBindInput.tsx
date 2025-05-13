@@ -13,56 +13,28 @@ type GamepadBindInputProps = {
   isJoystick?: boolean;
 };
 
-const gamepadMappings: Record<string, string> = {
-  '0': '1',
-  '1': '2',
-  '2': '5',
-  '3': '4',
-  '4': '7',
-  '5': '8',
-  '6': '9',
-  '7': '10',
-  '8': '11',
-  '9': '12',
-  '10': '14',
-  '11': '15',
-  '12': '16',
-  '13': '17',
-  '14': '18',
-  '15': '19',
-  '16': '13',
-  '17': '3',
-  '18': '6',
-  leftStick: 'leftStick',
-  rightStick: 'rightStick',
-  dPad: 'dPad',
-  faceButtons: 'faceButtons',
-};
-
-const displayMappings: Record<string, string> = {
-  '1': 'A / ×',
-  '2': 'B / ○',
-  '3': 'C',
-  '4': 'Y / △',
-  '5': 'X / □',
-  '6': 'Z',
-  '7': 'LB / L1',
-  '8': 'RB / R1',
-  '9': 'LT / L2',
-  '10': 'RT / R2',
-  '11': 'Back / Share',
-  '12': 'Start / Options',
-  '13': 'Xbox / PS Button',
-  '14': 'L3',
-  '15': 'R3',
-  '16': 'DPad Up',
-  '17': 'DPad Down',
-  '18': 'DPad Left',
-  '19': 'DPad Right',
-  leftStick: 'Left Stick',
-  rightStick: 'Right Stick',
-  dPad: 'D-Pad',
-  faceButtons: 'Face Buttons',
+const mappings: Record<string, string> = {
+  0: 'A / ×',
+  1: 'B / ○',
+  2: 'X / □',
+  3: 'Y / △',
+  4: 'LB / L1',
+  5: 'RB / R1',
+  6: 'LT / L2',
+  7: 'RT / R2',
+  8: 'Back / Share',
+  9: 'Start / Options',
+  10: 'Xbox / PS Button',
+  11: 'L3',
+  12: 'R3',
+  13: 'DPad Up',
+  14: 'DPad Down',
+  15: 'DPad Left',
+  16: 'DPad Right',
+  LeftStick: 'Left Stick',
+  RightStick: 'Right Stick',
+  DPad: 'D-Pad',
+  FaceButtons: 'Face Buttons',
 };
 
 function GamepadBindInput({
@@ -75,35 +47,36 @@ function GamepadBindInput({
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
   const [gamepadConnected, setGamepadConnected] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const animationRef = useRef<number>();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const animationRef = useRef<number | undefined>(undefined);
+
+  const updateGamepadConnection = () => {
+    if (!navigator.getGamepads) return;
+
+    const gamepads = navigator.getGamepads();
+    const hasConnectedGamepad = Array.from(gamepads).some(
+      (gamepad) => gamepad !== null,
+    );
+    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+    setGamepadConnected(hasConnectedGamepad);
+  };
 
   useEffect(() => {
     if (!navigator.getGamepads) {
       return;
     }
 
-    function checkGamepads() {
-      const gamepads = navigator.getGamepads();
-      const hasConnectedGamepad = Array.from(gamepads).some(
-        (gamepad) => gamepad !== null,
-      );
-      setGamepadConnected(hasConnectedGamepad);
-    }
+    updateGamepadConnection();
 
-    checkGamepads();
-
-    window.addEventListener('gamepadconnected', () => {
-      setGamepadConnected(true);
-    });
-
-    window.addEventListener('gamepaddisconnected', checkGamepads);
+    window.addEventListener('gamepadconnected', updateGamepadConnection);
+    window.addEventListener('gamepaddisconnected', updateGamepadConnection);
 
     return () => {
-      window.removeEventListener('gamepadconnected', () => {
-        setGamepadConnected(true);
-      });
-      window.removeEventListener('gamepaddisconnected', checkGamepads);
+      window.removeEventListener('gamepadconnected', updateGamepadConnection);
+      window.removeEventListener(
+        'gamepaddisconnected',
+        updateGamepadConnection,
+      );
     };
   }, []);
 
@@ -120,21 +93,20 @@ function GamepadBindInput({
           if (gamepad.buttons[i]?.pressed) {
             if (isJoystick) {
               if (i >= 0 && i <= 3) {
-                setCurrentBind('faceButtons');
+                setCurrentBind('FaceButtons');
                 setIsRecording(false);
-                onBindChange('faceButtons');
+                onBindChange('FaceButtons');
                 return;
               } else if (i >= 12 && i <= 15) {
-                setCurrentBind('dPad');
+                setCurrentBind('DPad');
                 setIsRecording(false);
-                onBindChange('dPad');
+                onBindChange('DPad');
                 return;
               }
             } else {
-              const rustKeyName = gamepadMappings[String(i)] ?? String(i);
-              setCurrentBind(rustKeyName);
+              setCurrentBind(String(i));
               setIsRecording(false);
-              onBindChange(rustKeyName);
+              onBindChange(String(i));
               return;
             }
           }
@@ -147,16 +119,16 @@ function GamepadBindInput({
           const rightY = gamepad.axes[3] ?? 0;
 
           if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
-            setCurrentBind('leftStick');
+            setCurrentBind('LeftStick');
             setIsRecording(false);
-            onBindChange('leftStick');
+            onBindChange('LeftStick');
             return;
           }
 
           if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
-            setCurrentBind('rightStick');
+            setCurrentBind('RightStick');
             setIsRecording(false);
-            onBindChange('rightStick');
+            onBindChange('RightStick');
             return;
           }
         }
@@ -200,14 +172,12 @@ function GamepadBindInput({
     onBindChange(defaultBind);
   };
 
-  const displayBind = displayMappings[currentBind] ?? currentBind;
-
   return (
     <div className='space-y-2'>
-      <div>{label}</div>
+      <span>{label}</span>
       <div className='flex items-center gap-2'>
         <Button
-          ref={buttonRef}
+          ref={buttonRef as React.RefObject<HTMLButtonElement>}
           variant={isRecording ? 'destructive' : 'outline'}
           className={cx(
             'flex w-40 items-center justify-between gap-2',
@@ -217,7 +187,9 @@ function GamepadBindInput({
         >
           <Gamepad2Icon className='h-4 w-4' />
           <span className='truncate'>
-            {isRecording ? 'Press a key...' : displayBind}
+            {isRecording
+              ? 'Press a key...'
+              : (mappings[currentBind] ?? currentBind)}
           </span>
         </Button>
         <Button

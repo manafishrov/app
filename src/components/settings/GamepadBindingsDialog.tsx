@@ -1,4 +1,4 @@
-import { type GamepadBindings, useConfigStore } from '@/stores/configStore';
+import { useStore } from '@tanstack/react-store';
 import { Gamepad2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -14,33 +14,34 @@ import {
 } from '@/components/ui/Dialog';
 import { toast } from '@/components/ui/Toaster';
 
+import {
+  type GamepadBindings,
+  configStore,
+  updateGamepadBindings,
+} from '@/stores/configStore';
+
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
-  moveHorizontal: 'leftStick',
-  moveUp: '9',
-  moveDown: '10',
-  pitchYaw: 'rightStick',
-  rollLeft: '7',
-  rollRight: '8',
+  moveHorizontal: 'LeftStick',
+  moveUp: '7',
+  moveDown: '6',
+  pitchYaw: 'RightStick',
+  rollLeft: '4',
+  rollRight: '5',
 };
 
-function GamepadControlsDialog() {
-  const config = useConfigStore((state) => state.config);
-  const updateGamepadBindings = useConfigStore(
-    (state) => state.updateGamepadBindings,
-  );
+function GamepadBindingsDialog() {
+  const config = useStore(configStore, (state) => state);
   const [localBindings, setLocalBindings] = useState<GamepadBindings | null>(
     null,
   );
-  const [isControllerConnected, setIsControllerConnected] = useState(false);
+  const [isControllerConnected, setIsControllerConnected] = useState(() => {
+    const gamepads = navigator.getGamepads();
+    return Array.from(gamepads).some((gamepad) => gamepad !== null);
+  });
 
   useEffect(() => {
     const handleGamepadConnected = () => setIsControllerConnected(true);
     const handleGamepadDisconnected = () => setIsControllerConnected(false);
-
-    const gamepads = navigator.getGamepads();
-    setIsControllerConnected(
-      Array.from(gamepads).some((gamepad) => gamepad !== null),
-    );
 
     window.addEventListener('gamepadconnected', handleGamepadConnected);
     window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
@@ -95,7 +96,7 @@ function GamepadControlsDialog() {
         </DialogDescription>
         <div className='mx-auto grid max-w-2xl grid-cols-1 sm:grid-cols-2'>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Movement</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Movement</h3>
             <div className='space-y-2'>
               <GamepadBindInput
                 label='Move Horizontal'
@@ -125,7 +126,7 @@ function GamepadControlsDialog() {
             </div>
           </div>
           <div className='mx-4'>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Pitch & Yaw</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Pitch & Yaw</h3>
             <div className='space-y-2'>
               <GamepadBindInput
                 label='Pitch/Yaw'
@@ -137,7 +138,7 @@ function GamepadControlsDialog() {
                 isJoystick
               />
             </div>
-            <h3 className='text-md mb-2 mt-4 font-semibold'>Roll</h3>
+            <h3 className='text-md mt-4 mb-2 font-semibold'>Roll</h3>
             <div className='space-y-2'>
               <GamepadBindInput
                 label='Roll Left'
@@ -163,4 +164,4 @@ function GamepadControlsDialog() {
   );
 }
 
-export { GamepadControlsDialog };
+export { GamepadBindingsDialog };

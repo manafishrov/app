@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 
 import { cx } from '@/lib/utils';
 
-const keycodeMappings: Record<string, string> = {
+const mappings: Record<string, string> = {
   KeyA: 'A',
   KeyB: 'B',
   KeyC: 'C',
@@ -32,60 +32,16 @@ const keycodeMappings: Record<string, string> = {
   KeyX: 'X',
   KeyY: 'Y',
   KeyZ: 'Z',
-  Digit0: 'Key0',
-  Digit1: 'Key1',
-  Digit2: 'Key2',
-  Digit3: 'Key3',
-  Digit4: 'Key4',
-  Digit5: 'Key5',
-  Digit6: 'Key6',
-  Digit7: 'Key7',
-  Digit8: 'Key8',
-  Digit9: 'Key9',
-  Numpad0: 'Numpad0',
-  Numpad1: 'Numpad1',
-  Numpad2: 'Numpad2',
-  Numpad3: 'Numpad3',
-  Numpad4: 'Numpad4',
-  Numpad5: 'Numpad5',
-  Numpad6: 'Numpad6',
-  Numpad7: 'Numpad7',
-  Numpad8: 'Numpad8',
-  Numpad9: 'Numpad9',
-  NumpadAdd: 'NumpadAdd',
-  NumpadSubtract: 'NumpadSubtract',
-  NumpadMultiply: 'NumpadMultiply',
-  NumpadDivide: 'NumpadDivide',
-  NumpadEnter: 'NumpadEnter',
-  NumpadDecimal: 'NumpadDecimal',
-  NumpadEqual: 'NumpadEquals',
-  Space: 'Space',
-  Enter: 'Enter',
-  Backspace: 'Backspace',
-  Tab: 'Tab',
-  Escape: 'Escape',
-  CapsLock: 'CapsLock',
-  ScrollLock: 'ScrollLock',
-  PrintScreen: 'PrintScreen',
-  Pause: 'Pause',
-  Insert: 'Insert',
-  Delete: 'Delete',
-  Home: 'Home',
-  End: 'End',
-  PageUp: 'PageUp',
-  PageDown: 'PageDown',
-  ArrowUp: 'Up',
-  ArrowDown: 'Down',
-  ArrowLeft: 'Left',
-  ArrowRight: 'Right',
-  ShiftLeft: 'Shift',
-  ShiftRight: 'Shift',
-  ControlLeft: 'Control',
-  ControlRight: 'Control',
-  AltLeft: 'Alt',
-  AltRight: 'Alt',
-  MetaLeft: 'Meta',
-  MetaRight: 'Meta',
+  Digit1: '1',
+  Digit2: '2',
+  Digit3: '3',
+  Digit4: '4',
+  Digit5: '5',
+  Digit6: '6',
+  Digit7: '7',
+  Digit8: '8',
+  Digit9: '9',
+  Digit0: '0',
   F1: 'F1',
   F2: 'F2',
   F3: 'F3',
@@ -98,107 +54,61 @@ const keycodeMappings: Record<string, string> = {
   F10: 'F10',
   F11: 'F11',
   F12: 'F12',
-  F13: 'F13',
-  F14: 'F14',
-  F15: 'F15',
-  F16: 'F16',
-  F17: 'F17',
-  F18: 'F18',
-  F19: 'F19',
-  F20: 'F20',
-  Comma: 'Comma',
-  Period: 'Dot',
-  Slash: 'Slash',
-  Backslash: 'BackSlash',
-  BracketLeft: 'LeftBracket',
-  BracketRight: 'RightBracket',
-  Equal: 'Equal',
-  Minus: 'Minus',
-  Backquote: 'Grave',
-  Semicolon: 'Semicolon',
-  Quote: 'Apostrophe',
-  IntlBackslash: 'BackSlash',
-};
-
-const displayMappings: Record<string, string> = {
-  Up: '↑',
-  Down: '↓',
-  Left: '←',
-  Right: '→',
-  Enter: 'Enter',
-  Backspace: 'Backspace',
-  CapsLock: 'Caps Lock',
-  Tab: 'Tab',
-  Escape: 'Esc',
-  Space: 'Space',
-  Insert: 'Insert',
-  Delete: 'Del',
-  Home: 'Home',
-  End: 'End',
-  PageUp: 'Page Up',
-  PageDown: 'Page Down',
-  Shift: 'Shift',
-  Control: 'Ctrl',
-  Alt: 'Alt',
-  Meta: 'Meta',
-  Key0: '0',
-  Key1: '1',
-  Key2: '2',
-  Key3: '3',
-  Key4: '4',
-  Key5: '5',
-  Key6: '6',
-  Key7: '7',
-  Key8: '8',
-  Key9: '9',
-  Numpad0: 'Num 0',
-  Numpad1: 'Num 1',
-  Numpad2: 'Num 2',
-  Numpad3: 'Num 3',
-  Numpad4: 'Num 4',
-  Numpad5: 'Num 5',
-  Numpad6: 'Num 6',
-  Numpad7: 'Num 7',
-  Numpad8: 'Num 8',
-  Numpad9: 'Num 9',
-  NumpadAdd: 'Num +',
-  NumpadSubtract: 'Num -',
-  NumpadMultiply: 'Num *',
-  NumpadDivide: 'Num /',
-  NumpadDecimal: 'Num .',
-  NumpadEnter: 'Num Enter',
-  NumpadEquals: 'Num =',
-  LeftBracket: '[',
-  RightBracket: ']',
-  Semicolon: ';',
-  Apostrophe: "'",
-  Grave: '`',
+  Enter: 'return',
+  Escape: 'esc',
+  Backspace: 'delete',
+  Tab: 'tap',
+  Space: 'space',
   Minus: '-',
   Equal: '=',
+  BracketLeft: '[',
+  BracketRight: ']',
+  Backslash: '\\',
+  Semicolon: ';',
+  Quote: "'",
+  Backquote: '`',
   Comma: ',',
-  Dot: '.',
+  Period: '.',
   Slash: '/',
-  BackSlash: '\\',
-  F1: 'F1',
-  F2: 'F2',
-  F3: 'F3',
-  F4: 'F4',
-  F5: 'F5',
-  F6: 'F6',
-  F7: 'F7',
-  F8: 'F8',
-  F9: 'F9',
-  F10: 'F10',
-  F11: 'F11',
-  F12: 'F12',
-  F13: 'F13',
-  F14: 'F14',
-  F15: 'F15',
-  F16: 'F16',
-  F17: 'F17',
-  F18: 'F18',
-  F19: 'F19',
-  F20: 'F20',
+  CapsLock: 'caps lock',
+  ArrowRight: '→',
+  ArrowLeft: '←',
+  ArrowDown: '↓',
+  ArrowUp: '↑',
+  ControlLeft: 'left control',
+  ShiftLeft: 'left shift',
+  AltLeft: 'left alt',
+  MetaLeft: 'left meta',
+  ControlRight: 'right control',
+  ShiftRight: 'right shift',
+  AltRight: 'right alt',
+  MetaRight: 'right meta',
+  PrintScreen: 'prtsc',
+  ScrollLock: 'scrlk',
+  Pause: 'pause',
+  Insert: 'ins',
+  Home: 'home',
+  PageUp: 'pgup',
+  Delete: 'del',
+  End: 'end',
+  PageDown: 'pgdn',
+  NumLock: 'numlk',
+  NumpadDivide: 'num /',
+  NumpadMultiply: 'num *',
+  NumpadSubtract: 'num -',
+  NumpadAdd: 'num +',
+  NumpadEnter: 'num return',
+  Numpad1: 'num 1',
+  Numpad2: 'num 2',
+  Numpad3: 'num 3',
+  Numpad4: 'num 4',
+  Numpad5: 'num 5',
+  Numpad6: 'num 6',
+  Numpad7: 'num 7',
+  Numpad8: 'num 8',
+  Numpad9: 'num 9',
+  Numpad0: 'num 0',
+  NumpadDecimal: 'num .',
 };
 
 type KeyboardBindInputProps = {
@@ -216,7 +126,7 @@ function KeyboardBindInput({
 }: KeyboardBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -229,18 +139,9 @@ function KeyboardBindInput({
         return;
       }
 
-      let rustKeyName: string;
-
-      if (e.code in keycodeMappings) {
-        rustKeyName = keycodeMappings[e.code]!;
-      } else {
-        console.warn('Unmapped key code:', e.code);
-        rustKeyName = e.code;
-      }
-
-      setCurrentBind(rustKeyName);
+      setCurrentBind(e.code);
       setIsRecording(false);
-      onBindChange(rustKeyName);
+      onBindChange(e.code);
     }
 
     window.addEventListener('keydown', handleKeyDown);
@@ -273,14 +174,12 @@ function KeyboardBindInput({
     onBindChange(defaultBind);
   }
 
-  const displayBind = displayMappings[currentBind] ?? currentBind;
-
   return (
     <div className='space-y-2'>
-      <div>{label}</div>
+      <span>{label}</span>
       <div className='flex items-center gap-2'>
         <Button
-          ref={buttonRef}
+          ref={buttonRef as React.RefObject<HTMLButtonElement>}
           variant={isRecording ? 'destructive' : 'outline'}
           className={cx(
             'flex w-40 items-center justify-between gap-2',
@@ -290,7 +189,9 @@ function KeyboardBindInput({
         >
           <KeyboardIcon className='h-4 w-4' />
           <span className='truncate'>
-            {isRecording ? 'Press a key...' : displayBind}
+            {isRecording
+              ? 'Press a key...'
+              : (mappings[currentBind] ?? currentBind)}
           </span>
         </Button>
         <Button

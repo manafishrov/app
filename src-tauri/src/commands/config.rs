@@ -37,7 +37,6 @@ pub fn save_config(config: Config) -> Result<(), String> {
   let content = serde_json::to_string(&config).map_err(|e| e.to_string())?;
   fs::write(config_path, content).map_err(|e| e.to_string())?;
 
-  crate::input_handler::update_config(&config);
   crate::websocket_client::update_config(&config);
 
   Ok(())

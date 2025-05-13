@@ -1,112 +1,55 @@
 import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
-import { forwardRef } from 'react';
 
-import { type VariantProps, cva, cx } from '@/lib/utils';
+import { cx } from '@/lib/utils';
 
-const scrollBarThumbVariants = cva({
-  base: 'relative z-10 flex-1 cursor-default scroll-smooth rounded-full',
-  variants: {
-    variant: {
-      default: 'bg-border',
-      soft: 'bg-border/50',
-      sidebar: 'bg-sidebar-border',
-      primary:
-        'bg-primary/60 hover:bg-primary/90 dark:bg-primary/40 hover:dark:bg-primary/60',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
-
-type ScrollBarProps = React.ComponentPropsWithoutRef<
-  typeof ScrollAreaPrimitive.Root
-> &
-  VariantProps<typeof scrollBarThumbVariants> & {
-    viewPortClassName?: string;
-    scrollBarClassName?: string;
-    scrollBar?: boolean;
-    orientation?: 'vertical' | 'horizontal';
-  };
-
-const ScrollArea = forwardRef<
-  React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
-  ScrollBarProps
->(
-  (
-    {
-      className,
-      viewPortClassName,
-      scrollBarClassName,
-      orientation,
-      scrollBar = true,
-      variant,
-      children,
-      ...props
-    },
-    ref,
-  ) => (
+function ScrollArea({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+  return (
     <ScrollAreaPrimitive.Root
-      ref={ref}
-      className={cx('relative overflow-hidden', className)}
+      data-slot='scroll-area'
+      className={cx('relative', className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
-        className={cx(
-          'relative h-full w-full rounded-[inherit]',
-          viewPortClassName,
-        )}
+        data-slot='scroll-area-viewport'
+        className='ring-ring/10 dark:ring-ring/20 dark:outline-ring/40 outline-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1'
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      {scrollBar && (
-        <ScrollBar
-          orientation={orientation}
-          thumbClassName={scrollBarClassName}
-          variant={variant}
-        />
-      )}
+      <ScrollBar />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
-  ),
-);
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
+  );
+}
 
-const ScrollBar = forwardRef<
-  React.ComponentRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
-  React.ComponentPropsWithoutRef<
-    typeof ScrollAreaPrimitive.ScrollAreaScrollbar
-  > &
-    VariantProps<typeof scrollBarThumbVariants> & {
-      thumbClassName?: string;
-    }
->(
-  (
-    { className, thumbClassName, variant, orientation = 'vertical', ...props },
-    ref,
-  ) => (
+function ScrollBar({
+  className,
+  orientation = 'vertical',
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
+  return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
-      ref={ref}
+      data-slot='scroll-area-scrollbar'
       orientation={orientation}
       className={cx(
-        'flex touch-none select-none transition-colors',
+        'flex touch-none p-px transition-colors select-none',
         orientation === 'vertical' &&
-          'h-full w-2.5 border-l border-l-transparent p-[1px]',
+          'h-full w-2.5 border-l border-l-transparent',
         orientation === 'horizontal' &&
-          'h-2.5 flex-col border-t border-t-transparent p-[1px]',
+          'h-2.5 flex-col border-t border-t-transparent',
         className,
       )}
       {...props}
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
-        className={scrollBarThumbVariants({
-          variant,
-          className: thumbClassName,
-        })}
+        data-slot='scroll-area-thumb'
+        className='bg-border relative flex-1 rounded-full'
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
-  ),
-);
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
+  );
+}
 
 export { ScrollArea, ScrollBar };
