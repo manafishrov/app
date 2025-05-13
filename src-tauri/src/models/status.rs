@@ -2,7 +2,7 @@ use serde::Serialize;
 
 #[derive(Serialize, Clone)]
 pub struct Status {
-  pub connected: bool,
+  pub is_connected: bool,
   pub water_detected: bool,
   pub pitch: f32,
   pub roll: f32,
@@ -11,7 +11,7 @@ pub struct Status {
 impl Default for Status {
   fn default() -> Self {
     Status {
-      connected: false,
+      is_connected: false,
       water_detected: false,
       pitch: 0.0,
       roll: 0.0,

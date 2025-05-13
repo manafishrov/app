@@ -124,7 +124,7 @@ async fn connect_and_handle(
   let connect_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
   {
     if let Ok(mut status) = CURRENT_STATUS.lock() {
-      status.connected = true;
+      status.is_connected = true;
       status.water_detected = false;
       status.pitch = 0.0;
       status.roll = 0.0;
@@ -168,8 +168,8 @@ async fn connect_and_handle(
       if now > 0 && now.saturating_sub(last_heartbeat) > timeout_duration {
         println!("Heartbeat timeout detected ({}s)", timeout_duration);
         if let Ok(mut status) = CURRENT_STATUS.lock() {
-          if status.connected {
-            status.connected = false;
+          if status.is_connected {
+            status.is_connected = false;
           }
         } else {
           eprintln!("Failed to lock status mutex on heartbeat timeout.");
@@ -193,9 +193,9 @@ async fn connect_and_handle(
                                     *lh_time = received_time;
                                 }
                                 if let Ok(mut status) = CURRENT_STATUS.lock() {
-                                    if !status.connected {
+                                    if !status.is_connected {
                                         println!("Re-established connection via heartbeat.");
-                                        status.connected = true;
+                                        status.is_connected = true;
                                     }
                                 }
 
@@ -256,9 +256,9 @@ async fn connect_and_handle(
 
   {
     if let Ok(mut status) = CURRENT_STATUS.lock() {
-      if status.connected {
+      if status.is_connected {
         println!("Setting connection status to false in connect_and_handle exit.");
-        status.connected = false;
+        status.is_connected = false;
       }
     } else {
       eprintln!("Failed to lock status mutex during disconnect handling.");
