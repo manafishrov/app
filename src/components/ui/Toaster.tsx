@@ -1,12 +1,28 @@
-import { Toaster as Sonner, toast } from 'sonner';
+'use client';
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+import * as ToasterPrimitive from 'sonner';
 
-const Toaster = ({ ...props }: ToasterProps) => {
+import { useTheme } from '@/components/providers/ThemeProvider';
+
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+const toast = ToasterPrimitive.toast;
+
+function Toaster({
+  ref,
+  ...props
+}: React.ComponentProps<typeof ToasterPrimitive.Toaster> & {
+  ref?: React.RefObject<React.ComponentRef<typeof ToasterPrimitive.Toaster>>;
+}) {
+  const { theme = 'system' } = useTheme();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+
   return (
-    <Sonner
-      theme='system'
+    <ToasterPrimitive.Toaster
+      ref={ref}
+      theme={theme as ToasterPrimitive.ToasterProps['theme']}
       className='toaster group'
+      position={isDesktop ? 'bottom-right' : 'top-center'}
       toastOptions={{
         classNames: {
           toast:
@@ -21,6 +37,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
-};
+}
 
 export { Toaster, toast };
