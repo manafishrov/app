@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { VideoStream } from '@/components/VideoStream';
-import { GamepadControlsDialog } from '@/components/settings/GamepadControlsDialog';
-import { KeyboardControlsDialog } from '@/components/settings/KeyboardControlsDialog';
+import { GamepadBindingsDialog } from '@/components/settings/GamepadBindingsDialog';
+import { KeyboardBindingsDialog } from '@/components/settings/KeyboardBindingsDialog';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { DeviceControlsConnection } from '@/components/status/DeviceControlsConnection';
 import { WaterSensor } from '@/components/status/WaterSensor';
@@ -24,8 +24,8 @@ function Home() {
       <div className='flex justify-between'>
         <div className='flex gap-2'>
           {/* <SettingsDialog /> */}
-          {/* <KeyboardControlsDialog /> */}
-          {/* <GamepadControlsDialog /> */}
+          <KeyboardBindingsDialog />
+          <GamepadBindingsDialog />
         </div>
         <Card className='bg-muted flex h-9 items-center justify-center gap-2 rounded-full px-2'>
           {/* <WaterSensor /> */}
