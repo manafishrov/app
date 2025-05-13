@@ -31,10 +31,10 @@ const mappings: Record<string, string> = {
   14: 'DPad Down',
   15: 'DPad Left',
   16: 'DPad Right',
-  leftStick: 'Left Stick',
-  rightStick: 'Right Stick',
-  dPad: 'D-Pad',
-  faceButtons: 'Face Buttons',
+  LeftStick: 'Left Stick',
+  RightStick: 'Right Stick',
+  DPad: 'D-Pad',
+  FaceButtons: 'Face Buttons',
 };
 
 function GamepadBindInput({
@@ -119,16 +119,16 @@ function GamepadBindInput({
           const rightY = gamepad.axes[3] ?? 0;
 
           if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
-            setCurrentBind('leftStick');
+            setCurrentBind('LeftStick');
             setIsRecording(false);
-            onBindChange('leftStick');
+            onBindChange('LeftStick');
             return;
           }
 
           if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
-            setCurrentBind('rightStick');
+            setCurrentBind('RightStick');
             setIsRecording(false);
-            onBindChange('rightStick');
+            onBindChange('RightStick');
             return;
           }
         }

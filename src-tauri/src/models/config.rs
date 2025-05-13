@@ -41,7 +41,7 @@ pub struct GamepadBindings {
 pub struct Config {
   pub ip_address: String,
   pub camera_stream_port: u16,
-  pub device_controls_port: u16,
+  pub web_socket_port: u16,
   pub keyboard: KeyboardBindings,
   pub gamepad: GamepadBindings,
 }
@@ -51,7 +51,7 @@ impl Default for Config {
     Config {
       ip_address: "10.10.10.10".to_string(),
       camera_stream_port: 8889,
-      device_controls_port: 5000,
+      web_socket_port: 5000,
       keyboard: KeyboardBindings {
         move_forward: "KeyW".to_string(),
         move_backward: "KeyS".to_string(),

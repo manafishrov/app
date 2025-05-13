@@ -79,7 +79,7 @@ pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
       }
     };
 
-    let url = format!("ws://{}:{}", config.ip_address, config.device_controls_port);
+    let url = format!("ws://{}:{}", config.ip_address, config.web_socket_port);
     println!("Attempting to connect to WebSocket: {}", url);
 
     let last_heartbeat_time = Arc::new(Mutex::new(0i64));

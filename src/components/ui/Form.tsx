@@ -160,9 +160,14 @@ function NumberField({
       description={description}
     >
       <Input
-        type='number'
-        value={field.state.value}
-        onChange={(e) => field.handleChange(Number(e.target.value))}
+        type='text'
+        pattern='[0-9]*'
+        inputMode='numeric'
+        value={field.state.value?.toString() ?? ''}
+        onChange={(e) => {
+          const value = e.target.value.replace(/[^\d]/g, '');
+          field.handleChange(Number(value));
+        }}
         onBlur={field.handleBlur}
         {...props}
       />
