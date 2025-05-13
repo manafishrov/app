@@ -8,11 +8,14 @@ import { DeviceControlsConnection } from '@/components/status/DeviceControlsConn
 import { WaterSensor } from '@/components/status/WaterSensor';
 import { Card } from '@/components/ui/Card';
 
+import { useControlInput } from '@/hooks/useControlInput';
+
 export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
+  useControlInput();
   return (
     <main className='mx-auto flex h-full w-full flex-col gap-2 p-4'>
       <Card className='relative w-full overflow-hidden bg-black'>
