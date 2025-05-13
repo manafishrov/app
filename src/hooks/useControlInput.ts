@@ -22,18 +22,24 @@ function useControlInput() {
     const input: InputArray = [...EMPTY_INPUT];
     const keys = pressedKeys.current;
 
-    if (keys.has(config.keyboard.moveForward)) input[0] = 1;
-    if (keys.has(config.keyboard.moveBackward)) input[0] = -1;
-    if (keys.has(config.keyboard.moveRight)) input[1] = 1;
-    if (keys.has(config.keyboard.moveLeft)) input[1] = -1;
-    if (keys.has(config.keyboard.moveUp)) input[2] = 1;
-    if (keys.has(config.keyboard.moveDown)) input[2] = -1;
-    if (keys.has(config.keyboard.pitchUp)) input[3] = 1;
-    if (keys.has(config.keyboard.pitchDown)) input[3] = -1;
-    if (keys.has(config.keyboard.yawRight)) input[4] = 1;
-    if (keys.has(config.keyboard.yawLeft)) input[4] = -1;
-    if (keys.has(config.keyboard.rollRight)) input[5] = 1;
-    if (keys.has(config.keyboard.rollLeft)) input[5] = -1;
+    input[0] =
+      (keys.has(config.keyboard.moveForward) ? 1 : 0) +
+      (keys.has(config.keyboard.moveBackward) ? -1 : 0);
+    input[1] =
+      (keys.has(config.keyboard.moveRight) ? 1 : 0) +
+      (keys.has(config.keyboard.moveLeft) ? -1 : 0);
+    input[2] =
+      (keys.has(config.keyboard.moveUp) ? 1 : 0) +
+      (keys.has(config.keyboard.moveDown) ? -1 : 0);
+    input[3] =
+      (keys.has(config.keyboard.pitchUp) ? 1 : 0) +
+      (keys.has(config.keyboard.pitchDown) ? -1 : 0);
+    input[4] =
+      (keys.has(config.keyboard.yawRight) ? 1 : 0) +
+      (keys.has(config.keyboard.yawLeft) ? -1 : 0);
+    input[5] =
+      (keys.has(config.keyboard.rollRight) ? 1 : 0) +
+      (keys.has(config.keyboard.rollLeft) ? -1 : 0);
 
     return input;
   }, [config]);
@@ -48,24 +54,28 @@ function useControlInput() {
     const handleMoveHorizontal = (source: ControlSource) => {
       switch (source) {
         case 'LeftStick':
-          input[0] = gamepad.axes[1] ?? 0;
+          input[0] = -(gamepad.axes[1] ?? 0);
           input[1] = gamepad.axes[0] ?? 0;
           break;
         case 'RightStick':
-          input[0] = gamepad.axes[3] ?? 0;
+          input[0] = -(gamepad.axes[3] ?? 0);
           input[1] = gamepad.axes[2] ?? 0;
           break;
         case 'DPad':
-          input[0] = gamepad.buttons[12]?.value ?? 0;
-          input[0] -= gamepad.buttons[13]?.value ?? 0;
-          input[1] = gamepad.buttons[14]?.value ?? 0;
-          input[1] -= gamepad.buttons[15]?.value ?? 0;
+          input[0] =
+            (gamepad.buttons[12]?.value ?? 0) +
+            -(gamepad.buttons[13]?.value ?? 0);
+          input[1] =
+            (gamepad.buttons[14]?.value ?? 0) +
+            -(gamepad.buttons[15]?.value ?? 0);
           break;
         case 'FaceButtons':
-          input[0] = gamepad.buttons[0]?.value ?? 0;
-          input[0] -= gamepad.buttons[2]?.value ?? 0;
-          input[1] = gamepad.buttons[1]?.value ?? 0;
-          input[1] -= gamepad.buttons[3]?.value ?? 0;
+          input[0] =
+            (gamepad.buttons[0]?.value ?? 0) +
+            -(gamepad.buttons[2]?.value ?? 0);
+          input[1] =
+            (gamepad.buttons[1]?.value ?? 0) +
+            -(gamepad.buttons[3]?.value ?? 0);
           break;
       }
     };
@@ -81,16 +91,20 @@ function useControlInput() {
           input[4] = gamepad.axes[2] ?? 0;
           break;
         case 'DPad':
-          input[3] = gamepad.buttons[12]?.value ?? 0;
-          input[3] -= gamepad.buttons[13]?.value ?? 0;
-          input[4] = gamepad.buttons[14]?.value ?? 0;
-          input[4] -= gamepad.buttons[15]?.value ?? 0;
+          input[3] =
+            (gamepad.buttons[12]?.value ?? 0) +
+            -(gamepad.buttons[13]?.value ?? 0);
+          input[4] =
+            (gamepad.buttons[14]?.value ?? 0) +
+            -(gamepad.buttons[15]?.value ?? 0);
           break;
         case 'FaceButtons':
-          input[3] = gamepad.buttons[0]?.value ?? 0;
-          input[3] -= gamepad.buttons[2]?.value ?? 0;
-          input[4] = gamepad.buttons[1]?.value ?? 0;
-          input[4] -= gamepad.buttons[3]?.value ?? 0;
+          input[3] =
+            (gamepad.buttons[0]?.value ?? 0) +
+            -(gamepad.buttons[2]?.value ?? 0);
+          input[4] =
+            (gamepad.buttons[1]?.value ?? 0) +
+            -(gamepad.buttons[3]?.value ?? 0);
           break;
       }
     };
@@ -101,14 +115,14 @@ function useControlInput() {
     const upButton = parseInt(config.gamepad.moveUp);
     const downButton = parseInt(config.gamepad.moveDown);
     input[2] =
-      (gamepad.buttons[upButton]?.value ?? 0) -
-      (gamepad.buttons[downButton]?.value ?? 0);
+      (gamepad.buttons[upButton]?.value ?? 0) +
+      -(gamepad.buttons[downButton]?.value ?? 0);
 
     const rollRightButton = parseInt(config.gamepad.rollRight);
     const rollLeftButton = parseInt(config.gamepad.rollLeft);
     input[5] =
-      (gamepad.buttons[rollRightButton]?.value ?? 0) -
-      (gamepad.buttons[rollLeftButton]?.value ?? 0);
+      (gamepad.buttons[rollRightButton]?.value ?? 0) +
+      -(gamepad.buttons[rollLeftButton]?.value ?? 0);
 
     return input.map(clamp) as InputArray;
   }, [config]);
