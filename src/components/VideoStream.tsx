@@ -1,17 +1,19 @@
-import { useConfigStore } from '@/stores/configStore';
+import { useStore } from '@tanstack/react-store';
 import { useEffect, useRef, useState } from 'react';
+
+import { configStore } from '@/stores/configStore';
 
 const RETRY_DELAY = 5000;
 
 function VideoStream() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const config = useConfigStore((state) => state.config);
+  const config = useStore(configStore, (state) => state);
 
-  const setupWebRTCConnection = async () => {
+  async function setupWebRTCConnection() {
     try {
       if (!config) return;
 
@@ -78,9 +80,9 @@ function VideoStream() {
       setIsLoading(false);
       scheduleRetry();
     }
-  };
+  }
 
-  const scheduleRetry = () => {
+  function scheduleRetry() {
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
     }
@@ -88,7 +90,7 @@ function VideoStream() {
     retryTimeoutRef.current = setTimeout(() => {
       void setupWebRTCConnection();
     }, RETRY_DELAY);
-  };
+  }
 
   useEffect(() => {
     void setupWebRTCConnection();

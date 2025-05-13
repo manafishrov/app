@@ -10,14 +10,20 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/Toaster';
 
+import { loadConfig } from '@/stores/configStore';
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
   component: RootComponent,
+  loader: async () => {
+    await loadConfig();
+    return null;
+  },
   notFoundComponent: () => {
     return (
       <div>
-        <p>This is the notFoundComponent configured on root route</p>
+        <p>This is the Not Found Page</p>
         <Link to='/'>Start Over</Link>
       </div>
     );
