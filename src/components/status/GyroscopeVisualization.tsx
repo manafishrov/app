@@ -5,6 +5,8 @@ function GyroscopeVisualization() {
 
   const pitch = status?.pitch ?? 0;
   const roll = status?.roll ?? 0;
+  const desiredPitch = status?.desiredPitch ?? 0;
+  const desiredRoll = status?.desiredRoll ?? 0;
 
   return (
     <div className='flex flex-col items-start gap-2 overflow-hidden rounded-lg p-4 backdrop-blur-xs'>
@@ -66,6 +68,19 @@ function GyroscopeVisualization() {
           </div>
         </div>
 
+        <div
+          className='absolute top-1/2 left-0 h-0.5 w-full origin-center bg-red-700 transition-transform'
+          style={{
+            transform: `
+              translateY(${-desiredPitch}px)
+              rotate(${desiredRoll}deg)
+            `,
+          }}
+        >
+          <div className='absolute top-0 left-1/2 h-0 w-0 -translate-x-1/2 -translate-y-2'>
+            <div className='h-0 w-0 border-r-[6px] border-b-[8px] border-l-[6px] border-r-transparent border-b-red-700 border-l-transparent' />
+          </div>
+        </div>
         <div
           className='bg-primary absolute top-1/2 left-0 h-0.5 w-full origin-center transition-transform'
           style={{
