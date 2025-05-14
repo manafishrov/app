@@ -106,25 +106,26 @@ async def shutdown_server(server):
     await server.wait_closed()
 
 
-def handle_shutdown(loop, server):
-    logging.info("Shutdown signal received")
-    asyncio.create_task(shutdown_server(server))
-    loop.stop()
-
-
 async def main():
     server = None
+    shutdown_event = asyncio.Event()
+
+    def signal_handler():
+        logging.info("Shutdown signal received")
+        shutdown_event.set()
+
     try:
         server = await websockets.serve(handle_client, "localhost", 5000)
         logging.info("Mock server running on localhost:5000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, lambda: handle_shutdown(loop, server))
-        await asyncio.Future()
+            loop.add_signal_handler(sig, signal_handler)
+        await shutdown_event.wait()
+        await shutdown_server(server)
     except Exception as e:
         logging.error(f"Server error: {e}")
     finally:
-        if not shutdown:
+        if server and not shutdown:
             await shutdown_server(server)
         logging.info("Server shutdown complete")
 
@@ -133,6 +134,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Received keyboard interrupt")
+        pass
     finally:
         logging.info("Exiting...")
