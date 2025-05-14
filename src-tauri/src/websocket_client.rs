@@ -6,6 +6,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use tauri::{AppHandle, Emitter};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
@@ -50,27 +51,18 @@ struct HeartbeatPayload {
   timestamp: Option<i64>,
 }
 
-pub fn get_current_status() -> Status {
-  CURRENT_STATUS
-    .lock()
-    .map(|guard| guard.clone())
-    .unwrap_or_else(|e| {
-      eprintln!("Failed to lock status mutex for reading: {}", e);
-      Status::default()
-    })
-}
-
 pub fn create_control_channel() -> (Sender<[f32; 6]>, Receiver<[f32; 6]>) {
   channel(1)
 }
 
-pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
+pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>, app_handle: AppHandle) {
   println!("WebSocket client starting...");
 
   loop {
     {
       if let Ok(mut status) = CURRENT_STATUS.lock() {
         *status = Status::default();
+        let _ = app_handle.emit("status_update", &*status);
       } else {
         eprintln!("Failed to lock status mutex for reset.");
         *CURRENT_STATUS.lock().unwrap() = Status::default();
@@ -92,7 +84,14 @@ pub async fn start_websocket_client(mut control_rx: Receiver<[f32; 6]>) {
 
     let last_heartbeat_time = Arc::new(Mutex::new(0i64));
 
-    match connect_and_handle(&mut control_rx, &url, last_heartbeat_time.clone()).await {
+    match connect_and_handle(
+      &mut control_rx,
+      &url,
+      last_heartbeat_time.clone(),
+      app_handle.clone(),
+    )
+    .await
+    {
       Ok(_) => {
         println!("WebSocket connection closed gracefully.");
       }
@@ -124,6 +123,7 @@ async fn connect_and_handle(
   control_rx: &mut Receiver<[f32; 6]>,
   url: &str,
   last_heartbeat_time: Arc<Mutex<i64>>,
+  app_handle: AppHandle,
 ) -> Result<(), Box<dyn std::error::Error>> {
   let connect_timeout = Duration::from_secs(5);
   let (ws_stream, _) = timeout(connect_timeout, connect_async(url)).await??;
@@ -138,6 +138,7 @@ async fn connect_and_handle(
       status.roll = 0.0;
       status.desired_pitch = 0.0;
       status.desired_roll = 0.0;
+      let _ = app_handle.emit("status_update", &*status);
     } else {
       eprintln!("Failed to lock status mutex on connect.");
       return Err("Failed to update status on connect".into());
@@ -158,6 +159,7 @@ async fn connect_and_handle(
   write.send(Message::Text(handshake_json.into())).await?;
 
   let last_heartbeat_time_monitor = last_heartbeat_time.clone();
+  let app_handle_monitor = app_handle.clone();
   let heartbeat_monitor = tokio::spawn(async move {
     let check_interval = Duration::from_secs(1);
     let timeout_duration: i64 = 5;
@@ -180,6 +182,7 @@ async fn connect_and_handle(
         if let Ok(mut status) = CURRENT_STATUS.lock() {
           if status.is_connected {
             status.is_connected = false;
+            let _ = app_handle_monitor.emit("status_update", &*status);
           }
         } else {
           eprintln!("Failed to lock status mutex on heartbeat timeout.");
@@ -212,6 +215,7 @@ async fn connect_and_handle(
                                         if let Ok(mut status) = CURRENT_STATUS.lock() {
                                             if !status.is_connected {
                                                 status.is_connected = true;
+                                                let _ = app_handle.emit("status_update", &*status);
                                             }
                                         }
 
@@ -234,6 +238,7 @@ async fn connect_and_handle(
                                             status.roll = status_msg.payload.roll;
                                             status.desired_pitch = status_msg.payload.desired_pitch;
                                             status.desired_roll = status_msg.payload.desired_roll;
+                                            let _ = app_handle.emit("status_update", &*status);
                                         } else {
                                             eprintln!("Failed to lock status mutex for status update.");
                                         }
@@ -280,6 +285,7 @@ async fn connect_and_handle(
     if status.is_connected {
       println!("Setting connection status to false in connect_and_handle exit.");
       status.is_connected = false;
+      let _ = app_handle.emit("status_update", &*status);
     }
   } else {
     eprintln!("Failed to lock status mutex during disconnect handling.");

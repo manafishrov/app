@@ -1,7 +1,6 @@
 mod commands {
   pub mod config;
   pub mod control;
-  pub mod status;
 }
 
 mod models {
@@ -13,7 +12,6 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::control::send_control_input;
-use commands::status::get_status;
 use tauri::Manager;
 use tokio::sync::mpsc::Sender;
 
@@ -23,11 +21,12 @@ pub struct ControlChannelState {
 
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
   let (control_tx, control_rx) = websocket_client::create_control_channel();
+  let app_handle = app.app_handle().clone();
 
   app.manage(ControlChannelState { tx: control_tx });
 
   tauri::async_runtime::spawn(async move {
-    websocket_client::start_websocket_client(control_rx).await;
+    websocket_client::start_websocket_client(control_rx, app_handle).await;
   });
 
   Ok(())
@@ -40,7 +39,6 @@ pub fn run() {
       get_config,
       save_config,
       send_control_input,
-      get_status,
     ])
     .setup(setup_handlers);
 
