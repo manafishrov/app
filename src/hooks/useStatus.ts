@@ -6,6 +6,8 @@ type Status = {
   waterDetected: boolean;
   pitch: number;
   roll: number;
+  desiredPitch: number;
+  desiredRoll: number;
 };
 
 const REFETCH_INTERVAL = 100;

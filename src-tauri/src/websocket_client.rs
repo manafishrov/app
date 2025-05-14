@@ -31,13 +31,6 @@ struct WebSocketMessage<T> {
 }
 
 #[derive(Serialize, Deserialize)]
-struct StatusPayload {
-  water_sensor: bool,
-  pitch: f32,
-  roll: f32,
-}
-
-#[derive(Serialize, Deserialize)]
 struct HeartbeatPayload {
   timestamp: Option<i64>,
 }
@@ -128,6 +121,8 @@ async fn connect_and_handle(
       status.water_detected = false;
       status.pitch = 0.0;
       status.roll = 0.0;
+      status.desired_pitch = 0.0;
+      status.desired_roll = 0.0;
     } else {
       eprintln!("Failed to lock status mutex on connect.");
       return Err("Failed to update status on connect".into());
@@ -209,12 +204,14 @@ async fn connect_and_handle(
                                     break;
                                 }
                             }
-                        } else if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<StatusPayload>>(&text) {
+                        } else if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<Status>>(&text) {
                             if matches!(status_msg.message_type, MessageType::Status) {
                                 if let Ok(mut status) = CURRENT_STATUS.lock() {
-                                    status.water_detected = status_msg.payload.water_sensor;
+                                    status.water_detected = status_msg.payload.water_detected;
                                     status.pitch = status_msg.payload.pitch;
                                     status.roll = status_msg.payload.roll;
+                                    status.desired_pitch = status_msg.payload.desired_pitch;
+                                    status.desired_roll = status_msg.payload.desired_roll;
                                 } else {
                                     eprintln!("Failed to lock status mutex for status update.");
                                 }

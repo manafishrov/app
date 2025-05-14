@@ -38,8 +38,8 @@ function ConnectionStatus() {
         >
           <p>
             {status?.isConnected
-              ? 'Connected to device controls'
-              : 'Disconnected from device controls'}
+              ? 'Connected with web sockets'
+              : 'Disconnected from web sockets'}
           </p>
         </TooltipContent>
       </Tooltip>

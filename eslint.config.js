@@ -10,7 +10,31 @@ import tseslint from 'typescript-eslint';
 
 const config = tseslint.config(
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['vite.config.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.node.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.recommendedTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+      eslintConfigPrettier,
+    ],
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -39,15 +63,10 @@ const config = tseslint.config(
     },
   },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
         ...globals.browser,
-      },
-      parserOptions: {
-        parser: tseslint.parser,
-        project: './tsconfig.json',
-        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
@@ -59,7 +78,8 @@ const config = tseslint.config(
   },
   reactCompiler.configs.recommended,
   {
-    ...react.configs['recommended-type-checked'],
+    files: ['src/**/*.{ts,tsx}'],
+    ...react.configs.recommended,
   },
   {
     linterOptions: {
