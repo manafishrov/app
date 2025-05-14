@@ -24,12 +24,6 @@ enum MessageType {
   Status,
 }
 
-impl std::fmt::Display for MessageType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{:?}", self)
-  }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 struct BasicMessage {
   message_type: MessageType,
