@@ -9,7 +9,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useTransition,
 } from 'react';
 
 import { themeScript } from '@/lib/themeScript';
@@ -121,6 +120,7 @@ function Theme({
           ? resolved
           : fallback;
         // @ts-expect-error - colorScheme is a valid CSS property but missing in TS types
+        // eslint-disable-next-line react-compiler/react-compiler
         d.style.colorScheme = colorScheme;
       }
 
@@ -139,6 +139,7 @@ function Theme({
 
   const setTheme = useCallback(
     (theme: string | ((prev: string) => string)) => {
+      // @ts-expect-error - argument is assignable
       const newTheme = typeof theme === 'function' ? theme(theme) : theme;
       setThemeState(newTheme);
 
@@ -152,13 +153,11 @@ function Theme({
     [storageKey],
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_unused, startTransition] = useTransition();
-
   const handleMediaQuery = useCallback(
     (e: MediaQueryListEvent | MediaQueryList) => {
       const resolved = getSystemTheme(e);
       requestAnimationFrame(() => {
+        // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
         setResolvedTheme(resolved);
       });
 
