@@ -10,13 +10,11 @@ type Status = {
   desiredRoll: number;
 };
 
-const REFETCH_INTERVAL = 100;
-
 function useStatus() {
   return useQuery({
     queryKey: ['status'],
     queryFn: async () => invoke<Status>('get_status'),
-    refetchInterval: REFETCH_INTERVAL,
+    refetchInterval: 100,
   });
 }
 

@@ -3,6 +3,8 @@ import { useStatus } from '@/hooks/useStatus';
 function GyroscopeVisualization() {
   const { data: status } = useStatus();
 
+  if (!status?.isConnected) return null;
+
   const pitch = status?.pitch ?? 0;
   const roll = status?.roll ?? 0;
   const desiredPitch = status?.desiredPitch ?? 0;

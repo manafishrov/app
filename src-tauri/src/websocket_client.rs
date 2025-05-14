@@ -16,7 +16,7 @@ static CURRENT_STATUS: Lazy<Arc<Mutex<Status>>> =
 static CURRENT_CONFIG: Lazy<Arc<Mutex<Config>>> =
   Lazy::new(|| Arc::new(Mutex::new(get_config().unwrap_or_default())));
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 enum MessageType {
   Command,
   Heartbeat,
@@ -24,10 +24,31 @@ enum MessageType {
   Status,
 }
 
+impl std::fmt::Display for MessageType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{:?}", self)
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct BasicMessage {
+  message_type: MessageType,
+  payload: serde_json::Value,
+}
+
 #[derive(Serialize, Deserialize)]
 struct WebSocketMessage<T> {
   message_type: MessageType,
   payload: T,
+}
+
+#[derive(Serialize, Deserialize)]
+struct StatusPayload {
+  water_detected: bool,
+  pitch: f32,
+  roll: f32,
+  desired_pitch: f32,
+  desired_roll: f32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -145,7 +166,7 @@ async fn connect_and_handle(
   let last_heartbeat_time_monitor = last_heartbeat_time.clone();
   let heartbeat_monitor = tokio::spawn(async move {
     let check_interval = Duration::from_secs(1);
-    let timeout_duration: i64 = 10;
+    let timeout_duration: i64 = 5;
 
     loop {
       tokio::time::sleep(check_interval).await;
@@ -181,43 +202,53 @@ async fn connect_and_handle(
                 Ok(msg) => {
                     if msg.is_text() {
                         let text = msg.into_text()?;
-                        if let Ok(heartbeat_msg) = serde_json::from_str::<WebSocketMessage<HeartbeatPayload>>(&text) {
-                            if matches!(heartbeat_msg.message_type, MessageType::Heartbeat) {
-                                let received_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
-                                if let Ok(mut lh_time) = last_heartbeat_time.lock() {
-                                    *lh_time = received_time;
-                                }
-                                if let Ok(mut status) = CURRENT_STATUS.lock() {
-                                    if !status.is_connected {
-                                        println!("Re-established connection via heartbeat.");
-                                        status.is_connected = true;
-                                    }
-                                }
+                        if let Ok(basic_msg) = serde_json::from_str::<BasicMessage>(&text) {
+                            match basic_msg.message_type {
+                                MessageType::Heartbeat => {
+                                    if let Ok(heartbeat_msg) = serde_json::from_str::<WebSocketMessage<HeartbeatPayload>>(&text) {
+                                        let received_time = heartbeat_msg.payload.timestamp.unwrap_or_else(|| {
+                                            SystemTime::now()
+                                                .duration_since(UNIX_EPOCH)
+                                                .unwrap_or_default()
+                                                .as_secs() as i64
+                                        });
+                                        if let Ok(mut lh_time) = last_heartbeat_time.lock() {
+                                            *lh_time = received_time;
+                                        }
+                                        if let Ok(mut status) = CURRENT_STATUS.lock() {
+                                            if !status.is_connected {
+                                                status.is_connected = true;
+                                            }
+                                        }
 
-                                let response = WebSocketMessage {
-                                    message_type: MessageType::Heartbeat,
-                                    payload: HeartbeatPayload { timestamp: None },
-                                };
-                                let response_json = serde_json::to_string(&response)?;
-                                if let Err(e) = write.send(Message::Text(response_json.into())).await {
-                                    eprintln!("Failed to send heartbeat response: {}", e);
-                                    break;
-                                }
-                            }
-                        } else if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<Status>>(&text) {
-                            if matches!(status_msg.message_type, MessageType::Status) {
-                                if let Ok(mut status) = CURRENT_STATUS.lock() {
-                                    status.water_detected = status_msg.payload.water_detected;
-                                    status.pitch = status_msg.payload.pitch;
-                                    status.roll = status_msg.payload.roll;
-                                    status.desired_pitch = status_msg.payload.desired_pitch;
-                                    status.desired_roll = status_msg.payload.desired_roll;
-                                } else {
-                                    eprintln!("Failed to lock status mutex for status update.");
-                                }
+                                        let response = WebSocketMessage {
+                                            message_type: MessageType::Heartbeat,
+                                            payload: HeartbeatPayload { timestamp: None },
+                                        };
+                                        let response_json = serde_json::to_string(&response)?;
+                                        if let Err(e) = write.send(Message::Text(response_json.into())).await {
+                                            eprintln!("Failed to send heartbeat response: {}", e);
+                                            break;
+                                        }
+                                    }
+                                },
+                                MessageType::Status => {
+                                    if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<StatusPayload>>(&text) {
+                                        if let Ok(mut status) = CURRENT_STATUS.lock() {
+                                            status.water_detected = status_msg.payload.water_detected;
+                                            status.pitch = status_msg.payload.pitch;
+                                            status.roll = status_msg.payload.roll;
+                                            status.desired_pitch = status_msg.payload.desired_pitch;
+                                            status.desired_roll = status_msg.payload.desired_roll;
+                                        } else {
+                                            eprintln!("Failed to lock status mutex for status update.");
+                                        }
+                                    }
+                                },
+                                _ => println!("Received unhandled message type: {:?}", basic_msg.message_type),
                             }
                         } else {
-                            println!("Received unhandled text message: {}", text);
+                            println!("Failed to parse message as BasicMessage: {}", text);
                         }
                     } else if msg.is_close() {
                         println!("Received Close frame");
@@ -251,15 +282,13 @@ async fn connect_and_handle(
 
   heartbeat_monitor.abort();
 
-  {
-    if let Ok(mut status) = CURRENT_STATUS.lock() {
-      if status.is_connected {
-        println!("Setting connection status to false in connect_and_handle exit.");
-        status.is_connected = false;
-      }
-    } else {
-      eprintln!("Failed to lock status mutex during disconnect handling.");
+  if let Ok(mut status) = CURRENT_STATUS.lock() {
+    if status.is_connected {
+      println!("Setting connection status to false in connect_and_handle exit.");
+      status.is_connected = false;
     }
+  } else {
+    eprintln!("Failed to lock status mutex during disconnect handling.");
   }
 
   println!("Exiting connect_and_handle for {}", url);
