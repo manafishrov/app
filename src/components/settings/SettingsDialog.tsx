@@ -19,7 +19,8 @@ import { configStore, updateConnectionSettings } from '@/stores/configStore';
 
 const formSchema = z.object({
   ipAddress: z.string(),
-  cameraStreamPort: z.number(),
+  webrtcSignalingApiPort: z.number(),
+  webrtcSignalingApiPath: z.string(),
   webSocketPort: z.number(),
 });
 
@@ -32,14 +33,16 @@ function SettingsDialog() {
     },
     defaultValues: {
       ipAddress: config?.ipAddress ?? '',
-      cameraStreamPort: config?.cameraStreamPort ?? 0,
+      webrtcSignalingApiPort: config?.webrtcSignalingApiPort ?? 0,
+      webrtcSignalingApiPath: config?.webrtcSignalingApiPath ?? '',
       webSocketPort: config?.webSocketPort ?? 0,
     },
     onSubmit: async ({ value }) => {
       try {
         await updateConnectionSettings(
           value.ipAddress,
-          value.cameraStreamPort,
+          value.webrtcSignalingApiPort,
+          value.webrtcSignalingApiPath,
           value.webSocketPort,
         );
         toast.success('Settings updated');
@@ -54,7 +57,8 @@ function SettingsDialog() {
     if (config) {
       form.reset({
         ipAddress: config.ipAddress,
-        cameraStreamPort: config.cameraStreamPort,
+        webrtcSignalingApiPort: config.webrtcSignalingApiPort,
+        webrtcSignalingApiPath: config.webrtcSignalingApiPath,
         webSocketPort: config.webSocketPort,
       });
     }
@@ -94,12 +98,21 @@ function SettingsDialog() {
                 />
               )}
             </form.AppField>
-            <form.AppField name='cameraStreamPort'>
+            <form.AppField name='webrtcSignalingApiPort'>
               {(field) => (
                 <field.NumberField
-                  label='Camera stream port'
-                  placeholder='8889'
-                  description='The port number for the camera stream'
+                  label='WebRTC signaling API port'
+                  placeholder='1984'
+                  description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
+                />
+              )}
+            </form.AppField>
+            <form.AppField name='webrtcSignalingApiPath'>
+              {(field) => (
+                <field.TextField
+                  label='WebRTC signaling API path'
+                  placeholder='/api/webrtc?src=cam'
+                  description='The path for the WebRTC signaling API (used for establishing the video stream connection).'
                 />
               )}
             </form.AppField>

@@ -52,7 +52,8 @@ async function loadConfig() {
 
 async function updateConnectionSettings(
   ipAddress: string,
-  cameraStreamPort: number,
+  webrtcSignalingApiPort: number,
+  webrtcSignalingApiPath: string,
   webSocketPort: number,
 ) {
   const currentConfig = configStore.state;
@@ -61,7 +62,8 @@ async function updateConnectionSettings(
   const newConfig = {
     ...currentConfig,
     ipAddress,
-    cameraStreamPort,
+    webrtcSignalingApiPort,
+    webrtcSignalingApiPath,
     webSocketPort,
   };
 
