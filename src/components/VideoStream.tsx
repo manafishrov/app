@@ -5,7 +5,7 @@ import { StatusOverlay } from '@/components/status/StatusOverlay';
 
 import { configStore } from '@/stores/configStore';
 
-const RETRY_DELAY = 5000;
+const RETRY_DELAY = 3000;
 
 function VideoStream() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,7 +59,7 @@ function VideoStream() {
       await pc.setLocalDescription(offer);
 
       const response = await fetch(
-        `http://${config.ipAddress}:${config.cameraStreamPort}/cam/whep`,
+        `http://${config.ipAddress}:${config.webrtcSignalingApiPort}${config.webrtcSignalingApiPath}`,
         {
           method: 'POST',
           headers: {
@@ -105,7 +105,11 @@ function VideoStream() {
         peerConnectionRef.current.close();
       }
     };
-  }, [config?.ipAddress, config?.cameraStreamPort]);
+  }, [
+    config?.ipAddress,
+    config?.webrtcSignalingApiPort,
+    config?.webrtcSignalingApiPath,
+  ]);
 
   return (
     <>

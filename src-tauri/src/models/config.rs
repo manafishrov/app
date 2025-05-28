@@ -40,7 +40,8 @@ pub struct GamepadBindings {
 #[serde(rename_all = "camelCase")]
 pub struct Config {
   pub ip_address: String,
-  pub camera_stream_port: u16,
+  pub webrtc_signaling_api_port: u16,
+  pub webrtc_signaling_api_path: String,
   pub web_socket_port: u16,
   pub keyboard: KeyboardBindings,
   pub gamepad: GamepadBindings,
@@ -50,8 +51,9 @@ impl Default for Config {
   fn default() -> Self {
     Config {
       ip_address: "10.10.10.10".to_string(),
-      camera_stream_port: 8889,
-      web_socket_port: 5000,
+      webrtc_signaling_api_port: 1984,
+      webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
+      web_socket_port: 9000,
       keyboard: KeyboardBindings {
         move_forward: "KeyW".to_string(),
         move_backward: "KeyS".to_string(),

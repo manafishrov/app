@@ -31,7 +31,8 @@ type GamepadBindings = {
 
 type Config = {
   ipAddress: string;
-  cameraStreamPort: number;
+  webrtcSignalingApiPort: number;
+  webrtcSignalingApiPath: string;
   webSocketPort: number;
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
