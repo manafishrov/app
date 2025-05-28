@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 fn get_config_path() -> PathBuf {
   let base_dir = dirs::config_dir().expect("Failed to get config directory");
-  base_dir.join("cyberfish").join("config.json")
+  base_dir.join("manafish").join("config.json")
 }
 
 #[tauri::command]

@@ -14,7 +14,7 @@ shutdown = False
 
 
 async def handle_client(websocket):
-    logging.info(f"Client connected from Cyberfish App at {websocket.remote_address}!")
+    logging.info(f"Client connected from Manafish App at {websocket.remote_address}!")
     clients.add(websocket)
 
     async def send_heartbeat():

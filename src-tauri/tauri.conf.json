@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "cyberfish",
+  "productName": "manafish",
   "version": "0.1.0",
-  "identifier": "com.cyberfish.app",
+  "identifier": "com.manafish.app",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Cyberfish",
+        "title": "Manafish",
         "width": 800,
         "height": 600
       }

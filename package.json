@@ -1,6 +1,6 @@
 {
-  "name": "cyberfish",
-  "description": "An app for controlling the Cyberfish ROV",
+  "name": "manafish",
+  "description": "An app for controlling the Manafish ROV",
   "private": true,
   "version": "0.1.0",
   "type": "module",

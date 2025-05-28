@@ -79,7 +79,7 @@ function SettingsDialog() {
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Configure your Cyberfish Raspberry Pi connection settings.
+          Configure your Manafish Raspberry Pi connection settings.
         </DialogDescription>
         <form
           onSubmit={(e) => {
@@ -94,7 +94,7 @@ function SettingsDialog() {
                 <field.TextField
                   label='IP address'
                   placeholder='10.10.10.10'
-                  description='The IP address of your Cyberfish Raspberry Pi.'
+                  description='The IP address of your Manafish Raspberry Pi.'
                 />
               )}
             </form.AppField>
