@@ -30,6 +30,15 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3OEFGMzdGMEVFNTU3RjYKUldUMlYrVU9mL09LeDBJbktpRy91ZU9oL1RKMElNWjN6Y3B1RzhkaldsVGo3VjcwRjlubHhMUDkK",
+      "endpoints": [
+        "https://github.com/Lektr/manafish-app/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
