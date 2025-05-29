@@ -1,4 +1,4 @@
-use crate::models::gamepad::GamepadData;
+use crate::models::gamepad::{GamepadData, GamepadEventType};
 use gilrs::{Axis, Button, EventType, Gamepad, MappingSource};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -92,33 +92,40 @@ pub fn gamepad_to_json(gamepad: Gamepad, event: EventType, time: SystemTime) -> 
   };
   let power_info = format!("{:?}", gamepad.power_info());
 
+  let event = match event {
+    EventType::Connected => GamepadEventType::Connected,
+    EventType::Disconnected => GamepadEventType::Disconnected,
+    EventType::ButtonPressed(..) => GamepadEventType::ButtonPressed,
+    EventType::ButtonReleased(..) => GamepadEventType::ButtonReleased,
+    EventType::ButtonChanged(..) => GamepadEventType::ButtonChanged,
+    EventType::AxisChanged(..) => GamepadEventType::AxisChanged,
+    EventType::Dropped => GamepadEventType::Dropped,
+    _ => GamepadEventType::ButtonChanged,
+  };
+
   let axes: Vec<f32> = (0..num_of_axes)
     .map(|idx| gamepad.axis_data(axis_from_u16(idx)))
-    .map(|o| match o {
-      Some(&axis) => axis.value(),
-      None => 0.0,
-    })
+    .map(|o| o.map_or(0.0, |axis| axis.value()))
     .collect();
 
   let buttons: Vec<f32> = (0..num_of_buttons)
     .map(|idx| gamepad.button_data(button_from_u16(idx)))
-    .map(|o| match o {
-      Some(button) => button.value(),
-      None => 0.0,
-    })
+    .map(|o| o.map_or(0.0, |button| button.value()))
     .collect();
 
-  GamepadData {
+  let gamepad_data = GamepadData {
     id,
     uuid,
     connected,
     vibration,
-    event: format!("{:?}", event),
+    event,
     timestamp,
     name,
     buttons,
     axes,
     mapping,
     power_info,
-  }
+  };
+
+  gamepad_data
 }

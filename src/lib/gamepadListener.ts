@@ -1,75 +1,36 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
-export type PluginEvent = {
+type GamepadEventType =
+  | 'connected'
+  | 'disconnected'
+  | 'buttonPressed'
+  | 'buttonReleased'
+  | 'buttonChanged'
+  | 'axisChanged'
+  | 'dropped';
+
+type GamepadData = {
   id: number;
   uuid: string;
   connected: boolean;
   vibration: boolean;
-  event: string | object;
+  event: GamepadEventType;
   timestamp: number;
   name: string;
   buttons: ReadonlyArray<number>;
   axes: ReadonlyArray<number>;
   mapping: string;
-  power_info: string;
+  powerInfo: string;
 };
 
-type UnlistenFn = () => void;
-type Callback = (response: PluginEvent) => void;
-let callback: Callback | null = null;
-let unlisten: UnlistenFn;
+const gamepads: (Gamepad | null)[] = [null, null, null, null];
 
-let gamepads: Gamepad[] = [];
+function getGamepads() {
+  return [...gamepads];
+}
 
-export const getGamepads = () => {
-  if (gamepads.length === 0) return [null, null, null, null];
-  return gamepads;
-};
-
-const start = async () => {
-  await invoke('execute_gamepad');
-  navigator.getGamepads = getGamepads;
-
-  unlisten = await listen<PluginEvent>(
-    'event',
-    (event: { payload: PluginEvent }) => {
-      const { payload } = event;
-      const gamepad = eventToGamepad(payload);
-      let added = false;
-      gamepads = gamepads.map((g) => {
-        if (g.id === gamepad.id && g.index === gamepad.index) {
-          added = true;
-          return gamepad;
-        }
-        return g;
-      });
-
-      if (!added) gamepads.push(gamepad);
-
-      if (payload.event === 'Connected') {
-        const customEvent = new CustomEvent(
-          'gamepadconnected',
-        ) as CustomEvent & { gamepad?: Gamepad };
-        customEvent.gamepad = gamepad;
-        window.dispatchEvent(customEvent as GamepadEvent);
-      }
-      if (payload.event === 'Disconnected') {
-        const customEvent = new CustomEvent(
-          'gamepaddisconnected',
-        ) as CustomEvent & { gamepad?: Gamepad };
-        customEvent.gamepad = gamepad;
-        window.dispatchEvent(customEvent as GamepadEvent);
-        gamepads = gamepads.filter((g) => g.index !== gamepad.index);
-      }
-      if (callback !== null) callback(payload);
-    },
-  );
-};
-
-void start();
-
-const eventToGamepad = (event: PluginEvent): Gamepad => {
+function createGamepadFromEvent(event: GamepadData): Gamepad {
   const { id, axes, connected, name, timestamp, uuid, mapping } = event;
   const buttons = event.buttons.map(
     (value) => ({ value, touched: false, pressed: value > 0 }) as GamepadButton,
@@ -86,9 +47,30 @@ const eventToGamepad = (event: PluginEvent): Gamepad => {
     hapticActuators: [],
     vibrationActuator: null,
   } as unknown as Gamepad;
-};
+}
 
-export const execute = async (cb: Callback): Promise<UnlistenFn> => {
-  callback = cb;
-  return Promise.resolve(unlisten);
-};
+function handleGamepadEvent(event: { payload: GamepadData }) {
+  const { payload } = event;
+  const gamepad = createGamepadFromEvent(payload);
+
+  if (payload.event === 'connected') {
+    gamepads[gamepad.index] = gamepad;
+    const customEvent = new GamepadEvent('gamepadconnected', { gamepad });
+    window.dispatchEvent(customEvent);
+  } else if (payload.event === 'disconnected') {
+    gamepads[gamepad.index] = null;
+    const customEvent = new GamepadEvent('gamepaddisconnected', { gamepad });
+    window.dispatchEvent(customEvent);
+  } else {
+    gamepads[gamepad.index] = gamepad;
+  }
+}
+
+async function initializeGamepadListener() {
+  await invoke('execute_gamepad');
+  navigator.getGamepads = getGamepads;
+
+  await listen<GamepadData>('event', handleGamepadEvent);
+}
+
+void initializeGamepadListener();

@@ -1,12 +1,25 @@
 use serde::Serialize;
 
 #[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum GamepadEventType {
+  Connected,
+  Disconnected,
+  ButtonPressed,
+  ButtonReleased,
+  ButtonChanged,
+  AxisChanged,
+  Dropped,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct GamepadData {
   pub id: usize,
   pub uuid: String,
   pub connected: bool,
   pub vibration: bool,
-  pub event: String,
+  pub event: GamepadEventType,
   pub timestamp: u128,
   pub name: String,
   pub buttons: Vec<f32>,
