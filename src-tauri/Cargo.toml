@@ -29,3 +29,5 @@ tokio = { version = "1.44.1", features = ["full"] }
 tokio-tungstenite = "0.26.2"
 futures-util = "0.3.31"
 sdl2 = { version = "0.37.0", features = ["bundled"] }
+gilrs = "0.11.0"
+uuid = "1.17.0"

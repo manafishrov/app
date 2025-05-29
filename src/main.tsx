@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 
 import '@/styles/app.css';
+import '@/lib/gamepadListener';
 
 const queryClient = new QueryClient({
   defaultOptions: {
