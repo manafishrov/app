@@ -15,7 +15,7 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::control::send_control_input;
-use commands::gamepad::{execute_gamepad, vibrate_gamepad};
+use commands::gamepad::execute_gamepad;
 use tauri::Manager;
 use tokio::sync::mpsc::Sender;
 
@@ -44,7 +44,6 @@ pub fn run() {
       save_config,
       send_control_input,
       execute_gamepad,
-      vibrate_gamepad
     ])
     .setup(setup_handlers);
 
