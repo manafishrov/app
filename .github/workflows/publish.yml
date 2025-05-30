@@ -5,6 +5,9 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*
 
+permissions:
+  contents: write
+
 jobs:
   create-release-draft:
     name: Create Release Draft
@@ -28,8 +31,6 @@ jobs:
   build-tauri:
     name: Build Tauri App
     needs: create-release-draft
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
