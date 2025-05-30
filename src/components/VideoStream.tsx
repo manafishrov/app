@@ -113,7 +113,7 @@ function VideoStream() {
 
   return (
     <>
-      <div className='relative aspect-video w-full'>
+      <div className='relative aspect-4/3 w-full'>
         <video
           ref={videoRef}
           className='h-full w-full'

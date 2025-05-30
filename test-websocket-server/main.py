@@ -115,8 +115,8 @@ async def main():
         shutdown_event.set()
 
     try:
-        server = await websockets.serve(handle_client, "localhost", 5000)
-        logging.info("Mock server running on localhost:5000")
+        server = await websockets.serve(handle_client, "localhost", 9000)
+        logging.info("Mock server running on localhost:9000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, signal_handler)
