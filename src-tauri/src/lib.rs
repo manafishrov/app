@@ -16,7 +16,7 @@ mod websocket_client;
 use commands::config::{get_config, save_config};
 use commands::control::send_control_input;
 use commands::gamepad::execute_gamepad;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::mpsc::Sender;
 
@@ -26,21 +26,28 @@ pub struct ControlChannelState {
 
 async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
   if let Some(update) = app.updater()?.check().await? {
+    app.emit("update-available", ()).unwrap();
     let mut downloaded = 0;
-
     update
       .download_and_install(
         |chunk_length, content_length| {
           downloaded += chunk_length;
-          println!("downloaded {downloaded} from {content_length:?}");
+          app
+            .emit(
+              "update-progress",
+              serde_json::json!({
+                "downloaded": downloaded,
+                "total": content_length.unwrap_or(0)
+              }),
+            )
+            .unwrap();
         },
         || {
-          println!("download finished");
+          app.emit("update-downloaded", ()).unwrap();
         },
       )
       .await?;
-
-    println!("update installed");
+    app.emit("update-installing", ()).unwrap();
     app.restart();
   }
 
