@@ -17,20 +17,47 @@ use commands::config::{get_config, save_config};
 use commands::control::send_control_input;
 use commands::gamepad::execute_gamepad;
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::mpsc::Sender;
 
 pub struct ControlChannelState {
   pub tx: Sender<[f32; 6]>,
 }
 
+async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+  if let Some(update) = app.updater()?.check().await? {
+    let mut downloaded = 0;
+
+    update
+      .download_and_install(
+        |chunk_length, content_length| {
+          downloaded += chunk_length;
+          println!("downloaded {downloaded} from {content_length:?}");
+        },
+        || {
+          println!("download finished");
+        },
+      )
+      .await?;
+
+    println!("update installed");
+    app.restart();
+  }
+
+  Ok(())
+}
+
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
   let (control_tx, control_rx) = websocket_client::create_control_channel();
   let app_handle = app.app_handle().clone();
+  let update_handle = app.app_handle().clone();
 
   app.manage(ControlChannelState { tx: control_tx });
-
   tauri::async_runtime::spawn(async move {
     websocket_client::start_websocket_client(control_rx, app_handle).await;
+  });
+  tauri::async_runtime::spawn(async move {
+    update(update_handle).await.unwrap();
   });
 
   Ok(())
