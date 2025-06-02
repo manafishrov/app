@@ -4,8 +4,6 @@ import * as ToasterPrimitive from 'sonner';
 
 import { useTheme } from '@/components/providers/ThemeProvider';
 
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-
 const toast = ToasterPrimitive.toast;
 
 function Toaster({
@@ -15,14 +13,12 @@ function Toaster({
   ref?: React.RefObject<React.ComponentRef<typeof ToasterPrimitive.Toaster>>;
 }) {
   const { theme = 'system' } = useTheme();
-  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   return (
     <ToasterPrimitive.Toaster
       ref={ref}
       theme={theme as ToasterPrimitive.ToasterProps['theme']}
       className='toaster group'
-      position={isDesktop ? 'bottom-right' : 'top-center'}
       toastOptions={{
         classNames: {
           toast:

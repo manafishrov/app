@@ -33,7 +33,7 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <>
-      <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+      <ThemeProvider>
         <Outlet />
         <Toaster />
       </ThemeProvider>

@@ -24,7 +24,6 @@ function Home() {
         <KeyboardBindingsDialog />
         <GamepadBindingsDialog />
       </div>
-      <p>UPDATE TEST</p>
     </main>
   );
 }

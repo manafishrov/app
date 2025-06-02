@@ -26,9 +26,9 @@ async function initializeUpdateListener() {
       });
     });
 
-    await listen('update-installing', () => {
-      toast.loading('Installing update...', {
-        description: 'The app will restart automatically.',
+    await listen('update-ready', () => {
+      toast.loading('Update ready', {
+        description: 'Restart the app to apply the update.',
       });
     });
   } catch (error) {

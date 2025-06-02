@@ -47,8 +47,7 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
         },
       )
       .await?;
-    app.emit("update-installing", ()).unwrap();
-    app.restart();
+    app.emit("update-ready", ()).unwrap();
   }
 
   Ok(())
