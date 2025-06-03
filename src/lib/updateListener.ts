@@ -21,13 +21,13 @@ async function initializeUpdateListener() {
     );
 
     await listen('update-downloaded', () => {
-      toast.success('Update downloaded', {
+      toast.loading('Update downloaded', {
         description: 'Installing...',
       });
     });
 
     await listen('update-ready', () => {
-      toast.loading('Update ready', {
+      toast.success('Update ready', {
         description: 'Restart the app to apply the update.',
       });
     });
