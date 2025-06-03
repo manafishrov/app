@@ -125,7 +125,7 @@ function VideoStream() {
           <div className='absolute inset-0 flex items-center justify-center bg-black'>
             <div className='text-center text-white'>
               {isLoading ? (
-                <p>Connecting to CyberFish drone camera...</p>
+                <p>Connecting to Manafish drone camera...</p>
               ) : (
                 <p>Unable to connect to drone camera. Retrying...</p>
               )}
