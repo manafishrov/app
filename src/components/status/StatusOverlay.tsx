@@ -1,5 +1,5 @@
+import { AttitudeIndicator } from '@/components/status/AttitudeIndicator';
 import { ConnectionStatus } from '@/components/status/ConnectionStatus';
-import { GyroscopeVisualization } from '@/components/status/GyroscopeVisualization';
 import { WaterStatus } from '@/components/status/WaterStatus';
 
 function StatusOverlay() {
@@ -11,7 +11,7 @@ function StatusOverlay() {
       </div>
 
       <div className='absolute bottom-2 left-2'>
-        <GyroscopeVisualization />
+        <AttitudeIndicator />
       </div>
     </>
   );

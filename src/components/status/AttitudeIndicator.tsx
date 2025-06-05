@@ -1,6 +1,6 @@
 import { useStatus } from '@/hooks/useStatus';
 
-function GyroscopeVisualization() {
+function AttitudeIndicator() {
   const { data: status } = useStatus();
 
   if (!status?.isConnected) return null;
@@ -101,4 +101,4 @@ function GyroscopeVisualization() {
   );
 }
 
-export { GyroscopeVisualization };
+export { AttitudeIndicator };
