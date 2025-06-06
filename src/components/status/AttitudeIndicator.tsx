@@ -1,7 +1,9 @@
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useStatus } from '@/hooks/useStatus';
 
 function AttitudeIndicator() {
   const { data: status } = useStatus();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   if (!status?.isConnected) return null;
 
@@ -10,93 +12,178 @@ function AttitudeIndicator() {
   const desiredPitch = status?.desiredPitch ?? 0;
   const desiredRoll = status?.desiredRoll ?? 0;
 
+  const size = isDesktop ? 220 : 160;
+  const center = size / 2;
+  const pitchScale = size / 200;
+
   return (
-    <div className='flex flex-col items-start gap-2 overflow-hidden rounded-lg p-4 backdrop-blur-xs'>
-      <div className='flex w-full justify-between text-base font-medium'>
-        <div className='flex gap-6'>
-          <div>
-            <span className='text-muted-foreground'>Pitch: </span>
-            <span className='text-primary'>{pitch.toFixed(1)}°</span>
-          </div>
-          <div>
-            <span className='text-muted-foreground'>Roll: </span>
-            <span className='text-primary'>{roll.toFixed(1)}°</span>
-          </div>
-        </div>
-      </div>
+    <div className='relative' style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`-${size * 0.05} -${size * 0.05} ${size * 1.1} ${size * 1.1}`}
+      >
+        <circle
+          cx={center}
+          cy={center}
+          r={center - size * 0.05}
+          fill='#1a1a1a'
+          stroke='#333'
+          strokeWidth={size * 0.01}
+        />
 
-      <div className='relative h-48 w-64'>
-        <div className='absolute inset-0'>
-          <div className='bg-muted-foreground/50 absolute top-1/2 left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute left-3 z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              0°
-            </span>
-          </div>
+        {[-90, -60, -30, -15, 0, 15, 30, 60, 90].map((deg) => (
+          <g key={deg}>
+            <line
+              x1={center - size * 0.4}
+              y1={center + deg * pitchScale}
+              x2={center + size * 0.4}
+              y2={center + deg * pitchScale}
+              stroke='white'
+              strokeWidth={size * 0.005}
+              strokeOpacity='0.5'
+            />
+            <text
+              x={center - size * 0.4 - size * 0.025}
+              y={center + deg * pitchScale + size * 0.025}
+              fill='white'
+              fontSize={size * 0.05}
+              textAnchor='end'
+            >
+              {deg}°
+            </text>
+            <text
+              x={center + size * 0.4 + size * 0.025}
+              y={center + deg * pitchScale + size * 0.025}
+              fill='white'
+              fontSize={size * 0.05}
+              textAnchor='start'
+            >
+              {deg}°
+            </text>
+          </g>
+        ))}
 
-          <div className='bg-primary/50 absolute top-[33.33%] left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute left-1 z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              30°
-            </span>
-          </div>
+        {[-180, -135, -90, -45, 0, 45, 90, 135, 180].map((deg) => (
+          <g key={deg} transform={`rotate(${deg} ${center} ${center})`}>
+            <line
+              x1={center}
+              y1={size * 0.075}
+              x2={center}
+              y2={size * 0.125}
+              stroke='white'
+              strokeWidth={size * 0.01}
+            />
+            {(deg <= -90 || (deg >= -45 && deg <= 90) || deg >= 135) && (
+              <text
+                x={center}
+                y={size * 0.17}
+                fill='white'
+                fontSize={size * 0.06}
+                textAnchor='middle'
+                alignmentBaseline='middle'
+                transform={`
+                  rotate(${-deg} ${center} ${size * 0.17})
+                  translate(0 ${deg === -180 || deg === 180 ? 2 : deg === 0 ? -2 : 1})
+                `}
+              >
+                {deg === -180
+                  ? 90
+                  : deg === -135
+                    ? -45
+                    : deg === -90
+                      ? 0
+                      : deg === -45
+                        ? 45
+                        : deg === 0
+                          ? -90
+                          : deg === 45
+                            ? -45
+                            : deg === 90
+                              ? 0
+                              : deg === 135
+                                ? 45
+                                : deg === 180
+                                  ? 90
+                                  : ''}
+                °
+              </text>
+            )}
+          </g>
+        ))}
 
-          <div className='bg-primary/50 absolute top-[16.67%] left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute left-1 z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              60°
-            </span>
-          </div>
-
-          <div className='bg-primary/50 absolute top-0 left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute left-1 z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              90°
-            </span>
-          </div>
-
-          <div className='bg-primary/50 absolute top-[66.67%] left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              -30°
-            </span>
-          </div>
-
-          <div className='bg-primary/50 absolute top-[83.33%] left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              -60°
-            </span>
-          </div>
-
-          <div className='bg-primary/50 absolute bottom-0 left-0 h-px w-full'>
-            <span className='text-muted-foreground absolute z-10 -translate-y-1/2 bg-black/70 px-1 text-xs'>
-              -90°
-            </span>
-          </div>
-        </div>
-
-        <div
-          className='absolute top-1/2 left-0 h-0.5 w-full origin-center bg-red-700 transition-transform'
+        <g
           style={{
             transform: `
-              translateY(${-desiredPitch}px)
+              translate(${center}px, ${center}px)
+              translateY(${-desiredPitch * pitchScale}px)
               rotate(${desiredRoll}deg)
+              translate(${-center}px, ${-center}px)
             `,
           }}
         >
-          <div className='absolute top-0 left-1/2 h-0 w-0 -translate-x-1/2 -translate-y-2'>
-            <div className='h-0 w-0 border-r-[6px] border-b-[8px] border-l-[6px] border-r-transparent border-b-red-700 border-l-transparent' />
-          </div>
-        </div>
-        <div
-          className='bg-primary absolute top-1/2 left-0 h-0.5 w-full origin-center transition-transform'
+          <line
+            x1={center - size * 0.25}
+            y1={center}
+            x2={center + size * 0.25}
+            y2={center}
+            stroke='#ffff00'
+            strokeWidth={size * 0.01}
+            strokeDasharray={`${size * 0.02} ${size * 0.02}`}
+          />
+          <path
+            d={`M ${-size * 0.02},${-size * 0.02} L 0,${-size * 0.04} L ${size * 0.02},${-size * 0.02}`}
+            fill='#ffff00'
+            transform={`translate(${center} ${center})`}
+          />
+        </g>
+
+        <g
           style={{
             transform: `
-              translateY(${-pitch}px)
+              translate(${center}px, ${center}px)
+              translateY(${-pitch * pitchScale}px)
               rotate(${roll}deg)
+              translate(${-center}px, ${-center}px)
             `,
           }}
         >
-          <div className='absolute top-0 left-1/2 h-0 w-0 -translate-x-1/2 -translate-y-2'>
-            <div className='border-b-primary h-0 w-0 border-r-[6px] border-b-[8px] border-l-[6px] border-r-transparent border-l-transparent' />
-          </div>
-        </div>
-      </div>
+          <line
+            x1={center - size * 0.25}
+            y1={center}
+            x2={center - size * 0.075}
+            y2={center}
+            stroke='#00ff00'
+            strokeWidth={size * 0.01}
+          />
+          <line
+            x1={center + size * 0.075}
+            y1={center}
+            x2={center + size * 0.25}
+            y2={center}
+            stroke='#00ff00'
+            strokeWidth={size * 0.01}
+          />
+          <circle cx={center} cy={center} r={size * 0.02} fill='#00ff00' />
+        </g>
+
+        <text
+          x={size * 0.1}
+          y={size - size * 0.1}
+          fill='white'
+          fontSize={size * 0.06}
+        >
+          Pitch: {pitch.toFixed(1)}°
+        </text>
+        <text
+          x={size - size * 0.4}
+          y={size - size * 0.1}
+          fill='white'
+          fontSize={size * 0.06}
+        >
+          Roll: {roll.toFixed(1)}°
+        </text>
+      </svg>
     </div>
   );
 }

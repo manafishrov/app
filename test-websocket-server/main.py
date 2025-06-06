@@ -36,8 +36,8 @@ async def handle_client(websocket):
             try:
                 current_time = time.time()
 
-                pitch = 45 * math.sin(current_time / 2) + random.uniform(-5, 5)
-                roll = 30 * math.cos(current_time / 3) + random.uniform(-5, 5)
+                pitch = 70 * math.sin(current_time / 2)
+                roll = 70 * math.cos(current_time / 3)
                 desired_pitch = 20 * math.sin(current_time / 4)
                 desired_roll = 15 * math.cos(current_time / 5)
 
