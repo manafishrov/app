@@ -27,8 +27,8 @@ function AttitudeIndicator() {
           cx={center}
           cy={center}
           r={center - size * 0.05}
-          fill='#1a1a1a'
-          stroke='#333'
+          fill='oklch(0.21 0.006 285.885)'
+          stroke='oklch(1 0 0 / 10%)'
           strokeWidth={size * 0.01}
         />
 
@@ -39,14 +39,14 @@ function AttitudeIndicator() {
               y1={center + deg * pitchScale}
               x2={center + size * 0.4}
               y2={center + deg * pitchScale}
-              stroke='white'
+              stroke='oklch(0.985 0 0)'
               strokeWidth={size * 0.005}
               strokeOpacity='0.5'
             />
             <text
               x={center - size * 0.4 - size * 0.025}
               y={center + deg * pitchScale + size * 0.025}
-              fill='white'
+              fill='oklch(0.985 0 0)'
               fontSize={size * 0.05}
               textAnchor='end'
             >
@@ -55,7 +55,7 @@ function AttitudeIndicator() {
             <text
               x={center + size * 0.4 + size * 0.025}
               y={center + deg * pitchScale + size * 0.025}
-              fill='white'
+              fill='oklch(0.985 0 0)'
               fontSize={size * 0.05}
               textAnchor='start'
             >
@@ -71,14 +71,14 @@ function AttitudeIndicator() {
               y1={size * 0.075}
               x2={center}
               y2={size * 0.125}
-              stroke='white'
+              stroke='oklch(0.985 0 0)'
               strokeWidth={size * 0.01}
             />
             {(deg <= -90 || (deg >= -45 && deg <= 90) || deg >= 135) && (
               <text
                 x={center}
                 y={size * 0.17}
-                fill='white'
+                fill='oklch(0.985 0 0)'
                 fontSize={size * 0.06}
                 textAnchor='middle'
                 alignmentBaseline='middle'
@@ -170,7 +170,7 @@ function AttitudeIndicator() {
         <text
           x={size * 0.1}
           y={size - size * 0.1}
-          fill='white'
+          fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
           Pitch: {pitch.toFixed(1)}°
@@ -178,7 +178,7 @@ function AttitudeIndicator() {
         <text
           x={size - size * 0.4}
           y={size - size * 0.1}
-          fill='white'
+          fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
           Roll: {roll.toFixed(1)}°
