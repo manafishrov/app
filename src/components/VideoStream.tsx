@@ -113,7 +113,7 @@ function VideoStream() {
 
   return (
     <>
-      <div className='relative aspect-4/3 w-full'>
+      <div className='relative aspect-4/3'>
         <video
           ref={videoRef}
           className='h-full w-full'
@@ -122,8 +122,8 @@ function VideoStream() {
           muted
         />
         {(isLoading || hasError) && (
-          <div className='absolute inset-0 flex items-center justify-center bg-black'>
-            <div className='text-center text-white'>
+          <div className='bg-card absolute inset-0 flex items-center justify-center'>
+            <div className='text-foreground text-center'>
               {isLoading ? (
                 <p>Connecting to Manafish drone camera...</p>
               ) : (
