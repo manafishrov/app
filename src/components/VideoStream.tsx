@@ -1,8 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 import { useEffect, useRef, useState } from 'react';
 
-import { StatusOverlay } from '@/components/status/StatusOverlay';
-
 import { configStore } from '@/stores/configStore';
 
 const RETRY_DELAY = 3000;
@@ -113,27 +111,24 @@ function VideoStream() {
 
   return (
     <>
-      <div className='relative aspect-4/3'>
-        <video
-          ref={videoRef}
-          className='h-full w-full'
-          autoPlay
-          playsInline
-          muted
-        />
-        {(isLoading || hasError) && (
-          <div className='bg-card absolute inset-0 flex items-center justify-center'>
-            <div className='text-foreground text-center'>
-              {isLoading ? (
-                <p>Connecting to Manafish drone camera...</p>
-              ) : (
-                <p>Unable to connect to drone camera. Retrying...</p>
-              )}
-            </div>
+      <video
+        ref={videoRef}
+        className='h-full w-full'
+        autoPlay
+        playsInline
+        muted
+      />
+      {(isLoading || hasError) && (
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <div className='text-center'>
+            {isLoading ? (
+              <p>Connecting to Manafish drone camera...</p>
+            ) : (
+              <p>Unable to connect to drone camera. Retrying...</p>
+            )}
           </div>
-        )}
-      </div>
-      <StatusOverlay />
+        </div>
+      )}
     </>
   );
 }
