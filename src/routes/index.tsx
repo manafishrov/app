@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
 
-import { useControlInput } from '@/hooks/useControlInput';
+import { useMovementCommand } from '@/hooks/useMovementCommand';
 
 import { cx } from '@/lib/utils';
 
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  useControlInput();
+  useMovementCommand();
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
