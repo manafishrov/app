@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_sidebar/debug/')({
+export const Route = createFileRoute('/settings/debug/')({
   component: Debug,
 });
 

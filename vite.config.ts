@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
-import path from 'node:path';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 declare const process: {
@@ -20,7 +20,7 @@ const config = defineConfig(() => ({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
     },
   },
 

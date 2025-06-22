@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_sidebar/regulator/')({
+export const Route = createFileRoute('/settings/regulator/')({
   component: Regulator,
 });
 

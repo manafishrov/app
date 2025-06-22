@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_sidebar/keyboard/')({
+export const Route = createFileRoute('/settings/keyboard/')({
   component: Keyboard,
 });
 
