@@ -33,7 +33,6 @@
   },
   "include": [
     "eslint.config.js",
-    "postcss.config.ts",
     "prettier.config.js",
     "src/**/*.ts",
     "src/**/*.tsx",
