@@ -1,9 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { SettingsIcon } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
-import { Link } from '@/components/ui/Link';
+import { SettingsButton } from '@/components/settings/SettingsButton';
 
 import { useMovementCommand } from '@/hooks/useMovementCommand';
 
@@ -73,20 +72,13 @@ function Home() {
         className={cx('bg-card relative aspect-4/3 rounded-lg', sizeClass)}
         onMouseMove={handleMouseMove}
       >
-        <Link
+        <SettingsButton
           className={cx(
             'absolute top-2 left-2 z-10 transition-opacity',
             showSettingsLink ? 'opacity-100' : 'opacity-0',
             'hover:opacity-100',
           )}
-          to='/settings'
-          variant='outline'
-          size='icon'
-          aria-label='Settings'
-          title='Settings'
-        >
-          <SettingsIcon />
-        </Link>
+        />
         <VideoStream />
       </div>
     </main>

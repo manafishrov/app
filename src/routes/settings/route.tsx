@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router';
 
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { ScrollArea } from '@/components/ui/ScrollArea';
 import { SidebarProvider } from '@/components/ui/Sidebar';
 
 export const Route = createFileRoute('/settings')({
@@ -19,9 +20,11 @@ function SidebarLayout() {
       }
     >
       <SettingsSidebar />
-      <main className='mx-auto max-w-3xl p-4 md:p-6 lg:p-8'>
-        <Outlet />
-      </main>
+      <ScrollArea className='h-svh w-full'>
+        <main className='mx-auto max-w-3xl p-8'>
+          <Outlet />
+        </main>
+      </ScrollArea>
     </SidebarProvider>
   );
 }
