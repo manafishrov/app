@@ -1,9 +1,10 @@
 import {
+  ArrowLeftIcon,
   BugIcon,
   CogIcon,
   CompassIcon,
   EthernetPortIcon,
-  GamepadIcon,
+  Gamepad2Icon,
   KeyboardIcon,
   WrenchIcon,
 } from 'lucide-react';
@@ -25,7 +26,16 @@ import {
 function SettingsSidebar() {
   return (
     <Sidebar collapsible='icon'>
-      <SidebarHeader />
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuButton asChild>
+            <Link to='/' aria-label='Back' title='Back'>
+              <ArrowLeftIcon />
+              <span>Back</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenu>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
@@ -54,7 +64,7 @@ function SettingsSidebar() {
                     aria-label='Gamepad'
                     title='Gamepad'
                   >
-                    <GamepadIcon />
+                    <Gamepad2Icon />
                     <span>Gamepad</span>
                   </Link>
                 </SidebarMenuButton>
@@ -66,12 +76,6 @@ function SettingsSidebar() {
                   >
                     <EthernetPortIcon />
                     <span>Connection</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton asChild aria-label='Debug' title='Debug'>
-                  <Link to='/settings/debug'>
-                    <BugIcon />
-                    <span>Debug</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -108,7 +112,16 @@ function SettingsSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuButton asChild aria-label='Debug' title='Debug'>
+            <Link to='/settings/debug'>
+              <BugIcon />
+              <span>Debug</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

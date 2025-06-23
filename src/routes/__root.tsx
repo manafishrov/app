@@ -37,7 +37,7 @@ function RootComponent() {
         <Outlet />
         <Toaster />
       </ThemeProvider>
-      <ReactQueryDevtools buttonPosition='bottom-left' />
+      <ReactQueryDevtools buttonPosition='bottom-right' />
       <TanStackRouterDevtools position='bottom-right' />
     </>
   );
