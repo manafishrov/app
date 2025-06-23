@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { SettingsIcon } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
+import { Link } from '@/components/ui/Link';
 
 import { useMovementCommand } from '@/hooks/useMovementCommand';
 
@@ -16,6 +18,8 @@ function Home() {
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
+  const [showSettingsLink, setShowSettingsLink] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useLayoutEffect(() => {
     const mainEl = mainRef.current;
@@ -50,12 +54,38 @@ function Home() {
     };
   }, []);
 
+  function handleMouseMove() {
+    setShowSettingsLink(true);
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowSettingsLink(false);
+    }, 2000);
+  }
+
   return (
     <main
       ref={mainRef}
       className='flex h-full w-full items-center justify-center p-1'
     >
-      <div className={cx('bg-card relative aspect-4/3 rounded-lg', sizeClass)}>
+      <div
+        className={cx('bg-card relative aspect-4/3 rounded-lg', sizeClass)}
+        onMouseMove={handleMouseMove}
+      >
+        <Link
+          className={cx(
+            'absolute top-2 left-2 z-10 transition-opacity',
+            showSettingsLink ? 'opacity-100' : 'opacity-0',
+            'hover:opacity-100',
+          )}
+          to='/settings'
+          variant='outline'
+          size='icon'
+          aria-label='Open settings'
+        >
+          <SettingsIcon />
+        </Link>
         <VideoStream />
       </div>
     </main>
