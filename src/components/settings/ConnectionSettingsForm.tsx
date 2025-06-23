@@ -80,7 +80,7 @@ function ConnectionSettingsForm() {
             <field.TextField
               label='IP address'
               placeholder='10.10.10.10'
-              description='The IP address of your Manafish Raspberry Pi.'
+              description='The IP address of your Manafish.'
             />
           )}
         </form.AppField>

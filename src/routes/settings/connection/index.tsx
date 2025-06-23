@@ -12,8 +12,8 @@ function Connection() {
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>Connection</h1>
         <p className='text-muted-foreground'>
-          Configure your Manafish Raspberry Pi connection settings. Only change
-          this if you know what you are doing.
+          Configure your Manafish connection settings. Only change this if you
+          know what you are doing.
         </p>
       </div>
       <ConnectionSettingsForm />
