@@ -19,7 +19,7 @@ function SidebarLayout() {
       }
     >
       <SettingsSidebar />
-      <main>
+      <main className='mx-auto max-w-3xl p-4 md:p-6 lg:p-8'>
         <Outlet />
       </main>
     </SidebarProvider>

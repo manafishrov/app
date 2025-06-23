@@ -18,8 +18,10 @@ type KeyboardBindings = {
   rollRight: string;
   action1: string;
   action2: string;
-  stabilization: string;
-  reconnect: string;
+  stabilizePitch: string;
+  stabilizeRoll: string;
+  stabilizeDepth: string;
+  record: string;
 };
 
 type ControlSource = 'LeftStick' | 'RightStick' | 'DPad' | 'FaceButtons';
@@ -33,8 +35,10 @@ type GamepadBindings = {
   rollRight: string;
   action1: string;
   action2: string;
-  stabilization: string;
-  reconnect: string;
+  stabilizePitch: string;
+  stabilizeRoll: string;
+  stabilizeDepth: string;
+  record: string;
 };
 
 type Config = {
