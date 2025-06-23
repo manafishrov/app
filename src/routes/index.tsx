@@ -82,7 +82,8 @@ function Home() {
           to='/settings'
           variant='outline'
           size='icon'
-          aria-label='Open settings'
+          aria-label='Settings'
+          title='Settings'
         >
           <SettingsIcon />
         </Link>

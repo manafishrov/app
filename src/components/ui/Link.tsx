@@ -7,7 +7,12 @@ import type { VariantProps } from '@/lib/utils';
 type LinkProps = React.ComponentPropsWithoutRef<typeof LinkPrimitive> &
   VariantProps<typeof buttonVariants>;
 
-function Link({ className, variant, size, ...props }: LinkProps) {
+function Link({
+  className,
+  variant = 'none',
+  size = 'none',
+  ...props
+}: LinkProps) {
   return (
     <Button className={className} variant={variant} size={size} asChild>
       <LinkPrimitive {...props} />
