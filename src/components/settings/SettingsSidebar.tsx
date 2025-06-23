@@ -1,3 +1,4 @@
+import { useMatches } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
   BugIcon,
@@ -24,12 +25,13 @@ import {
 } from '@/components/ui/Sidebar';
 
 function SettingsSidebar() {
+  const matches = useMatches();
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuButton asChild>
-            <Link to='/' aria-label='Back' title='Back'>
+          <SidebarMenuButton asChild aria-label='Back' tooltip='Back'>
+            <Link to='/'>
               <ArrowLeftIcon />
               <span>Back</span>
             </Link>
@@ -42,38 +44,52 @@ function SettingsSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to='/settings' aria-label='Settings' title='Settings'>
+                <SidebarMenuButton
+                  asChild
+                  aria-label='General'
+                  tooltip='General'
+                  isActive={matches.some((match) => match.id === '/settings/')}
+                >
+                  <Link to='/settings'>
                     <CogIcon />
                     <span>General</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to='/settings/keyboard'
-                    aria-label='Keyboard'
-                    title='Keyboard'
-                  >
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Keyboard'
+                  tooltip='Keyboard'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/keyboard/',
+                  )}
+                >
+                  <Link to='/settings/keyboard'>
                     <KeyboardIcon />
                     <span>Keyboard</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to='/settings/gamepad'
-                    aria-label='Gamepad'
-                    title='Gamepad'
-                  >
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Gamepad'
+                  tooltip='Gamepad'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/gamepad/',
+                  )}
+                >
+                  <Link to='/settings/gamepad'>
                     <Gamepad2Icon />
                     <span>Gamepad</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to='/settings/connection'
-                    aria-label='Connection'
-                    title='Connection'
-                  >
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Connection'
+                  tooltip='Connection'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/connection/',
+                  )}
+                >
+                  <Link to='/settings/connection'>
                     <EthernetPortIcon />
                     <span>Connection</span>
                   </Link>
@@ -87,22 +103,28 @@ function SettingsSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to='/settings/calibration'
-                    aria-label='Calibration'
-                    title='Calibration'
-                  >
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Calibration'
+                  tooltip='Calibration'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/calibration/',
+                  )}
+                >
+                  <Link to='/settings/calibration'>
                     <WrenchIcon />
                     <span>Calibration</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuButton asChild>
-                  <Link
-                    to='/settings/regulator'
-                    aria-label='Regulator'
-                    title='Regulator'
-                  >
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Regulator'
+                  tooltip='Regulator'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/regulator/',
+                  )}
+                >
+                  <Link to='/settings/regulator'>
                     <CompassIcon />
                     <span>Regulator</span>
                   </Link>
@@ -114,7 +136,12 @@ function SettingsSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton asChild aria-label='Debug' title='Debug'>
+          <SidebarMenuButton
+            asChild
+            aria-label='Debug'
+            tooltip='Debug'
+            isActive={matches.some((match) => match.id === '/settings/debug/')}
+          >
             <Link to='/settings/debug'>
               <BugIcon />
               <span>Debug</span>
