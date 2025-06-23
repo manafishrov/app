@@ -91,93 +91,113 @@ function GamepadSettings() {
   }
 
   return (
-    <>
-      <h3 className='text-md mt-4 mb-2 font-semibold'>Movement</h3>
-      <div className='space-y-2'>
-        <GamepadBindInput
-          label='Move Horizontal'
-          bind={currentBindings.moveHorizontal}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveHorizontal}
-          onBindChange={(newBind) =>
-            handleBindingChange('moveHorizontal', newBind)
-          }
-          isJoystick
-        />
-        <GamepadBindInput
-          label='Move Up'
-          bind={currentBindings.moveUp}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveUp}
-          onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
-        />
-        <GamepadBindInput
-          label='Move Down'
-          bind={currentBindings.moveDown}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveDown}
-          onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
-        />
+    <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
+      <div className='space-y-6'>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
+          <GamepadBindInput
+            label='Move Horizontal'
+            bind={currentBindings.moveHorizontal}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveHorizontal}
+            onBindChange={(newBind) =>
+              handleBindingChange('moveHorizontal', newBind)
+            }
+            isJoystick
+          />
+          <GamepadBindInput
+            label='Move Up'
+            bind={currentBindings.moveUp}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveUp}
+            onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
+          />
+          <GamepadBindInput
+            label='Move Down'
+            bind={currentBindings.moveDown}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveDown}
+            onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
+          />
+        </div>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>
+            Stabilization
+          </h3>
+          <GamepadBindInput
+            label='Stabilize Pitch'
+            bind={currentBindings.stabilizePitch}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizePitch}
+            onBindChange={(newBind) =>
+              handleBindingChange('stabilizePitch', newBind)
+            }
+          />
+          <GamepadBindInput
+            label='Stabilize Roll'
+            bind={currentBindings.stabilizeRoll}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeRoll}
+            onBindChange={(newBind) =>
+              handleBindingChange('stabilizeRoll', newBind)
+            }
+          />
+          <GamepadBindInput
+            label='Stabilize Depth'
+            bind={currentBindings.stabilizeDepth}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeDepth}
+            onBindChange={(newBind) =>
+              handleBindingChange('stabilizeDepth', newBind)
+            }
+          />
+        </div>
       </div>
-      <h3 className='text-md mt-4 mb-2 font-semibold'>Stabilization</h3>
-      <div className='space-y-2'>
-        <GamepadBindInput
-          label='Stabilize Pitch'
-          bind={currentBindings.stabilizePitch}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizePitch}
-          onBindChange={(newBind) =>
-            handleBindingChange('stabilizePitch', newBind)
-          }
-        />
-        <GamepadBindInput
-          label='Stabilize Roll'
-          bind={currentBindings.stabilizeRoll}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeRoll}
-          onBindChange={(newBind) =>
-            handleBindingChange('stabilizeRoll', newBind)
-          }
-        />
-        <GamepadBindInput
-          label='Stabilize Depth'
-          bind={currentBindings.stabilizeDepth}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeDepth}
-          onBindChange={(newBind) =>
-            handleBindingChange('stabilizeDepth', newBind)
-          }
-        />
+      <div className='space-y-6'>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>Pitch & Yaw</h3>
+          <GamepadBindInput
+            label='Pitch/Yaw'
+            bind={currentBindings.pitchYaw}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchYaw}
+            onBindChange={(newBind) => handleBindingChange('pitchYaw', newBind)}
+            isJoystick
+          />
+        </div>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
+          <GamepadBindInput
+            label='Roll Left'
+            bind={currentBindings.rollLeft}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
+            onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
+          />
+          <GamepadBindInput
+            label='Roll Right'
+            bind={currentBindings.rollRight}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
+            onBindChange={(newBind) =>
+              handleBindingChange('rollRight', newBind)
+            }
+          />
+        </div>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
+          <GamepadBindInput
+            label='Action 1'
+            bind={currentBindings.action1}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1}
+            onBindChange={(newBind) => handleBindingChange('action1', newBind)}
+          />
+          <GamepadBindInput
+            label='Action 2'
+            bind={currentBindings.action2}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2}
+            onBindChange={(newBind) => handleBindingChange('action2', newBind)}
+          />
+          <GamepadBindInput
+            label='Record'
+            bind={currentBindings.record}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.record}
+            onBindChange={(newBind) => handleBindingChange('record', newBind)}
+          />
+        </div>
       </div>
-      <h3 className='text-md mt-4 mb-2 font-semibold'>Pitch & Yaw</h3>
-      <div className='space-y-2'>
-        <GamepadBindInput
-          label='Pitch/Yaw'
-          bind={currentBindings.pitchYaw}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchYaw}
-          onBindChange={(newBind) => handleBindingChange('pitchYaw', newBind)}
-          isJoystick
-        />
-      </div>
-      <h3 className='text-md mt-4 mb-2 font-semibold'>Roll</h3>
-      <div className='space-y-2'>
-        <GamepadBindInput
-          label='Roll Left'
-          bind={currentBindings.rollLeft}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
-          onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
-        />
-        <GamepadBindInput
-          label='Roll Right'
-          bind={currentBindings.rollRight}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
-          onBindChange={(newBind) => handleBindingChange('rollRight', newBind)}
-        />
-      </div>
-      <h3 className='text-md mt-4 mb-2 font-semibold'>Misc</h3>
-      <div className='space-y-2'>
-        <GamepadBindInput
-          label='Record'
-          bind={currentBindings.record}
-          defaultBind={DEFAULT_GAMEPAD_BINDINGS.record}
-          onBindChange={(newBind) => handleBindingChange('record', newBind)}
-        />
-      </div>
-    </>
+    </div>
   );
 }
 
