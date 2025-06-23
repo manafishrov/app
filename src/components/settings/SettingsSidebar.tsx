@@ -24,7 +24,7 @@ import {
 
 function SettingsSidebar() {
   return (
-    <Sidebar>
+    <Sidebar collapsible='icon'>
       <SidebarHeader />
       <SidebarContent>
         <SidebarGroup>

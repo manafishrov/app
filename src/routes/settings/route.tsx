@@ -9,7 +9,15 @@ export const Route = createFileRoute('/settings')({
 
 function SidebarLayout() {
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      collapseOnMobile
+      style={
+        {
+          '--sidebar-width': '10rem',
+          '--sidebar-width-mobile': '12rem',
+        } as React.CSSProperties
+      }
+    >
       <SettingsSidebar />
       <main>
         <Outlet />
