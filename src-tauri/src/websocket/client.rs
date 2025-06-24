@@ -1,13 +1,22 @@
+use super::handler::handle_message;
 use crate::commands::config::get_config;
 use crate::models::config::Config;
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tauri::AppHandle;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{self, Receiver};
 use tokio::time::timeout;
-use tokio_tungstenite::connect_async;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
 
-pub async fn start_websocket_client(app: AppHandle, mut rx: Receiver<Config>) {
+pub struct MessageSendChannelState {
+  pub tx: mpsc::Sender<Message>,
+}
+
+pub async fn start_websocket_client(
+  app: AppHandle,
+  mut config_rx: Receiver<Config>,
+  mut message_rx: Receiver<Message>,
+) {
   let mut config = get_config().unwrap_or_default();
 
   loop {
@@ -18,41 +27,48 @@ pub async fn start_websocket_client(app: AppHandle, mut rx: Receiver<Config>) {
       Ok(Ok((stream, _))) => stream,
       Ok(Err(e)) => {
         eprintln!("WebSocket connect error: {}. Retrying...", e);
-        wait_before_retry(&mut rx).await;
+        wait_before_retry(&mut config_rx).await;
         continue;
       }
       Err(_) => {
         eprintln!("WebSocket connect timeout. Retrying...");
-        wait_before_retry(&mut rx).await;
+        wait_before_retry(&mut config_rx).await;
         continue;
       }
     };
 
-    let (_, mut read) = ws_stream.split();
+    let (mut write, mut read) = ws_stream.split();
 
     loop {
       tokio::select! {
-          Some(new_config) = rx.recv() => {
+          Some(new_config) = config_rx.recv() => {
               config = new_config;
               eprintln!("Config updated. Reconnecting websocket.");
               break;
           }
-          message = read.next() => {
+          Some(message_to_send) = message_rx.recv() => {
+              if let Err(e) = write.send(message_to_send).await {
+                  eprintln!("Websocket send error: {}", e);
+                  break;
+              }
+          }
+          Some(message) = read.next() => {
               match message {
-                  Some(Ok(msg)) => {
-                      if msg.is_text() {
-                          let _text = msg.into_text().unwrap();
+                  Ok(msg) => {
+                      if msg.is_text() || msg.is_binary() {
+                          if let Some(response) = handle_message(&app, msg).await {
+                              if let Err(e) = write.send(response).await {
+                                  eprintln!("Websocket send error: {}", e);
+                                  break;
+                              }
+                          }
                       } else if msg.is_close() {
                           eprintln!("Websocket connection closed.");
                           break;
                       }
                   }
-                  Some(Err(e)) => {
+                  Err(e) => {
                       eprintln!("Websocket read error: {}", e);
-                      break;
-                  }
-                  None => {
-                      eprintln!("Websocket stream ended.");
                       break;
                   }
               }

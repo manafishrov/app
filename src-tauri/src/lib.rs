@@ -12,6 +12,12 @@ mod models {
 
 mod websocket {
   pub mod client;
+  pub mod handler;
+  mod receive {
+    pub mod heartbeat;
+    pub mod ping;
+    pub mod pong;
+  }
 }
 
 mod gamepad;
@@ -20,28 +26,27 @@ mod updater;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
-use models::config::Config;
+use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
-use tauri::{generate_handler, Builder, Manager};
-use tokio::sync::mpsc;
+use tauri::{generate_handler, App, Builder, Manager, State};
+use tokio::sync::mpsc::channel;
+use tokio_tungstenite::tungstenite::Message;
 use updater::update_app;
-use websocket::client::start_websocket_client;
+use websocket::client::{start_websocket_client, MessageSendChannelState};
 
-pub struct ConfigSendChannelState {
-  pub tx: mpsc::Sender<Config>,
-}
-
-fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let update_handle = app.app_handle().clone();
   spawn(async move {
     update_app(update_handle).await;
   });
 
   let websocket_handle = app.app_handle().clone();
-  let (tx, rx) = mpsc::channel::<Config>(1);
-  app.manage(ConfigSendChannelState { tx });
+  let (config_tx, config_rx) = channel::<Config>(1);
+  app.manage(ConfigSendChannelState { tx: config_tx });
+  let (message_tx, message_rx) = channel::<Message>(1);
+  app.manage(MessageSendChannelState { tx: message_tx });
   spawn(async move {
-    start_websocket_client(websocket_handle, rx).await;
+    start_websocket_client(websocket_handle, config_rx, message_rx).await;
   });
 
   Ok(())
