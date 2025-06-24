@@ -93,7 +93,7 @@ function ConnectionSettingsForm() {
             <field.NumberField
               label='WebSocket port'
               placeholder='5000'
-              description='The port number for the WebSocket connection (used for controlling the ROV and obtaining statuses).'
+              description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
             />
           )}
         </form.AppField>

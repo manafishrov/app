@@ -42,8 +42,8 @@ function General() {
   }
 
   return (
-    <div className='space-y-6'>
-      <div>
+    <>
+      <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>General</h1>
         <p className='text-muted-foreground'>
           Generic settings for the Manafish application.
@@ -51,9 +51,7 @@ function General() {
       </div>
       <div className='space-y-6'>
         <div>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Automatic Updates
-          </h3>
+          <h4 className='text-lg font-medium'>Automatic Updates</h4>
           <p className='text-muted-foreground text-sm'>
             Enable or disable automatic updates on startup.
           </p>
@@ -69,9 +67,7 @@ function General() {
           </div>
         </div>
         <div>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Video Directory
-          </h3>
+          <h4 className='text-lg font-medium'>Video Directory</h4>
           <p className='text-muted-foreground text-sm'>
             Set the directory where recordings are stored.
           </p>
@@ -144,6 +140,6 @@ function General() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
