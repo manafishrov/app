@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
-  pub is_connected: bool,
   pub pitch: f32,
   pub roll: f32,
   pub desired_pitch: f32,
@@ -15,7 +14,6 @@ pub struct Status {
 impl Default for Status {
   fn default() -> Self {
     Status {
-      is_connected: false,
       pitch: 0.0,
       roll: 0.0,
       desired_pitch: 0.0,

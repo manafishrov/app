@@ -1,7 +1,6 @@
 import { Store } from '@tanstack/react-store';
 
 type Status = {
-  isConnected: boolean;
   pitch: number;
   roll: number;
   desiredPitch: number;
@@ -11,7 +10,6 @@ type Status = {
 };
 
 const statusStore = new Store<Status>({
-  isConnected: false,
   pitch: 0,
   roll: 0,
   desiredPitch: 0,

@@ -2,6 +2,7 @@ import '@/listeners/gamepad';
 import '@/listeners/settings';
 import '@/listeners/status';
 import '@/listeners/update';
+import '@/listeners/webSocketConnection';
 import { routeTree } from '@/routeTree.gen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouter } from '@tanstack/react-router';

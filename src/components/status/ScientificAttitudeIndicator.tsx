@@ -3,12 +3,17 @@ import { useStore } from '@tanstack/react-store';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 import { statusStore } from '@/stores/statusStore';
+import { webSocketConnectionStore } from '@/stores/websocketConnectionStore';
 
 function ScientificAttitudeIndicator() {
   const status = useStore(statusStore, (state) => state);
+  const webSocketConnection = useStore(
+    webSocketConnectionStore,
+    (state) => state,
+  );
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  if (!status.isConnected) return null;
+  if (!webSocketConnection.isConnected) return null;
 
   const size = isDesktop ? 220 : 160;
   const center = size / 2;
