@@ -4,15 +4,13 @@ import { Button, type buttonVariants } from '@/components/ui/Button';
 
 import type { VariantProps } from '@/lib/utils';
 
-type LinkProps = React.ComponentPropsWithoutRef<typeof LinkPrimitive> &
-  VariantProps<typeof buttonVariants>;
-
 function Link({
   className,
   variant = 'none',
   size = 'none',
   ...props
-}: LinkProps) {
+}: React.ComponentProps<typeof LinkPrimitive> &
+  VariantProps<typeof buttonVariants>) {
   return (
     <Button className={className} variant={variant} size={size} asChild>
       <LinkPrimitive {...props} />
@@ -20,4 +18,4 @@ function Link({
   );
 }
 
-export { Link, type LinkProps };
+export { Link };

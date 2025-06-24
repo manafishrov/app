@@ -1,17 +1,11 @@
 import { cx } from '@/lib/utils';
 
-function Card({
-  ref,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  ref?: React.RefObject<HTMLDivElement>;
-}) {
+function Card({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      ref={ref}
+      data-slot='card'
       className={cx(
-        'bg-card text-card-foreground rounded-lg border shadow-xs',
+        'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
         className,
       )}
       {...props}
@@ -19,40 +13,12 @@ function Card({
   );
 }
 
-function CardHeader({
-  ref,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  ref?: React.RefObject<HTMLDivElement>;
-}) {
+function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      ref={ref}
-      className={cx('flex flex-col space-y-1.5 p-6', className)}
-      {...props}
-    />
-  );
-}
-
-type CardTitleProps = {
-  level?: 'h2' | 'h3' | 'h4';
-} & React.HTMLAttributes<HTMLHeadingElement>;
-
-function CardTitle({
-  ref,
-  level = 'h3',
-  className,
-  ...props
-}: CardTitleProps & {
-  ref?: React.RefObject<HTMLParagraphElement>;
-}) {
-  const Component = level;
-  return (
-    <Component
-      ref={ref}
+      data-slot='card-header'
       className={cx(
-        'text-2xl leading-none font-semibold tracking-tight',
+        '@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6',
         className,
       )}
       {...props}
@@ -60,43 +26,54 @@ function CardTitle({
   );
 }
 
-function CardDescription({
-  ref,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement> & {
-  ref?: React.RefObject<HTMLParagraphElement>;
-}) {
+function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <p
-      ref={ref}
+    <div
+      data-slot='card-title'
+      className={cx('leading-none font-semibold', className)}
+      {...props}
+    />
+  );
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot='card-description'
       className={cx('text-muted-foreground text-sm', className)}
       {...props}
     />
   );
 }
 
-function CardContent({
-  ref,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  ref?: React.RefObject<HTMLDivElement>;
-}) {
-  return <div ref={ref} className={cx('p-6 pt-0', className)} {...props} />;
-}
-
-function CardFooter({
-  ref,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  ref?: React.RefObject<HTMLDivElement>;
-}) {
+function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      ref={ref}
-      className={cx('flex items-center p-6 pt-0', className)}
+      data-slot='card-action'
+      className={cx(
+        'col-start-2 row-span-2 row-start-1 self-start justify-self-end',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot='card-content'
+      className={cx('px-6', className)}
+      {...props}
+    />
+  );
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot='card-footer'
+      className={cx('flex items-center px-6 [.border-t]:pt-6', className)}
       {...props}
     />
   );
@@ -107,6 +84,7 @@ export {
   CardHeader,
   CardFooter,
   CardTitle,
+  CardAction,
   CardDescription,
   CardContent,
 };

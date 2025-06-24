@@ -33,28 +33,25 @@ const buttonVariants = cva({
   },
 });
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-    ref?: React.RefObject<HTMLButtonElement>;
-  };
-
 function Button({
-  ref,
   className,
   variant,
   size,
   asChild = false,
   ...props
-}: ButtonProps) {
+}: React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  }) {
   const Comp = asChild ? Slot : 'button';
+
   return (
     <Comp
+      data-slot='button'
       className={buttonVariants({ variant, size, className })}
-      ref={ref}
       {...props}
     />
   );
 }
 
-export { Button, buttonVariants, type ButtonProps };
+export { Button, buttonVariants };

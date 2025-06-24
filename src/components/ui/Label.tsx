@@ -2,23 +2,19 @@
 
 import * as LabelPrimitive from '@radix-ui/react-label';
 
-import { cva, cx } from '@/lib/utils';
-
-const labelVariants = cva({
-  base: 'text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-});
+import { cx } from '@/lib/utils';
 
 function Label({
-  ref,
   className,
   ...props
-}: React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & {
-  ref?: React.RefObject<React.ComponentRef<typeof LabelPrimitive.Root>>;
-}) {
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root
-      ref={ref}
-      className={cx(labelVariants(), className)}
+      data-slot='label'
+      className={cx(
+        'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
+        className,
+      )}
       {...props}
     />
   );
