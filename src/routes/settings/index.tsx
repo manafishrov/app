@@ -1,8 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
+import { open } from '@tauri-apps/plugin-dialog';
 
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 
@@ -21,9 +24,26 @@ function General() {
   const { theme, setTheme } = useTheme();
 
   if (!config) return null;
+
+  async function selectVideoDirectory() {
+    try {
+      const result = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Video Directory',
+        defaultPath: config?.videoDirectory,
+      });
+      if (typeof result === 'string') {
+        await updateConfig({ videoDirectory: result });
+      }
+    } catch (error) {
+      console.error('Error opening dialog:', error);
+    }
+  }
+
   return (
-    <>
-      <div className='mb-6 flex flex-col gap-2'>
+    <div className='space-y-6'>
+      <div>
         <h1 className='text-4xl font-extrabold tracking-tight'>General</h1>
         <p className='text-muted-foreground'>
           Generic settings for the Manafish application.
@@ -46,6 +66,22 @@ function General() {
               }
             />
             <Label htmlFor='autoUpdate'>Enable automatic app updates</Label>
+          </div>
+        </div>
+        <div>
+          <h3 className='text-2xl font-semibold tracking-tight'>
+            Video Directory
+          </h3>
+          <p className='text-muted-foreground text-sm'>
+            Set the directory where recordings are stored.
+          </p>
+          <div className='mt-2 flex items-center gap-3'>
+            <Input
+              readOnly
+              value={config.videoDirectory}
+              className='w-full max-w-xs'
+            />
+            <Button onClick={selectVideoDirectory}>Select Directory</Button>
           </div>
         </div>
         <div>
@@ -108,6 +144,6 @@ function General() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
