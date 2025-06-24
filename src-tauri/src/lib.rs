@@ -25,6 +25,12 @@ pub struct ControlChannelState {
 }
 
 async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+  let config = get_config().unwrap_or_default();
+  if !config.auto_update {
+    println!("Auto-update is disabled in config, skipping update check");
+    return Ok(());
+  }
+
   if let Some(update) = app.updater()?.check().await? {
     app.emit("update-available", ()).unwrap();
     let mut downloaded = 0;
@@ -71,9 +77,9 @@ fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
 
 pub fn run() {
   let builder = tauri::Builder::default()
+    .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
-    .plugin(tauri_plugin_opener::init())
     .invoke_handler(tauri::generate_handler![
       get_config,
       save_config,
