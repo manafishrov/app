@@ -15,6 +15,12 @@ pub struct KeyboardBindings {
   pub pitch_down: String,
   pub roll_left: String,
   pub roll_right: String,
+  pub action1: String,
+  pub action2: String,
+  pub stabilize_pitch: String,
+  pub stabilize_roll: String,
+  pub stabilize_depth: String,
+  pub record: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -26,6 +32,13 @@ pub enum ControlSource {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub enum AttitudeIndicator {
+  Scientific,
+  Dimensional3D,
+  Disabled,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
   pub move_horizontal: ControlSource,
@@ -34,11 +47,20 @@ pub struct GamepadBindings {
   pub pitch_yaw: ControlSource,
   pub roll_left: String,
   pub roll_right: String,
+  pub action1: String,
+  pub action2: String,
+  pub stabilize_pitch: String,
+  pub stabilize_roll: String,
+  pub stabilize_depth: String,
+  pub record: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
+  pub auto_update: bool,
+  pub attitude_indicator: AttitudeIndicator,
+  pub video_directory: String,
   pub ip_address: String,
   pub webrtc_signaling_api_port: u16,
   pub webrtc_signaling_api_path: String,
@@ -49,7 +71,27 @@ pub struct Config {
 
 impl Default for Config {
   fn default() -> Self {
+    let video_directory = if cfg!(target_os = "windows") {
+      format!(
+        "{}\\Videos\\Manafish",
+        std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())
+      )
+    } else if cfg!(target_os = "macos") {
+      format!(
+        "{}/Movies/Manafish",
+        std::env::var("HOME").unwrap_or_else(|_| "/Users/default".to_string())
+      )
+    } else {
+      format!(
+        "{}/Videos/Manafish",
+        std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string())
+      )
+    };
+
     Config {
+      auto_update: true,
+      attitude_indicator: AttitudeIndicator::Scientific,
+      video_directory,
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
@@ -67,6 +109,12 @@ impl Default for Config {
         yaw_right: "KeyL".to_string(),
         roll_left: "KeyQ".to_string(),
         roll_right: "KeyE".to_string(),
+        action1: "KeyU".to_string(),
+        action2: "KeyO".to_string(),
+        stabilize_pitch: "Digit1".to_string(),
+        stabilize_roll: "Digit2".to_string(),
+        stabilize_depth: "Digit3".to_string(),
+        record: "KeyR".to_string(),
       },
       gamepad: GamepadBindings {
         move_horizontal: ControlSource::LeftStick,
@@ -75,6 +123,12 @@ impl Default for Config {
         pitch_yaw: ControlSource::RightStick,
         roll_left: "4".to_string(),
         roll_right: "5".to_string(),
+        action1: "1".to_string(),
+        action2: "2".to_string(),
+        stabilize_pitch: "12".to_string(),
+        stabilize_roll: "15".to_string(),
+        stabilize_depth: "13".to_string(),
+        record: "9".to_string(),
       },
     }
   }

@@ -25,7 +25,7 @@ type KeyboardBindings = {
 };
 
 type ControlSource = 'LeftStick' | 'RightStick' | 'DPad' | 'FaceButtons';
-type AttitudeIndicator = 'scientific' | '3d' | 'disabled';
+type AttitudeIndicator = 'Scientific' | 'Dimensional3D' | 'Disabled';
 
 type GamepadBindings = {
   moveHorizontal: ControlSource;
@@ -43,15 +43,15 @@ type GamepadBindings = {
 };
 
 type Config = {
+  autoUpdate: boolean;
+  attitudeIndicator: AttitudeIndicator;
+  videoDirectory: string;
   ipAddress: string;
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
   webSocketPort: number;
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
-  autoUpdate: boolean;
-  attitudeIndicator: AttitudeIndicator;
-  videoDirectory: string;
 };
 
 const configStore = new Store<Config | null>(null);

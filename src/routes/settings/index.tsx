@@ -124,15 +124,15 @@ function General() {
                 className='mt-2 space-y-1'
               >
                 <div className='flex items-center gap-3'>
-                  <RadioGroupItem value='scientific' id='ai-scientific' />
+                  <RadioGroupItem value='Scientific' id='ai-scientific' />
                   <Label htmlFor='ai-scientific'>Scientific</Label>
                 </div>
                 <div className='flex items-center gap-3'>
-                  <RadioGroupItem value='3d' id='ai-3d' />
+                  <RadioGroupItem value='Dimensional3D' id='ai-3d' />
                   <Label htmlFor='ai-3d'>3D</Label>
                 </div>
                 <div className='flex items-center gap-3'>
-                  <RadioGroupItem value='disabled' id='ai-disabled' />
+                  <RadioGroupItem value='Disabled' id='ai-disabled' />
                   <Label htmlFor='ai-disabled'>Disabled</Label>
                 </div>
               </RadioGroup>

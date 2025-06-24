@@ -20,8 +20,8 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   action1: '0',
   action2: '1',
   stabilizePitch: '12',
-  stabilizeRoll: '13',
-  stabilizeDepth: '14',
+  stabilizeRoll: '15',
+  stabilizeDepth: '13',
   record: '9',
 };
 
