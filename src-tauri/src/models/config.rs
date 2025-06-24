@@ -89,7 +89,7 @@ impl Default for Config {
     };
 
     Config {
-      auto_update: true,
+      auto_update: false,
       attitude_indicator: AttitudeIndicator::Scientific,
       video_directory,
       ip_address: "10.10.10.10".to_string(),

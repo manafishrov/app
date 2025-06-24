@@ -10,66 +10,32 @@ mod models {
   pub mod status;
 }
 
+mod websocket {
+  pub mod client;
+}
+
 mod gamepad;
-mod websocket_client;
+mod updater;
 
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
-use tauri::{Emitter, Manager};
-use tauri_plugin_updater::UpdaterExt;
+use tauri::Manager;
 use tokio::sync::mpsc::Sender;
 
 pub struct ControlChannelState {
   pub tx: Sender<[f32; 6]>,
 }
 
-async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-  let config = get_config().unwrap_or_default();
-  if !config.auto_update {
-    println!("Auto-update is disabled in config, skipping update check");
-    return Ok(());
-  }
-
-  if let Some(update) = app.updater()?.check().await? {
-    app.emit("update-available", ()).unwrap();
-    let mut downloaded = 0;
-    update
-      .download_and_install(
-        |chunk_length, content_length| {
-          downloaded += chunk_length;
-          app
-            .emit(
-              "update-progress",
-              serde_json::json!({
-                "downloaded": downloaded,
-                "total": content_length.unwrap_or(0)
-              }),
-            )
-            .unwrap();
-        },
-        || {
-          app.emit("update-downloaded", ()).unwrap();
-        },
-      )
-      .await?;
-    app.emit("update-ready", ()).unwrap();
-  }
-
-  Ok(())
-}
-
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-  let (control_tx, control_rx) = websocket_client::create_control_channel();
-  let app_handle = app.app_handle().clone();
   let update_handle = app.app_handle().clone();
 
-  app.manage(ControlChannelState { tx: control_tx });
   tauri::async_runtime::spawn(async move {
-    websocket_client::start_websocket_client(control_rx, app_handle).await;
+    updater::update(update_handle).await.unwrap();
   });
+
   tauri::async_runtime::spawn(async move {
-    update(update_handle).await.unwrap();
+    websocket::client::start_websocket_client().await;
   });
 
   Ok(())
