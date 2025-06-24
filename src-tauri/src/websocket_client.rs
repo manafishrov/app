@@ -39,11 +39,12 @@ struct WebSocketMessage<T> {
 
 #[derive(Serialize, Deserialize)]
 struct StatusPayload {
-  water_detected: bool,
   pitch: f32,
   roll: f32,
   desired_pitch: f32,
   desired_roll: f32,
+  depth: f32,
+  temperature: f32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -133,11 +134,12 @@ async fn connect_and_handle(
   {
     if let Ok(mut status) = CURRENT_STATUS.lock() {
       status.is_connected = true;
-      status.water_detected = false;
       status.pitch = 0.0;
       status.roll = 0.0;
       status.desired_pitch = 0.0;
       status.desired_roll = 0.0;
+      status.depth = 0.0;
+      status.temperature = 0.0;
       let _ = app_handle.emit("status_update", &*status);
     } else {
       eprintln!("Failed to lock status mutex on connect.");
@@ -233,11 +235,12 @@ async fn connect_and_handle(
                                 MessageType::Status => {
                                     if let Ok(status_msg) = serde_json::from_str::<WebSocketMessage<StatusPayload>>(&text) {
                                         if let Ok(mut status) = CURRENT_STATUS.lock() {
-                                            status.water_detected = status_msg.payload.water_detected;
                                             status.pitch = status_msg.payload.pitch;
                                             status.roll = status_msg.payload.roll;
                                             status.desired_pitch = status_msg.payload.desired_pitch;
                                             status.desired_roll = status_msg.payload.desired_roll;
+                                            status.depth = status_msg.payload.depth;
+                                            status.temperature = status_msg.payload.temperature;
                                             let _ = app_handle.emit("status_update", &*status);
                                         } else {
                                             eprintln!("Failed to lock status mutex for status update.");

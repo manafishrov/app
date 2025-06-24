@@ -15,7 +15,7 @@ mod websocket_client;
 
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
-use commands::movement::send_movement_command;
+use commands::movement::send_movement_input;
 use tauri::{Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::mpsc::Sender;
@@ -83,7 +83,7 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       get_config,
       save_config,
-      send_movement_command,
+      send_movement_input,
       execute_gamepad,
     ])
     .setup(setup_handlers);

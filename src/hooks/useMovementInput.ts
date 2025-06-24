@@ -11,7 +11,7 @@ function clamp(value: number) {
   return Math.max(-1, Math.min(1, value));
 }
 
-function useMovementCommand() {
+function useMovementInput() {
   const config = useStore(configStore, (state) => state);
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -133,9 +133,9 @@ function useMovementCommand() {
 
   async function sendInput(input: InputArray) {
     try {
-      await invoke('send_movement_command', { input });
+      await invoke('send_movement_input', { input });
     } catch (error) {
-      console.error('Failed to send movement command:', error);
+      console.error('Failed to send movement input:', error);
     }
   }
 
@@ -186,4 +186,4 @@ function useMovementCommand() {
   }, [config, getKeyboardInput, processGamepadInput]);
 }
 
-export { useMovementCommand };
+export { useMovementInput };

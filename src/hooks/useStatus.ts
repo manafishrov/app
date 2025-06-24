@@ -3,21 +3,23 @@ import { useEffect, useState } from 'react';
 
 type Status = {
   isConnected: boolean;
-  waterDetected: boolean;
   pitch: number;
   roll: number;
   desiredPitch: number;
   desiredRoll: number;
+  pressure: number;
+  temperature: number;
 };
 
 function useStatus() {
   const [status, setStatus] = useState<Status>({
     isConnected: false,
-    waterDetected: false,
     pitch: 0,
     roll: 0,
     desiredPitch: 0,
     desiredRoll: 0,
+    pressure: 0,
+    temperature: 0,
   });
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { VideoStream } from '@/components/VideoStream';
 import { SettingsButton } from '@/components/settings/SettingsButton';
 
-import { useMovementCommand } from '@/hooks/useMovementCommand';
+import { useMovementInput } from '@/hooks/useMovementInput';
 
 import { cx } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  useMovementCommand();
+  useMovementInput();
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
