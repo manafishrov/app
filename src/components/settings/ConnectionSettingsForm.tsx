@@ -84,7 +84,7 @@ function ConnectionSettingsForm() {
             <field.TextField
               label='WebRTC signaling API path'
               placeholder='/api/webrtc?src=cam'
-              description='The path for the WebRTC signaling API (used for establishing the video stream connection).'
+              description='The path for the WebRTC signaling API.'
             />
           )}
         </form.AppField>
