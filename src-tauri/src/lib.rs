@@ -17,25 +17,29 @@ mod websocket {
 mod gamepad;
 mod updater;
 
+use crate::models::config::Config;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
 use tauri::Manager;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc;
 
-pub struct ControlChannelState {
-  pub tx: Sender<[f32; 6]>,
+pub struct ConfigSendChannelState {
+  pub tx: mpsc::Sender<Config>,
 }
 
 fn setup_handlers(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
   let update_handle = app.app_handle().clone();
+  let (tx, rx) = mpsc::channel::<Config>(1);
+
+  app.manage(ConfigSendChannelState { tx });
 
   tauri::async_runtime::spawn(async move {
     updater::update(update_handle).await.unwrap();
   });
 
   tauri::async_runtime::spawn(async move {
-    websocket::client::start_websocket_client().await;
+    websocket::client::start(rx).await;
   });
 
   Ok(())
