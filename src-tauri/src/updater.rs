@@ -1,8 +1,8 @@
 use crate::commands::config::get_config;
-use tauri::Emitter;
-use tauri_plugin_updater::UpdaterExt;
+use tauri::{AppHandle, Emitter};
+use tauri_plugin_updater::{Result, UpdaterExt};
 
-pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+pub async fn update_app(app: AppHandle) -> Result<()> {
   let config = get_config().unwrap_or_default();
   if !config.auto_update {
     println!("Auto-update is disabled in config, skipping update check");

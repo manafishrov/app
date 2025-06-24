@@ -1,12 +1,14 @@
+use crate::commands::config::get_config;
 use crate::models::config::Config;
 use futures_util::StreamExt;
 use std::time::Duration;
-use tokio::sync::mpsc;
+use tauri::AppHandle;
+use tokio::sync::mpsc::Receiver;
 use tokio::time::timeout;
 use tokio_tungstenite::connect_async;
 
-pub async fn start(mut rx: mpsc::Receiver<Config>) {
-  let mut config = crate::commands::config::get_config().unwrap_or_default();
+pub async fn start_websocket_client(app: AppHandle, mut rx: Receiver<Config>) {
+  let mut config = get_config().unwrap_or_default();
 
   loop {
     let url = format!("ws://{}:{}", config.ip_address, config.web_socket_port);
@@ -60,7 +62,7 @@ pub async fn start(mut rx: mpsc::Receiver<Config>) {
   }
 }
 
-async fn wait_before_retry(rx: &mut mpsc::Receiver<Config>) {
+async fn wait_before_retry(rx: &mut Receiver<Config>) {
   tokio::select! {
       Some(_) = rx.recv() => {},
       _ = tokio::time::sleep(Duration::from_secs(3)) => {}
