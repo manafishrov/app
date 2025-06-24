@@ -3,12 +3,11 @@ import { Gamepad2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
-import { toast } from '@/components/ui/Toaster';
 
 import {
   type GamepadBindings,
   configStore,
-  updateGamepadBindings,
+  updateConfig,
 } from '@/stores/configStore';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
@@ -80,14 +79,7 @@ function GamepadSettings() {
     };
 
     setLocalBindings(newBindings);
-
-    try {
-      await updateGamepadBindings(newBindings);
-      toast.success('Gamepad binding updated');
-    } catch (error) {
-      console.error('Failed to update gamepad binding:', error);
-      toast.error('Failed to update gamepad binding');
-    }
+    await updateConfig({ gamepad: newBindings });
   }
 
   return (

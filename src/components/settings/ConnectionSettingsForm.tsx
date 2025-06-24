@@ -3,9 +3,8 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
-import { toast } from '@/components/ui/Toaster';
 
-import { configStore, updateConnectionSettings } from '@/stores/configStore';
+import { configStore, updateConfig } from '@/stores/configStore';
 
 const formSchema = z.object({
   ipAddress: z.string().ip('Invalid IP address'),
@@ -37,20 +36,7 @@ function ConnectionSettingsForm() {
       webrtcSignalingApiPath: config?.webrtcSignalingApiPath ?? '',
       webSocketPort: config?.webSocketPort ?? 0,
     },
-    onSubmit: async ({ value }) => {
-      try {
-        await updateConnectionSettings(
-          value.ipAddress,
-          value.webrtcSignalingApiPort,
-          value.webrtcSignalingApiPath,
-          value.webSocketPort,
-        );
-        toast.success('Settings updated');
-      } catch (error) {
-        console.error('Failed to update settings:', error);
-        toast.error('Failed to update settings');
-      }
-    },
+    onSubmit: ({ value }) => updateConfig(value),
   });
 
   useEffect(() => {

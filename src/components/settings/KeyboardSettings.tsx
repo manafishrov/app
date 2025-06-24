@@ -2,12 +2,11 @@ import { useStore } from '@tanstack/react-store';
 import { useState } from 'react';
 
 import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
-import { toast } from '@/components/ui/Toaster';
 
 import {
   type KeyboardBindings,
   configStore,
-  updateKeyboardBindings,
+  updateConfig,
 } from '@/stores/configStore';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
@@ -51,14 +50,7 @@ function KeyboardSettings() {
     };
 
     setLocalBindings(newBindings);
-
-    try {
-      await updateKeyboardBindings(newBindings);
-      toast.success('Keybinding updated');
-    } catch (error) {
-      console.error('Failed to update keybinding:', error);
-      toast.error('Failed to update keybinding');
-    }
+    await updateConfig({ keyboard: newBindings });
   }
 
   return (

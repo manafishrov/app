@@ -25,6 +25,7 @@ type KeyboardBindings = {
 };
 
 type ControlSource = 'LeftStick' | 'RightStick' | 'DPad' | 'FaceButtons';
+type AttitudeIndicator = 'scientific' | '3d' | 'disabled';
 
 type GamepadBindings = {
   moveHorizontal: ControlSource;
@@ -48,6 +49,9 @@ type Config = {
   webSocketPort: number;
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
+  autoUpdate: boolean;
+  attitudeIndicator: AttitudeIndicator;
+  videoDirectory: string;
 };
 
 const configStore = new Store<Config | null>(null);
@@ -62,61 +66,32 @@ async function loadConfig() {
   }
 }
 
-async function updateConnectionSettings(
-  ipAddress: string,
-  webrtcSignalingApiPort: number,
-  webrtcSignalingApiPath: string,
-  webSocketPort: number,
-) {
+async function updateConfig(settings: Partial<Config>) {
   const currentConfig = configStore.state;
   if (!currentConfig) return;
 
   const newConfig = {
     ...currentConfig,
-    ipAddress,
-    webrtcSignalingApiPort,
-    webrtcSignalingApiPath,
-    webSocketPort,
+    ...settings,
   };
 
-  await invoke('save_config', { config: newConfig });
-  configStore.setState(() => newConfig);
-}
-
-async function updateKeyboardBindings(bindings: KeyboardBindings) {
-  const currentConfig = configStore.state;
-  if (!currentConfig) return;
-
-  const newConfig = {
-    ...currentConfig,
-    keyboard: bindings,
-  };
-
-  await invoke('save_config', { config: newConfig });
-  configStore.setState(() => newConfig);
-}
-
-async function updateGamepadBindings(bindings: GamepadBindings) {
-  const currentConfig = configStore.state;
-  if (!currentConfig) return;
-
-  const newConfig = {
-    ...currentConfig,
-    gamepad: bindings,
-  };
-
-  await invoke('save_config', { config: newConfig });
-  configStore.setState(() => newConfig);
+  try {
+    await invoke('save_config', { config: newConfig });
+    configStore.setState(() => newConfig);
+    toast.success('Configuration updated successfully');
+  } catch (error) {
+    console.error('Failed to update config:', error);
+    toast.error('Failed to update configuration');
+  }
 }
 
 export {
   configStore,
   loadConfig,
-  updateConnectionSettings,
-  updateKeyboardBindings,
-  updateGamepadBindings,
+  updateConfig,
   type KeyboardBindings,
   type ControlSource,
   type GamepadBindings,
   type Config,
+  type AttitudeIndicator,
 };
