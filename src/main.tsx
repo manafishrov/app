@@ -1,10 +1,11 @@
+import '@/listeners/gamepad';
+import '@/listeners/settings';
+import '@/listeners/status';
+import '@/listeners/update';
 import { routeTree } from '@/routeTree.gen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
-
-import '@/lib/gamepadListener';
-import '@/lib/updateListener';
 
 import '@/styles/app.css';
 

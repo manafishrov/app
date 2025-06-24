@@ -1,13 +1,10 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import {
-  Link,
-  Outlet,
-  createRootRouteWithContext,
-} from '@tanstack/react-router';
+import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { Link } from '@/components/ui/Link';
 import { Toaster } from '@/components/ui/Toaster';
 
 import { loadConfig } from '@/stores/configStore';
@@ -22,10 +19,12 @@ export const Route = createRootRouteWithContext<{
   },
   notFoundComponent: () => {
     return (
-      <div>
+      <main className='flex h-full w-full flex-col items-center justify-center gap-4'>
         <p>This is the Not Found Page</p>
-        <Link to='/'>Start Over</Link>
-      </div>
+        <Link to='/' variant='default' size='default'>
+          Start Over
+        </Link>
+      </main>
     );
   },
 });

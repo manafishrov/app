@@ -1,16 +1,14 @@
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useStatus } from '@/hooks/useStatus';
+import { useStore } from '@tanstack/react-store';
 
-function AttitudeIndicator() {
-  const { data: status } = useStatus();
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+import { statusStore } from '@/stores/statusStore';
+
+function ScientificAttitudeIndicator() {
+  const status = useStore(statusStore, (state) => state);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  if (!status?.isConnected) return null;
-
-  const pitch = status?.pitch ?? 0;
-  const roll = status?.roll ?? 0;
-  const desiredPitch = status?.desiredPitch ?? 0;
-  const desiredRoll = status?.desiredRoll ?? 0;
+  if (!status.isConnected) return null;
 
   const size = isDesktop ? 220 : 160;
   const center = size / 2;
@@ -116,8 +114,8 @@ function AttitudeIndicator() {
           style={{
             transform: `
               translate(${center}px, ${center}px)
-              translateY(${-desiredPitch * pitchScale}px)
-              rotate(${desiredRoll}deg)
+              translateY(${-status.desiredPitch * pitchScale}px)
+              rotate(${status.desiredRoll}deg)
               translate(${-center}px, ${-center}px)
             `,
           }}
@@ -142,8 +140,8 @@ function AttitudeIndicator() {
           style={{
             transform: `
               translate(${center}px, ${center}px)
-              translateY(${-pitch * pitchScale}px)
-              rotate(${roll}deg)
+              translateY(${-status.pitch * pitchScale}px)
+              rotate(${status.roll}deg)
               translate(${-center}px, ${-center}px)
             `,
           }}
@@ -173,7 +171,7 @@ function AttitudeIndicator() {
           fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
-          Pitch: {pitch.toFixed(1)}°
+          Pitch: {status.pitch.toFixed(1)}°
         </text>
         <text
           x={size - size * 0.4}
@@ -181,11 +179,11 @@ function AttitudeIndicator() {
           fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
-          Roll: {roll.toFixed(1)}°
+          Roll: {status.roll.toFixed(1)}°
         </text>
       </svg>
     </div>
   );
 }
 
-export { AttitudeIndicator };
+export { ScientificAttitudeIndicator };
