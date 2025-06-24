@@ -325,13 +325,26 @@ type CheckboxFieldProps = Omit<
   'checked' | 'onCheckedChange' | 'onBlur'
 > & {
   label: string;
+  labelSibling?: React.ReactNode;
+  description?: string;
 };
 
-function CheckboxField({ className, label, ...props }: CheckboxFieldProps) {
+function CheckboxField({
+  className,
+  label,
+  labelSibling,
+  description,
+  ...props
+}: CheckboxFieldProps) {
   const field = useFieldContext<boolean>();
 
   return (
-    <BaseField label={label} className={className}>
+    <BaseField
+      label={label}
+      labelSibling={labelSibling}
+      className={className}
+      description={description}
+    >
       <Checkbox
         checked={field.state.value}
         onCheckedChange={() => field.handleChange(!field.state.value)}
