@@ -1,8 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
+import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
+import { useEffect, useState } from 'react';
 
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
@@ -22,6 +25,19 @@ export const Route = createFileRoute('/settings/')({
 function General() {
   const config = useStore(configStore, (state) => state);
   const { theme, setTheme } = useTheme();
+  const [appVersion, setAppVersion] = useState<string>('');
+
+  useEffect(() => {
+    async function fetchVersion() {
+      try {
+        const version = await getVersion();
+        setAppVersion(version);
+      } catch (error) {
+        console.error('Error fetching app version:', error);
+      }
+    }
+    void fetchVersion();
+  }, []);
 
   if (!config) return null;
 
@@ -50,6 +66,17 @@ function General() {
         </p>
       </div>
       <div className='space-y-6'>
+        {appVersion && (
+          <div>
+            <h4 className='text-lg font-medium'>App Version</h4>
+            <p className='text-muted-foreground text-sm'>
+              Current version of the Manafish application.
+            </p>
+            <Badge className='bg-primary/10 text-primary mt-2 rounded-full px-3 py-1 text-sm font-medium'>
+              v{appVersion}
+            </Badge>
+          </div>
+        )}
         <div>
           <h4 className='text-lg font-medium'>Automatic Updates</h4>
           <p className='text-muted-foreground text-sm'>
