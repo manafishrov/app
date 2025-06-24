@@ -69,7 +69,10 @@ function Home() {
       className='flex h-full w-full items-center justify-center p-1'
     >
       <div
-        className={cx('bg-card relative aspect-4/3 rounded-lg', sizeClass)}
+        className={cx(
+          'bg-card dark text-foreground relative aspect-4/3 rounded-lg',
+          sizeClass,
+        )}
         onMouseMove={handleMouseMove}
       >
         <SettingsButton
