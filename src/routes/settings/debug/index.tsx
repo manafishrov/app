@@ -15,9 +15,10 @@ const ANSI_ORANGE = '\x1b[33m';
 const ANSI_RESET = '\x1b[0m';
 
 function formatLogMessage(log: LogMessage) {
-  const timestamp = new Date(log.timestamp).toISOString();
+  const date = new Date(log.timestamp);
+  const timestamp = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 
-  let formattedMessage = `[${log.origin.toUpperCase()}] [${timestamp}] [${log.level.toUpperCase()}]: ${log.message}`;
+  let formattedMessage = `[${log.origin.toUpperCase()}] [${log.level.toUpperCase()}] [${timestamp}]: ${log.message}`;
 
   switch (log.level.toUpperCase()) {
     case 'ERROR':

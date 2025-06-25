@@ -47,6 +47,9 @@ function VideoStream() {
           pc.iceConnectionState === 'disconnected' ||
           pc.iceConnectionState === 'closed'
         ) {
+          logInfo(
+            `WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`,
+          );
           setHasError(true);
           setIsLoading(false);
           scheduleRetry();
@@ -77,7 +80,7 @@ function VideoStream() {
         sdp: answer,
       });
     } catch (error) {
-      logInfo('WebRTC connection failed, retryingin 3 seconds...', error);
+      logInfo('WebRTC connection failed, retrying in 3 seconds...', error);
       setHasError(true);
       setIsLoading(false);
       scheduleRetry();
