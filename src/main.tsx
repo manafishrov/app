@@ -1,3 +1,4 @@
+import '@/listeners/debug';
 import '@/listeners/gamepad';
 import '@/listeners/settings';
 import '@/listeners/status';

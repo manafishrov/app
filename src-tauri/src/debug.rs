@@ -12,13 +12,15 @@ pub fn debug_init(app_handle: AppHandle) {
 
 pub fn debug_log(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
-    let _ = handle.emit(
-      "debug_backend",
-      Debug {
-        log_type: LogType::Log,
-        message: message.to_string(),
-      },
-    );
+    handle
+      .emit(
+        "debug_backend",
+        Debug {
+          log_type: LogType::Log,
+          message: message.to_string(),
+        },
+      )
+      .unwrap();
   } else {
     println!("DEBUG: {}", message);
   }
@@ -26,13 +28,15 @@ pub fn debug_log(message: &str) {
 
 pub fn debug_error(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
-    let _ = handle.emit(
-      "debug_backend",
-      Debug {
-        log_type: LogType::Error,
-        message: message.to_string(),
-      },
-    );
+    handle
+      .emit(
+        "debug_backend",
+        Debug {
+          log_type: LogType::Error,
+          message: message.to_string(),
+        },
+      )
+      .unwrap();
   } else {
     eprintln!("DEBUG: {}", message);
   }
