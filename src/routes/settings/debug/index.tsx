@@ -4,20 +4,31 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 
-import {
-  type DebugMessage,
-  clearDebugMessages,
-  getDebugMessages,
-} from '@/lib/debug';
+import { type LogMessage, clearLogMessages, getLogMessages } from '@/lib/log';
 
 export const Route = createFileRoute('/settings/debug/')({
   component: Debug,
 });
 
-function formatLogMessage(log: DebugMessage): string {
-  return `[${log.timestamp.toLocaleString()}] [${log.origin}] [${log.logType.toUpperCase()}]: ${
-    log.message
-  }`;
+const ANSI_RED = '\x1b[31m';
+const ANSI_ORANGE = '\x1b[33m';
+const ANSI_RESET = '\x1b[0m';
+
+function formatLogMessage(log: LogMessage) {
+  const timestamp = new Date(log.timestamp).toISOString();
+
+  let formattedMessage = `[${log.origin.toUpperCase()}] [${timestamp}] [${log.level.toUpperCase()}]: ${log.message}`;
+
+  switch (log.level.toUpperCase()) {
+    case 'ERROR':
+      formattedMessage = `${ANSI_RED}${formattedMessage}${ANSI_RESET}`;
+      break;
+    case 'WARN':
+      formattedMessage = `${ANSI_ORANGE}${formattedMessage}${ANSI_RESET}`;
+      break;
+  }
+
+  return formattedMessage;
 }
 
 function Debug() {
@@ -25,14 +36,14 @@ function Debug() {
   const [text, setText] = useState('');
 
   function handleClear() {
-    void clearDebugMessages();
+    void clearLogMessages();
     logRef.current?.clear();
     setText('');
   }
 
   useEffect(() => {
     async function loadInitialLog() {
-      const messages = await getDebugMessages();
+      const messages = await getLogMessages();
       if (messages.length > 0) {
         const formattedLogs = messages.map(formatLogMessage).join('\n');
         setText(formattedLogs);
@@ -43,7 +54,7 @@ function Debug() {
 
   useEffect(() => {
     function handleNewMessage(event: Event) {
-      const customEvent = event as CustomEvent<DebugMessage>;
+      const customEvent = event as CustomEvent<LogMessage>;
       const newMessage = customEvent.detail;
       if (newMessage) {
         const formattedMessage = formatLogMessage(newMessage);

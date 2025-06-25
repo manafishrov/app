@@ -1,4 +1,4 @@
-import '@/listeners/debug';
+import '@/listeners/log';
 import '@/listeners/gamepad';
 import '@/listeners/settings';
 import '@/listeners/status';

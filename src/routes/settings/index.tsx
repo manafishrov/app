@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 
+import { logError, logWarn } from '@/lib/log';
+
 import {
   type AttitudeIndicator,
   configStore,
@@ -33,7 +35,7 @@ function General() {
         const version = await getVersion();
         setAppVersion(version);
       } catch (error) {
-        console.error('Error fetching app version:', error);
+        logWarn('Error fetching app version:', error);
       }
     }
     void fetchVersion();
@@ -53,7 +55,7 @@ function General() {
         await updateConfig({ videoDirectory: result });
       }
     } catch (error) {
-      console.error('Error opening dialog:', error);
+      logError('Error opening file picker dialog:', error);
     }
   }
 

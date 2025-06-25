@@ -10,6 +10,6 @@ pub enum LogLevel {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Log {
-  pub log_level: LogLevel,
+  pub level: LogLevel,
   pub message: String,
 }

@@ -1,6 +1,8 @@
 import { useStore } from '@tanstack/react-store';
 import { useEffect, useRef, useState } from 'react';
 
+import { logInfo } from '@/lib/log';
+
 import { configStore } from '@/stores/configStore';
 
 const RETRY_DELAY = 3000;
@@ -75,7 +77,7 @@ function VideoStream() {
         sdp: answer,
       });
     } catch (error) {
-      console.error('WebRTC setup failed:', error);
+      logInfo('WebRTC connection failed, retryingin 3 seconds...', error);
       setHasError(true);
       setIsLoading(false);
       scheduleRetry();

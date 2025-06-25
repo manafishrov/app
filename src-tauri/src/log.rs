@@ -16,7 +16,7 @@ pub fn log_info(message: &str) {
       .emit(
         "log_backend",
         Log {
-          log_level: LogLevel::Info,
+          level: LogLevel::Info,
           message: message.to_string(),
         },
       )
@@ -32,7 +32,7 @@ pub fn log_warn(message: &str) {
       .emit(
         "log_backend",
         Log {
-          log_level: LogLevel::Warn,
+          level: LogLevel::Warn,
           message: message.to_string(),
         },
       )
@@ -48,7 +48,7 @@ pub fn log_error(message: &str) {
       .emit(
         "log_backend",
         Log {
-          log_level: LogLevel::Error,
+          level: LogLevel::Error,
           message: message.to_string(),
         },
       )

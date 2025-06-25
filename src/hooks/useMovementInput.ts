@@ -2,8 +2,6 @@ import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { debugLog } from '@/lib/debug';
-
 import { type ControlSource, configStore } from '@/stores/configStore';
 import {
   type MovementInputArray,
