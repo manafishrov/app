@@ -1,26 +1,26 @@
-import { useStore } from '@tanstack/react-store';
+type ScientificAttitudeIndicatorProps = {
+  size: number;
+  pitch: number;
+  roll: number;
+  desiredPitch: number;
+  desiredRoll: number;
+};
 
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-
-import { statusStore } from '@/stores/statusStore';
-import { webSocketConnectionStore } from '@/stores/websocketConnectionStore';
-
-function ScientificAttitudeIndicator() {
-  const status = useStore(statusStore, (state) => state);
-  const webSocketConnection = useStore(
-    webSocketConnectionStore,
-    (state) => state,
-  );
-  const isDesktop = useMediaQuery('(min-width: 768px)');
-
-  if (!webSocketConnection.isConnected) return null;
-
-  const size = isDesktop ? 220 : 160;
+function ScientificAttitudeIndicator({
+  size,
+  pitch,
+  roll,
+  desiredPitch,
+  desiredRoll,
+}: ScientificAttitudeIndicatorProps) {
   const center = size / 2;
   const pitchScale = size / 200;
 
   return (
-    <div className='relative' style={{ width: size, height: size }}>
+    <div
+      className='bg-muted relative rounded-2xl opacity-75'
+      style={{ width: size, height: size }}
+    >
       <svg
         width={size}
         height={size}
@@ -30,7 +30,7 @@ function ScientificAttitudeIndicator() {
           cx={center}
           cy={center}
           r={center - size * 0.05}
-          fill='oklch(0.21 0.006 285.885)'
+          fill='transparent'
           stroke='oklch(1 0 0 / 10%)'
           strokeWidth={size * 0.01}
         />
@@ -119,8 +119,8 @@ function ScientificAttitudeIndicator() {
           style={{
             transform: `
               translate(${center}px, ${center}px)
-              translateY(${-status.desiredPitch * pitchScale}px)
-              rotate(${status.desiredRoll}deg)
+              translateY(${-desiredPitch * pitchScale}px)
+              rotate(${desiredRoll}deg)
               translate(${-center}px, ${-center}px)
             `,
           }}
@@ -145,8 +145,8 @@ function ScientificAttitudeIndicator() {
           style={{
             transform: `
               translate(${center}px, ${center}px)
-              translateY(${-status.pitch * pitchScale}px)
-              rotate(${status.roll}deg)
+              translateY(${-pitch * pitchScale}px)
+              rotate(${roll}deg)
               translate(${-center}px, ${-center}px)
             `,
           }}
@@ -168,6 +168,11 @@ function ScientificAttitudeIndicator() {
             strokeWidth={size * 0.01}
           />
           <circle cx={center} cy={center} r={size * 0.02} fill='#00ff00' />
+          <path
+            d={`M ${-size * 0.02},${-size * 0.02} L 0,${-size * 0.04} L ${size * 0.02},${-size * 0.02}`}
+            fill='#00ff00'
+            transform={`translate(${center} ${center})`}
+          />
         </g>
 
         <text
@@ -176,7 +181,7 @@ function ScientificAttitudeIndicator() {
           fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
-          Pitch: {status.pitch.toFixed(1)}°
+          Pitch: {pitch.toFixed(1)}°
         </text>
         <text
           x={size - size * 0.4}
@@ -184,7 +189,7 @@ function ScientificAttitudeIndicator() {
           fill='oklch(0.985 0 0)'
           fontSize={size * 0.06}
         >
-          Roll: {status.roll.toFixed(1)}°
+          Roll: {roll.toFixed(1)}°
         </text>
       </svg>
     </div>

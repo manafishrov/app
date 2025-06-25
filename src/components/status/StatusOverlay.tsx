@@ -1,14 +1,14 @@
-import { ConnectionStatus } from '@/components/status/ConnectionStatus';
-import { ScientificAttitudeIndicator } from '@/components/status/ScientificAttitudeIndicator';
+import { AttitudeIndicator } from '@/components/status/AttitudeIndicator';
+import { WebSocketConnectionIndicator } from '@/components/status/WebSocketConnectionIndicator';
 
 function StatusOverlay() {
   return (
     <>
-      <div className='absolute top-2 right-2 flex gap-2'>
-        <ConnectionStatus />
+      <div className='absolute top-2 left-2'>
+        <WebSocketConnectionIndicator />
       </div>
       <div className='absolute bottom-2 left-2'>
-        <ScientificAttitudeIndicator />
+        <AttitudeIndicator />
       </div>
     </>
   );

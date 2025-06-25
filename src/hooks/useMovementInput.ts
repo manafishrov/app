@@ -3,9 +3,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { type ControlSource, configStore } from '@/stores/configStore';
+import {
+  type MovementInputArray,
+  movementInputStore,
+} from '@/stores/movementInputStore';
 
-type InputArray = [number, number, number, number, number, number];
-const EMPTY_INPUT: InputArray = [0, 0, 0, 0, 0, 0];
+const EMPTY_INPUT: MovementInputArray = [0, 0, 0, 0, 0, 0];
 
 function clamp(value: number) {
   return Math.max(-1, Math.min(1, value));
@@ -16,10 +19,10 @@ function useMovementInput() {
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
 
-  const getKeyboardInput = useCallback((): InputArray => {
+  const getKeyboardInput = useCallback((): MovementInputArray => {
     if (!config) return [...EMPTY_INPUT];
 
-    const input: InputArray = [...EMPTY_INPUT];
+    const input: MovementInputArray = [...EMPTY_INPUT];
     const keys = pressedKeys.current;
 
     input[0] =
@@ -44,12 +47,12 @@ function useMovementInput() {
     return input;
   }, [config]);
 
-  const processGamepadInput = useCallback((): InputArray => {
+  const processGamepadInput = useCallback((): MovementInputArray => {
     if (!config) return [...EMPTY_INPUT];
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return [...EMPTY_INPUT];
 
-    const input: InputArray = [...EMPTY_INPUT];
+    const input: MovementInputArray = [...EMPTY_INPUT];
 
     const handleMoveHorizontal = (source: ControlSource) => {
       switch (source) {
@@ -124,14 +127,20 @@ function useMovementInput() {
       (gamepad.buttons[rollRightButton]?.value ?? 0) +
       -(gamepad.buttons[rollLeftButton]?.value ?? 0);
 
-    return input.map(clamp) as InputArray;
+    return input.map(clamp) as MovementInputArray;
   }, [config]);
 
-  function mergeInputs(keyboard: InputArray, gamepad: InputArray) {
-    return keyboard.map((k, i) => clamp(k + (gamepad[i] ?? 0))) as InputArray;
+  function mergeInputs(
+    keyboard: MovementInputArray,
+    gamepad: MovementInputArray,
+  ) {
+    return keyboard.map((k, i) =>
+      clamp(k + (gamepad[i] ?? 0)),
+    ) as MovementInputArray;
   }
 
-  async function sendInput(input: InputArray) {
+  async function sendInput(input: MovementInputArray) {
+    movementInputStore.setState(() => input);
     try {
       await invoke('send_movement_input', { input });
     } catch (error) {
@@ -182,6 +191,7 @@ function useMovementInput() {
         cancelAnimationFrame(animationFrameRef.current);
       }
       void sendInput(EMPTY_INPUT);
+      movementInputStore.setState(() => EMPTY_INPUT);
     };
   }, [config, getKeyboardInput, processGamepadInput]);
 }

@@ -77,6 +77,7 @@ function Home() {
         onMouseMove={handleMouseMove}
       >
         <VideoStream />
+        <StatusOverlay />
         <SettingsButton
           className={cx(
             'absolute top-2 left-2 z-10 transition-opacity',
@@ -84,7 +85,6 @@ function Home() {
             'hover:opacity-100',
           )}
         />
-        <StatusOverlay />
       </div>
     </main>
   );

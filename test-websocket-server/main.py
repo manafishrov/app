@@ -21,12 +21,12 @@ async def handle_client(websocket):
             try:
                 current_time = time.time()
 
-                pitch = 70 * math.sin(current_time / 2)
-                roll = 70 * math.cos(current_time / 3)
-                desired_pitch = 20 * math.sin(current_time / 4)
-                desired_roll = 15 * math.cos(current_time / 5)
-                depth = 10 + 5 * math.sin(current_time / 6)
-                temperature = 20 + 5 * math.cos(current_time / 7)
+                pitch = 20 * math.sin(current_time / 2)
+                roll = 15 * math.cos(current_time / 3)
+                desired_pitch = 25 * math.sin(current_time / 2)
+                desired_roll = 20 * math.cos(current_time / 3)
+                depth = 10 + 5 * math.sin(current_time / 4)
+                temperature = 20 + 5 * math.cos(current_time / 5)
 
                 status_msg = {
                     "type": "status",

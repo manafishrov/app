@@ -1,6 +1,6 @@
 import { SettingsIcon } from 'lucide-react';
 
-import { Link, type LinkProps } from '@/components/ui/Link';
+import { Link } from '@/components/ui/Link';
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-type SettingsButtonProps = Omit<LinkProps, 'to' | 'aria-label'>;
+type SettingsButtonProps = Omit<
+  React.ComponentProps<typeof Link>,
+  'to' | 'aria-label'
+>;
 
 function SettingsButton(props: SettingsButtonProps) {
   return (
