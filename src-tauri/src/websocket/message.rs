@@ -7,4 +7,5 @@ pub enum WebsocketMessage {
   Status(Status),
   Settings(Settings),
   MovementCommand([f32; 6]),
+  DebugFirmware(String),
 }

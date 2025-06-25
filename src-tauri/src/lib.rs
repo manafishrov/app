@@ -16,6 +16,7 @@ mod websocket {
   pub mod handler;
   pub mod message;
   pub mod receive {
+    pub mod debug_firmware;
     pub mod settings;
     pub mod status;
   }
