@@ -10,6 +10,7 @@ use tokio::time::{interval, sleep, timeout};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 #[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct WebSocketConnection {
   is_connected: bool,
   delay: Option<u128>,

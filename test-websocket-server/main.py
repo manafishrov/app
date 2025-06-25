@@ -4,7 +4,6 @@ import time
 import websockets
 import logging
 import math
-import random
 import signal
 
 logging.basicConfig(level=logging.INFO)
@@ -17,20 +16,6 @@ async def handle_client(websocket):
     logging.info(f"Client connected from Manafish App at {websocket.remote_address}!")
     clients.add(websocket)
 
-    async def send_heartbeat():
-        while not shutdown:
-            try:
-                heartbeat_msg = {
-                    "message_type": "Heartbeat",
-                    "payload": {"timestamp": int(time.time())},
-                }
-                await websocket.send(json.dumps(heartbeat_msg))
-                logging.debug("Sent heartbeat")
-                await asyncio.sleep(1)
-            except Exception as e:
-                logging.error(f"Heartbeat error: {e}")
-                break
-
     async def send_status_updates():
         while not shutdown:
             try:
@@ -40,17 +25,18 @@ async def handle_client(websocket):
                 roll = 70 * math.cos(current_time / 3)
                 desired_pitch = 20 * math.sin(current_time / 4)
                 desired_roll = 15 * math.cos(current_time / 5)
-
-                water_detected = (int(current_time) % 10) < 5
+                depth = 10 + 5 * math.sin(current_time / 6)
+                temperature = 20 + 5 * math.cos(current_time / 7)
 
                 status_msg = {
-                    "message_type": "Status",
+                    "type": "status",
                     "payload": {
-                        "water_detected": water_detected,
                         "pitch": round(pitch, 2),
                         "roll": round(roll, 2),
-                        "desired_pitch": round(desired_pitch, 2),
-                        "desired_roll": round(desired_roll, 2),
+                        "desiredPitch": round(desired_pitch, 2),
+                        "desiredRoll": round(desired_roll, 2),
+                        "depth": round(depth, 2),
+                        "temperature": round(temperature, 2),
                     },
                 }
                 await websocket.send(json.dumps(status_msg))
@@ -60,8 +46,26 @@ async def handle_client(websocket):
                     logging.error(f"Status update error: {e}")
                 break
 
-    heartbeat_task = asyncio.create_task(send_heartbeat())
+    async def send_settings_updates():
+        while not shutdown:
+            try:
+                settings_msg = {
+                    "type": "settings",
+                    "payload": {
+                        "pitchStabilization": True,
+                        "rollStabilization": True,
+                        "depthStabilization": True,
+                    },
+                }
+                await websocket.send(json.dumps(settings_msg))
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                if not shutdown:
+                    logging.error(f"Settings update error: {e}")
+                break
+
     status_task = asyncio.create_task(send_status_updates())
+    settings_task = asyncio.create_task(send_settings_updates())
 
     try:
         async for message in websocket:
@@ -69,20 +73,12 @@ async def handle_client(websocket):
                 break
             try:
                 msg_data = json.loads(message)
-                msg_type = msg_data.get("message_type")
+                msg_type = msg_data.get("type")
                 payload = msg_data.get("payload")
 
-                if msg_type == "Command" and payload == "connect":
-                    logging.info("Client sent handshake")
-                elif msg_type == "Heartbeat":
-                    logging.debug("Received heartbeat response")
-                elif msg_type == "ControlInput":
-                    if isinstance(payload, list) and len(payload) == 6:
-                        logging.info(f"Received control input: {payload}")
-                    else:
-                        logging.warning(f"Invalid control input format: {payload}")
-                else:
-                    logging.info(f"Received message: {msg_data}")
+                logging.info(
+                    f"Received message of type '{msg_type}' with payload: {payload}"
+                )
             except json.JSONDecodeError:
                 logging.warning(f"Received non-JSON message: {message}")
 
@@ -91,8 +87,8 @@ async def handle_client(websocket):
             logging.info(f"Client disconnected: {e}")
     finally:
         clients.remove(websocket)
-        heartbeat_task.cancel()
         status_task.cancel()
+        settings_task.cancel()
 
 
 async def shutdown_server(server):
@@ -115,8 +111,8 @@ async def main():
         shutdown_event.set()
 
     try:
-        server = await websockets.serve(handle_client, "localhost", 9000)
-        logging.info("Mock server running on localhost:9000")
+        server = await websockets.serve(handle_client, "127.0.0.1", 9000)
+        logging.info("Mock server running on 127.0.0.1:9000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, signal_handler)
