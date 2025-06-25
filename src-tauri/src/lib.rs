@@ -1,7 +1,6 @@
 mod commands {
   pub mod config;
   pub mod gamepad;
-  pub mod movement;
 }
 
 mod models {
@@ -14,9 +13,7 @@ mod websocket {
   pub mod client;
   pub mod handler;
   mod receive {
-    pub mod heartbeat;
     pub mod ping;
-    pub mod pong;
   }
 }
 
@@ -25,10 +22,9 @@ mod updater;
 
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
-use commands::movement::send_movement_input;
 use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
-use tauri::{generate_handler, App, Builder, Manager, State};
+use tauri::{generate_handler, App, Builder, Manager};
 use tokio::sync::mpsc::channel;
 use tokio_tungstenite::tungstenite::Message;
 use updater::update_app;
@@ -37,7 +33,7 @@ use websocket::client::{start_websocket_client, MessageSendChannelState};
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let update_handle = app.app_handle().clone();
   spawn(async move {
-    update_app(update_handle).await;
+    update_app(update_handle).await.unwrap();
   });
 
   let websocket_handle = app.app_handle().clone();
@@ -57,12 +53,7 @@ pub fn run() {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
-    .invoke_handler(generate_handler![
-      get_config,
-      save_config,
-      send_movement_input,
-      execute_gamepad,
-    ])
+    .invoke_handler(generate_handler![get_config, save_config, execute_gamepad,])
     .setup(setup_handlers);
 
   builder

@@ -1,4 +1,4 @@
-use super::receive::{ping::handle_ping, pong::handle_pong};
+use super::receive::ping::handle_ping;
 use serde::Deserialize;
 use serde_json::Value;
 use tauri::AppHandle;
