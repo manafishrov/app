@@ -39,7 +39,7 @@ pub async fn start_websocket_client(
         stream
       }
       Ok(Err(e)) => {
-        log_warn!("WebSocket connect error: {}. Retrying...", e);
+        log_info!("WebSocket connect error: {}. Retrying...", e);
         app
           .emit(
             "websocket_connection",

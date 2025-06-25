@@ -62,10 +62,10 @@ function Debug() {
       }
     }
 
-    window.addEventListener('debug-message', handleNewMessage);
+    window.addEventListener('logmessage', handleNewMessage);
 
     return () => {
-      window.removeEventListener('debug-message', handleNewMessage);
+      window.removeEventListener('logmessage', handleNewMessage);
     };
   }, []);
 

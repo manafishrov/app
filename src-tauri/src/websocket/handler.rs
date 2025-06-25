@@ -2,7 +2,7 @@ use super::message::WebsocketMessage;
 use super::receive::{
   log_firmware::handle_log_firmware, settings::handle_settings, status::handle_status,
 };
-use crate::log_warn;
+use crate::log_error;
 use tauri::AppHandle;
 use tokio_tungstenite::tungstenite::Message;
 
@@ -16,7 +16,7 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
         _ => None,
       },
       Err(e) => {
-        log_warn!("Failed to deserialize message: {}", e);
+        log_error!("Failed to deserialize message: {}", e);
         None
       }
     }

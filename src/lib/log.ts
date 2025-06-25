@@ -1,4 +1,12 @@
-import { type DBSchema, openDB } from 'idb';
+import {
+  type DBSchema,
+  type IDBPDatabase,
+  type OpenDBCallbacks,
+  deleteDB,
+  openDB,
+} from 'idb';
+
+import { toast } from '@/components/ui/Toaster';
 
 type LogLevel = 'info' | 'warn' | 'error';
 
@@ -25,40 +33,77 @@ type LogDatabase = {
   };
 } & DBSchema;
 
-const dbPromise = openDB<LogDatabase>('manafish-db', 1, {
+const DB_NAME = 'manafish-db';
+const DB_VERSION = 1;
+
+const dbCallbacks: OpenDBCallbacks<LogDatabase> = {
   upgrade(db) {
-    const store = db.createObjectStore('logMessages', {
-      keyPath: 'id',
-      autoIncrement: true,
-    });
-    store.createIndex('timestamp', 'timestamp');
+    if (!db.objectStoreNames.contains('logMessages')) {
+      const store = db.createObjectStore('logMessages', {
+        keyPath: 'id',
+        autoIncrement: true,
+      });
+      store.createIndex('timestamp', 'timestamp');
+    }
   },
-});
+};
+
+let dbPromise = openDB<LogDatabase>(DB_NAME, DB_VERSION, dbCallbacks);
+
+async function withErrorHandling<T>(
+  operation: (db: IDBPDatabase<LogDatabase>) => Promise<T>,
+  retry = true,
+): Promise<T> {
+  try {
+    const db = await dbPromise;
+    return await operation(db);
+  } catch (error) {
+    if (
+      retry &&
+      error instanceof DOMException &&
+      error.name === 'NotFoundError'
+    ) {
+      console.warn(
+        'Object store not found. Deleting database and retrying operation.',
+      );
+      const db = await dbPromise;
+      db.close();
+      await deleteDB(DB_NAME);
+      dbPromise = openDB<LogDatabase>(DB_NAME, DB_VERSION, dbCallbacks);
+      return await withErrorHandling(operation, false);
+    }
+    throw error;
+  }
+}
 
 async function addLogMessage(
   message: string,
   level: LogLevel,
   origin: LogOrigin,
 ) {
-  const db = await dbPromise;
-  const newLogEntry = {
-    message,
-    level,
-    origin,
-    timestamp: new Date(),
-  };
-
-  const id = await db.add('logMessages', newLogEntry as LogMessage);
-
-  const fullMessage = await db.get('logMessages', id);
-
-  if (fullMessage) {
-    window.dispatchEvent(
-      new CustomEvent<LogMessage>('logmessage', {
-        detail: fullMessage,
-      }),
-    );
+  if (level === 'error') {
+    toast.error(`${origin} Error: ${message}`);
   }
+
+  await withErrorHandling(async (db) => {
+    const newLogEntry = {
+      message,
+      level,
+      origin,
+      timestamp: new Date(),
+    };
+
+    const id = await db.add('logMessages', newLogEntry as LogMessage);
+    const fullMessage = await db.get('logMessages', id);
+
+    if (fullMessage) {
+      window.dispatchEvent(
+        new CustomEvent<LogMessage>('logmessage', {
+          detail: fullMessage,
+        }),
+      );
+    }
+  });
 }
 
 function formatLog(...args: unknown[]) {
@@ -92,13 +137,11 @@ function logError(...args: unknown[]) {
 }
 
 async function getLogMessages() {
-  const db = await dbPromise;
-  return db.getAll('logMessages');
+  return withErrorHandling((db) => db.getAll('logMessages'));
 }
 
 async function clearLogMessages() {
-  const db = await dbPromise;
-  await db.clear('logMessages');
+  await withErrorHandling((db) => db.clear('logMessages'));
 }
 
 export {
