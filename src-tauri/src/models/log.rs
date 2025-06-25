@@ -1,14 +1,15 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum LogType {
-  Log,
+pub enum LogLevel {
+  Info,
+  Warn,
   Error,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Debug {
-  pub log_type: LogType,
+pub struct Log {
+  pub log_level: LogLevel,
   pub message: String,
 }

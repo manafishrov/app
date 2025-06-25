@@ -6,8 +6,8 @@ mod commands {
 
 mod models {
   pub mod config;
-  pub mod debug;
   pub mod gamepad;
+  pub mod log;
   pub mod settings;
   pub mod status;
 }
@@ -17,7 +17,7 @@ mod websocket {
   pub mod handler;
   pub mod message;
   pub mod receive {
-    pub mod debug_firmware;
+    pub mod log_firmware;
     pub mod settings;
     pub mod status;
   }
@@ -26,14 +26,14 @@ mod websocket {
   }
 }
 
-mod debug;
 mod gamepad;
+mod log;
 mod updater;
 
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
-use debug::debug_init;
+use log::log_init;
 use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
 use tauri::{generate_handler, App, Builder, Manager};
@@ -43,8 +43,8 @@ use websocket::client::{start_websocket_client, MessageSendChannelState};
 use websocket::message::WebsocketMessage;
 
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-  let debug_handle = app.app_handle().clone();
-  debug_init(debug_handle);
+  let log_handle = app.app_handle().clone();
+  log_init(log_handle);
 
   let update_handle = app.app_handle().clone();
   spawn(async move {
