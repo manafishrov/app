@@ -1,4 +1,5 @@
 use super::handler::handle_message;
+use super::message::WebsocketMessage;
 use crate::commands::config::get_config;
 use crate::models::config::Config;
 use futures_util::{SinkExt, StreamExt};
@@ -15,13 +16,13 @@ struct WebSocketConnection {
 }
 
 pub struct MessageSendChannelState {
-  pub tx: mpsc::Sender<Message>,
+  pub tx: mpsc::Sender<WebsocketMessage>,
 }
 
 pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
-  mut message_rx: Receiver<Message>,
+  mut message_rx: Receiver<WebsocketMessage>,
 ) {
   let mut config = get_config().unwrap_or_default();
 
@@ -80,7 +81,15 @@ pub async fn start_websocket_client(
               break;
           }
           Some(message_to_send) = message_rx.recv() => {
-              if let Err(e) = write.send(message_to_send).await {
+              let message_text = match serde_json::to_string(&message_to_send) {
+                Ok(text) => text,
+                Err(e) => {
+                  eprintln!("Failed to serialize message: {}", e);
+                  continue;
+                }
+              };
+
+              if let Err(e) = write.send(Message::Text(message_text.into())).await {
                   eprintln!("Websocket send error: {}. Reconnecting...", e);
                   app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                   break;

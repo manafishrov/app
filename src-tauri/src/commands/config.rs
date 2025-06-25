@@ -30,8 +30,8 @@ pub fn get_config() -> Result<Config, String> {
 
 #[tauri::command]
 pub async fn save_config(
-  config: Config,
   state: State<'_, ConfigSendChannelState>,
+  config: Config,
 ) -> Result<(), String> {
   let config_path = get_config_path();
 
@@ -42,11 +42,7 @@ pub async fn save_config(
   let content = serde_json::to_string(&config).map_err(|e| e.to_string())?;
   fs::write(&config_path, &content).map_err(|e| e.to_string())?;
 
-  state
-    .tx
-    .send(config)
-    .await
-    .map_err(|e| e.to_string())?;
+  state.tx.send(config).await.map_err(|e| e.to_string())?;
 
   Ok(())
 }

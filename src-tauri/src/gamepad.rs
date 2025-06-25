@@ -113,7 +113,7 @@ pub fn gamepad_to_json(gamepad: Gamepad, event: EventType, time: SystemTime) -> 
     .map(|o| o.map_or(0.0, |button| button.value()))
     .collect();
 
-  let gamepad_data = GamepadData {
+  GamepadData {
     id,
     uuid,
     connected,
@@ -125,7 +125,5 @@ pub fn gamepad_to_json(gamepad: Gamepad, event: EventType, time: SystemTime) -> 
     axes,
     mapping,
     power_info,
-  };
-
-  gamepad_data
+  }
 }
