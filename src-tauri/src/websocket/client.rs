@@ -48,7 +48,9 @@ pub async fn start_websocket_client(
             },
           )
           .unwrap();
-        wait_before_retry(&mut config_rx).await;
+        if let Some(new_config) = wait_before_retry(&mut config_rx).await {
+          config = new_config;
+        }
         continue;
       }
       Err(_) => {
@@ -62,7 +64,9 @@ pub async fn start_websocket_client(
             },
           )
           .unwrap();
-        wait_before_retry(&mut config_rx).await;
+        if let Some(new_config) = wait_before_retry(&mut config_rx).await {
+          config = new_config;
+        }
         continue;
       }
     };
@@ -152,14 +156,16 @@ pub async fn start_websocket_client(
   }
 }
 
-async fn wait_before_retry(rx: &mut Receiver<Config>) {
+async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
   eprintln!("Waiting 3 seconds or for config update before retrying...");
   tokio::select! {
-      Some(_) = rx.recv() => {
+      Some(new_config) = rx.recv() => {
           eprintln!("Config updated, retrying immediately.");
+          Some(new_config)
       },
       _ = sleep(Duration::from_secs(3)) => {
           eprintln!("3 seconds passed, retrying connection.");
+          None
       }
   }
 }
