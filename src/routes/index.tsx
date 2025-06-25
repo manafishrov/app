@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
 import { SettingsButton } from '@/components/settings/SettingsButton';
+import { StatusOverlay } from '@/components/status/StatusOverlay';
 
 import { useMovementInput } from '@/hooks/useMovementInput';
 
@@ -75,6 +76,7 @@ function Home() {
         )}
         onMouseMove={handleMouseMove}
       >
+        <VideoStream />
         <SettingsButton
           className={cx(
             'absolute top-2 left-2 z-10 transition-opacity',
@@ -82,7 +84,7 @@ function Home() {
             'hover:opacity-100',
           )}
         />
-        <VideoStream />
+        <StatusOverlay />
       </div>
     </main>
   );
