@@ -34,6 +34,16 @@ pub fn debug_error(message: &str) {
       },
     );
   } else {
-    println!("DEBUG: {}", message);
+    eprintln!("DEBUG: {}", message);
   }
+}
+
+#[macro_export]
+macro_rules! debug_log {
+  ($($arg:tt)*) => ($crate::debug::debug_log(&format!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! debug_error {
+  ($($arg:tt)*) => ($crate::debug::debug_error(&format!($($arg)*)));
 }

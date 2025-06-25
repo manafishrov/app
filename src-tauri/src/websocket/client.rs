@@ -2,6 +2,7 @@ use super::handler::handle_message;
 use super::message::WebsocketMessage;
 use crate::commands::config::get_config;
 use crate::models::config::Config;
+use crate::{debug_error, debug_log};
 use futures_util::{SinkExt, StreamExt};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter};
@@ -31,14 +32,14 @@ pub async fn start_websocket_client(
     let url = format!("ws://{}:{}", config.ip_address, config.web_socket_port);
     let connect_timeout = Duration::from_secs(5);
 
-    eprintln!("Attempting to connect to {}", url);
+    debug_log!("Attempting to connect to {}", url);
     let ws_stream = match timeout(connect_timeout, connect_async(&url)).await {
       Ok(Ok((stream, _))) => {
-        eprintln!("Successfully connected to {}", url);
+        debug_log!("Successfully connected to {}", url);
         stream
       }
       Ok(Err(e)) => {
-        eprintln!("WebSocket connect error: {}. Retrying...", e);
+        debug_log!("WebSocket connect error: {}. Retrying...", e);
         app
           .emit(
             "websocket_connection",
@@ -54,7 +55,7 @@ pub async fn start_websocket_client(
         continue;
       }
       Err(_) => {
-        eprintln!("WebSocket connect timeout. Retrying...");
+        debug_error!("WebSocket connect timeout. Retrying...");
         app
           .emit(
             "websocket_connection",
@@ -83,7 +84,7 @@ pub async fn start_websocket_client(
             if new_config.ip_address != config.ip_address
               || new_config.web_socket_port != config.web_socket_port
             {
-              eprintln!("WebSocket config updated. Reconnecting websocket.");
+              debug_log!("WebSocket config updated. Reconnecting websocket.");
               config = new_config;
               app
                 .emit(
@@ -102,13 +103,13 @@ pub async fn start_websocket_client(
               let message_text = match serde_json::to_string(&message_to_send) {
                 Ok(text) => text,
                 Err(e) => {
-                  eprintln!("Failed to serialize message: {}", e);
+                  debug_error!("Failed to serialize message: {}", e);
                   continue;
                 }
               };
 
               if let Err(e) = write.send(Message::Text(message_text.into())).await {
-                  eprintln!("Websocket send error: {}. Reconnecting...", e);
+                  debug_error!("Websocket send error: {}. Reconnecting...", e);
                   app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                   break;
               }
@@ -121,11 +122,10 @@ pub async fn start_websocket_client(
               let ping_data = timestamp_ms.to_string().into_bytes();
 
               if let Err(e) = write.send(Message::Ping(ping_data.into())).await {
-                  eprintln!("Failed to send ping: {}. Reconnecting...", e);
+                  debug_error!("Failed to send ping: {}. Reconnecting...", e);
                   app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                   break;
               }
-              eprintln!("Sent Ping with timestamp: {}", timestamp_ms);
           }
           Some(message) = read.next() => {
               match message {
@@ -133,13 +133,13 @@ pub async fn start_websocket_client(
                       if msg.is_text() || msg.is_binary() {
                           if let Some(response) = handle_message(&app, msg).await {
                               if let Err(e) = write.send(response).await {
-                                  eprintln!("Websocket send error: {}. Reconnecting...", e);
+                                  debug_error!("Websocket send error: {}. Reconnecting...", e);
                                   app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                                   break;
                               }
                           }
                       } else if msg.is_close() {
-                          eprintln!("Websocket connection closed by peer. Reconnecting...");
+                          debug_log!("Websocket connection closed by peer. Reconnecting...");
                           app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                           break;
                       }
@@ -158,7 +158,7 @@ pub async fn start_websocket_client(
                       }
                   }
                   Err(e) => {
-                      eprintln!("Websocket read error: {}. Reconnecting...", e);
+                      debug_error!("Websocket read error: {}. Reconnecting...", e);
                       app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
                       break;
                   }
@@ -170,14 +170,14 @@ pub async fn start_websocket_client(
 }
 
 async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
-  eprintln!("Waiting 3 seconds or for config update before retrying...");
+  debug_log!("Waiting 3 seconds or for config update before retrying...");
   tokio::select! {
       Some(new_config) = rx.recv() => {
-          eprintln!("Config updated, retrying immediately.");
+          debug_log!("Config updated, retrying immediately.");
           Some(new_config)
       },
       _ = sleep(Duration::from_secs(3)) => {
-          eprintln!("3 seconds passed, retrying connection.");
+          debug_log!("3 seconds passed, retrying connection.");
           None
       }
   }
