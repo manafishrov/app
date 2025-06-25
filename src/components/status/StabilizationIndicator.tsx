@@ -14,7 +14,7 @@ function StabilizationIndicator() {
   if (!webSocketConnection.isConnected) return null;
 
   return (
-    <div className='flex flex-col gap-1 text-xs'>
+    <div className='flex flex-col gap-1 text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
       <div className='flex items-center gap-2'>
         <span
           className={`h-2 w-2 rounded-full ${

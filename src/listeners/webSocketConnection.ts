@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import {
   type WebSocketConnection,
   webSocketConnectionStore,
-} from '@/stores/websocketConnectionStore';
+} from '@/stores/webSocketConnectionStore';
 
 async function initializeWebSocketConnectionListener() {
   try {

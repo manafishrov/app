@@ -5,7 +5,7 @@ type Status = {
   roll: number;
   desiredPitch: number;
   desiredRoll: number;
-  pressure: number;
+  depth: number;
   temperature: number;
 };
 
@@ -14,7 +14,7 @@ const statusStore = new Store<Status>({
   roll: 0,
   desiredPitch: 0,
   desiredRoll: 0,
-  pressure: 0,
+  depth: 0,
   temperature: 0,
 });
 

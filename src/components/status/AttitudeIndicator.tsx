@@ -8,7 +8,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { configStore } from '@/stores/configStore';
 import { movementInputStore } from '@/stores/movementInputStore';
 import { statusStore } from '@/stores/statusStore';
-import { webSocketConnectionStore } from '@/stores/websocketConnectionStore';
+import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function AttitudeIndicator() {
   const status = useStore(statusStore, (state) => state);

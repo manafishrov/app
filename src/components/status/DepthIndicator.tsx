@@ -1,11 +1,11 @@
 import { useStore } from '@tanstack/react-store';
-import { ThermometerIcon } from 'lucide-react';
+import { WavesIcon } from 'lucide-react';
 
 import { statusStore } from '@/stores/statusStore';
 import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
-function TemperatureIndicator() {
-  const { temperature } = useStore(statusStore);
+function DepthIndicator() {
+  const { depth } = useStore(statusStore);
   const webSocketConnection = useStore(
     webSocketConnectionStore,
     (state) => state,
@@ -15,10 +15,10 @@ function TemperatureIndicator() {
 
   return (
     <div className='flex items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
-      <ThermometerIcon className='h-4 w-4' />
-      <span className='text-xs'>{temperature.toFixed(1)} °C</span>
+      <WavesIcon className='h-4 w-4' />
+      <span className='text-xs'>{depth.toFixed(1)} m</span>
     </div>
   );
 }
 
-export { TemperatureIndicator };
+export { DepthIndicator };

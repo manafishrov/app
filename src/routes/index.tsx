@@ -80,7 +80,7 @@ function Home() {
         <StatusOverlay />
         <SettingsButton
           className={cx(
-            'absolute top-2 left-2 z-10 transition-opacity',
+            'absolute top-2 right-2 z-10 transition-opacity',
             showSettingsLink ? 'opacity-100' : 'opacity-0',
             'hover:opacity-100',
           )}

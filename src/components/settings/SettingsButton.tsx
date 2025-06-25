@@ -28,7 +28,7 @@ function SettingsButton(props: SettingsButtonProps) {
             <SettingsIcon />
           </Link>
         </TooltipTrigger>
-        <TooltipContent side='right'>
+        <TooltipContent side='left'>
           <p>Settings</p>
         </TooltipContent>
       </Tooltip>

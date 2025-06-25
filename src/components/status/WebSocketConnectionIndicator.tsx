@@ -1,6 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 
-import { webSocketConnectionStore } from '@/stores/websocketConnectionStore';
+import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function WebSocketConnectionIndicator() {
   const webSocketConnection = useStore(
