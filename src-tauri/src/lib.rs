@@ -7,6 +7,7 @@ mod commands {
 mod models {
   pub mod config;
   pub mod gamepad;
+  pub mod settings;
   pub mod status;
 }
 
@@ -15,7 +16,8 @@ mod websocket {
   pub mod handler;
   pub mod message;
   pub mod receive {
-    pub mod ping;
+    pub mod settings;
+    pub mod status;
   }
   pub mod send {
     pub mod movement;

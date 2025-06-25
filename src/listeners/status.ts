@@ -1,10 +1,10 @@
 import { listen } from '@tauri-apps/api/event';
 
-import { statusStore, type Status } from '@/stores/statusStore';
+import { type Status, statusStore } from '@/stores/statusStore';
 
 async function initializeStatusListener() {
   try {
-    await listen<Status>('status_update', (event) => {
+    await listen<Status>('status', (event) => {
       statusStore.setState(() => event.payload);
     });
   } catch (error) {
@@ -13,4 +13,3 @@ async function initializeStatusListener() {
 }
 
 void initializeStatusListener();
-

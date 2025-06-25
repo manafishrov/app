@@ -4,7 +4,7 @@ import { type Settings, settingsStore } from '@/stores/settingsStore';
 
 async function initializeSettingsListener() {
   try {
-    await listen<Settings>('settings_update', (event) => {
+    await listen<Settings>('settings', (event) => {
       settingsStore.setState(() => event.payload);
     });
   } catch (error) {
