@@ -7,13 +7,3 @@ pub struct Settings {
   pub roll_stabilization: bool,
   pub depth_stabilization: bool,
 }
-
-impl Default for Settings {
-  fn default() -> Self {
-    Settings {
-      pitch_stabilization: true,
-      roll_stabilization: true,
-      depth_stabilization: true,
-    }
-  }
-}

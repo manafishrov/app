@@ -1,4 +1,4 @@
-use crate::models::{settings::Settings, status::Status};
+use crate::models::{debug::Debug, settings::Settings, status::Status};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -7,5 +7,5 @@ pub enum WebsocketMessage {
   Status(Status),
   Settings(Settings),
   MovementCommand([f32; 6]),
-  DebugFirmware(String),
+  DebugFirmware(Debug),
 }
