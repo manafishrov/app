@@ -80,10 +80,23 @@ pub async fn start_websocket_client(
     loop {
       tokio::select! {
           Some(new_config) = config_rx.recv() => {
+            if new_config.ip_address != config.ip_address
+              || new_config.web_socket_port != config.web_socket_port
+            {
+              eprintln!("WebSocket config updated. Reconnecting websocket.");
               config = new_config;
-              eprintln!("Config updated. Reconnecting websocket.");
-              app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+              app
+                .emit(
+                  "websocket_connection",
+                  WebSocketConnection {
+                    is_connected: false,
+                    delay: None,
+                  },
+                )
+                .unwrap();
               break;
+            }
+            config = new_config;
           }
           Some(message_to_send) = message_rx.recv() => {
               let message_text = match serde_json::to_string(&message_to_send) {
