@@ -19,9 +19,9 @@ function ThrusterPinSetupTable() {
   return (
     <>
       <h3 className='text-2xl font-semibold tracking-tight'>
-        Truster pin setup
+        Thruster pin setup
       </h3>
-      <Table>
+      <Table className='border'>
         <TableHeader>
           <TableRow>
             <TableHead>
@@ -73,7 +73,7 @@ function ThrusterPinSetupTable() {
         <TableBody>
           {Array.from({ length: 8 }, (_, index) => (
             <TableRow key={index}>
-              <TableCell>{index + 1}</TableCell>
+              <TableCell className="text-center">{index + 1}</TableCell>
               <TableCell>
                 <PinSelect value={index} onValueChange={() => {}} />
               </TableCell>
