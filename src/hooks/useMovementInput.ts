@@ -2,7 +2,7 @@ import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { logError } from '@/lib/log';
+import { logError, logWarn } from '@/lib/log';
 
 import { type ControlSource, configStore } from '@/stores/configStore';
 import {
@@ -146,7 +146,8 @@ function useMovementInput() {
     try {
       await invoke('send_movement_input', { payload: input });
     } catch (error) {
-      logError('Failed to send movement input:', error);
+      logError('Failed to send movement input');
+      logWarn('Failed to send movement input:', error);
     }
   }
 
