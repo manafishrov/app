@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { ThrusterPinSetupTable } from '@/components/calibration/ThrusterPinSetupTable';
+
 export const Route = createFileRoute('/settings/calibration/')({
   component: Calibration,
 });
@@ -12,6 +14,12 @@ function Calibration() {
         <p className='text-muted-foreground'>
           Calibrate the thrusters of the ROV.
         </p>
+      </div>
+      <div className='space-y-6'>
+        <ThrusterPinSetupTable />
+        <h3 className='text-2xl font-semibold tracking-tight'>
+          Thruster allocation
+        </h3>
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 import { useMatches } from '@tanstack/react-router';
+import { useStore } from '@tanstack/react-store';
 import {
   ArrowLeftIcon,
   BugIcon,
@@ -24,8 +25,14 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/Sidebar';
 
+import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+
 function SettingsSidebar() {
   const matches = useMatches();
+  const webSocketConnection = useStore(
+    webSocketConnectionStore,
+    (state) => state,
+  );
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
@@ -110,6 +117,7 @@ function SettingsSidebar() {
                   isActive={matches.some(
                     (match) => match.id === '/settings/calibration/',
                   )}
+                  disabled={!webSocketConnection.isConnected}
                 >
                   <Link to='/settings/calibration'>
                     <WrenchIcon />
@@ -123,6 +131,7 @@ function SettingsSidebar() {
                   isActive={matches.some(
                     (match) => match.id === '/settings/regulator/',
                   )}
+                  disabled={!webSocketConnection.isConnected}
                 >
                   <Link to='/settings/regulator'>
                     <CompassIcon />
