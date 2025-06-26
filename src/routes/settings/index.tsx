@@ -41,7 +41,7 @@ function General() {
     void fetchVersion();
   }, []);
 
-  if (!config) return null;
+  if (!config) return;
 
   async function selectVideoDirectory() {
     try {

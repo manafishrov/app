@@ -50,7 +50,7 @@ function ConnectionSettingsForm() {
     }
   }, [config, form]);
 
-  if (!config) return null;
+  if (!config) return;
 
   return (
     <form

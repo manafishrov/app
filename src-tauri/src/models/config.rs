@@ -70,6 +70,7 @@ pub struct Config {
   pub webrtc_signaling_api_port: u16,
   pub webrtc_signaling_api_path: String,
   pub web_socket_port: u16,
+  pub info_logging: bool,
   pub keyboard: KeyboardBindings,
   pub gamepad: GamepadBindings,
 }
@@ -101,6 +102,7 @@ impl Default for Config {
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
       web_socket_port: 9000,
+      info_logging: false,
       keyboard: KeyboardBindings {
         move_forward: "KeyW".to_string(),
         move_backward: "KeyS".to_string(),

@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+  preferredstrategy: 'pseudoelements';
+}
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -118,5 +121,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .react-lazylog {
+    @apply scrollbar-thin scrollbar-thumb-[#7e7e7e] scrollbar-hover:scrollbar-thumb-[#464646] scrollbar-track-[#222222] scrollbar-thumb-rounded-full;
   }
 }

@@ -8,7 +8,9 @@ import {
 
 import { toast } from '@/components/ui/Toaster';
 
-type LogLevel = 'info' | 'warn' | 'error';
+import { configStore } from '@/stores/configStore';
+
+type LogLevel = 'Info' | 'Warn' | 'Error';
 
 type LogOrigin = 'Frontend' | 'Backend' | 'Firmware';
 
@@ -81,7 +83,11 @@ async function addLogMessage(
   level: LogLevel,
   origin: LogOrigin,
 ) {
-  if (level === 'error') {
+  if (level === 'Info' && !configStore.state?.infoLogging) {
+    return;
+  }
+
+  if (level === 'Error') {
     toast.error(`${origin} Error: ${message}`);
   }
 
@@ -125,15 +131,15 @@ function formatLog(...args: unknown[]) {
 }
 
 function logInfo(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'info', 'Frontend');
+  void addLogMessage(formatLog(...args), 'Info', 'Frontend');
 }
 
 function logWarn(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'warn', 'Frontend');
+  void addLogMessage(formatLog(...args), 'Warn', 'Frontend');
 }
 
 function logError(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'error', 'Frontend');
+  void addLogMessage(formatLog(...args), 'Error', 'Frontend');
 }
 
 async function getLogMessages() {

@@ -36,7 +36,7 @@ function KeyboardSettings() {
     null,
   );
 
-  if (!config) return null;
+  if (!config) return;
 
   const currentBindings = localBindings ?? config.keyboard;
 

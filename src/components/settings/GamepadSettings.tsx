@@ -51,7 +51,7 @@ function GamepadSettings() {
     };
   }, []);
 
-  if (!config) return null;
+  if (!config) return;
 
   if (!isControllerConnected) {
     return (

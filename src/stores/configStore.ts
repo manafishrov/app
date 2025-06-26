@@ -3,6 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { toast } from '@/components/ui/Toaster';
 
+import { logError } from '@/lib/log';
+
 type KeyboardBindings = {
   moveForward: string;
   moveBackward: string;
@@ -50,6 +52,7 @@ type Config = {
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
   webSocketPort: number;
+  infoLogging: boolean;
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
 };
@@ -61,8 +64,7 @@ async function loadConfig() {
     const config = await invoke<Config>('get_config');
     configStore.setState(() => config);
   } catch (error) {
-    console.error('Failed to load config:', error);
-    toast.error('Failed to load config');
+    logError('Failed to load config:', error);
   }
 }
 
@@ -80,8 +82,7 @@ async function updateConfig(settings: Partial<Config>) {
     configStore.setState(() => newConfig);
     toast.success('Configuration updated successfully');
   } catch (error) {
-    console.error('Failed to update config:', error);
-    toast.error('Failed to update configuration');
+    logError('Failed to update config:', error);
   }
 }
 

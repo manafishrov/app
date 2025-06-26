@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { logWarn } from '@/lib/log';
 
 import {
   type WebSocketConnection,
@@ -11,7 +12,7 @@ async function initializeWebSocketConnectionListener() {
       webSocketConnectionStore.setState(() => event.payload);
     });
   } catch (error) {
-    console.error('Failed to listen to if websockets are connected:', error);
+    logWarn('Failed to listen to if websockets are connected:', error);
   }
 }
 

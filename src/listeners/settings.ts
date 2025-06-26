@@ -8,7 +8,7 @@ async function initializeSettingsListener() {
       settingsStore.setState(() => event.payload);
     });
   } catch (error) {
-    console.error('Failed to listen to setting updates:', error);
+    logWarn('Failed to listen to setting updates:', error);
   }
 }
 

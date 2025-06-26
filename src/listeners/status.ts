@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { logWarn } from '@/lib/log';
 
 import { type Status, statusStore } from '@/stores/statusStore';
 
@@ -8,7 +9,7 @@ async function initializeStatusListener() {
       statusStore.setState(() => event.payload);
     });
   } catch (error) {
-    console.error('Failed to listen to status updates:', error);
+    logWarn('Failed to listen to status updates:', error);
   }
 }
 

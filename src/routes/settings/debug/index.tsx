@@ -1,10 +1,15 @@
 import { LazyLog, ScrollFollow } from '@melloware/react-logviewer';
 import { createFileRoute } from '@tanstack/react-router';
+import { useStore } from '@tanstack/react-store';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { Label } from '@/components/ui/Label';
+import { Switch } from '@/components/ui/Switch';
 
 import { type LogMessage, clearLogMessages, getLogMessages } from '@/lib/log';
+
+import { configStore, updateConfig } from '@/stores/configStore';
 
 export const Route = createFileRoute('/settings/debug/')({
   component: Debug,
@@ -33,6 +38,7 @@ function formatLogMessage(log: LogMessage) {
 }
 
 function Debug() {
+  const config = useStore(configStore, (state) => state);
   const logRef = useRef<LazyLog>(null);
   const [text, setText] = useState('');
 
@@ -83,8 +89,18 @@ function Debug() {
           Clear Log
         </Button>
       </div>
+      <div className='mb-4 flex items-center space-x-2'>
+        <Switch
+          id='info-logs'
+          checked={config?.infoLogging ?? false}
+          onCheckedChange={() =>
+            updateConfig({ infoLogging: !config?.infoLogging })
+          }
+        />
+        <Label htmlFor='info-logs'>Enable Info level Logging</Label>
+      </div>
       <div className='absolute left-0 h-full w-full px-8'>
-        <div className='h-[80svh] w-full overflow-hidden rounded-xl'>
+        <div className='h-[calc(100svh-10rem)] w-full overflow-hidden rounded-t-xl'>
           <ScrollFollow
             startFollowing
             render={({ follow, onScroll }) => (
