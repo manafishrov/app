@@ -1,4 +1,4 @@
-import { PinSelect } from '@/components/calibration/PinSelect';
+import { IdentifierSelect } from '@/components/calibration/IdentifierSelect';
 import { SpinDirectionSelect } from '@/components/calibration/SpinDirectionSelect';
 import { Button } from '@/components/ui/Button';
 import {
@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/Tooltip';
 
 function ThrusterPinSetupTable() {
+  const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
+
   return (
     <>
       <h3 className='text-2xl font-semibold tracking-tight'>
@@ -24,6 +26,17 @@ function ThrusterPinSetupTable() {
       <Table className='border'>
         <TableHeader>
           <TableRow>
+            <TableHead className='text-center'>
+              <Tooltip>
+                <TooltipTrigger>Pin</TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    The general purpose pin on the Raspberry Pi Pico that the
+                    thruster is connected to.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TableHead>
             <TableHead>
               <Tooltip>
                 <TooltipTrigger>Identifier</TooltipTrigger>
@@ -31,17 +44,6 @@ function ThrusterPinSetupTable() {
                   <p>
                     Identifier to be used for the thruster in the thruster
                     allocation.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TableHead>
-            <TableHead>
-              <Tooltip>
-                <TooltipTrigger>Pin</TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    The general purpose pin on the Raspberry Pi Pico that the
-                    thruster is connected to.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -71,11 +73,11 @@ function ThrusterPinSetupTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Array.from({ length: 8 }, (_, index) => (
-            <TableRow key={index}>
-              <TableCell className="text-center">{index + 1}</TableCell>
+          {pinNumbers.map((pin, index) => (
+            <TableRow key={pin}>
+              <TableCell className='text-center'>GP{pin}</TableCell>
               <TableCell>
-                <PinSelect value={index} onValueChange={() => {}} />
+                <IdentifierSelect value={index + 1} onValueChange={() => {}} />
               </TableCell>
               <TableCell>
                 <SpinDirectionSelect value={1} onValueChange={() => {}} />
