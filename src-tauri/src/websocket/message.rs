@@ -1,4 +1,10 @@
-use crate::models::{log::Log, settings::Settings, status::Status};
+use crate::models::{
+  log::Log,
+  movement::MovementCommand,
+  settings::Settings,
+  status::Status,
+  thrusters::{TestThruster, ThrusterAllocation, ThrusterPinSetup},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -6,6 +12,10 @@ use serde::{Deserialize, Serialize};
 pub enum WebsocketMessage {
   Status(Status),
   Settings(Settings),
-  MovementCommand([f32; 6]),
+  MovementCommand(MovementCommand),
   LogFirmware(Log),
+  ThrusterPinSetup(ThrusterPinSetup),
+  ThrusterAllocation(ThrusterAllocation),
+  GetThrusterConfig,
+  TestThruster(TestThruster),
 }

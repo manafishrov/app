@@ -2,14 +2,17 @@ mod commands {
   pub mod config;
   pub mod gamepad;
   pub mod movement;
+  pub mod thrusters;
 }
 
 mod models {
   pub mod config;
   pub mod gamepad;
   pub mod log;
+  pub mod movement;
   pub mod settings;
   pub mod status;
+  pub mod thrusters;
 }
 
 mod websocket {
@@ -20,9 +23,11 @@ mod websocket {
     pub mod log_firmware;
     pub mod settings;
     pub mod status;
+    pub mod thrusters;
   }
   pub mod send {
     pub mod movement;
+    pub mod thrusters;
   }
 }
 
@@ -33,6 +38,7 @@ mod updater;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
+use commands::thrusters::{get_thruster_config, thruster_allocation, thruster_pin_setup};
 use log::log_init;
 use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
@@ -72,7 +78,10 @@ pub fn run() {
       get_config,
       save_config,
       execute_gamepad,
-      send_movement_input
+      send_movement_input,
+      thruster_pin_setup,
+      thruster_allocation,
+      get_thruster_config
     ])
     .setup(setup_handlers);
 

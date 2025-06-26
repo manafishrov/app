@@ -1,5 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 
+import { logWarn } from '@/lib/log';
+
 import { type Settings, settingsStore } from '@/stores/settingsStore';
 
 async function initializeSettingsListener() {
