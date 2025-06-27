@@ -9,7 +9,13 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 
-function ThrusterAllocationTable() {
+import type { ThrusterAllocation } from '@/routes/settings/calibration';
+
+function ThrusterAllocationTable({
+  thrusterAllocation,
+}: {
+  thrusterAllocation: ThrusterAllocation;
+}) {
   const rowLabels = [
     'Forward',
     'Side',

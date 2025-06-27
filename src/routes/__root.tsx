@@ -13,10 +13,7 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
   component: RootComponent,
-  loader: async () => {
-    await loadConfig();
-    return null;
-  },
+  loader: loadConfig,
   notFoundComponent: () => {
     return (
       <main className='flex h-full w-full flex-col items-center justify-center gap-4'>

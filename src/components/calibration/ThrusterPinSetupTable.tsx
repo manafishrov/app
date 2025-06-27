@@ -15,7 +15,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-function ThrusterPinSetupTable() {
+import type { ThrusterPinSetup } from '@/routes/settings/calibration';
+
+function ThrusterPinSetupTable({
+  thrusterPinSetup,
+}: {
+  thrusterPinSetup: ThrusterPinSetup;
+}) {
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
 
   return (
