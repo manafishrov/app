@@ -55,8 +55,7 @@ function General() {
         await updateConfig({ videoDirectory: result });
       }
     } catch (error) {
-      logError('Error opening file picker dialog');
-      logWarn('Error opening file picker dialog:', error);
+      logError('Error opening file picker dialog:', error);
     }
   }
 

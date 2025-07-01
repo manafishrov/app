@@ -1,3 +1,5 @@
+# Before running, make sure to install the required library: pip install websockets
+
 import asyncio
 import json
 import time
@@ -11,8 +13,25 @@ logging.basicConfig(level=logging.INFO)
 clients = set()
 shutdown = False
 
+thruster_pin_setup = {
+    "identifiers": [5, 4, 3, 1, 2, 7, 6, 8],
+    "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],
+}
+
+thruster_allocation = [
+    [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+]
+
 
 async def handle_client(websocket):
+    global thruster_allocation
     logging.info(f"Client connected from Manafish App at {websocket.remote_address}!")
     clients.add(websocket)
 
@@ -79,6 +98,27 @@ async def handle_client(websocket):
                 logging.info(
                     f"Received message of type '{msg_type}' with payload: {payload}"
                 )
+
+                if msg_type == "getThrusterConfig":
+                    logging.info("Sending thruster configuration")
+                    pin_setup_msg = {
+                        "type": "thrusterPinSetup",
+                        "payload": thruster_pin_setup,
+                    }
+                    allocation_msg = {
+                        "type": "thrusterAllocation",
+                        "payload": thruster_allocation,
+                    }
+                    await websocket.send(json.dumps(pin_setup_msg))
+                    await websocket.send(json.dumps(allocation_msg))
+                elif msg_type == "thrusterPinSetup":
+                    thruster_pin_setup.update(payload)
+                    logging.info(f"Updated thruster pin setup: {thruster_pin_setup}")
+                elif msg_type == "thrusterAllocation":
+                    thruster_allocation = payload
+                    logging.info(f"Updated thruster allocation: {thruster_allocation}")
+                elif msg_type == "testThruster":
+                    logging.info(f"Testing thruster with identifier: {payload}")
             except json.JSONDecodeError:
                 logging.warning(f"Received non-JSON message: {message}")
 

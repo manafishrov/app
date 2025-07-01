@@ -38,7 +38,9 @@ mod updater;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
-use commands::thrusters::{get_thruster_config, thruster_allocation, thruster_pin_setup};
+use commands::thrusters::{
+  get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
+};
 use log::log_init;
 use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
@@ -81,7 +83,8 @@ pub fn run() {
       send_movement_input,
       thruster_pin_setup,
       thruster_allocation,
-      get_thruster_config
+      get_thruster_config,
+      test_thruster
     ])
     .setup(setup_handlers);
 

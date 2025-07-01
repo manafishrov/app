@@ -88,7 +88,7 @@ async function addLogMessage(
   }
 
   if (level === 'Error') {
-    toast.error(`${origin} Error: ${message}`);
+    toast.error(`${origin} Error: ${message.split(':')[0]}`);
   }
 
   await withErrorHandling(async (db) => {

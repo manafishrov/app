@@ -88,7 +88,7 @@ export const Route = createFileRoute('/settings/calibration/')({
       ]);
       return { thrusterPinSetup, thrusterAllocation };
     } catch (error) {
-      logError('Failed to retrieve thruster configuration', error);
+      logError('Failed to retrieve thruster configuration:', error);
       return { thrusterPinSetup: null, thrusterAllocation: null };
     }
   },
@@ -122,4 +122,4 @@ function Calibration() {
   );
 }
 
-export type { ThrusterPinSetup, ThrusterAllocation };
+export type { ThrusterPinSetup, ThrusterAllocation, Row };

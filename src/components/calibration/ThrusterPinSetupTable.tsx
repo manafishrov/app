@@ -1,3 +1,6 @@
+import { invoke } from '@tauri-apps/api/core';
+import { useState } from 'react';
+
 import { IdentifierSelect } from '@/components/calibration/IdentifierSelect';
 import { SpinDirectionSelect } from '@/components/calibration/SpinDirectionSelect';
 import { Button } from '@/components/ui/Button';
@@ -15,14 +18,57 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-import type { ThrusterPinSetup } from '@/routes/settings/calibration';
+import { logError } from '@/lib/log';
+
+import type { Row, ThrusterPinSetup } from '@/routes/settings/calibration';
 
 function ThrusterPinSetupTable({
-  thrusterPinSetup,
+  thrusterPinSetup: initialThrusterPinSetup,
 }: {
   thrusterPinSetup: ThrusterPinSetup;
 }) {
+  const [thrusterPinSetup, setThrusterPinSetup] = useState(
+    initialThrusterPinSetup,
+  );
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
+
+  async function handleIdentifierChange(index: number, value: number) {
+    const newIdentifiers = [...thrusterPinSetup.identifiers];
+    newIdentifiers[index] = value;
+    const newThrusterPinSetup = {
+      ...thrusterPinSetup,
+      identifiers: newIdentifiers as Row,
+    };
+    setThrusterPinSetup(newThrusterPinSetup);
+    try {
+      await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
+    } catch (error) {
+      logError('Failed to set thruster pin setup:', error);
+    }
+  }
+
+  async function handleSpinDirectionChange(index: number, value: number) {
+    const newSpinDirections = [...thrusterPinSetup.spinDirections];
+    newSpinDirections[index] = value;
+    const newThrusterPinSetup = {
+      ...thrusterPinSetup,
+      spinDirections: newSpinDirections as Row,
+    };
+    setThrusterPinSetup(newThrusterPinSetup);
+    try {
+      await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
+    } catch (error) {
+      logError('Failed to set thruster pin setup', error);
+    }
+  }
+
+  async function handleTestThruster(identifier: number) {
+    try {
+      await invoke('test_thruster', { payload: identifier });
+    } catch (error) {
+      logError('Failed to test thruster:', error);
+    }
+  }
 
   return (
     <>
@@ -83,13 +129,28 @@ function ThrusterPinSetupTable({
             <TableRow key={pin}>
               <TableCell className='text-center'>GP{pin}</TableCell>
               <TableCell>
-                <IdentifierSelect value={index + 1} onValueChange={() => {}} />
+                <IdentifierSelect
+                  value={thrusterPinSetup.identifiers[index]!}
+                  onValueChange={(value) =>
+                    handleIdentifierChange(index, value)
+                  }
+                />
               </TableCell>
               <TableCell>
-                <SpinDirectionSelect value={1} onValueChange={() => {}} />
+                <SpinDirectionSelect
+                  value={thrusterPinSetup.spinDirections[index]!}
+                  onValueChange={(value) =>
+                    handleSpinDirectionChange(index, value)
+                  }
+                />
               </TableCell>
               <TableCell>
-                <Button variant='outline'>Test</Button>
+                <Button
+                  variant='outline'
+                  onClick={() => handleTestThruster(index + 1)}
+                >
+                  Test
+                </Button>
               </TableCell>
             </TableRow>
           ))}
