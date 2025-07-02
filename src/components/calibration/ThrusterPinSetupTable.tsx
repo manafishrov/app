@@ -14,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
-import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +24,8 @@ import { logError } from '@/lib/log';
 
 import { type Row, droneConfigStore } from '@/stores/droneConfigStore';
 import { statusStore } from '@/stores/statusStore';
+
+const THRUSTER_POLE_PAIRS = 6;
 
 function ThrusterPinSetupTable() {
   const { thrusterPinSetup } = useStore(droneConfigStore);
@@ -203,7 +204,10 @@ function ThrusterPinSetupTable() {
                   style={{
                     animationDuration: `${
                       (thrusterErpms[index] ?? 0) > 0
-                        ? 60_000 / ((thrusterErpms[index] ?? 0) / 6 / 60)
+                        ? 60_000 /
+                          ((thrusterErpms[index] ?? 0) /
+                            THRUSTER_POLE_PAIRS /
+                            60)
                         : 0
                     }ms`,
                   }}
