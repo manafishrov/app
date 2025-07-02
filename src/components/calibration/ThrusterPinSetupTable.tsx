@@ -147,7 +147,9 @@ function ThrusterPinSetupTable({
               <TableCell>
                 <Button
                   variant='outline'
-                  onClick={() => handleTestThruster(index + 1)}
+                  onClick={() =>
+                    handleTestThruster(thrusterPinSetup.identifiers[index])
+                  }
                 >
                   Test
                 </Button>
