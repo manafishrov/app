@@ -39,10 +39,13 @@ function ThrusterPinSetupTable() {
   }
 
   async function handleIdentifierChange(index: number, value: number) {
-    const newIdentifiers = [...thrusterPinSetup!.identifiers];
+    if (!thrusterPinSetup) {
+      return;
+    }
+    const newIdentifiers = [...thrusterPinSetup.identifiers];
     newIdentifiers[index] = value;
     const newThrusterPinSetup = {
-      ...thrusterPinSetup!,
+      ...thrusterPinSetup,
       identifiers: newIdentifiers as Row,
     };
     droneConfigStore.setState((config) => ({
@@ -57,10 +60,13 @@ function ThrusterPinSetupTable() {
   }
 
   async function handleSpinDirectionChange(index: number, value: number) {
-    const newSpinDirections = [...thrusterPinSetup!.spinDirections];
+    if (!thrusterPinSetup) {
+      return;
+    }
+    const newSpinDirections = [...thrusterPinSetup.spinDirections];
     newSpinDirections[index] = value;
     const newThrusterPinSetup = {
-      ...thrusterPinSetup!,
+      ...thrusterPinSetup,
       spinDirections: newSpinDirections as Row,
     };
     droneConfigStore.setState((config) => ({
@@ -77,7 +83,6 @@ function ThrusterPinSetupTable() {
   async function handleTestThruster(identifier: number) {
     try {
       await invoke('test_thruster', { payload: identifier });
-      toast.loading('Testing thruster...');
     } catch (error) {
       logError('Failed to test thruster:', error);
     }
@@ -151,7 +156,7 @@ function ThrusterPinSetupTable() {
               <TableCell className='text-center'>GP{pin}</TableCell>
               <TableCell>
                 <IdentifierSelect
-                  value={thrusterPinSetup.identifiers[index]!}
+                  value={thrusterPinSetup?.identifiers[index] ?? 0}
                   onValueChange={(value) =>
                     handleIdentifierChange(index, value)
                   }
@@ -159,7 +164,7 @@ function ThrusterPinSetupTable() {
               </TableCell>
               <TableCell>
                 <SpinDirectionSelect
-                  value={thrusterPinSetup.spinDirections[index]!}
+                  value={thrusterPinSetup?.spinDirections[index] ?? 0}
                   onValueChange={(value) =>
                     handleSpinDirectionChange(index, value)
                   }
@@ -198,12 +203,12 @@ function ThrusterPinSetupTable() {
                   style={{
                     animationDuration: `${
                       (thrusterErpms[index] ?? 0) > 0
-                        ? 60_000 / ((thrusterErpms[index] ?? 0) / 4 / 10)
+                        ? 60_000 / ((thrusterErpms[index] ?? 0) / 6 / 60)
                         : 0
                     }ms`,
                   }}
                 />
-                {Math.round((thrusterErpms[index] ?? 0) / 4)}
+                {Math.round((thrusterErpms[index] ?? 0) / 6)}
               </TableCell>
             </TableRow>
           ))}

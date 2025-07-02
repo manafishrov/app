@@ -21,7 +21,7 @@ function Calibration() {
       </div>
       <div className='space-y-6 overflow-x-auto'>
         <ThrusterPinSetupTable />
-        {/* <ThrusterAllocationTable /> */}
+        <ThrusterAllocationTable />
       </div>
     </>
   );

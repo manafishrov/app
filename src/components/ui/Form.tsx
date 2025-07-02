@@ -161,11 +161,10 @@ function NumberField({
     >
       <Input
         type='text'
-        pattern='[0-9]*'
         inputMode='numeric'
         value={field.state.value?.toString() ?? ''}
         onChange={(e) => {
-          const value = e.target.value.replace(/[^\d]/g, '');
+          const value = e.target.value.replace(',', '.').replace(/[^\d]/g, '');
           field.handleChange(Number(value));
         }}
         onBlur={field.handleBlur}
