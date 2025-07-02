@@ -1,5 +1,6 @@
-import '@/listeners/log';
+import '@/listeners/droneConfig';
 import '@/listeners/gamepad';
+import '@/listeners/log';
 import '@/listeners/state';
 import '@/listeners/status';
 import '@/listeners/update';
