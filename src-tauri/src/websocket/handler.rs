@@ -1,6 +1,7 @@
 use super::message::WebsocketMessage;
 use super::receive::{
   log_firmware::handle_log_firmware,
+  regulator::handle_regulator,
   states::handle_states,
   status::handle_status,
   thrusters::{handle_thruster_allocation, handle_thruster_pin_setup},
@@ -22,6 +23,7 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
         WebsocketMessage::ThrusterAllocation(payload) => {
           handle_thruster_allocation(app_handle, &payload)
         }
+        WebsocketMessage::Regulator(payload) => handle_regulator(app_handle, &payload),
         other => {
           log_warn!("Received unhandled message type: {:?}", other);
           None

@@ -1,6 +1,7 @@
 use crate::models::{
   log::Log,
   movement::MovementCommand,
+  regulator::Regulator,
   states::States,
   status::Status,
   thrusters::{TestThruster, ThrusterAllocation, ThrusterPinSetup},
@@ -18,4 +19,7 @@ pub enum WebsocketMessage {
   ThrusterAllocation(ThrusterAllocation),
   GetThrusterConfig,
   TestThruster(TestThruster),
+  Regulator(Regulator),
+  GetRegulatorConfig,
+  RegulatorAutoTuning,
 }

@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { logError } from '@/lib/log';
 
 import {
+  type Regulator,
   type ThrusterAllocation,
   type ThrusterPinSetup,
   droneConfigStore,
@@ -20,6 +21,12 @@ async function initializeDroneConfigListener() {
       droneConfigStore.setState((config) => ({
         ...config,
         thrusterAllocation: event.payload,
+      }));
+    });
+    await listen<Regulator>('regulator', (event) => {
+      droneConfigStore.setState((config) => ({
+        ...config,
+        regulator: event.payload,
       }));
     });
   } catch (error) {

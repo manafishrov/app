@@ -12,9 +12,17 @@ type ThrusterPinSetup = {
 
 type ThrusterAllocation = [Row, Row, Row, Row, Row, Row, Row, Row];
 
+type Regulator = {
+  speedCoefficient: number;
+  kp: number;
+  ki: number;
+  kd: number;
+};
+
 type DroneConfig = {
   thrusterPinSetup?: ThrusterPinSetup;
   thrusterAllocation?: ThrusterAllocation;
+  regulator?: Regulator;
 };
 
 const droneConfigStore = new Store<DroneConfig>({});
@@ -27,9 +35,19 @@ async function requestThrusterConfig() {
   }
 }
 
+async function requestRegulatorConfig() {
+  try {
+    await invoke('get_regulator_config');
+  } catch (error) {
+    logError('Failed to request regulator config:', error);
+  }
+}
+
 export {
   droneConfigStore,
   requestThrusterConfig,
+  requestRegulatorConfig,
+  type Regulator,
   type DroneConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,

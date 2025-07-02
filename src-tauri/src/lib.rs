@@ -2,6 +2,7 @@ mod commands {
   pub mod config;
   pub mod gamepad;
   pub mod movement;
+  pub mod regulator;
   pub mod thrusters;
 }
 
@@ -10,6 +11,7 @@ mod models {
   pub mod gamepad;
   pub mod log;
   pub mod movement;
+  pub mod regulator;
   pub mod states;
   pub mod status;
   pub mod thrusters;
@@ -21,12 +23,14 @@ mod websocket {
   pub mod message;
   pub mod receive {
     pub mod log_firmware;
+    pub mod regulator;
     pub mod states;
     pub mod status;
     pub mod thrusters;
   }
   pub mod send {
     pub mod movement;
+    pub mod regulator;
     pub mod thrusters;
   }
 }
@@ -38,6 +42,7 @@ mod updater;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
+use commands::regulator::{get_regulator_config, regulator, regulator_auto_tuning};
 use commands::thrusters::{
   get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
 };
@@ -84,7 +89,10 @@ pub fn run() {
       thruster_pin_setup,
       thruster_allocation,
       get_thruster_config,
-      test_thruster
+      test_thruster,
+      regulator,
+      get_regulator_config,
+      regulator_auto_tuning,
     ])
     .setup(setup_handlers);
 
