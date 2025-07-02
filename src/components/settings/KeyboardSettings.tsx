@@ -31,7 +31,7 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
 };
 
 function KeyboardSettings() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore);
   const [localBindings, setLocalBindings] = useState<KeyboardBindings | null>(
     null,
   );

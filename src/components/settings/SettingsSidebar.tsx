@@ -29,7 +29,7 @@ import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function SettingsSidebar() {
   const matches = useMatches();
-  const webSocketConnection = useStore(webSocketConnectionStore);
+  const { isConnected } = useStore(webSocketConnectionStore);
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
@@ -114,7 +114,7 @@ function SettingsSidebar() {
                   isActive={matches.some(
                     (match) => match.id === '/settings/calibration/',
                   )}
-                  disabled={!webSocketConnection.isConnected}
+                  disabled={!isConnected}
                 >
                   <Link to='/settings/calibration'>
                     <WrenchIcon />
@@ -128,7 +128,7 @@ function SettingsSidebar() {
                   isActive={matches.some(
                     (match) => match.id === '/settings/regulator/',
                   )}
-                  disabled={!webSocketConnection.isConnected}
+                  disabled={!isConnected}
                 >
                   <Link to='/settings/regulator'>
                     <CompassIcon />

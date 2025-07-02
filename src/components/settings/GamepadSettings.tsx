@@ -26,7 +26,7 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
 };
 
 function GamepadSettings() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore);
   const [localBindings, setLocalBindings] = useState<GamepadBindings | null>(
     null,
   );

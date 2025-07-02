@@ -17,7 +17,7 @@ function clamp(value: number) {
 }
 
 function useMovementInput() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore);
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
 

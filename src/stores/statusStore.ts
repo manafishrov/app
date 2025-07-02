@@ -7,6 +7,16 @@ type Status = {
   desiredRoll: number;
   depth: number;
   temperature: number;
+  thrusterErpms: [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
 };
 
 const statusStore = new Store<Status>({
@@ -16,6 +26,7 @@ const statusStore = new Store<Status>({
   desiredRoll: 0,
   depth: 0,
   temperature: 0,
+  thrusterErpms: [0, 0, 0, 0, 0, 0, 0, 0],
 });
 
 export { statusStore, type Status };

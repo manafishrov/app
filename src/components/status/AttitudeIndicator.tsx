@@ -11,13 +11,13 @@ import { statusStore } from '@/stores/statusStore';
 import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function AttitudeIndicator() {
-  const status = useStore(statusStore);
+  const { pitch, roll, desiredPitch, desiredRoll } = useStore(statusStore);
   const config = useStore(configStore);
   const movementInput = useStore(movementInputStore);
-  const webSocketConnection = useStore(webSocketConnectionStore);
+  const { isConnected } = useStore(webSocketConnectionStore);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  if (!webSocketConnection.isConnected) return null;
+  if (!isConnected) return null;
 
   const size = isDesktop ? 220 : 160;
 
@@ -26,18 +26,18 @@ function AttitudeIndicator() {
       return (
         <ScientificAttitudeIndicator
           size={size}
-          pitch={status.pitch}
-          roll={status.roll}
-          desiredPitch={status.desiredPitch}
-          desiredRoll={status.desiredRoll}
+          pitch={pitch}
+          roll={roll}
+          desiredPitch={desiredPitch}
+          desiredRoll={desiredRoll}
         />
       );
     case 'Dimensional3D':
       return (
         <Dimensional3DAttitudeIndicator
           size={size}
-          pitch={status.pitch}
-          roll={status.roll}
+          pitch={pitch}
+          roll={roll}
           rawYawInput={movementInput[4]}
         />
       );

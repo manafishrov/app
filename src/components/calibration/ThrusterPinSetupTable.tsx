@@ -1,4 +1,6 @@
+import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
+import { FanIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { IdentifierSelect } from '@/components/calibration/IdentifierSelect';
@@ -12,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -20,26 +23,32 @@ import {
 
 import { logError } from '@/lib/log';
 
-import type { Row, ThrusterPinSetup } from '@/routes/settings/calibration';
+import { type Row, droneConfigStore } from '@/stores/droneConfigStore';
+import { statusStore } from '@/stores/statusStore';
 
-function ThrusterPinSetupTable({
-  thrusterPinSetup: initialThrusterPinSetup,
-}: {
-  thrusterPinSetup: ThrusterPinSetup;
-}) {
-  const [thrusterPinSetup, setThrusterPinSetup] = useState(
-    initialThrusterPinSetup,
-  );
+function ThrusterPinSetupTable() {
+  const { thrusterPinSetup } = useStore(droneConfigStore);
+  const { thrusterErpms } = useStore(statusStore);
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
+  const [loadingStates, setLoadingStates] = useState<boolean[]>(
+    Array(pinNumbers.length).fill(false),
+  );
+
+  if (!thrusterPinSetup) {
+    return;
+  }
 
   async function handleIdentifierChange(index: number, value: number) {
-    const newIdentifiers = [...thrusterPinSetup.identifiers];
+    const newIdentifiers = [...thrusterPinSetup!.identifiers];
     newIdentifiers[index] = value;
     const newThrusterPinSetup = {
-      ...thrusterPinSetup,
+      ...thrusterPinSetup!,
       identifiers: newIdentifiers as Row,
     };
-    setThrusterPinSetup(newThrusterPinSetup);
+    droneConfigStore.setState((config) => ({
+      ...config,
+      thrusterPinSetup: newThrusterPinSetup,
+    }));
     try {
       await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
     } catch (error) {
@@ -48,13 +57,16 @@ function ThrusterPinSetupTable({
   }
 
   async function handleSpinDirectionChange(index: number, value: number) {
-    const newSpinDirections = [...thrusterPinSetup.spinDirections];
+    const newSpinDirections = [...thrusterPinSetup!.spinDirections];
     newSpinDirections[index] = value;
     const newThrusterPinSetup = {
-      ...thrusterPinSetup,
+      ...thrusterPinSetup!,
       spinDirections: newSpinDirections as Row,
     };
-    setThrusterPinSetup(newThrusterPinSetup);
+    droneConfigStore.setState((config) => ({
+      ...config,
+      thrusterPinSetup: newThrusterPinSetup,
+    }));
     try {
       await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
     } catch (error) {
@@ -65,6 +77,7 @@ function ThrusterPinSetupTable({
   async function handleTestThruster(identifier: number) {
     try {
       await invoke('test_thruster', { payload: identifier });
+      toast.loading('Testing thruster...');
     } catch (error) {
       logError('Failed to test thruster:', error);
     }
@@ -122,6 +135,14 @@ function ThrusterPinSetupTable({
                 </TooltipContent>
               </Tooltip>
             </TableHead>
+            <TableHead>
+              <Tooltip>
+                <TooltipTrigger>RPM</TooltipTrigger>
+                <TooltipContent>
+                  <p>The revolutions per minute of the thruster.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -147,12 +168,42 @@ function ThrusterPinSetupTable({
               <TableCell>
                 <Button
                   variant='outline'
-                  onClick={() =>
-                    handleTestThruster(thrusterPinSetup.identifiers[index])
-                  }
+                  disabled={loadingStates[index]}
+                  onClick={async () => {
+                    const identifier = thrusterPinSetup.identifiers[index];
+                    if (identifier !== undefined) {
+                      const newLoadingStates = [...loadingStates];
+                      newLoadingStates[index] = true;
+                      setLoadingStates(newLoadingStates);
+                      await handleTestThruster(identifier);
+                      setTimeout(() => {
+                        setLoadingStates((prevLoadingStates) => {
+                          const newLoadingStates = [...prevLoadingStates];
+                          newLoadingStates[index] = false;
+                          return newLoadingStates;
+                        });
+                      }, 2000);
+                    }
+                  }}
                 >
                   Test
                 </Button>
+              </TableCell>
+              <TableCell className='flex items-center gap-2'>
+                <FanIcon
+                  className={((thrusterErpms[index] ?? 0) > 0
+                    ? 'animate-spin'
+                    : ''
+                  ).toString()}
+                  style={{
+                    animationDuration: `${
+                      (thrusterErpms[index] ?? 0) > 0
+                        ? 60_000 / ((thrusterErpms[index] ?? 0) / 4 / 10)
+                        : 0
+                    }ms`,
+                  }}
+                />
+                {Math.round((thrusterErpms[index] ?? 0) / 4)}
               </TableCell>
             </TableRow>
           ))}
