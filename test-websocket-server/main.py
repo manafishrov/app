@@ -65,18 +65,18 @@ async def handle_client(websocket):
                     logging.error(f"Status update error: {e}")
                 break
 
-    async def send_settings_updates():
+    async def send_states_updates():
         while not shutdown:
             try:
-                settings_msg = {
-                    "type": "settings",
+                states_msg = {
+                    "type": "states",
                     "payload": {
                         "pitchStabilization": True,
                         "rollStabilization": True,
                         "depthStabilization": True,
                     },
                 }
-                await websocket.send(json.dumps(settings_msg))
+                await websocket.send(json.dumps(states_msg))
                 await asyncio.sleep(0.5)
             except Exception as e:
                 if not shutdown:
@@ -84,7 +84,7 @@ async def handle_client(websocket):
                 break
 
     status_task = asyncio.create_task(send_status_updates())
-    settings_task = asyncio.create_task(send_settings_updates())
+    settings_task = asyncio.create_task(send_states_updates())
 
     try:
         async for message in websocket:

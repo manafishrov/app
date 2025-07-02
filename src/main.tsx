@@ -1,6 +1,6 @@
 import '@/listeners/log';
 import '@/listeners/gamepad';
-import '@/listeners/settings';
+import '@/listeners/state';
 import '@/listeners/status';
 import '@/listeners/update';
 import '@/listeners/webSocketConnection';

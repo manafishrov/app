@@ -38,7 +38,7 @@ function formatLogMessage(log: LogMessage) {
 }
 
 function Debug() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore)
   const logRef = useRef<LazyLog>(null);
   const [text, setText] = useState('');
 

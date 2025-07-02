@@ -24,7 +24,7 @@ const formSchema = z.object({
 });
 
 function ConnectionSettingsForm() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore)
 
   const form = useAppForm({
     validators: {

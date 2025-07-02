@@ -6,10 +6,7 @@ import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function DepthIndicator() {
   const { depth } = useStore(statusStore);
-  const webSocketConnection = useStore(
-    webSocketConnectionStore,
-    (state) => state,
-  );
+  const webSocketConnection = useStore(webSocketConnectionStore);
 
   if (!webSocketConnection.isConnected) return null;
 

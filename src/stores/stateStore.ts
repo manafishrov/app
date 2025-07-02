@@ -1,15 +1,15 @@
 import { Store } from '@tanstack/react-store';
 
-type Settings = {
+type States = {
   pitchStabilization: boolean;
   rollStabilization: boolean;
   depthStabilization: boolean;
 };
 
-const settingsStore = new Store<Settings>({
+const stateStore = new Store<States>({
   pitchStabilization: false,
   rollStabilization: false,
   depthStabilization: false,
 });
 
-export { settingsStore, type Settings };
+export { stateStore, type States };

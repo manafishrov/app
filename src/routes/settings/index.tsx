@@ -25,7 +25,7 @@ export const Route = createFileRoute('/settings/')({
 });
 
 function General() {
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore)
   const { theme, setTheme } = useTheme();
   const [appVersion, setAppVersion] = useState<string>('');
 

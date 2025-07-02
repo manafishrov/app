@@ -13,7 +13,7 @@ function VideoStream() {
   const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const config = useStore(configStore, (state) => state);
+  const config = useStore(configStore);
 
   async function setupWebRTCConnection() {
     try {

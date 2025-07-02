@@ -10,7 +10,7 @@ mod models {
   pub mod gamepad;
   pub mod log;
   pub mod movement;
-  pub mod settings;
+  pub mod states;
   pub mod status;
   pub mod thrusters;
 }
@@ -21,7 +21,7 @@ mod websocket {
   pub mod message;
   pub mod receive {
     pub mod log_firmware;
-    pub mod settings;
+    pub mod states;
     pub mod status;
     pub mod thrusters;
   }

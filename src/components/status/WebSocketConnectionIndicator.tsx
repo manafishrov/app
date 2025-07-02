@@ -3,10 +3,7 @@ import { useStore } from '@tanstack/react-store';
 import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function WebSocketConnectionIndicator() {
-  const webSocketConnection = useStore(
-    webSocketConnectionStore,
-    (state) => state,
-  );
+  const webSocketConnection = useStore(webSocketConnectionStore);
 
   return (
     <div className='flex items-center space-x-2'>

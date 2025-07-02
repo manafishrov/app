@@ -1,7 +1,7 @@
 use crate::models::{
   log::Log,
   movement::MovementCommand,
-  settings::Settings,
+  states::States,
   status::Status,
   thrusters::{TestThruster, ThrusterAllocation, ThrusterPinSetup},
 };
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum WebsocketMessage {
   Status(Status),
-  Settings(Settings),
+  States(States),
   MovementCommand(MovementCommand),
   LogFirmware(Log),
   ThrusterPinSetup(ThrusterPinSetup),

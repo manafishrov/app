@@ -11,13 +11,10 @@ import { statusStore } from '@/stores/statusStore';
 import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function AttitudeIndicator() {
-  const status = useStore(statusStore, (state) => state);
-  const config = useStore(configStore, (state) => state);
-  const movementInput = useStore(movementInputStore, (state) => state);
-  const webSocketConnection = useStore(
-    webSocketConnectionStore,
-    (state) => state,
-  );
+  const status = useStore(statusStore);
+  const config = useStore(configStore);
+  const movementInput = useStore(movementInputStore);
+  const webSocketConnection = useStore(webSocketConnectionStore);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   if (!webSocketConnection.isConnected) return null;

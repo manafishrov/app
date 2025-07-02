@@ -29,10 +29,7 @@ import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 
 function SettingsSidebar() {
   const matches = useMatches();
-  const webSocketConnection = useStore(
-    webSocketConnectionStore,
-    (state) => state,
-  );
+  const webSocketConnection = useStore(webSocketConnectionStore);
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
