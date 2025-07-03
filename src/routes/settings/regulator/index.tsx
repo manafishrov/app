@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { requestRegulatorConfig } from '@/stores/droneConfigStore';
+
 export const Route = createFileRoute('/settings/regulator/')({
   component: Regulator,
+  loader: requestRegulatorConfig,
 });
 
 function Regulator() {
