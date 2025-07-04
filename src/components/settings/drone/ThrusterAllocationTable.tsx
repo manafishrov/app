@@ -77,7 +77,7 @@ function ThrusterAllocationTable() {
     let numericValue: number;
 
     if (value === '' || value === '-') {
-      numericValue = NaN;
+      numericValue = 0;
     } else {
       const hasMultipleDots = (value.match(/\./g) ?? []).length > 1;
       const hasMisplacedMinus = value.lastIndexOf('-') > 0;

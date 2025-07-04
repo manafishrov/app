@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ThrusterAllocationTable } from '@/components/calibration/ThrusterAllocationTable';
-import { ThrusterPinSetupTable } from '@/components/calibration/ThrusterPinSetupTable';
+import { ThrusterAllocationTable } from '@/components/settings/drone/ThrusterAllocationTable';
+import { ThrusterPinSetupTable } from '@/components/settings/drone/ThrusterPinSetupTable';
 
 import { requestThrusterConfig } from '@/stores/droneConfigStore';
 
@@ -19,7 +19,7 @@ function Calibration() {
           Calibrate the thrusters of the ROV.
         </p>
       </div>
-      <div className='w-[calc(100svw-7rem)] space-y-6 md:w-full '>
+      <div className='w-[calc(100svw-7rem)] space-y-6 md:w-full'>
         <ThrusterPinSetupTable />
         <ThrusterAllocationTable />
       </div>

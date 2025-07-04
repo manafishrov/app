@@ -12,11 +12,16 @@ type ThrusterPinSetup = {
 
 type ThrusterAllocation = [Row, Row, Row, Row, Row, Row, Row, Row];
 
-type Regulator = {
-  speedCoefficient: number;
+type pid = {
   kp: number;
   ki: number;
   kd: number;
+};
+
+type Regulator = {
+  pitch: pid;
+  roll: pid;
+  depth: pid;
 };
 
 type DroneConfig = {
