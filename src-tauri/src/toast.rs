@@ -10,28 +10,88 @@ pub fn toast_init(app_handle: AppHandle) {
   }
 }
 
-pub fn toast(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, None, message, description, None);
+pub fn toast(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(id, None, message, description, cancel_command);
 }
 
-pub fn toast_success(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, Some(ToastType::Success), message, description, None);
+pub fn toast_success(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(
+    id,
+    Some(ToastType::Success),
+    message,
+    description,
+    cancel_command,
+  );
 }
 
-pub fn toast_info(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, Some(ToastType::Info), message, description, None);
+pub fn toast_info(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(
+    id,
+    Some(ToastType::Info),
+    message,
+    description,
+    cancel_command,
+  );
 }
 
-pub fn toast_warn(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, Some(ToastType::Warn), message, description, None);
+pub fn toast_warn(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(
+    id,
+    Some(ToastType::Warn),
+    message,
+    description,
+    cancel_command,
+  );
 }
 
-pub fn toast_error(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, Some(ToastType::Error), message, description, None);
+pub fn toast_error(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(
+    id,
+    Some(ToastType::Error),
+    message,
+    description,
+    cancel_command,
+  );
 }
 
-pub fn toast_loading(id: Option<String>, message: String, description: Option<String>) {
-  toast_message(id, Some(ToastType::Loading), message, description, None);
+pub fn toast_loading(
+  id: Option<String>,
+  message: String,
+  description: Option<String>,
+  cancel_command: Option<String>,
+) {
+  toast_message(
+    id,
+    Some(ToastType::Loading),
+    message,
+    description,
+    cancel_command,
+  );
 }
 
 pub fn toast_message(

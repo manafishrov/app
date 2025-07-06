@@ -16,6 +16,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
       None,
       "Update available".to_string(),
       Some("Downloading update...".to_string()),
+      None,
     );
     let mut downloaded = 0;
     update
@@ -30,6 +31,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
               Some("update-progress".to_string()),
               format!("Downloading: {}%", progress_percent),
               None,
+              None,
             );
           }
         },
@@ -38,6 +40,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
             None,
             "Update downloaded".to_string(),
             Some("Installing...".to_string()),
+            None,
           );
         },
       )
@@ -46,6 +49,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
       None,
       "Update ready".to_string(),
       Some("Restart the app to apply the update.".to_string()),
+      None,
     );
   }
 
