@@ -2,11 +2,8 @@ import asyncio
 import json
 import time
 import websockets
-import logging
 import math
 import signal
-
-logging.basicConfig(level=logging.INFO)
 
 clients = set()
 shutdown = False
@@ -28,9 +25,23 @@ thruster_allocation = [
 ]
 
 
+async def log_firmware(level, message):
+    log_msg = {
+        "type": "logFirmware",
+        "payload": {"level": level, "message": str(message)},
+    }
+    if clients:
+        await asyncio.gather(
+            *[client.send(json.dumps(log_msg)) for client in clients],
+            return_exceptions=True,
+        )
+
+
 async def handle_client(websocket):
     global thruster_allocation
-    logging.info(f"Client connected from Manafish App at {websocket.remote_address}!")
+    await log_firmware(
+        "info", f"Client connected from Manafish App at {websocket.remote_address}!"
+    )
     clients.add(websocket)
 
     async def send_status_updates():
@@ -62,7 +73,7 @@ async def handle_client(websocket):
                 await asyncio.sleep(1 / 60)
             except Exception as e:
                 if not shutdown:
-                    logging.error(f"Status update error: {e}")
+                    await log_firmware("Error", f"Status update error: {e}")
                 break
 
     async def send_states_updates():
@@ -80,7 +91,7 @@ async def handle_client(websocket):
                 await asyncio.sleep(0.5)
             except Exception as e:
                 if not shutdown:
-                    logging.error(f"Settings update error: {e}")
+                    await log_firmware("error", f"Settings update error: {e}")
                 break
 
     status_task = asyncio.create_task(send_status_updates())
@@ -95,12 +106,13 @@ async def handle_client(websocket):
                 msg_type = msg_data.get("type")
                 payload = msg_data.get("payload")
 
-                logging.info(
-                    f"Received message of type '{msg_type}' with payload: {payload}"
+                await log_firmware(
+                    "info",
+                    f"Received message of type '{msg_type}' with payload: {payload}",
                 )
 
                 if msg_type == "getThrusterConfig":
-                    logging.info("Sending thruster configuration")
+                    await log_firmware("info", "Sending thruster configuration")
                     pin_setup_msg = {
                         "type": "thrusterPinSetup",
                         "payload": thruster_pin_setup,
@@ -113,18 +125,24 @@ async def handle_client(websocket):
                     await websocket.send(json.dumps(allocation_msg))
                 elif msg_type == "thrusterPinSetup":
                     thruster_pin_setup.update(payload)
-                    logging.info(f"Updated thruster pin setup: {thruster_pin_setup}")
+                    await log_firmware(
+                        "info", f"Updated thruster pin setup: {thruster_pin_setup}"
+                    )
                 elif msg_type == "thrusterAllocation":
                     thruster_allocation = payload
-                    logging.info(f"Updated thruster allocation: {thruster_allocation}")
+                    await log_firmware(
+                        "info", f"Updated thruster allocation: {thruster_allocation}"
+                    )
                 elif msg_type == "testThruster":
-                    logging.info(f"Testing thruster with identifier: {payload}")
+                    await log_firmware(
+                        "info", f"Testing thruster with identifier: {payload}"
+                    )
             except json.JSONDecodeError:
-                logging.warning(f"Received non-JSON message: {message}")
+                await log_firmware("warn", f"Received non-JSON message: {message}")
 
     except websockets.exceptions.ConnectionClosed as e:
         if not shutdown:
-            logging.info(f"Client disconnected: {e}")
+            await log_firmware("info", f"Client disconnected: {e}")
     finally:
         clients.remove(websocket)
         status_task.cancel()
@@ -135,9 +153,9 @@ async def shutdown_server(server):
     global shutdown
     shutdown = True
     if clients:
-        logging.info("Closing client connections...")
+        print("Closing client connections...")
         await asyncio.gather(*(ws.close() for ws in clients))
-    logging.info("Stopping server...")
+    print("Stopping server...")
     server.close()
     await server.wait_closed()
 
@@ -147,23 +165,23 @@ async def main():
     shutdown_event = asyncio.Event()
 
     def signal_handler():
-        logging.info("Shutdown signal received")
+        print("Shutdown signal received")
         shutdown_event.set()
 
     try:
         server = await websockets.serve(handle_client, "127.0.0.1", 9000)
-        logging.info("Mock server running on 127.0.0.1:9000")
+        print("Mock server running on 127.0.0.1:9000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, signal_handler)
         await shutdown_event.wait()
         await shutdown_server(server)
     except Exception as e:
-        logging.error(f"Server error: {e}")
+        print(f"Server error: {e}")
     finally:
         if server and not shutdown:
             await shutdown_server(server)
-        logging.info("Server shutdown complete")
+        print("Server shutdown complete")
 
 
 if __name__ == "__main__":
@@ -172,4 +190,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        logging.info("Exiting...")
+        print("Exiting...")
