@@ -4,103 +4,98 @@ import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
 
-import { configStore, updateConfig } from '@/stores/configStore';
+import { droneConfigStore } from '@/stores/droneConfigStore';
 
-const formSchema = z.object({
-  ipAddress: z.string().ip('Invalid IP address'),
-  webrtcSignalingApiPort: z
-    .number()
-    .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65535, 'Port must be between 1 and 65535'),
-  webrtcSignalingApiPath: z
-    .string()
-    .startsWith('/', 'Path must start with a /'),
-  webSocketPort: z
-    .number()
-    .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65535, 'Port must be between 1 and 65535'),
+const pidSchema = z.object({
+  kp: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
+  ki: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
+  kd: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
 });
 
-function ConnectionSettingsForm() {
-  const config = useStore(configStore)
+const formSchema = z.object({
+  pitch: pidSchema,
+  roll: pidSchema,
+  depth: pidSchema,
+});
+
+function PidForm() {
+  const { regulator } = useStore(droneConfigStore);
 
   const form = useAppForm({
     validators: {
       onSubmit: formSchema,
     },
     defaultValues: {
-      ipAddress: config?.ipAddress ?? '',
-      webrtcSignalingApiPort: config?.webrtcSignalingApiPort ?? 0,
-      webrtcSignalingApiPath: config?.webrtcSignalingApiPath ?? '',
-      webSocketPort: config?.webSocketPort ?? 0,
+      pitch: {
+        kp: regulator?.pitch.kp ?? 0,
+        ki: regulator?.pitch.ki ?? 0,
+        kd: regulator?.pitch.kd ?? 0,
+      },
+      roll: {
+        kp: regulator?.roll.kp ?? 0,
+        ki: regulator?.roll.ki ?? 0,
+        kd: regulator?.roll.kd ?? 0,
+      },
+      depth: {
+        kp: regulator?.depth.kp ?? 0,
+        ki: regulator?.depth.ki ?? 0,
+        kd: regulator?.depth.kd ?? 0,
+      },
     },
-    onSubmit: ({ value }) => updateConfig(value),
+    onSubmit: ({ value }) => {},
   });
 
   useEffect(() => {
-    if (config) {
+    if (regulator) {
       form.reset({
-        ipAddress: config.ipAddress,
-        webrtcSignalingApiPort: config.webrtcSignalingApiPort,
-        webrtcSignalingApiPath: config.webrtcSignalingApiPath,
-        webSocketPort: config.webSocketPort,
+        pitch: {
+          kp: regulator.pitch.kp,
+          ki: regulator.pitch.ki,
+          kd: regulator.pitch.kd,
+        },
+        roll: {
+          kp: regulator.roll.kp,
+          ki: regulator.roll.ki,
+          kd: regulator.roll.kd,
+        },
+        depth: {
+          kp: regulator.depth.kp,
+          ki: regulator.depth.ki,
+          kd: regulator.depth.kd,
+        },
       });
     }
-  }, [config, form]);
+  }, [regulator, form]);
 
-  if (!config) return;
+  if (!regulator) return;
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void form.handleSubmit();
-      }}
-      className='relative grow space-y-8'
-    >
-      <form.AppForm>
-        <form.AppField name='ipAddress'>
-          {(field) => (
-            <field.TextField
-              label='IP address'
-              placeholder='10.10.10.10'
-              description='The IP address of your Manafish.'
-            />
-          )}
-        </form.AppField>
-        <form.AppField name='webrtcSignalingApiPort'>
-          {(field) => (
-            <field.NumberField
-              label='WebRTC signaling API port'
-              placeholder='1984'
-              description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
-            />
-          )}
-        </form.AppField>
-        <form.AppField name='webrtcSignalingApiPath'>
-          {(field) => (
-            <field.TextField
-              label='WebRTC signaling API path'
-              placeholder='/api/webrtc?src=cam'
-              description='The path for the WebRTC signaling API.'
-            />
-          )}
-        </form.AppField>
-        <form.AppField name='webSocketPort'>
-          {(field) => (
-            <field.NumberField
-              label='WebSocket port'
-              placeholder='5000'
-              description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
-            />
-          )}
-        </form.AppField>
-        <form.SubmitButton>Save</form.SubmitButton>
-      </form.AppForm>
-    </form>
+    <>
+      <h3 className='text-2xl font-semibold tracking-tight'>
+        PID (Proportional-Integral-Derivative) controller
+      </h3>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void form.handleSubmit();
+        }}
+        className='relative grow space-y-8'
+      >
+        <form.AppForm>
+          <form.AppField name='ipAddress'>
+            {(field) => (
+              <field.TextField
+                label='IP address'
+                placeholder='10.10.10.10'
+                description='The IP address of your Manafish.'
+              />
+            )}
+          </form.AppField>
+          <form.SubmitButton>Save</form.SubmitButton>
+        </form.AppForm>
+      </form>
+    </>
   );
 }
 
-export { ConnectionSettingsForm };
+export { PidForm };

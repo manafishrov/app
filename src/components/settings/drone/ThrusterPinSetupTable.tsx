@@ -1,7 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { FanIcon } from 'lucide-react';
-import { useState } from 'react';
 
 import { IdentifierSelect } from '@/components/settings/drone/IdentifierSelect';
 import { SpinDirectionSelect } from '@/components/settings/drone/SpinDirectionSelect';
@@ -23,6 +22,7 @@ import {
 import { logError } from '@/lib/log';
 
 import { type Row, droneConfigStore } from '@/stores/droneConfigStore';
+import { settingsStateStore } from '@/stores/settingsStateStore';
 import { statusStore } from '@/stores/statusStore';
 
 const THRUSTER_POLE_PAIRS = 6;
@@ -30,10 +30,8 @@ const THRUSTER_POLE_PAIRS = 6;
 function ThrusterPinSetupTable() {
   const { thrusterPinSetup } = useStore(droneConfigStore);
   const { thrusterErpms } = useStore(statusStore);
+  const { thrusterTesting } = useStore(settingsStateStore);
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
-  const [loadingStates, setLoadingStates] = useState<boolean[]>(
-    Array(pinNumbers.length).fill(false),
-  );
 
   if (!thrusterPinSetup) {
     return;
@@ -174,21 +172,16 @@ function ThrusterPinSetupTable() {
               <TableCell>
                 <Button
                   variant='outline'
-                  disabled={loadingStates[index]}
+                  disabled={thrusterTesting}
                   onClick={async () => {
-                    const identifier = thrusterPinSetup.identifiers[index];
-                    if (identifier !== undefined) {
-                      const newLoadingStates = [...loadingStates];
-                      newLoadingStates[index] = true;
-                      setLoadingStates(newLoadingStates);
-                      await handleTestThruster(identifier);
-                      setTimeout(() => {
-                        setLoadingStates((prevLoadingStates) => {
-                          const newLoadingStates = [...prevLoadingStates];
-                          newLoadingStates[index] = false;
-                          return newLoadingStates;
-                        });
-                      }, 2000);
+                    if (thrusterPinSetup.identifiers[index]) {
+                      settingsStateStore.setState((settingsState) => ({
+                        ...settingsState,
+                        thrusterTesting: true,
+                      }));
+                      await handleTestThruster(
+                        thrusterPinSetup.identifiers[index],
+                      );
                     }
                   }}
                 >

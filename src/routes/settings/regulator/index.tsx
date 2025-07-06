@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { PidForm } from '@/components/settings/drone/PidForm';
+
 import { requestRegulatorConfig } from '@/stores/droneConfigStore';
 
 export const Route = createFileRoute('/settings/regulator/')({
@@ -17,9 +19,7 @@ function Regulator() {
         </p>
       </div>
       <div className='space-y-6'>
-        <h3 className='text-2xl font-semibold tracking-tight'>
-          PID (Proportional-Integral-Derivative) controller
-        </h3>
+        <PidForm />
         <h4 className='text-lg font-medium'>Pitch</h4>
         <h4 className='text-lg font-medium'>Roll</h4>
         <h4 className='text-lg font-medium'>Depth</h4>
