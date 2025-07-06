@@ -1,9 +1,17 @@
-use crate::models::regulator::Regulator;
+use crate::models::regulator::{MovementCoefficients, Regulator};
 use crate::websocket::{client::MessageSendChannelState, message::WebsocketMessage};
 use tauri::State;
 
 pub async fn handle_regulator(state: &State<'_, MessageSendChannelState>, payload: Regulator) {
   let message = WebsocketMessage::Regulator(payload);
+  let _ = state.tx.send(message).await;
+}
+
+pub async fn handle_movement_coefficients(
+  state: &State<'_, MessageSendChannelState>,
+  payload: MovementCoefficients,
+) {
+  let message = WebsocketMessage::MovementCoefficients(payload);
   let _ = state.tx.send(message).await;
 }
 

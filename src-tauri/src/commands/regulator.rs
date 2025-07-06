@@ -1,7 +1,10 @@
-use crate::models::regulator::Regulator;
+use crate::models::regulator::{MovementCoefficients, Regulator};
 use crate::websocket::{
   client::MessageSendChannelState,
-  send::regulator::{handle_get_regulator_config, handle_regulator, handle_regulator_auto_tuning},
+  send::regulator::{
+    handle_get_regulator_config, handle_movement_coefficients, handle_regulator,
+    handle_regulator_auto_tuning,
+  },
 };
 use tauri::State;
 
@@ -11,6 +14,15 @@ pub async fn regulator(
   payload: Regulator,
 ) -> Result<(), String> {
   handle_regulator(&state, payload).await;
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn movement_coefficients(
+  state: State<'_, MessageSendChannelState>,
+  payload: MovementCoefficients,
+) -> Result<(), String> {
+  handle_movement_coefficients(&state, payload).await;
   Ok(())
 }
 

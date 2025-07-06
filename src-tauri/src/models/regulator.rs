@@ -15,3 +15,14 @@ pub struct Regulator {
   pub roll: Pid,
   pub depth: Pid,
 }
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MovementCoefficients {
+  horizontal: f32,
+  strafe: f32,
+  vertical: f32,
+  pitch: f32,
+  yaw: f32,
+  roll: f32,
+}

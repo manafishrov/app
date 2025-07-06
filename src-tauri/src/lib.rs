@@ -45,7 +45,9 @@ mod updater;
 use commands::config::{get_config, save_config};
 use commands::gamepad::execute_gamepad;
 use commands::movement::send_movement_input;
-use commands::regulator::{get_regulator_config, regulator, regulator_auto_tuning};
+use commands::regulator::{
+  get_regulator_config, movement_coefficients, regulator, regulator_auto_tuning,
+};
 use commands::thrusters::{
   get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
 };
@@ -53,8 +55,8 @@ use log::log_init;
 use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
 use tauri::{generate_handler, App, Builder, Manager};
-use tokio::sync::mpsc::channel;
 use toast::toast_init;
+use tokio::sync::mpsc::channel;
 use updater::update_app;
 use websocket::client::{start_websocket_client, MessageSendChannelState};
 use websocket::message::WebsocketMessage;
@@ -99,6 +101,7 @@ pub fn run() {
       test_thruster,
       regulator,
       get_regulator_config,
+      movement_coefficients,
       regulator_auto_tuning,
     ])
     .setup(setup_handlers);

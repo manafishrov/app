@@ -24,10 +24,20 @@ type Regulator = {
   depth: pid;
 };
 
+type MovementCoefficients = {
+  horizontal: number;
+  strafe: number;
+  vertical: number;
+  pitch: number;
+  yaw: number;
+  roll: number;
+};
+
 type DroneConfig = {
   thrusterPinSetup?: ThrusterPinSetup;
   thrusterAllocation?: ThrusterAllocation;
   regulator?: Regulator;
+  movementCoefficients?: MovementCoefficients;
 };
 
 const droneConfigStore = new Store<DroneConfig>({});
