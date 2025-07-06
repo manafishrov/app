@@ -46,6 +46,7 @@ async function initializeToastListener() {
     });
   } catch (error) {
     logError('Failed to listen to toast messages:', error);
+    toast.error('Failed to initialize toast listener');
   }
 }
 

@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,7 @@ function ThrusterPinSetupTable() {
       await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
     } catch (error) {
       logError('Failed to set thruster pin setup:', error);
+      toast.error('Failed to set thruster pin setup');
     }
   }
 
@@ -76,6 +78,7 @@ function ThrusterPinSetupTable() {
       await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
     } catch (error) {
       logError('Failed to set thruster pin setup', error);
+      toast.error('Failed to set thruster pin setup');
     }
   }
 
@@ -84,6 +87,7 @@ function ThrusterPinSetupTable() {
       await invoke('test_thruster', { payload: identifier });
     } catch (error) {
       logError('Failed to test thruster:', error);
+      toast.error('Failed to test thruster');
     }
   }
 

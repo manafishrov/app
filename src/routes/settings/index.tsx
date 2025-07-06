@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { toast } from '@/components/ui/Toaster';
 
 import { logError, logWarn } from '@/lib/log';
 
@@ -25,7 +26,7 @@ export const Route = createFileRoute('/settings/')({
 });
 
 function General() {
-  const config = useStore(configStore)
+  const config = useStore(configStore);
   const { theme, setTheme } = useTheme();
   const [appVersion, setAppVersion] = useState<string>('');
 
@@ -56,6 +57,7 @@ function General() {
       }
     } catch (error) {
       logError('Error opening file picker dialog:', error);
+      toast.error('Failed to open file picker dialog');
     }
   }
 

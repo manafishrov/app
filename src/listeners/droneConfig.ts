@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
@@ -31,6 +32,7 @@ async function initializeDroneConfigListener() {
     });
   } catch (error) {
     logError('Failed to listen to drone config messages:', error);
+    toast.error('Failed to initialize drone config listener');
   }
 }
 

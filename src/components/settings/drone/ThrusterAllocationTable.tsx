@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -133,6 +134,7 @@ function ThrusterAllocationTable() {
       await invoke('thruster_allocation', { payload: thrusterAllocation });
     } catch (error) {
       logError('Failed to set thruster allocation:', error);
+      toast.error('Failed to set thruster allocation');
     }
   }
 
