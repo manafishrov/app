@@ -170,7 +170,7 @@ async def main():
 
     try:
         server = await websockets.serve(handle_client, "127.0.0.1", 9000)
-        print("Mock server running on 127.0.0.1:9000")
+        print("Test server running on 127.0.0.1:9000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, signal_handler)

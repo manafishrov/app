@@ -16,5 +16,6 @@ pub struct Toast {
   pub id: Option<String>,
   pub toast_type: Option<ToastType>,
   pub message: String,
+  pub description: Option<String>,
   pub cancel_command: Option<String>,
 }

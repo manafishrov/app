@@ -1,6 +1,7 @@
 use crate::commands::config::get_config;
 use crate::log_info;
-use tauri::{AppHandle, Emitter};
+use crate::toast::{toast_info, toast_loading};
+use tauri::AppHandle;
 use tauri_plugin_updater::{Result, UpdaterExt};
 
 pub async fn update_app(app: AppHandle) -> Result<()> {
@@ -11,28 +12,41 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
   }
 
   if let Some(update) = app.updater()?.check().await? {
-    app.emit("update-available", ()).unwrap();
+    toast_info(
+      None,
+      "Update available".to_string(),
+      Some("Downloading update...".to_string()),
+    );
     let mut downloaded = 0;
     update
       .download_and_install(
-        |chunk_length, content_length| {
+        |chunk_length, content_length_opt| {
+          let actual_content_length = content_length_opt.unwrap_or(0);
           downloaded += chunk_length;
-          app
-            .emit(
-              "update-progress",
-              serde_json::json!({
-                "downloaded": downloaded,
-                "total": content_length.unwrap_or(0)
-              }),
-            )
-            .unwrap();
+          if actual_content_length > 0 {
+            let progress_percent =
+              (downloaded as f64 / actual_content_length as f64 * 100.0).round() as u64;
+            toast_loading(
+              Some("update-progress".to_string()),
+              format!("Downloading: {}%", progress_percent),
+              None,
+            );
+          }
         },
         || {
-          app.emit("update-downloaded", ()).unwrap();
+          toast_info(
+            None,
+            "Update downloaded".to_string(),
+            Some("Installing...".to_string()),
+          );
         },
       )
       .await?;
-    app.emit("update-ready", ()).unwrap();
+    toast_info(
+      None,
+      "Update ready".to_string(),
+      Some("Restart the app to apply the update.".to_string()),
+    );
   }
 
   Ok(())

@@ -39,6 +39,7 @@ mod websocket {
 
 mod gamepad;
 mod log;
+mod toast;
 mod updater;
 
 use commands::config::{get_config, save_config};
@@ -53,6 +54,7 @@ use models::config::{Config, ConfigSendChannelState};
 use tauri::async_runtime::spawn;
 use tauri::{generate_handler, App, Builder, Manager};
 use tokio::sync::mpsc::channel;
+use toast::toast_init;
 use updater::update_app;
 use websocket::client::{start_websocket_client, MessageSendChannelState};
 use websocket::message::WebsocketMessage;
@@ -60,6 +62,9 @@ use websocket::message::WebsocketMessage;
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let log_handle = app.app_handle().clone();
   log_init(log_handle);
+
+  let toast_handle = app.app_handle().clone();
+  toast_init(toast_handle);
 
   let update_handle = app.app_handle().clone();
   spawn(async move {

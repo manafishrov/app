@@ -9,6 +9,7 @@ type Toast = {
   id?: string;
   toastType?: 'success' | 'info' | 'warn' | 'error' | 'loading';
   message: string;
+  description?: string;
   cancelCommand?: string;
 };
 
@@ -26,6 +27,7 @@ async function initializeToastListener() {
       function getToastOptions(payload: Toast) {
         return {
           id: payload.id,
+          description: payload.description,
           ...(payload.cancelCommand && {
             cancel: {
               label: 'Cancel',
