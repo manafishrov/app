@@ -62,10 +62,32 @@ async function requestRegulatorConfig() {
   }
 }
 
+async function thrusterAllocationUpdate(
+  thrusterAllocation: ThrusterAllocation,
+) {
+  try {
+    await invoke('thruster_allocation', { payload: thrusterAllocation });
+  } catch (error) {
+    logError('Failed to set thruster allocation:', error);
+    toast.error('Failed to set thruster allocation');
+  }
+}
+
+async function regulatorUpdate(regulator: Regulator) {
+  try {
+    await invoke('regulator', { payload: regulator });
+  } catch (error) {
+    logError('Failed to set new regulator config:', error);
+    toast.error('Failed to set new regulator config');
+  }
+}
+
 export {
   droneConfigStore,
   requestThrusterConfig,
   requestRegulatorConfig,
+  thrusterAllocationUpdate,
+  regulatorUpdate,
   type Regulator,
   type DroneConfig,
   type ThrusterPinSetup,

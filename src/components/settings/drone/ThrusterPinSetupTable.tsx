@@ -82,7 +82,7 @@ function ThrusterPinSetupTable() {
     }
   }
 
-  async function handleTestThruster(identifier: number) {
+  async function testThruster(identifier: number) {
     try {
       await invoke('test_thruster', { payload: identifier });
     } catch (error) {
@@ -183,9 +183,7 @@ function ThrusterPinSetupTable() {
                         ...settingsState,
                         thrusterTesting: true,
                       }));
-                      await handleTestThruster(
-                        thrusterPinSetup.identifiers[index],
-                      );
+                      await testThruster(thrusterPinSetup.identifiers[index]);
                     }
                   }}
                 >

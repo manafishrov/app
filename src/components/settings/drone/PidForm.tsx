@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
 
-import { droneConfigStore } from '@/stores/droneConfigStore';
+import { droneConfigStore, regulatorUpdate } from '@/stores/droneConfigStore';
 
 const pidSchema = z.object({
   kp: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
@@ -42,7 +42,7 @@ function PidForm() {
         kd: regulator?.depth.kd ?? 0,
       },
     },
-    onSubmit: ({ value }) => {},
+    onSubmit: ({ value }) => regulatorUpdate(value),
   });
 
   useEffect(() => {
@@ -82,16 +82,49 @@ function PidForm() {
         className='relative grow space-y-8'
       >
         <form.AppForm>
-          <form.AppField name='ipAddress'>
-            {(field) => (
-              <field.TextField
-                label='IP address'
-                placeholder='10.10.10.10'
-                description='The IP address of your Manafish.'
-              />
-            )}
-          </form.AppField>
-          <form.SubmitButton>Save</form.SubmitButton>
+          <div>
+            <h4 className='text-lg font-medium'>Pitch</h4>
+            <div className='space-y-6'>
+              <form.AppField name='pitch.kp'>
+                {(field) => <field.NumberField label='Kp' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='pitch.ki'>
+                {(field) => <field.NumberField label='Ki' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='pitch.kd'>
+                {(field) => <field.NumberField label='Kd' placeholder='1' />}
+              </form.AppField>
+            </div>
+          </div>
+          <div>
+            <h4 className='text-lg font-medium'>Roll</h4>
+            <div className='space-y-6'>
+              <form.AppField name='roll.kp'>
+                {(field) => <field.NumberField label='Kp' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='roll.ki'>
+                {(field) => <field.NumberField label='Ki' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='roll.kd'>
+                {(field) => <field.NumberField label='Kd' placeholder='1' />}
+              </form.AppField>
+            </div>
+          </div>
+          <div>
+            <h4 className='text-lg font-medium'>Depth</h4>
+            <div className='space-y-6'>
+              <form.AppField name='depth.kp'>
+                {(field) => <field.NumberField label='Kp' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='depth.ki'>
+                {(field) => <field.NumberField label='Ki' placeholder='1' />}
+              </form.AppField>
+              <form.AppField name='depth.kd'>
+                {(field) => <field.NumberField label='Kd' placeholder='1' />}
+              </form.AppField>
+            </div>
+          </div>
+          <form.SubmitButton>Update Regulator PID</form.SubmitButton>
         </form.AppForm>
       </form>
     </>

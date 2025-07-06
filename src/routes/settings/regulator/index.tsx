@@ -20,9 +20,6 @@ function Regulator() {
       </div>
       <div className='space-y-6'>
         <PidForm />
-        <h4 className='text-lg font-medium'>Pitch</h4>
-        <h4 className='text-lg font-medium'>Roll</h4>
-        <h4 className='text-lg font-medium'>Depth</h4>
         <h3 className='text-2xl font-semibold tracking-tight'>
           Movement Coefficients
         </h3>

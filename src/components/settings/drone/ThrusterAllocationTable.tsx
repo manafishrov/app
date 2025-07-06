@@ -12,18 +12,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
-import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-import { logError } from '@/lib/log';
-
 import {
   type ThrusterAllocation,
   droneConfigStore,
+  thrusterAllocationUpdate,
 } from '@/stores/droneConfigStore';
 
 function ThrusterAllocationTable() {
@@ -129,15 +127,6 @@ function ThrusterAllocationTable() {
     }));
   }
 
-  async function handleUpdate() {
-    try {
-      await invoke('thruster_allocation', { payload: thrusterAllocation });
-    } catch (error) {
-      logError('Failed to set thruster allocation:', error);
-      toast.error('Failed to set thruster allocation');
-    }
-  }
-
   return (
     <>
       <h3 className='text-2xl font-semibold tracking-tight'>
@@ -197,7 +186,13 @@ function ThrusterAllocationTable() {
           ))}
         </TableBody>
       </Table>
-      <Button onClick={handleUpdate}>Update thrusters</Button>
+      <Button
+        onClick={async () => {
+          await thrusterAllocationUpdate(thrusterAllocation);
+        }}
+      >
+        Update thrusters
+      </Button>
     </>
   );
 }
