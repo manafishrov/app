@@ -3,8 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { FanIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import { IdentifierSelect } from '@/components/calibration/IdentifierSelect';
-import { SpinDirectionSelect } from '@/components/calibration/SpinDirectionSelect';
+import { IdentifierSelect } from '@/components/settings/drone/IdentifierSelect';
+import { SpinDirectionSelect } from '@/components/settings/drone/SpinDirectionSelect';
 import { Button } from '@/components/ui/Button';
 import {
   Table,
