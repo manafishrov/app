@@ -8,9 +8,9 @@ import {
 
 import { configStore } from '@/stores/configStore';
 
-type LogLevel = 'Info' | 'Warn' | 'Error';
+type LogLevel = 'info' | 'warn' | 'error';
 
-type LogOrigin = 'Frontend' | 'Backend' | 'Firmware';
+type LogOrigin = 'frontend' | 'backend' | 'firmware';
 
 type Log = {
   level: LogLevel;
@@ -81,7 +81,7 @@ async function addLogMessage(
   level: LogLevel,
   origin: LogOrigin,
 ) {
-  if (level === 'Info' && !configStore.state?.infoLogging) {
+  if (level === 'info' && !configStore.state?.infoLogging) {
     return;
   }
 
@@ -125,15 +125,15 @@ function formatLog(...args: unknown[]) {
 }
 
 function logInfo(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'Info', 'Frontend');
+  void addLogMessage(formatLog(...args), 'info', 'frontend');
 }
 
 function logWarn(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'Warn', 'Frontend');
+  void addLogMessage(formatLog(...args), 'warn', 'frontend');
 }
 
 function logError(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'Error', 'Frontend');
+  void addLogMessage(formatLog(...args), 'error', 'frontend');
 }
 
 async function getLogMessages() {

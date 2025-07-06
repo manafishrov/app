@@ -8,11 +8,11 @@ async function initializeLogListener() {
       void addLogMessage(
         event.payload.message,
         event.payload.level,
-        'Firmware',
+        'firmware',
       );
     });
     await listen<Log>('log_backend', (event) => {
-      void addLogMessage(event.payload.message, event.payload.level, 'Backend');
+      void addLogMessage(event.payload.message, event.payload.level, 'backend');
     });
   } catch (error) {
     logError('Failed to listen to log messages:', error);

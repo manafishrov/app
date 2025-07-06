@@ -26,8 +26,8 @@ type KeyboardBindings = {
   record: string;
 };
 
-type ControlSource = 'LeftStick' | 'RightStick' | 'DPad' | 'FaceButtons';
-type AttitudeIndicator = 'Scientific' | 'Dimensional3D' | 'Disabled';
+type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
+type AttitudeIndicator = 'scientific' | 'dimensional3D' | 'disabled';
 
 type GamepadBindings = {
   moveHorizontal: ControlSource;

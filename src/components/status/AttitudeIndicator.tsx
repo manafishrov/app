@@ -22,7 +22,7 @@ function AttitudeIndicator() {
   const size = isDesktop ? 220 : 160;
 
   switch (config?.attitudeIndicator) {
-    case 'Scientific':
+    case 'scientific':
       return (
         <ScientificAttitudeIndicator
           size={size}
@@ -32,7 +32,7 @@ function AttitudeIndicator() {
           desiredRoll={desiredRoll}
         />
       );
-    case 'Dimensional3D':
+    case 'dimensional3D':
       return (
         <Dimensional3DAttitudeIndicator
           size={size}

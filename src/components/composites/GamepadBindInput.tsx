@@ -31,10 +31,10 @@ const mappings: Record<string, string> = {
   14: 'DPad Left',
   15: 'DPad Right',
   16: 'Xbox / PS Button',
-  LeftStick: 'Left Stick',
-  RightStick: 'Right Stick',
-  DPad: 'D-Pad',
-  FaceButtons: 'Face Buttons',
+  leftStick: 'Left Stick',
+  rightStick: 'Right Stick',
+  dPad: 'D-Pad',
+  faceButtons: 'Face Buttons',
 };
 
 function GamepadBindInput({

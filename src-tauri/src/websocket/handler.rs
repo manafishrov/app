@@ -5,6 +5,7 @@ use super::receive::{
   states::handle_states,
   status::handle_status,
   thrusters::{handle_thruster_allocation, handle_thruster_pin_setup},
+  toast::handle_toast,
 };
 use crate::{log_error, log_warn};
 use tauri::AppHandle;
@@ -14,9 +15,10 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
   if let Message::Text(text) = message {
     match serde_json::from_str::<WebsocketMessage>(&text) {
       Ok(incoming_message) => match incoming_message {
+        WebsocketMessage::LogFirmware(payload) => handle_log_firmware(app_handle, &payload),
+        WebsocketMessage::Toast(payload) => handle_toast(app_handle, &payload),
         WebsocketMessage::Status(payload) => handle_status(app_handle, &payload),
         WebsocketMessage::States(payload) => handle_states(app_handle, &payload),
-        WebsocketMessage::LogFirmware(payload) => handle_log_firmware(app_handle, &payload),
         WebsocketMessage::ThrusterPinSetup(payload) => {
           handle_thruster_pin_setup(app_handle, &payload)
         }

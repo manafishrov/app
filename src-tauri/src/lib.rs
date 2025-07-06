@@ -15,6 +15,7 @@ mod models {
   pub mod states;
   pub mod status;
   pub mod thrusters;
+  pub mod toast;
 }
 
 mod websocket {
@@ -27,6 +28,7 @@ mod websocket {
     pub mod states;
     pub mod status;
     pub mod thrusters;
+    pub mod toast;
   }
   pub mod send {
     pub mod movement;

@@ -58,15 +58,15 @@ function useMovementInput() {
 
     const handleMoveHorizontal = (source: ControlSource) => {
       switch (source) {
-        case 'LeftStick':
+        case 'leftStick':
           input[0] = -(gamepad.axes[1] ?? 0);
           input[1] = gamepad.axes[0] ?? 0;
           break;
-        case 'RightStick':
+        case 'rightStick':
           input[0] = -(gamepad.axes[3] ?? 0);
           input[1] = gamepad.axes[2] ?? 0;
           break;
-        case 'DPad':
+        case 'dPad':
           input[0] =
             (gamepad.buttons[12]?.value ?? 0) +
             -(gamepad.buttons[13]?.value ?? 0);
@@ -74,7 +74,7 @@ function useMovementInput() {
             (gamepad.buttons[14]?.value ?? 0) +
             -(gamepad.buttons[15]?.value ?? 0);
           break;
-        case 'FaceButtons':
+        case 'faceButtons':
           input[0] =
             (gamepad.buttons[0]?.value ?? 0) +
             -(gamepad.buttons[2]?.value ?? 0);
@@ -87,15 +87,15 @@ function useMovementInput() {
 
     const handlePitchYaw = (source: ControlSource) => {
       switch (source) {
-        case 'LeftStick':
+        case 'leftStick':
           input[3] = -(gamepad.axes[1] ?? 0);
           input[4] = gamepad.axes[0] ?? 0;
           break;
-        case 'RightStick':
+        case 'rightStick':
           input[3] = -(gamepad.axes[3] ?? 0);
           input[4] = gamepad.axes[2] ?? 0;
           break;
-        case 'DPad':
+        case 'dPad':
           input[3] =
             (gamepad.buttons[12]?.value ?? 0) +
             -(gamepad.buttons[13]?.value ?? 0);
@@ -103,7 +103,7 @@ function useMovementInput() {
             (gamepad.buttons[14]?.value ?? 0) +
             -(gamepad.buttons[15]?.value ?? 0);
           break;
-        case 'FaceButtons':
+        case 'faceButtons':
           input[3] =
             (gamepad.buttons[0]?.value ?? 0) +
             -(gamepad.buttons[2]?.value ?? 0);

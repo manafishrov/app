@@ -29,6 +29,7 @@ pub struct KeyboardBindings {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub enum ControlSource {
   LeftStick,
   RightStick,
@@ -37,6 +38,7 @@ pub enum ControlSource {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub enum AttitudeIndicator {
   Scientific,
   Dimensional3D,

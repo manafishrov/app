@@ -11,10 +11,10 @@ import {
 } from '@/stores/configStore';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
-  moveHorizontal: 'LeftStick',
+  moveHorizontal: 'leftStick',
   moveUp: '7',
   moveDown: '6',
-  pitchYaw: 'RightStick',
+  pitchYaw: 'rightStick',
   rollLeft: '4',
   rollRight: '5',
   action1: '0',

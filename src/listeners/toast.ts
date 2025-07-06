@@ -7,7 +7,7 @@ import { logError } from '@/lib/log';
 
 type Toast = {
   id?: string;
-  type?: 'success' | 'info' | 'warning' | 'error' | 'loading';
+  toastType?: 'success' | 'info' | 'warn' | 'error' | 'loading';
   message: string;
   cancelCommand?: string;
 };
@@ -18,7 +18,7 @@ async function initializeToastListener() {
       const typeMethodMap = {
         success: toast.success,
         info: toast.info,
-        warning: toast.warning,
+        warn: toast.warning,
         error: toast.error,
         loading: toast.loading,
       } as const;
@@ -37,9 +37,9 @@ async function initializeToastListener() {
         };
       }
 
-      const { type = 'message', message } = event.payload;
+      const { toastType = 'message', message } = event.payload;
       const toastMethod =
-        typeMethodMap[type as keyof typeof typeMethodMap] || toast.message;
+        typeMethodMap[toastType as keyof typeof typeMethodMap] || toast.message;
       toastMethod(message, getToastOptions(event.payload));
     });
   } catch (error) {
