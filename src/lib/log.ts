@@ -6,8 +6,6 @@ import {
   openDB,
 } from 'idb';
 
-import { toast } from '@/components/ui/Toaster';
-
 import { configStore } from '@/stores/configStore';
 
 type LogLevel = 'Info' | 'Warn' | 'Error';
@@ -85,10 +83,6 @@ async function addLogMessage(
 ) {
   if (level === 'Info' && !configStore.state?.infoLogging) {
     return;
-  }
-
-  if (level === 'Error') {
-    toast.error(`${origin} Error: ${message.split(':')[0]}`);
   }
 
   await withErrorHandling(async (db) => {

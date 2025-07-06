@@ -3,6 +3,7 @@ import '@/listeners/gamepad';
 import '@/listeners/log';
 import '@/listeners/states';
 import '@/listeners/status';
+import '@/listeners/toast';
 import '@/listeners/update';
 import '@/listeners/webSocketConnection';
 import { routeTree } from '@/routeTree.gen';
