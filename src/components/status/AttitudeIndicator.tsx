@@ -17,7 +17,7 @@ function AttitudeIndicator() {
   const { isConnected } = useStore(webSocketConnectionStore);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  if (!isConnected) return null;
+  if (!isConnected) return;
 
   const size = isDesktop ? 220 : 160;
 
@@ -42,7 +42,7 @@ function AttitudeIndicator() {
         />
       );
     default:
-      return null;
+      return;
   }
 }
 

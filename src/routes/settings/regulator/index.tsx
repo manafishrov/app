@@ -13,7 +13,7 @@ function Regulator() {
   const { regulator } = useStore(droneConfigStore);
 
   if (!regulator) {
-    return null;
+    return;
   }
   return (
     <>

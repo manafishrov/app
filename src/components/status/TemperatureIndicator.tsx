@@ -8,7 +8,7 @@ function TemperatureIndicator() {
   const { temperature } = useStore(statusStore);
   const { isConnected } = useStore(webSocketConnectionStore);
 
-  if (!isConnected) return null;
+  if (!isConnected) return;
 
   return (
     <div className='flex items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>

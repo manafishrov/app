@@ -39,7 +39,7 @@ function ThrusterAllocationTable() {
   }
 
   if (!thrusterAllocation || !displayAllocation) {
-    return null;
+    return;
   }
 
   const rowLabels = [
