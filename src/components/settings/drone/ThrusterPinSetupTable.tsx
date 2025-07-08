@@ -36,10 +36,6 @@ function ThrusterPinSetupTable() {
     Array(pinNumbers.length).fill(false),
   );
 
-  if (!thrusterPinSetup) {
-    return;
-  }
-
   async function handleIdentifierChange(index: number, value: number) {
     if (!thrusterPinSetup) {
       return;
@@ -196,7 +192,7 @@ function ThrusterPinSetupTable() {
                     (thrusterErpms[index] ?? 0) !== 0
                   }
                   onClick={async () => {
-                    if (thrusterPinSetup.identifiers[index]) {
+                    if (thrusterPinSetup?.identifiers[index]) {
                       await testThruster(
                         thrusterPinSetup.identifiers[index],
                         index,

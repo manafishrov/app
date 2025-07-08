@@ -148,10 +148,24 @@ async def handle_client(websocket):
                     await log_firmware(
                         "info", f"Updated thruster pin setup: {thruster_pin_setup}"
                     )
+                    await toast(
+                        None,
+                        "success",
+                        "Thruster pin setup updated successfully",
+                        None,
+                        None,
+                    )
                 elif msg_type == "thrusterAllocation":
                     thruster_allocation = payload
                     await log_firmware(
                         "info", f"Updated thruster allocation: {thruster_allocation}"
+                    )
+                    await toast(
+                        None,
+                        "success",
+                        "Thruster allocation updated successfully",
+                        None,
+                        None,
                     )
                 elif msg_type == "testThruster":
 

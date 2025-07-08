@@ -1,5 +1,4 @@
 import { useStore } from '@tanstack/react-store';
-import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -12,11 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
+import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
+
+import { logWarn } from '@/lib/log';
 
 import {
   type ThrusterAllocation,
@@ -76,7 +78,7 @@ function ThrusterAllocationTable() {
     let numericValue: number;
 
     if (value === '' || value === '-') {
-      numericValue = 0;
+      numericValue = NaN;
     } else {
       const hasMultipleDots = (value.match(/\./g) ?? []).length > 1;
       const hasMisplacedMinus = value.lastIndexOf('-') > 0;
@@ -188,6 +190,36 @@ function ThrusterAllocationTable() {
       </Table>
       <Button
         onClick={async () => {
+          let invalidCell: {
+            rowLabel: string;
+            colIndex: number;
+            value: number | null | undefined;
+          } | null = null;
+          for (let r = 0; r < (thrusterAllocation?.length ?? 0); r++) {
+            for (let c = 0; c < (thrusterAllocation?.[r]?.length ?? 0); c++) {
+              const cell = thrusterAllocation?.[r]?.[c];
+              if (cell === undefined || cell === null || isNaN(cell)) {
+                invalidCell = {
+                  rowLabel: rowLabels?.[r] ?? '',
+                  colIndex: c + 1,
+                  value: cell,
+                };
+                break;
+              }
+            }
+            if (invalidCell) break;
+          }
+          if (invalidCell) {
+            logWarn(
+              `Aborting update: Invalid value in "${invalidCell.rowLabel}" row, column #${invalidCell.colIndex}. Value:`,
+              invalidCell.value,
+              thrusterAllocation,
+            );
+            toast.warning(
+              `Invalid thruster allocation value [${invalidCell.rowLabel}, ${invalidCell.colIndex}]`,
+            );
+            return;
+          }
           await thrusterAllocationUpdate(thrusterAllocation);
         }}
       >

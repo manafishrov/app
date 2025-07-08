@@ -70,8 +70,6 @@ function PidForm() {
     }
   }, [regulator, form]);
 
-  // if (!regulator) return;
-
   return (
     <>
       <h3 className='text-2xl font-semibold tracking-tight'>
