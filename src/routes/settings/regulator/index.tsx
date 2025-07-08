@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
+import { MovementCoefficientsForm } from '@/components/settings/drone/MovementCoefficientsForm';
 import { PidForm } from '@/components/settings/drone/PidForm';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -33,9 +34,7 @@ function Regulator() {
       ) : (
         <div className='space-y-6'>
           <PidForm />
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Movement Coefficients
-          </h3>
+          <MovementCoefficientsForm />
         </div>
       )}
     </>
