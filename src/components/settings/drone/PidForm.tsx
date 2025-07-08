@@ -80,7 +80,7 @@ function PidForm() {
           e.preventDefault();
           void form.handleSubmit();
         }}
-        className='relative grow space-y-8'
+        className='relative space-y-4'
       >
         <form.AppForm>
           <div>

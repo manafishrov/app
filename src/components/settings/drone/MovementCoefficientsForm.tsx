@@ -10,10 +10,22 @@ import {
 } from '@/stores/droneConfigStore';
 
 const formSchema = z.object({
-  horizontal: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
-  strafe: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
-  vertical: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
-  pitch: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
+  horizontal: z
+    .number()
+    .min(0, 'Must be at least 0')
+    .max(100, 'Must be at most 100'),
+  strafe: z
+    .number()
+    .min(0, 'Must be at least 0')
+    .max(100, 'Must be at most 100'),
+  vertical: z
+    .number()
+    .min(0, 'Must be at least 0')
+    .max(100, 'Must be at most 100'),
+  pitch: z
+    .number()
+    .min(0, 'Must be at least 0')
+    .max(100, 'Must be at most 100'),
   yaw: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
   roll: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
 });
@@ -59,57 +71,27 @@ function MovementCoefficientsForm() {
           e.preventDefault();
           void form.handleSubmit();
         }}
-        className='relative grow space-y-8'
+        className='relative space-y-4'
       >
         <form.AppForm>
-          <div>
-            <h4 className='text-lg font-medium'>Horizontal</h4>
-            <form.AppField name='horizontal'>
-              {(field) => (
-                <field.NumberField label='Horizontal' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
-          <div>
-            <h4 className='text-lg font-medium'>Strafe</h4>
-            <form.AppField name='strafe'>
-              {(field) => (
-                <field.NumberField label='Strafe' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
-          <div>
-            <h4 className='text-lg font-medium'>Vertical</h4>
-            <form.AppField name='vertical'>
-              {(field) => (
-                <field.NumberField label='Vertical' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
-          <div>
-            <h4 className='text-lg font-medium'>Pitch</h4>
-            <form.AppField name='pitch'>
-              {(field) => (
-                <field.NumberField label='Pitch' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
-          <div>
-            <h4 className='text-lg font-medium'>Yaw</h4>
-            <form.AppField name='yaw'>
-              {(field) => (
-                <field.NumberField label='Yaw' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
-          <div>
-            <h4 className='text-lg font-medium'>Roll</h4>
-            <form.AppField name='roll'>
-              {(field) => (
-                <field.NumberField label='Roll' placeholder='0-100' min={0} max={100} />
-              )}
-            </form.AppField>
-          </div>
+          <form.AppField name='horizontal'>
+            {(field) => <field.NumberField label='Horizontal' />}
+          </form.AppField>
+          <form.AppField name='strafe'>
+            {(field) => <field.NumberField label='Strafe' />}
+          </form.AppField>
+          <form.AppField name='vertical'>
+            {(field) => <field.NumberField label='Vertical' />}
+          </form.AppField>
+          <form.AppField name='pitch'>
+            {(field) => <field.NumberField label='Pitch' />}
+          </form.AppField>
+          <form.AppField name='yaw'>
+            {(field) => <field.NumberField label='Yaw' />}
+          </form.AppField>
+          <form.AppField name='roll'>
+            {(field) => <field.NumberField label='Roll' />}
+          </form.AppField>
           <form.SubmitButton>Update Movement Coefficients</form.SubmitButton>
         </form.AppForm>
       </form>

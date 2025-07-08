@@ -164,7 +164,8 @@ function NumberField({
         inputMode='numeric'
         value={field.state.value?.toString() ?? ''}
         onChange={(e) => {
-          const value = e.target.value.replace(',', '.').replace(/[^\d]/g, '');
+          let value = e.target.value.replace(',', '.');
+          value = value.replace(/(?!^)-|[^\d.-]/g, '');
           field.handleChange(Number(value));
         }}
         onBlur={field.handleBlur}

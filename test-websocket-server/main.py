@@ -26,6 +26,21 @@ thruster_allocation = [
     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
 ]
 
+regulator = {
+    "pitch": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+    "roll": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+    "depth": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+}
+
+movement_coefficients = {
+    "horizontal": 0.0,
+    "strafe": 0.0,
+    "vertical": 0.0,
+    "pitch": 0.0,
+    "yaw": 0.0,
+    "roll": 0.0,
+}
+
 
 async def log_firmware(level, message):
     log_msg = {
@@ -59,6 +74,8 @@ async def toast(id, toast_type, message, description, cancel):
 
 async def handle_client(websocket):
     global thruster_allocation
+    global regulator
+    global movement_coefficients
     await log_firmware(
         "info", f"Client connected from Manafish App at {websocket.remote_address}!"
     )
@@ -143,6 +160,21 @@ async def handle_client(websocket):
                     }
                     await websocket.send(json.dumps(pin_setup_msg))
                     await websocket.send(json.dumps(allocation_msg))
+                elif msg_type == "getRegulatorConfig":
+                    await log_firmware(
+                        "info",
+                        "Sending regulator and movement coefficients configuration",
+                    )
+                    regulator_msg = {
+                        "type": "regulator",
+                        "payload": regulator,
+                    }
+                    movement_coefficients_msg = {
+                        "type": "movementCoefficients",
+                        "payload": movement_coefficients,
+                    }
+                    await websocket.send(json.dumps(regulator_msg))
+                    await websocket.send(json.dumps(movement_coefficients_msg))
                 elif msg_type == "thrusterPinSetup":
                     thruster_pin_setup.update(payload)
                     await log_firmware(
@@ -164,6 +196,29 @@ async def handle_client(websocket):
                         None,
                         "success",
                         "Thruster allocation updated successfully",
+                        None,
+                        None,
+                    )
+                elif msg_type == "regulator":
+                    regulator = payload
+                    await log_firmware("info", f"Updated regulator: {regulator}")
+                    await toast(
+                        None,
+                        "success",
+                        "Regulator updated successfully",
+                        None,
+                        None,
+                    )
+                elif msg_type == "movementCoefficients":
+                    movement_coefficients = payload
+                    await log_firmware(
+                        "info",
+                        f"Updated movement coefficients: {movement_coefficients}",
+                    )
+                    await toast(
+                        None,
+                        "success",
+                        "Movement coefficients updated successfully",
                         None,
                         None,
                     )

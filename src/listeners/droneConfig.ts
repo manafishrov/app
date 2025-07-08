@@ -1,9 +1,11 @@
 import { listen } from '@tauri-apps/api/event';
+
 import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
 import {
+  type MovementCoefficients,
   type Regulator,
   type ThrusterAllocation,
   type ThrusterPinSetup,
@@ -28,6 +30,12 @@ async function initializeDroneConfigListener() {
       droneConfigStore.setState((config) => ({
         ...config,
         regulator: event.payload,
+      }));
+    });
+    await listen<MovementCoefficients>('movement_coefficients', (event) => {
+      droneConfigStore.setState((config) => ({
+        ...config,
+        movementCoefficients: event.payload,
       }));
     });
   } catch (error) {

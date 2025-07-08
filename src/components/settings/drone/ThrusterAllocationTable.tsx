@@ -142,8 +142,7 @@ function ThrusterAllocationTable() {
                 <TooltipTrigger>Identifier</TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    Identifier to be used for the thruster given in the pin
-                    setup. allocation.
+                    Identifier for the given thruster, defined in the pin setup.
                   </p>
                 </TooltipContent>
               </Tooltip>
