@@ -19,7 +19,7 @@ function Calibration() {
           Calibrate the thrusters of the ROV.
         </p>
       </div>
-      <div className='w-[calc(100svw-7rem)] space-y-6 md:w-full'>
+      <div className='w-[calc(100svw-7rem)] max-w-full space-y-6 md:w-[calc(100svw-14rem)] lg:w-full'>
         <ThrusterPinSetupTable />
         <ThrusterAllocationTable />
       </div>
