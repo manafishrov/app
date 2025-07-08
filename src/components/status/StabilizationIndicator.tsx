@@ -6,9 +6,9 @@ import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
 function StabilizationIndicator() {
   const { pitchStabilization, rollStabilization, depthStabilization } =
     useStore(stateStore);
-  const webSocketConnection = useStore(webSocketConnectionStore);
+  const { isConnected } = useStore(webSocketConnectionStore);
 
-  if (!webSocketConnection.isConnected) return;
+  if (!isConnected) return;
 
   return (
     <div className='flex flex-col gap-1 text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
