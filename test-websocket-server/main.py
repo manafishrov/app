@@ -8,6 +8,8 @@ import signal
 clients = set()
 shutdown = False
 
+on_going_thruster_tests = {}
+
 thruster_pin_setup = {
     "identifiers": [5, 4, 3, 1, 2, 7, 6, 8],
     "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],
@@ -33,6 +35,24 @@ async def log_firmware(level, message):
     if clients:
         await asyncio.gather(
             *[client.send(json.dumps(log_msg)) for client in clients],
+            return_exceptions=True,
+        )
+
+
+async def toast(id, toast_type, message, description, cancel):
+    toast_msg = {
+        "type": "toast",
+        "payload": {
+            "id": id,
+            "toastType": toast_type,
+            "message": message,
+            "description": description,
+            "cancel": cancel,
+        },
+    }
+    if clients:
+        await asyncio.gather(
+            *[client.send(json.dumps(toast_msg)) for client in clients],
             return_exceptions=True,
         )
 
@@ -134,9 +154,56 @@ async def handle_client(websocket):
                         "info", f"Updated thruster allocation: {thruster_allocation}"
                     )
                 elif msg_type == "testThruster":
-                    await log_firmware(
-                        "info", f"Testing thruster with identifier: {payload}"
-                    )
+
+                    async def test_thruster_task(thruster_id):
+                        try:
+                            await log_firmware(
+                                "info",
+                                f"Testing thruster with identifier: {thruster_id}",
+                            )
+                            for i in range(1, 11):
+                                progress = i * 10
+                                await toast(
+                                    "test",
+                                    "loading",
+                                    f"Testing thruster {thruster_id} {progress}%",
+                                    None,
+                                    {
+                                        "command": "cancelTestThruster",
+                                        "payload": thruster_id,
+                                    },
+                                )
+                                if i < 10:
+                                    await asyncio.sleep(1)
+                            await toast(
+                                "test",
+                                "success",
+                                f"Finished testing thruster {thruster_id}",
+                                None,
+                                None,
+                            )
+                        except asyncio.CancelledError:
+                            pass
+                        finally:
+                            on_going_thruster_tests.pop(thruster_id, None)
+
+                    existing = on_going_thruster_tests.get(payload)
+                    if existing:
+                        existing.cancel()
+                    task = asyncio.create_task(test_thruster_task(payload))
+                    on_going_thruster_tests[payload] = task
+                elif msg_type == "cancelTestThruster":
+                    thruster_id = payload
+                    task = on_going_thruster_tests.get(thruster_id)
+                    if task:
+                        task.cancel()
+                        await toast(
+                            "test",
+                            "success",
+                            f"Cancelled testing thruster {thruster_id}",
+                            None,
+                            None,
+                        )
             except json.JSONDecodeError:
                 await log_firmware("warn", f"Received non-JSON message: {message}")
 

@@ -1,4 +1,4 @@
-use crate::models::toast::{Toast, ToastType};
+use crate::models::toast::{Cancel, Toast, ToastType};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
 
@@ -14,84 +14,54 @@ pub fn toast(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(id, None, message, description, cancel_command);
+  toast_message(id, None, message, description, cancel);
 }
 
 pub fn toast_success(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(
-    id,
-    Some(ToastType::Success),
-    message,
-    description,
-    cancel_command,
-  );
+  toast_message(id, Some(ToastType::Success), message, description, cancel);
 }
 
 pub fn toast_info(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(
-    id,
-    Some(ToastType::Info),
-    message,
-    description,
-    cancel_command,
-  );
+  toast_message(id, Some(ToastType::Info), message, description, cancel);
 }
 
 pub fn toast_warn(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(
-    id,
-    Some(ToastType::Warn),
-    message,
-    description,
-    cancel_command,
-  );
+  toast_message(id, Some(ToastType::Warn), message, description, cancel);
 }
 
 pub fn toast_error(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(
-    id,
-    Some(ToastType::Error),
-    message,
-    description,
-    cancel_command,
-  );
+  toast_message(id, Some(ToastType::Error), message, description, cancel);
 }
 
 pub fn toast_loading(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
-  toast_message(
-    id,
-    Some(ToastType::Loading),
-    message,
-    description,
-    cancel_command,
-  );
+  toast_message(id, Some(ToastType::Loading), message, description, cancel);
 }
 
 pub fn toast_message(
@@ -99,7 +69,7 @@ pub fn toast_message(
   toast_type: Option<ToastType>,
   message: String,
   description: Option<String>,
-  cancel_command: Option<String>,
+  cancel: Option<Cancel>,
 ) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
@@ -110,7 +80,7 @@ pub fn toast_message(
           toast_type,
           message,
           description,
-          cancel_command,
+          cancel,
         },
       )
       .unwrap();

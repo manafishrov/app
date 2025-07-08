@@ -37,7 +37,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
         },
         || {
           toast_info(
-            None,
+            Some("update-progress".to_string()),
             "Update downloaded".to_string(),
             Some("Installing...".to_string()),
             None,
@@ -46,7 +46,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
       )
       .await?;
     toast_info(
-      None,
+      Some("update-progress".to_string()),
       "Update ready".to_string(),
       Some("Restart the app to apply the update.".to_string()),
       None,
