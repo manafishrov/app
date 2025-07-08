@@ -3,7 +3,7 @@ import { Store } from '@tanstack/react-store';
 import type { Regulator } from '@/stores/droneConfigStore';
 
 type SettingsState = {
-  regulatorSuggestion?: Regulator;
+  regulatorSuggestions?: Regulator;
   thrusterTesting: boolean;
 };
 

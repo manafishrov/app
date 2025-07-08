@@ -4,6 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsState {
-  regulator_suggestion: Option<Regulator>,
+  regulator_suggestions: Option<Regulator>,
   thruster_testing: bool,
 }
