@@ -2,14 +2,14 @@ use crate::models::config::Config;
 use crate::ConfigSendChannelState;
 use std::fs;
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{command, State};
 
 fn get_config_path() -> PathBuf {
   let base_dir = dirs::config_dir().expect("Failed to get config directory");
   base_dir.join("manafish").join("config.json")
 }
 
-#[tauri::command]
+#[command]
 pub fn get_config() -> Result<Config, String> {
   let config_path = get_config_path();
 
@@ -28,7 +28,7 @@ pub fn get_config() -> Result<Config, String> {
   }
 }
 
-#[tauri::command]
+#[command]
 pub async fn save_config(
   state: State<'_, ConfigSendChannelState>,
   config: Config,

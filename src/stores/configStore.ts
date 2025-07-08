@@ -65,7 +65,7 @@ async function loadConfig() {
     configStore.setState(() => config);
   } catch (error) {
     logError('Failed to load config:', error);
-    toast.error('Failed to load configuration');
+    toast.error('Failed to load config');
   }
 }
 

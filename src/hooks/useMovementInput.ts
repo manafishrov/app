@@ -143,13 +143,19 @@ function useMovementInput() {
     ) as MovementInputArray;
   }
 
+  const lastMovementInputErrorRef = useRef(0);
+
   async function sendInput(input: MovementInputArray) {
     movementInputStore.setState(() => input);
     try {
       await invoke('send_movement_input', { payload: input });
     } catch (error) {
-      logError('Failed to send movement input:', error);
-      toast.error('Failed to send movement input');
+      const now = Date.now();
+      if (now - lastMovementInputErrorRef.current > 10000) {
+        lastMovementInputErrorRef.current = now;
+        logError('Failed to send movement input:', error);
+        toast.error('Failed to send movement input');
+      }
     }
   }
 

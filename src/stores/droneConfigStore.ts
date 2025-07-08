@@ -82,13 +82,26 @@ async function regulatorUpdate(regulator: Regulator) {
   }
 }
 
+async function movementCoefficientsUpdate(
+  movementCoefficients: MovementCoefficients,
+) {
+  try {
+    await invoke('movement_coefficients', { payload: movementCoefficients });
+  } catch (error) {
+    logError('Failed to set new movement coefficients config:', error);
+    toast.error('Failed to set new movement coefficients config');
+  }
+}
+
 export {
   droneConfigStore,
   requestThrusterConfig,
   requestRegulatorConfig,
   thrusterAllocationUpdate,
+  movementCoefficientsUpdate,
   regulatorUpdate,
   type Regulator,
+  type MovementCoefficients,
   type DroneConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,

@@ -6,9 +6,9 @@ use crate::websocket::{
     handle_thruster_allocation, handle_thruster_pin_setup,
   },
 };
-use tauri::State;
+use tauri::{command, State};
 
-#[tauri::command]
+#[command]
 pub async fn thruster_pin_setup(
   state: State<'_, MessageSendChannelState>,
   payload: ThrusterPinSetup,
@@ -17,7 +17,7 @@ pub async fn thruster_pin_setup(
   Ok(())
 }
 
-#[tauri::command]
+#[command]
 pub async fn thruster_allocation(
   state: State<'_, MessageSendChannelState>,
   payload: ThrusterAllocation,
@@ -26,13 +26,13 @@ pub async fn thruster_allocation(
   Ok(())
 }
 
-#[tauri::command]
+#[command]
 pub async fn get_thruster_config(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
   handle_get_thruster_config(&state).await;
   Ok(())
 }
 
-#[tauri::command]
+#[command]
 pub async fn test_thruster(
   state: State<'_, MessageSendChannelState>,
   payload: TestThruster,
@@ -41,7 +41,7 @@ pub async fn test_thruster(
   Ok(())
 }
 
-#[tauri::command]
+#[command]
 pub async fn cancel_test_thruster(
   state: State<'_, MessageSendChannelState>,
   payload: TestThruster,
