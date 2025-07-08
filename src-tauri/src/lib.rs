@@ -49,7 +49,7 @@ use commands::regulator::{
   get_regulator_config, movement_coefficients, regulator, regulator_auto_tuning,
 };
 use commands::thrusters::{
-  get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
+  cancel_test_thruster, get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
 };
 use log::log_init;
 use models::config::{Config, ConfigSendChannelState};
@@ -99,6 +99,7 @@ pub fn run() {
       thruster_allocation,
       get_thruster_config,
       test_thruster,
+      cancel_test_thruster,
       regulator,
       get_regulator_config,
       movement_coefficients,

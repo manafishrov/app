@@ -5,6 +5,10 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
+function camelToSnake(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
 type Cancel = {
   command: string;
   payload?: Record<string, unknown>;
@@ -42,12 +46,13 @@ async function initializeToastListener() {
                     ? undefined
                     : {
                         label: 'Cancel',
-                        onClick: () => {
+                        onClick: async (event: React.MouseEvent) => {
+                          event.preventDefault();
                           if (payload.cancel?.command) {
                             try {
-                              void invoke(
-                                payload.cancel.command,
-                                payload.cancel.payload,
+                              await invoke(
+                                camelToSnake(payload.cancel.command),
+                                { payload: payload.cancel.payload },
                               );
                             } catch (error) {
                               logError(
@@ -56,6 +61,13 @@ async function initializeToastListener() {
                               );
                               toast.error('Failed to invoke cancel command');
                             }
+                          }
+                          if (
+                            payload.id &&
+                            activeLoadingToasts.has(payload.id)
+                          ) {
+                            clearTimeout(activeLoadingToasts.get(payload.id));
+                            activeLoadingToasts.delete(payload.id);
                           }
                         },
                       },

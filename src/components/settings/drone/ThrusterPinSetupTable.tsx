@@ -1,6 +1,7 @@
 import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { FanIcon } from 'lucide-react';
+import { useState } from 'react';
 
 import { IdentifierSelect } from '@/components/settings/drone/IdentifierSelect';
 import { SpinDirectionSelect } from '@/components/settings/drone/SpinDirectionSelect';
@@ -23,7 +24,6 @@ import {
 import { logError } from '@/lib/log';
 
 import { type Row, droneConfigStore } from '@/stores/droneConfigStore';
-import { settingsStateStore } from '@/stores/settingsStateStore';
 import { statusStore } from '@/stores/statusStore';
 
 const THRUSTER_POLE_PAIRS = 6;
@@ -31,8 +31,10 @@ const THRUSTER_POLE_PAIRS = 6;
 function ThrusterPinSetupTable() {
   const { thrusterPinSetup } = useStore(droneConfigStore);
   const { thrusterErpms } = useStore(statusStore);
-  const { thrusterTesting } = useStore(settingsStateStore);
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
+  const [testDisabled, setTestDisabled] = useState<boolean[]>(
+    Array(pinNumbers.length).fill(false),
+  );
 
   if (!thrusterPinSetup) {
     return;
@@ -82,12 +84,25 @@ function ThrusterPinSetupTable() {
     }
   }
 
-  async function testThruster(identifier: number) {
+  async function testThruster(identifier: number, index: number) {
+    setTestDisabled((prev: boolean[]): boolean[] => {
+      const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
+      updated[index] = true;
+      return updated;
+    });
     try {
       await invoke('test_thruster', { payload: identifier });
     } catch (error) {
       logError('Failed to test thruster:', error);
       toast.error('Failed to test thruster');
+    } finally {
+      setTimeout(() => {
+        setTestDisabled((prev: boolean[]): boolean[] => {
+          const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
+          updated[index] = false;
+          return updated;
+        });
+      }, 2000);
     }
   }
 
@@ -176,14 +191,16 @@ function ThrusterPinSetupTable() {
               <TableCell>
                 <Button
                   variant='outline'
-                  disabled={thrusterTesting}
+                  disabled={
+                    (testDisabled[index] ?? false) ||
+                    (thrusterErpms[index] ?? 0) !== 0
+                  }
                   onClick={async () => {
                     if (thrusterPinSetup.identifiers[index]) {
-                      settingsStateStore.setState((settingsState) => ({
-                        ...settingsState,
-                        thrusterTesting: true,
-                      }));
-                      await testThruster(thrusterPinSetup.identifiers[index]);
+                      await testThruster(
+                        thrusterPinSetup.identifiers[index],
+                        index,
+                      );
                     }
                   }}
                 >

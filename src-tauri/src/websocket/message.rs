@@ -21,6 +21,7 @@ pub enum WebsocketMessage {
   ThrusterAllocation(ThrusterAllocation),
   GetThrusterConfig,
   TestThruster(TestThruster),
+  CancelTestThruster(TestThruster),
   Regulator(Regulator),
   MovementCoefficients(MovementCoefficients),
   GetRegulatorConfig,

@@ -30,3 +30,11 @@ pub async fn handle_test_thruster(
   let message = WebsocketMessage::TestThruster(payload);
   let _ = state.tx.send(message).await;
 }
+
+pub async fn handle_cancel_test_thruster(
+  state: &State<'_, MessageSendChannelState>,
+  payload: TestThruster,
+) {
+  let message = WebsocketMessage::CancelTestThruster(payload);
+  let _ = state.tx.send(message).await;
+}

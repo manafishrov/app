@@ -197,13 +197,6 @@ async def handle_client(websocket):
                     task = on_going_thruster_tests.get(thruster_id)
                     if task:
                         task.cancel()
-                        await toast(
-                            "test",
-                            "success",
-                            f"Cancelled testing thruster {thruster_id}",
-                            None,
-                            None,
-                        )
             except json.JSONDecodeError:
                 await log_firmware("warn", f"Received non-JSON message: {message}")
 

@@ -4,11 +4,8 @@ import type { Regulator } from '@/stores/droneConfigStore';
 
 type SettingsState = {
   regulatorSuggestions?: Regulator;
-  thrusterTesting: boolean;
 };
 
-const settingsStateStore = new Store<SettingsState>({
-  thrusterTesting: false,
-});
+const settingsStateStore = new Store<SettingsState>({});
 
 export { settingsStateStore, type SettingsState };

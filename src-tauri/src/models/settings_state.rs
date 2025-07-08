@@ -5,5 +5,4 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct SettingsState {
   regulator_suggestions: Option<Regulator>,
-  thruster_testing: bool,
 }
