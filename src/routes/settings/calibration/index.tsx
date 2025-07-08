@@ -32,7 +32,7 @@ function Calibration() {
           <Spinner size='lg' />
         </div>
       ) : (
-        <div className='w-[calc(100svw-7rem)] max-w-full space-y-6 md:w-[calc(100svw-14rem)] lg:w-full'>
+        <div className='w-[calc(100svw-7rem)] max-w-full space-y-8 md:w-[calc(100svw-14rem)] lg:w-full'>
           <ThrusterPinSetupTable />
           <ThrusterAllocationTable />
         </div>

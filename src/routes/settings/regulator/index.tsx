@@ -32,7 +32,7 @@ function Regulator() {
           <Spinner size='lg' />
         </div>
       ) : (
-        <div className='space-y-6'>
+        <div className='space-y-8'>
           <PidForm />
           <MovementCoefficientsForm />
         </div>

@@ -2,6 +2,7 @@ import { useStore } from '@tanstack/react-store';
 import { useEffect } from 'react';
 import { z } from 'zod';
 
+import { RegulatorFieldButtons } from '@/components/settings/drone/RegulatorFieldButtons';
 import { useAppForm } from '@/components/ui/Form';
 
 import {
@@ -63,9 +64,17 @@ function MovementCoefficientsForm() {
 
   return (
     <>
-      <h3 className='text-2xl font-semibold tracking-tight'>
-        Movement Coefficients
-      </h3>
+      <div>
+        <h3 className='text-2xl font-semibold tracking-tight'>
+          Movement Coefficients
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Set the relative power for moving or turning in each direction. The{' '}
+          <b>ratios</b> between these values determine how much force each
+          thruster will use to move in the expected direction without drifting.
+          The units don’t matter as long as all axes use the same units.
+        </p>
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -75,24 +84,80 @@ function MovementCoefficientsForm() {
       >
         <form.AppForm>
           <form.AppField name='horizontal'>
-            {(field) => <field.NumberField label='Horizontal' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Horizontal' />
+                <RegulatorFieldButtons
+                  defaultValue={0.8}
+                  onChange={field.handleChange}
+                  label='Horizontal Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
           <form.AppField name='strafe'>
-            {(field) => <field.NumberField label='Strafe' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Strafe' />
+                <RegulatorFieldButtons
+                  defaultValue={0.35}
+                  onChange={field.handleChange}
+                  label='Strafe Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
           <form.AppField name='vertical'>
-            {(field) => <field.NumberField label='Vertical' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Vertical' />
+                <RegulatorFieldButtons
+                  defaultValue={0.5}
+                  onChange={field.handleChange}
+                  label='Vertial Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
           <form.AppField name='pitch'>
-            {(field) => <field.NumberField label='Pitch' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Pitch' />
+                <RegulatorFieldButtons
+                  defaultValue={0.4}
+                  onChange={field.handleChange}
+                  label='Pitch Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
           <form.AppField name='yaw'>
-            {(field) => <field.NumberField label='Yaw' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Yaw' />
+                <RegulatorFieldButtons
+                  defaultValue={0.3}
+                  onChange={field.handleChange}
+                  label='Yaw Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
           <form.AppField name='roll'>
-            {(field) => <field.NumberField label='Roll' />}
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Roll' />
+                <RegulatorFieldButtons
+                  defaultValue={0.8}
+                  onChange={field.handleChange}
+                  label='Roll Movement Coefficient'
+                />
+              </div>
+            )}
           </form.AppField>
-          <form.SubmitButton>Update Movement Coefficients</form.SubmitButton>
+          <div className='mt-3.5 flex items-center gap-4'>
+            <form.SubmitButton>Update Movement Coefficients</form.SubmitButton>
+          </div>
         </form.AppForm>
       </form>
     </>

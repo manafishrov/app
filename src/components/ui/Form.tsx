@@ -3,7 +3,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form';
 import { XIcon } from 'lucide-react';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 
 import { Button, type buttonVariants } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -141,6 +141,7 @@ type NumberFieldProps = Omit<
   label: string;
   labelSibling?: React.ReactNode;
   description?: string;
+  maxDecimals?: number;
 };
 
 function NumberField({
@@ -148,9 +149,67 @@ function NumberField({
   label,
   labelSibling,
   description,
+  maxDecimals,
   ...props
 }: NumberFieldProps) {
   const field = useFieldContext<number>();
+  const [draftValue, setDraftValue] = useState<string | null>(null);
+
+  const formValue = field.state.value;
+  const canonicalValue =
+    formValue === null || formValue === undefined || isNaN(formValue)
+      ? ''
+      : String(formValue);
+
+  const displayValue = draftValue ?? canonicalValue;
+
+  function handleChange(value: string) {
+    let currentDisplayValue = value;
+
+    if (currentDisplayValue === '' || currentDisplayValue === '-') {
+      setDraftValue(currentDisplayValue);
+      field.handleChange(NaN);
+      return;
+    }
+
+    currentDisplayValue = currentDisplayValue.replace(',', '.');
+    if (
+      (currentDisplayValue.match(/\./g) ?? []).length > 1 ||
+      currentDisplayValue.lastIndexOf('-') > 0 ||
+      /[^0-9.-]/.test(currentDisplayValue)
+    ) {
+      return;
+    }
+
+    if (maxDecimals !== undefined) {
+      const parts = currentDisplayValue.split('.');
+      if (parts[1] && parts[1].length > maxDecimals) {
+        parts[1] = parts[1].substring(0, maxDecimals);
+        currentDisplayValue = parts.join('.');
+      }
+    }
+
+    setDraftValue(currentDisplayValue);
+
+    if (currentDisplayValue.endsWith('.')) {
+      const num = Number.parseFloat(currentDisplayValue.slice(0, -1));
+      field.handleChange(isNaN(num) ? NaN : num);
+    } else {
+      const num = Number.parseFloat(currentDisplayValue);
+      field.handleChange(isNaN(num) ? NaN : num);
+    }
+  }
+
+  function handleBlur() {
+    const num = Number.parseFloat(draftValue ?? '');
+    if (!isNaN(num)) {
+      field.handleChange(num);
+    } else {
+      field.handleChange(NaN);
+    }
+    field.handleBlur();
+    setDraftValue(null);
+  }
 
   return (
     <BaseField
@@ -162,13 +221,9 @@ function NumberField({
       <Input
         type='text'
         inputMode='numeric'
-        value={field.state.value?.toString() ?? ''}
-        onChange={(e) => {
-          let value = e.target.value.replace(',', '.');
-          value = value.replace(/(?!^)-|[^\d.-]/g, '');
-          field.handleChange(Number(value));
-        }}
-        onBlur={field.handleBlur}
+        value={displayValue}
+        onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
         {...props}
       />
     </BaseField>

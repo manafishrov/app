@@ -2,6 +2,7 @@ import { KeyboardIcon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
 import { cx } from '@/lib/utils';
 
@@ -194,14 +195,21 @@ function KeyboardBindInput({
               : (mappings[currentBind] ?? currentBind)}
           </span>
         </Button>
-        <Button
-          variant='ghost'
-          size='icon'
-          onClick={resetToDefault}
-          title='Reset to default'
-        >
-          <RotateCcwIcon className='h-4 w-4' />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
+              aria-label='Reset to default binding'
+              onClick={resetToDefault}
+            >
+              <RotateCcwIcon className='h-4 w-4' />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Reset to default binding</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

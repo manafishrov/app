@@ -2,6 +2,7 @@ import { useStore } from '@tanstack/react-store';
 import { useEffect } from 'react';
 import { z } from 'zod';
 
+import { RegulatorFieldButtons } from '@/components/settings/drone/RegulatorFieldButtons';
 import { Button } from '@/components/ui/Button';
 import { useAppForm } from '@/components/ui/Form';
 
@@ -72,9 +73,18 @@ function PidForm() {
 
   return (
     <>
-      <h3 className='text-2xl font-semibold tracking-tight'>
-        PID (Proportional-Integral-Derivative) controller
-      </h3>
+      <div>
+        <h3 className='text-2xl font-semibold tracking-tight'>
+          PID (Proportional-Integral-Derivative) controller
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Use this page to fine-tune how your drone responds to movement
+          commands. Adjust the Kp, Ki, and Kd values for pitch, roll, and depth
+          to control how strongly and smoothly the drone corrects its position.
+          Enter your own values or run auto-tuning when the drone is in still
+          water to automatically determine sane defaults.
+        </p>
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -85,37 +95,46 @@ function PidForm() {
         <form.AppForm>
           <div>
             <h4 className='text-lg font-medium'>Pitch</h4>
+            <p className='text-muted-foreground mb-2 text-xs'>
+              Controls nose up/down.
+            </p>
             <div className='space-y-4'>
               <form.AppField name='pitch.kp'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.pitch.kp}`}
-                    </span>
+                    <field.NumberField label='Kp' />
+                    <RegulatorFieldButtons
+                      defaultValue={5}
+                      suggestionValue={regulatorSuggestions?.pitch.kp}
+                      onChange={field.handleChange}
+                      label='Pitch Kp'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='pitch.ki'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.pitch.ki}`}
-                    </span>
+                    <field.NumberField label='Ki' />
+                    <RegulatorFieldButtons
+                      defaultValue={0.5}
+                      suggestionValue={regulatorSuggestions?.pitch.ki}
+                      onChange={field.handleChange}
+                      label='Pitch Ki'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='pitch.kd'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.pitch.kd}`}
-                    </span>
+                    <field.NumberField label='Kd' />
+                    <RegulatorFieldButtons
+                      defaultValue={1}
+                      suggestionValue={regulatorSuggestions?.pitch.kd}
+                      onChange={field.handleChange}
+                      label='Pitch Kd'
+                    />
                   </div>
                 )}
               </form.AppField>
@@ -123,37 +142,46 @@ function PidForm() {
           </div>
           <div>
             <h4 className='text-lg font-medium'>Roll</h4>
+            <p className='text-muted-foreground mb-2 text-xs'>
+              Controls side-to-side tilt.
+            </p>
             <div className='space-y-4'>
               <form.AppField name='roll.kp'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.roll.kp}`}
-                    </span>
+                    <field.NumberField label='Kp' />
+                    <RegulatorFieldButtons
+                      defaultValue={1.5}
+                      suggestionValue={regulatorSuggestions?.roll.kp}
+                      onChange={field.handleChange}
+                      label='Roll Kp'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='roll.ki'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.roll.ki}`}
-                    </span>
+                    <field.NumberField label='Ki' />
+                    <RegulatorFieldButtons
+                      defaultValue={0.1}
+                      suggestionValue={regulatorSuggestions?.roll.ki}
+                      onChange={field.handleChange}
+                      label='Roll Ki'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='roll.kd'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.roll.kd}`}
-                    </span>
+                    <field.NumberField label='Kd' />
+                    <RegulatorFieldButtons
+                      defaultValue={0.4}
+                      suggestionValue={regulatorSuggestions?.roll.kd}
+                      onChange={field.handleChange}
+                      label='Roll Kd'
+                    />
                   </div>
                 )}
               </form.AppField>
@@ -161,37 +189,46 @@ function PidForm() {
           </div>
           <div>
             <h4 className='text-lg font-medium'>Depth</h4>
+            <p className='text-muted-foreground mb-2 text-xs'>
+              Controls vertical movement.
+            </p>
             <div className='space-y-4'>
               <form.AppField name='depth.kp'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.depth.kp}`}
-                    </span>
+                    <field.NumberField label='Kp' />
+                    <RegulatorFieldButtons
+                      defaultValue={0}
+                      suggestionValue={regulatorSuggestions?.depth.kp}
+                      onChange={field.handleChange}
+                      label='Depth Kp'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='depth.ki'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.depth.ki}`}
-                    </span>
+                    <field.NumberField label='Ki' />
+                    <RegulatorFieldButtons
+                      defaultValue={0.05}
+                      suggestionValue={regulatorSuggestions?.depth.ki}
+                      onChange={field.handleChange}
+                      label='Depth Ki'
+                    />
                   </div>
                 )}
               </form.AppField>
               <form.AppField name='depth.kd'>
                 {(field) => (
                   <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' placeholder='1' />
-                    <span className='text-muted-foreground text-sm'>
-                      {regulatorSuggestions &&
-                        `Auto-tuning suggestion: ${regulatorSuggestions.depth.kd}`}
-                    </span>
+                    <field.NumberField label='Kd' />
+                    <RegulatorFieldButtons
+                      defaultValue={0.1}
+                      suggestionValue={regulatorSuggestions?.depth.kd}
+                      onChange={field.handleChange}
+                      label='Depth Kd'
+                    />
                   </div>
                 )}
               </form.AppField>

@@ -108,7 +108,12 @@ function General() {
               value={config.videoDirectory}
               className='w-full max-w-xs'
             />
-            <Button onClick={selectVideoDirectory}>Select Directory</Button>
+            <Button
+              onClick={selectVideoDirectory}
+              aria-label='Select Video Directory'
+            >
+              Select Directory
+            </Button>
           </div>
         </div>
         <div>
