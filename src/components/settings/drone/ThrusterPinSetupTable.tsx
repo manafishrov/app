@@ -104,9 +104,17 @@ function ThrusterPinSetupTable() {
 
   return (
     <>
-      <h3 className='text-2xl font-semibold tracking-tight'>
-        Thruster pin setup
-      </h3>
+      <div>
+        <h3 className='text-2xl font-semibold tracking-tight'>
+          Thruster pin setup
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Use this table to configure each thruster connected to your drone. For
+          each pin, choose the identifier by observing which thruster spins when
+          you test it and adjust the spin direction so that the thruster rotates
+          forward according to your propeller type.
+        </p>
+      </div>
       <Table className='border'>
         <TableHeader>
           <TableRow>

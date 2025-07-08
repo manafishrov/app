@@ -131,9 +131,18 @@ function ThrusterAllocationTable() {
 
   return (
     <>
-      <h3 className='text-2xl font-semibold tracking-tight'>
-        Thruster allocation
-      </h3>
+      <div>
+        <h3 className='text-2xl font-semibold tracking-tight'>
+          Thruster allocation
+        </h3>
+        <p className='text-muted-foreground text-sm'>
+          Use this matrix to control how each thruster responds to different
+          movement commands. For each action, assign a value between -1 and 1 to
+          specify the amount of thrust each thruster should provide: positive
+          values produce forward thrust, negative values produce reverse thrust,
+          and 0 disables the thruster for that action.
+        </p>
+      </div>
       <Table className='border'>
         <TableHeader>
           <TableRow>
