@@ -155,9 +155,9 @@ function MovementCoefficientsForm() {
               </div>
             )}
           </form.AppField>
-          <div className='mt-3.5 flex items-center gap-4'>
-            <form.SubmitButton>Update Movement Coefficients</form.SubmitButton>
-          </div>
+          <form.SubmitButton className='w-60'>
+            Update Movement Coefficients
+          </form.SubmitButton>
         </form.AppForm>
       </form>
     </>

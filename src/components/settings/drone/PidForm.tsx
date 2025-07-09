@@ -235,8 +235,12 @@ function PidForm() {
             </div>
           </div>
           <div className='flex items-center gap-4'>
-            <form.SubmitButton>Update Regulator PID</form.SubmitButton>
-            <Button variant='outline'>Run Auto Tuning</Button>
+            <form.SubmitButton className='w-44'>
+              Update Regulator PID
+            </form.SubmitButton>
+            <Button className='w-44' variant='outline'>
+              Run Auto Tuning
+            </Button>
           </div>
         </form.AppForm>
       </form>

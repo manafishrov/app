@@ -3,8 +3,10 @@ import { useStore } from '@tanstack/react-store';
 import {
   ArrowLeftIcon,
   BugIcon,
+  CircleGaugeIcon,
   CogIcon,
   CompassIcon,
+  DroneIcon,
   EthernetPortIcon,
   Gamepad2Icon,
   KeyboardIcon,
@@ -109,6 +111,20 @@ function SettingsSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
+                  aria-label='General ROV'
+                  tooltip='General ROV'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/general/',
+                  )}
+                  disabled={!isConnected}
+                >
+                  <Link to='/settings/general'>
+                    <DroneIcon />
+                    <span>General</span>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuButton
+                  asChild
                   aria-label='Calibration'
                   tooltip='Calibration'
                   isActive={matches.some(
@@ -133,6 +149,20 @@ function SettingsSidebar() {
                   <Link to='/settings/regulator'>
                     <CompassIcon />
                     <span>Regulator</span>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuButton
+                  asChild
+                  aria-label='Power'
+                  tooltip='Power'
+                  isActive={matches.some(
+                    (match) => match.id === '/settings/power/',
+                  )}
+                  disabled={!isConnected}
+                >
+                  <Link to='/settings/power'>
+                    <CircleGaugeIcon />
+                    <span>Power</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

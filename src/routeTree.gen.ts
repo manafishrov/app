@@ -15,7 +15,9 @@ import { Route as SettingsRouteImport } from './routes/settings/route'
 import { Route as IndexImport } from './routes/index'
 import { Route as SettingsIndexImport } from './routes/settings/index'
 import { Route as SettingsRegulatorIndexImport } from './routes/settings/regulator/index'
+import { Route as SettingsPowerIndexImport } from './routes/settings/power/index'
 import { Route as SettingsKeyboardIndexImport } from './routes/settings/keyboard/index'
+import { Route as SettingsGeneralIndexImport } from './routes/settings/general/index'
 import { Route as SettingsGamepadIndexImport } from './routes/settings/gamepad/index'
 import { Route as SettingsDebugIndexImport } from './routes/settings/debug/index'
 import { Route as SettingsConnectionIndexImport } from './routes/settings/connection/index'
@@ -47,9 +49,21 @@ const SettingsRegulatorIndexRoute = SettingsRegulatorIndexImport.update({
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 
+const SettingsPowerIndexRoute = SettingsPowerIndexImport.update({
+  id: '/power/',
+  path: '/power/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
 const SettingsKeyboardIndexRoute = SettingsKeyboardIndexImport.update({
   id: '/keyboard/',
   path: '/keyboard/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
+const SettingsGeneralIndexRoute = SettingsGeneralIndexImport.update({
+  id: '/general/',
+  path: '/general/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 
@@ -130,11 +144,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsGamepadIndexImport
       parentRoute: typeof SettingsRouteImport
     }
+    '/settings/general/': {
+      id: '/settings/general/'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralIndexImport
+      parentRoute: typeof SettingsRouteImport
+    }
     '/settings/keyboard/': {
       id: '/settings/keyboard/'
       path: '/keyboard'
       fullPath: '/settings/keyboard'
       preLoaderRoute: typeof SettingsKeyboardIndexImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/settings/power/': {
+      id: '/settings/power/'
+      path: '/power'
+      fullPath: '/settings/power'
+      preLoaderRoute: typeof SettingsPowerIndexImport
       parentRoute: typeof SettingsRouteImport
     }
     '/settings/regulator/': {
@@ -155,7 +183,9 @@ interface SettingsRouteRouteChildren {
   SettingsConnectionIndexRoute: typeof SettingsConnectionIndexRoute
   SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
   SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
+  SettingsGeneralIndexRoute: typeof SettingsGeneralIndexRoute
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
+  SettingsPowerIndexRoute: typeof SettingsPowerIndexRoute
   SettingsRegulatorIndexRoute: typeof SettingsRegulatorIndexRoute
 }
 
@@ -165,7 +195,9 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsConnectionIndexRoute: SettingsConnectionIndexRoute,
   SettingsDebugIndexRoute: SettingsDebugIndexRoute,
   SettingsGamepadIndexRoute: SettingsGamepadIndexRoute,
+  SettingsGeneralIndexRoute: SettingsGeneralIndexRoute,
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
+  SettingsPowerIndexRoute: SettingsPowerIndexRoute,
   SettingsRegulatorIndexRoute: SettingsRegulatorIndexRoute,
 }
 
@@ -181,7 +213,9 @@ export interface FileRoutesByFullPath {
   '/settings/connection': typeof SettingsConnectionIndexRoute
   '/settings/debug': typeof SettingsDebugIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
+  '/settings/general': typeof SettingsGeneralIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
+  '/settings/power': typeof SettingsPowerIndexRoute
   '/settings/regulator': typeof SettingsRegulatorIndexRoute
 }
 
@@ -192,7 +226,9 @@ export interface FileRoutesByTo {
   '/settings/connection': typeof SettingsConnectionIndexRoute
   '/settings/debug': typeof SettingsDebugIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
+  '/settings/general': typeof SettingsGeneralIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
+  '/settings/power': typeof SettingsPowerIndexRoute
   '/settings/regulator': typeof SettingsRegulatorIndexRoute
 }
 
@@ -205,7 +241,9 @@ export interface FileRoutesById {
   '/settings/connection/': typeof SettingsConnectionIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
+  '/settings/general/': typeof SettingsGeneralIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
+  '/settings/power/': typeof SettingsPowerIndexRoute
   '/settings/regulator/': typeof SettingsRegulatorIndexRoute
 }
 
@@ -219,7 +257,9 @@ export interface FileRouteTypes {
     | '/settings/connection'
     | '/settings/debug'
     | '/settings/gamepad'
+    | '/settings/general'
     | '/settings/keyboard'
+    | '/settings/power'
     | '/settings/regulator'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -229,7 +269,9 @@ export interface FileRouteTypes {
     | '/settings/connection'
     | '/settings/debug'
     | '/settings/gamepad'
+    | '/settings/general'
     | '/settings/keyboard'
+    | '/settings/power'
     | '/settings/regulator'
   id:
     | '__root__'
@@ -240,7 +282,9 @@ export interface FileRouteTypes {
     | '/settings/connection/'
     | '/settings/debug/'
     | '/settings/gamepad/'
+    | '/settings/general/'
     | '/settings/keyboard/'
+    | '/settings/power/'
     | '/settings/regulator/'
   fileRoutesById: FileRoutesById
 }
@@ -280,7 +324,9 @@ export const routeTree = rootRoute
         "/settings/connection/",
         "/settings/debug/",
         "/settings/gamepad/",
+        "/settings/general/",
         "/settings/keyboard/",
+        "/settings/power/",
         "/settings/regulator/"
       ]
     },
@@ -304,8 +350,16 @@ export const routeTree = rootRoute
       "filePath": "settings/gamepad/index.tsx",
       "parent": "/settings"
     },
+    "/settings/general/": {
+      "filePath": "settings/general/index.tsx",
+      "parent": "/settings"
+    },
     "/settings/keyboard/": {
       "filePath": "settings/keyboard/index.tsx",
+      "parent": "/settings"
+    },
+    "/settings/power/": {
+      "filePath": "settings/power/index.tsx",
       "parent": "/settings"
     },
     "/settings/regulator/": {

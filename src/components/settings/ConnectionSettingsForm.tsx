@@ -24,7 +24,7 @@ const formSchema = z.object({
 });
 
 function ConnectionSettingsForm() {
-  const config = useStore(configStore)
+  const config = useStore(configStore);
 
   const form = useAppForm({
     validators: {
@@ -97,7 +97,7 @@ function ConnectionSettingsForm() {
             />
           )}
         </form.AppField>
-        <form.SubmitButton>Save</form.SubmitButton>
+        <form.SubmitButton className='w-28'>Save</form.SubmitButton>
       </form.AppForm>
     </form>
   );

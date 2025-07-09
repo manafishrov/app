@@ -197,6 +197,7 @@ function ThrusterAllocationTable() {
         </TableBody>
       </Table>
       <Button
+        className='w-40'
         onClick={async () => {
           let invalidCell: {
             rowLabel: string;
