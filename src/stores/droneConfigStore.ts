@@ -5,6 +5,10 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
+type General = {
+  fluidType: 'saltwater' | 'freshwater';
+};
+
 type Row = [number, number, number, number, number, number, number, number];
 
 type ThrusterPinSetup = {
@@ -24,6 +28,7 @@ type Regulator = {
   pitch: pid;
   roll: pid;
   depth: pid;
+  turnSpeed: number;
 };
 
 type MovementCoefficients = {
@@ -35,14 +40,40 @@ type MovementCoefficients = {
   roll: number;
 };
 
+type Power = {
+  userMaxPower: number;
+  regulatorMaxPower: number;
+  batteryMinVoltage: number;
+  batteryMaxVoltage: number;
+};
+
 type DroneConfig = {
   thrusterPinSetup?: ThrusterPinSetup;
   thrusterAllocation?: ThrusterAllocation;
   regulator?: Regulator;
   movementCoefficients?: MovementCoefficients;
+  power?: Power;
 };
 
 const droneConfigStore = new Store<DroneConfig>({});
+
+async function requestFirmwareVersion() {
+  try {
+    await invoke('get_firmware_version');
+  } catch (error) {
+    logError('Failed to request firmware version:', error);
+    toast.error('Failed to request firmware version');
+  }
+}
+
+async function requestGeneralDroneConfig() {
+  try {
+    await invoke('get_general_drone_config');
+  } catch (error) {
+    logError('Failed to request general ROV config:', error);
+    toast.error('Failed to request general ROV config');
+  }
+}
 
 async function requestThrusterConfig() {
   try {
@@ -59,6 +90,24 @@ async function requestRegulatorConfig() {
   } catch (error) {
     logError('Failed to request regulator config:', error);
     toast.error('Failed to request regulator config');
+  }
+}
+
+async function requestPowerConfig() {
+  try {
+    await invoke('get_power_config');
+  } catch (error) {
+    logError('Failed to request power config:', error);
+    toast.error('Failed to request power config');
+  }
+}
+
+async function generalDroneConfigUpdate(general: General) {
+  try {
+    await invoke('general_drone_config', { payload: general });
+  } catch (error) {
+    logError('Failed to set general drone config:', error);
+    toast.error('Failed to set general drone config');
   }
 }
 
@@ -93,17 +142,33 @@ async function movementCoefficientsUpdate(
   }
 }
 
+async function powerUpdate(regulator: Regulator) {
+  try {
+    await invoke('regulator', { payload: regulator });
+  } catch (error) {
+    logError('Failed to set new regulator config:', error);
+    toast.error('Failed to set new regulator config');
+  }
+}
+
 export {
   droneConfigStore,
+  requestFirmwareVersion,
+  requestGeneralDroneConfig,
   requestThrusterConfig,
   requestRegulatorConfig,
+  requestPowerConfig,
+  generalDroneConfigUpdate,
   thrusterAllocationUpdate,
-  movementCoefficientsUpdate,
   regulatorUpdate,
+  movementCoefficientsUpdate,
+  powerUpdate,
   type Regulator,
   type MovementCoefficients,
   type DroneConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,
   type Row,
+  type General,
+  type Power,
 };
