@@ -1,10 +1,9 @@
 use crate::models::{
-  log::Log,
-  movement::MovementCommand,
-  regulator::{MovementCoefficients, Regulator},
-  states::States,
-  status::Status,
-  thrusters::{TestThruster, ThrusterAllocation, ThrusterPinSetup},
+  log::LogEntry,
+  rov_actions::RovMovementCommand,
+  rov_config::{Regulator, RovConfig, ThrusterTest},
+  rov_status::RovStatus,
+  rov_telemetry::RovTelemetry,
   toast::Toast,
 };
 use serde::{Deserialize, Serialize};
@@ -12,18 +11,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum WebsocketMessage {
-  LogFirmware(Log),
-  Toast(Toast),
-  Status(Status),
-  States(States),
-  MovementCommand(MovementCommand),
-  ThrusterPinSetup(ThrusterPinSetup),
-  ThrusterAllocation(ThrusterAllocation),
-  GetThrusterConfig,
-  TestThruster(TestThruster),
-  CancelTestThruster(TestThruster),
-  Regulator(Regulator),
-  MovementCoefficients(MovementCoefficients),
-  GetRegulatorConfig,
-  RegulatorAutoTuning,
+  MovementCommand(RovMovementCommand),
+  GetConfig,
+  SetConfig(RovConfig),
+  ConfigResponse(RovConfig),
+  StartThrusterTest(ThrusterTest),
+  CancelThrusterTest(ThrusterTest),
+  StartRegulatorAutoTuning,
+  CancelRegulatorAutoTuning,
+  RegulatorSuggestions(Regulator),
+  ShowToast(Toast),
+  LogMessage(LogEntry),
+  StatusUpdate(RovStatus),
+  Telemetry(RovTelemetry),
 }

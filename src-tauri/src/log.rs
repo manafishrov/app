@@ -1,4 +1,4 @@
-use crate::models::log::{Log, LogLevel};
+use crate::models::log::{LogEntry, LogLevel, LogOrigin};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
 
@@ -14,8 +14,9 @@ pub fn log_info(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
       .emit(
-        "log_backend",
-        Log {
+        "log_message",
+        LogEntry {
+          origin: LogOrigin::Backend,
           level: LogLevel::Info,
           message: message.to_string(),
         },
@@ -30,8 +31,9 @@ pub fn log_warn(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
       .emit(
-        "log_backend",
-        Log {
+        "log_message",
+        LogEntry {
+          origin: LogOrigin::Backend,
           level: LogLevel::Warn,
           message: message.to_string(),
         },
@@ -46,8 +48,9 @@ pub fn log_error(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
       .emit(
-        "log_backend",
-        Log {
+        "log_message",
+        LogEntry {
+          origin: LogOrigin::Backend,
           level: LogLevel::Error,
           message: message.to_string(),
         },

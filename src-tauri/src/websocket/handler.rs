@@ -1,11 +1,10 @@
 use super::message::WebsocketMessage;
 use super::receive::{
-  log_firmware::handle_log_firmware,
-  regulator::{handle_movement_coefficients, handle_regulator},
-  states::handle_states,
-  status::handle_status,
-  thrusters::{handle_thruster_allocation, handle_thruster_pin_setup},
-  toast::handle_toast,
+  config::{handle_config_response, handle_regulator_suggestions},
+  log::handle_log_message,
+  status::handle_status_update,
+  telemetry::handle_telemetry,
+  toast::handle_show_toast,
 };
 use crate::{log_error, log_warn};
 use tauri::AppHandle;
@@ -15,19 +14,13 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
   if let Message::Text(text) = message {
     match serde_json::from_str::<WebsocketMessage>(&text) {
       Ok(incoming_message) => match incoming_message {
-        WebsocketMessage::LogFirmware(payload) => handle_log_firmware(app_handle, &payload),
-        WebsocketMessage::Toast(payload) => handle_toast(app_handle, &payload),
-        WebsocketMessage::Status(payload) => handle_status(app_handle, &payload),
-        WebsocketMessage::States(payload) => handle_states(app_handle, &payload),
-        WebsocketMessage::ThrusterPinSetup(payload) => {
-          handle_thruster_pin_setup(app_handle, &payload)
-        }
-        WebsocketMessage::ThrusterAllocation(payload) => {
-          handle_thruster_allocation(app_handle, &payload)
-        }
-        WebsocketMessage::Regulator(payload) => handle_regulator(app_handle, &payload),
-        WebsocketMessage::MovementCoefficients(payload) => {
-          handle_movement_coefficients(app_handle, &payload)
+        WebsocketMessage::LogMessage(payload) => handle_log_message(app_handle, &payload),
+        WebsocketMessage::ShowToast(payload) => handle_show_toast(app_handle, &payload),
+        WebsocketMessage::Telemetry(payload) => handle_telemetry(app_handle, &payload),
+        WebsocketMessage::StatusUpdate(payload) => handle_status_update(app_handle, &payload),
+        WebsocketMessage::ConfigResponse(payload) => handle_config_response(app_handle, &payload),
+        WebsocketMessage::RegulatorSuggestions(payload) => {
+          handle_regulator_suggestions(app_handle, &payload)
         }
         other => {
           log_warn!("Received unhandled message type: {:?}", other);

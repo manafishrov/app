@@ -1,20 +1,18 @@
 mod commands {
   pub mod config;
   pub mod gamepad;
-  pub mod movement;
-  pub mod regulator;
-  pub mod thrusters;
+  pub mod rov_actions;
+  pub mod rov_config;
 }
 
 mod models {
   pub mod config;
   pub mod gamepad;
   pub mod log;
-  pub mod movement;
-  pub mod regulator;
-  pub mod states;
-  pub mod status;
-  pub mod thrusters;
+  pub mod rov_actions;
+  pub mod rov_config;
+  pub mod rov_status;
+  pub mod rov_telemetry;
   pub mod toast;
 }
 
@@ -23,36 +21,34 @@ mod websocket {
   pub mod handler;
   pub mod message;
   pub mod receive {
-    pub mod log_firmware;
-    pub mod regulator;
-    pub mod states;
+    pub mod config;
+    pub mod log;
     pub mod status;
-    pub mod thrusters;
+    pub mod telemetry;
     pub mod toast;
   }
   pub mod send {
-    pub mod movement;
-    pub mod regulator;
-    pub mod thrusters;
+    pub mod actions;
+    pub mod config;
   }
 }
 
+mod config;
 mod gamepad;
 mod log;
 mod toast;
 mod updater;
 
-use commands::config::{get_config, save_config};
-use commands::gamepad::execute_gamepad;
-use commands::movement::send_movement_input;
-use commands::regulator::{
-  get_regulator_config, movement_coefficients, regulator, regulator_auto_tuning,
+use commands::config::{get_config, set_config};
+use commands::gamepad::start_gamepad_stream;
+use commands::rov_actions::send_movement_command;
+use commands::rov_config::{
+  cancel_regulator_auto_tuning, cancel_thruster_test, request_rov_config, set_rov_config,
+  start_regulator_auto_tuning, start_thruster_test,
 };
-use commands::thrusters::{
-  cancel_test_thruster, get_thruster_config, test_thruster, thruster_allocation, thruster_pin_setup,
-};
+use config::ConfigSendChannelState;
 use log::log_init;
-use models::config::{Config, ConfigSendChannelState};
+use models::config::Config;
 use tauri::async_runtime::spawn;
 use tauri::{generate_handler, App, Builder, Manager};
 use toast::toast_init;
@@ -91,19 +87,16 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .invoke_handler(generate_handler![
+      start_gamepad_stream,
       get_config,
-      save_config,
-      execute_gamepad,
-      send_movement_input,
-      thruster_pin_setup,
-      thruster_allocation,
-      get_thruster_config,
-      test_thruster,
-      cancel_test_thruster,
-      regulator,
-      get_regulator_config,
-      movement_coefficients,
-      regulator_auto_tuning,
+      set_config,
+      request_rov_config,
+      set_rov_config,
+      start_thruster_test,
+      cancel_thruster_test,
+      start_regulator_auto_tuning,
+      cancel_regulator_auto_tuning,
+      send_movement_command,
     ])
     .setup(setup_handlers);
 

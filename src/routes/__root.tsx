@@ -6,13 +6,13 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/Toaster';
 
-import { loadConfig } from '@/stores/configStore';
+import { getConfig } from '@/stores/configStore';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
   component: RootComponent,
-  loader: loadConfig,
+  loader: getConfig,
 });
 
 function RootComponent() {

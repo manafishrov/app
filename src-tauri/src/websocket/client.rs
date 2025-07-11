@@ -1,6 +1,6 @@
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
-use crate::commands::config::get_config;
+use crate::config::get_config_from_file;
 use crate::models::config::Config;
 use crate::{log_info, log_warn};
 use futures_util::{SinkExt, StreamExt};
@@ -26,7 +26,7 @@ pub async fn start_websocket_client(
   mut config_rx: Receiver<Config>,
   mut message_rx: Receiver<WebsocketMessage>,
 ) {
-  let mut config = get_config().unwrap_or_default();
+  let mut config = get_config_from_file();
 
   loop {
     let url = format!("ws://{}:{}", config.ip_address, config.web_socket_port);

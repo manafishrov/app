@@ -49,8 +49,7 @@ function createGamepadFromEvent(event: GamepadData): Gamepad {
   } as unknown as Gamepad;
 }
 
-function handleGamepadEvent(event: { payload: GamepadData }) {
-  const { payload } = event;
+function handleGamepadEvent({ payload }: { payload: GamepadData }) {
   const gamepad = createGamepadFromEvent(payload);
 
   if (payload.event === 'connected') {
@@ -67,10 +66,10 @@ function handleGamepadEvent(event: { payload: GamepadData }) {
 }
 
 async function initializeGamepadListener() {
-  await invoke('execute_gamepad');
+  await invoke('request_gamepad');
   navigator.getGamepads = getGamepads;
 
-  await listen<GamepadData>('event', handleGamepadEvent);
+  await listen<GamepadData>('gamepad_retrieved', handleGamepadEvent);
 }
 
 void initializeGamepadListener();

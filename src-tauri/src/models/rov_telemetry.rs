@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Status {
+pub struct RovTelemetry {
   pub pitch: f32,
   pub roll: f32,
   pub desired_pitch: f32,

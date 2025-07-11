@@ -1,9 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc::Sender;
-
-pub struct ConfigSendChannelState {
-  pub tx: Sender<Config>,
-}
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

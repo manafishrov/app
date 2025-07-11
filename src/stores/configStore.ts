@@ -59,39 +59,43 @@ type Config = {
 
 const configStore = new Store<Config | null>(null);
 
-async function loadConfig() {
+async function getConfig() {
   try {
-    const config = await invoke<Config>('get_config');
-    configStore.setState(() => config);
+    const payload = await invoke<Config>('get_config');
+    configStore.setState(() => payload);
   } catch (error) {
-    logError('Failed to load config:', error);
-    toast.error('Failed to load config');
+    logError('Failed to get config:', error);
+    toast.error('Failed to get config');
   }
 }
 
-async function updateConfig(settings: Partial<Config>) {
+async function setConfig(newConfigOptions: Partial<Config>) {
   const currentConfig = configStore.state;
-  if (!currentConfig) return;
+  if (!currentConfig) {
+    logError('Current config is null');
+    toast.error('Current config is null');
+    return;
+  }
 
   const newConfig = {
     ...currentConfig,
-    ...settings,
+    ...newConfigOptions,
   };
 
   try {
-    await invoke('save_config', { config: newConfig });
+    await invoke('set_config', { payload: newConfig });
     configStore.setState(() => newConfig);
-    toast.success('Configuration updated successfully');
+    toast.success('Config set successfully');
   } catch (error) {
-    logError('Failed to update config:', error);
-    toast.error('Failed to update configuration');
+    logError('Failed to set config:', error);
+    toast.error('Failed to set config');
   }
 }
 
 export {
   configStore,
-  loadConfig,
-  updateConfig,
+  getConfig,
+  setConfig,
   type KeyboardBindings,
   type ControlSource,
   type GamepadBindings,

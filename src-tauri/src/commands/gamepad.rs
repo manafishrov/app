@@ -3,7 +3,7 @@ use gilrs::{Event, Gilrs};
 use tauri::{command, AppHandle, Emitter, Runtime, Window};
 
 #[command]
-pub async fn execute_gamepad<R: Runtime>(app: AppHandle<R>, _window: Window<R>) {
+pub async fn start_gamepad_stream<R: Runtime>(app: AppHandle<R>, _window: Window<R>) {
   let mut gilrs = Gilrs::new().unwrap();
 
   loop {
@@ -13,7 +13,7 @@ pub async fn execute_gamepad<R: Runtime>(app: AppHandle<R>, _window: Window<R>) 
     {
       let gamepad = gilrs.gamepad(id);
       let payload = gamepad_to_json(gamepad, event, time);
-      app.emit("event", payload).unwrap();
+      app.emit("gamepad_event", payload).unwrap();
     }
   }
 }

@@ -4,43 +4,16 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
-import {
-  type MovementCoefficients,
-  type Regulator,
-  type ThrusterAllocation,
-  type ThrusterPinSetup,
-  droneConfigStore,
-} from '@/stores/droneConfigStore';
+import { type DroneConfig, droneConfigStore } from '@/stores/droneConfigStore';
 
 async function initializeDroneConfigListener() {
   try {
-    await listen<ThrusterPinSetup>('thruster_pin_setup', (event) => {
-      droneConfigStore.setState((config) => ({
-        ...config,
-        thrusterPinSetup: event.payload,
-      }));
-    });
-    await listen<ThrusterAllocation>('thruster_allocation', (event) => {
-      droneConfigStore.setState((config) => ({
-        ...config,
-        thrusterAllocation: event.payload,
-      }));
-    });
-    await listen<Regulator>('regulator', (event) => {
-      droneConfigStore.setState((config) => ({
-        ...config,
-        regulator: event.payload,
-      }));
-    });
-    await listen<MovementCoefficients>('movement_coefficients', (event) => {
-      droneConfigStore.setState((config) => ({
-        ...config,
-        movementCoefficients: event.payload,
-      }));
+    await listen<DroneConfig>('drone_config_retrieved', ({ payload }) => {
+      droneConfigStore.setState(() => payload);
     });
   } catch (error) {
-    logError('Failed to listen to drone config messages:', error);
-    toast.error('Failed to initialize drone config listener');
+    logError('Failed to retrieve drone config:', error);
+    toast.error('Failed to retrieve drone config');
   }
 }
 

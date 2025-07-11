@@ -74,7 +74,7 @@ pub fn toast_message(
   if let Some(handle) = APP_HANDLE.get() {
     handle
       .emit(
-        "toast",
+        "show_toast",
         Toast {
           id,
           toast_type,
