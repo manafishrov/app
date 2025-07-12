@@ -12,9 +12,9 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 function getBatteryIcon(percentage: number) {
-  if (percentage > 75) return BatteryFullIcon;
-  if (percentage > 50) return BatteryMediumIcon;
-  if (percentage > 25) return BatteryLowIcon;
+  if (percentage > 70) return BatteryFullIcon;
+  if (percentage > 40) return BatteryMediumIcon;
+  if (percentage > 10) return BatteryLowIcon;
   return BatteryIcon;
 }
 

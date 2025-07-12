@@ -285,7 +285,6 @@ async def handle_client(websocket):
                         regulator_autotune_task()
                     )
                 elif msg_type == "cancelRegulatorAutoTuning":
-                    global on_going_regulator_autotune
                     if on_going_regulator_autotune:
                         on_going_regulator_autotune.cancel()
                     await log("info", "Auto-tuning cancelled")
