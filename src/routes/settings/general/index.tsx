@@ -50,8 +50,6 @@ function General() {
   );
   const firmwareVersion = useFirmwareVersionListener();
 
-  if (!rovConfig) return;
-
   return (
     <>
       <div className='mb-6 flex flex-col gap-2'>

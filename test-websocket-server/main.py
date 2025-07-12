@@ -16,7 +16,7 @@ on_going_thruster_tests = {}
 on_going_regulator_autotune = None
 
 rov_config = {
-    "fluidType": "Saltwater",
+    "fluidType": "saltwater",
     "thrusterPinSetup": {
         "identifiers": [5, 4, 3, 1, 2, 7, 6, 8],
         "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],

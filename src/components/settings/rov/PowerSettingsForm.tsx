@@ -62,50 +62,50 @@ function PowerSettingsForm() {
       <form.AppForm>
         <form.AppField name='userMaxPower'>
           {(field) => (
-            <div className='flex items-center gap-2'>
-              <field.NumberField
-                label='User Maximum Power'
-                placeholder='30'
-                description='The percentage of power given to the thrusters from user input.'
-              />
-              <span className='text-muted-foreground'>%</span>
-            </div>
+            <field.NumberField
+              label='User Maximum Power'
+              placeholder='30'
+              description='The percentage of power given to the thrusters from user input.'
+              fieldSuffix={
+                <span className='text-muted-foreground ml-1'>%</span>
+              }
+            />
           )}
         </form.AppField>
         <form.AppField name='regulatorMaxPower'>
           {(field) => (
-            <div className='flex items-center gap-2'>
-              <field.NumberField
-                label='Regulator Maximum Power'
-                placeholder='30'
-                description='The percentage of power given to the thrusters by the regulator to keep the ROV stabilized.'
-              />
-              <span className='text-muted-foreground'>%</span>
-            </div>
+            <field.NumberField
+              label='Regulator Maximum Power'
+              placeholder='30'
+              description='The percentage of power given to the thrusters by the regulator to keep the ROV stabilized.'
+              fieldSuffix={
+                <span className='text-muted-foreground ml-1'>%</span>
+              }
+            />
           )}
         </form.AppField>
         <form.AppField name='batteryMinVoltage'>
           {(field) => (
-            <div className='flex items-center gap-2'>
-              <field.NumberField
-                label='Battery Minimum Voltage'
-                placeholder='9.6'
-                description='The voltage of the battery when it is fully depleeted. This will show as 0% battery in the app. Please include a margin to avoid damaging the battery.'
-              />
-              <span className='text-muted-foreground'>V</span>
-            </div>
+            <field.NumberField
+              label='Battery Minimum Voltage'
+              placeholder='9.6'
+              description='The voltage of the battery when it is fully depleeted. This will show as 0% battery in the app. Please include a margin to avoid damaging the battery.'
+              fieldSuffix={
+                <span className='text-muted-foreground ml-1'>V</span>
+              }
+            />
           )}
         </form.AppField>
         <form.AppField name='batteryMaxVoltage'>
           {(field) => (
-            <div className='flex items-center gap-2'>
-              <field.NumberField
-                label='Battery Maximum Voltage'
-                placeholder='12.6'
-                description='The voltage of the battery when it is fully charged. This will show as 100% battery in the app.'
-              />
-              <span className='text-muted-foreground'>V</span>
-            </div>
+            <field.NumberField
+              label='Battery Maximum Voltage'
+              placeholder='12.6'
+              description='The voltage of the battery when it is fully charged. This will show as 100% battery in the app.'
+              fieldSuffix={
+                <span className='text-muted-foreground ml-1'>V</span>
+              }
+            />
           )}
         </form.AppField>
         <form.SubmitButton className='w-28'>Save</form.SubmitButton>

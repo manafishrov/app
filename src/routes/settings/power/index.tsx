@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
-import { PowerSettingsForm } from '@/components/settings/PowerSettingsForm';
+import { PowerSettingsForm } from '@/components/settings/rov/PowerSettingsForm';
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';

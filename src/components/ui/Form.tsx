@@ -30,6 +30,7 @@ type BaseFieldProps = {
   label: string;
   description?: string;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -37,6 +38,7 @@ function BaseField({
   className,
   label,
   labelSibling,
+  fieldSuffix,
   description,
   children,
 }: BaseFieldProps) {
@@ -73,17 +75,34 @@ function BaseField({
           {description}
         </p>
       )}
-      <Slot
-        id={`${id}-form-item`}
-        aria-describedby={
-          !(field.state.meta.errors.length > 0)
-            ? `${id}-form-item-description`
-            : `${id}-form-item-description ${id}-form-item-message`
-        }
-        aria-invalid={!!(field.state.meta.errors.length > 0)}
-      >
-        {children}
-      </Slot>
+      {fieldSuffix ? (
+        <div className='flex items-center'>
+          <Slot
+            id={`${id}-form-item`}
+            aria-describedby={
+              !(field.state.meta.errors.length > 0)
+                ? `${id}-form-item-description`
+                : `${id}-form-item-description ${id}-form-item-message`
+            }
+            aria-invalid={!!(field.state.meta.errors.length > 0)}
+          >
+            {children}
+          </Slot>
+          {fieldSuffix}
+        </div>
+      ) : (
+        <Slot
+          id={`${id}-form-item`}
+          aria-describedby={
+            !(field.state.meta.errors.length > 0)
+              ? `${id}-form-item-description`
+              : `${id}-form-item-description ${id}-form-item-message`
+          }
+          aria-invalid={!!(field.state.meta.errors.length > 0)}
+        >
+          {children}
+        </Slot>
+      )}
       <p
         id={`${id}-form-item-message`}
         className={cx(
@@ -104,6 +123,7 @@ type TextFieldProps = Omit<
 > & {
   label: string;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
 };
 
@@ -111,6 +131,7 @@ function TextField({
   className,
   label,
   labelSibling,
+  fieldSuffix,
   description,
   ...props
 }: TextFieldProps) {
@@ -120,6 +141,7 @@ function TextField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >
@@ -140,6 +162,7 @@ type NumberFieldProps = Omit<
 > & {
   label: string;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
   maxDecimals?: number;
 };
@@ -148,6 +171,7 @@ function NumberField({
   className,
   label,
   labelSibling,
+  fieldSuffix,
   description,
   maxDecimals,
   ...props
@@ -215,6 +239,7 @@ function NumberField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >
@@ -236,6 +261,7 @@ type TextAreaFieldProps = Omit<
 > & {
   label: string;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
 };
 
@@ -243,6 +269,7 @@ function TextAreaField({
   className,
   label,
   labelSibling,
+  fieldSuffix,
   description,
   ...props
 }: TextAreaFieldProps) {
@@ -252,6 +279,7 @@ function TextAreaField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >
@@ -277,6 +305,7 @@ type SelectFieldProps = {
   options: SelectOption[];
   required?: boolean;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
 };
 
@@ -287,6 +316,7 @@ function SelectField({
   options,
   required = true,
   labelSibling,
+  fieldSuffix,
   description,
 }: SelectFieldProps) {
   const field = useFieldContext<string>();
@@ -295,6 +325,7 @@ function SelectField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >
@@ -340,6 +371,7 @@ type RadioGroupFieldProps = {
   className?: string;
   options: RadioOption[];
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
 };
 
@@ -348,6 +380,7 @@ function RadioGroupField({
   className,
   options,
   labelSibling,
+  fieldSuffix,
   description,
 }: RadioGroupFieldProps) {
   const field = useFieldContext<string>();
@@ -356,6 +389,7 @@ function RadioGroupField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >
@@ -381,6 +415,7 @@ type CheckboxFieldProps = Omit<
 > & {
   label: string;
   labelSibling?: React.ReactNode;
+  fieldSuffix?: React.ReactNode;
   description?: string;
 };
 
@@ -388,6 +423,7 @@ function CheckboxField({
   className,
   label,
   labelSibling,
+  fieldSuffix,
   description,
   ...props
 }: CheckboxFieldProps) {
@@ -397,6 +433,7 @@ function CheckboxField({
     <BaseField
       label={label}
       labelSibling={labelSibling}
+      fieldSuffix={fieldSuffix}
       className={className}
       description={description}
     >

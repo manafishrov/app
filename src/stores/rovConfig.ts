@@ -79,7 +79,7 @@ async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
   rovConfigStore.setState(() => newRovConfig);
 
   try {
-    await invoke('set_rov_config', { rovConfig: newRovConfig });
+    await invoke('set_rov_config', { payload: newRovConfig });
     toast.success('ROV config set successfully');
   } catch (error) {
     rovConfigStore.setState(() => currentRovConfig);
