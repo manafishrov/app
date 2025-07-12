@@ -73,10 +73,10 @@ function ThrusterPinSetupTable() {
       return updated;
     });
     try {
-      await invoke('test_thruster', { payload: identifier });
+      await invoke('start_thruster_test', { payload: identifier });
     } catch (error) {
-      logError('Failed to test thruster:', error);
-      toast.error('Failed to test thruster');
+      logError('Failed to start thruster test:', error);
+      toast.error('Failed to start thruster test');
     } finally {
       setTimeout(() => {
         setTestDisabled((prev: boolean[]): boolean[] => {
@@ -166,7 +166,7 @@ function ThrusterPinSetupTable() {
               <TableCell className='text-center'>GP{pin}</TableCell>
               <TableCell>
                 <IdentifierSelect
-                  value={thrusterPinSetup?.identifiers[index] ?? 0}
+                  value={thrusterPinSetup.identifiers[index] ?? 0}
                   onValueChange={(value) =>
                     handleIdentifierChange(index, value)
                   }
@@ -174,7 +174,7 @@ function ThrusterPinSetupTable() {
               </TableCell>
               <TableCell>
                 <SpinDirectionSelect
-                  value={thrusterPinSetup?.spinDirections[index] ?? 0}
+                  value={thrusterPinSetup.spinDirections[index] ?? 0}
                   onValueChange={(value) =>
                     handleSpinDirectionChange(index, value)
                   }
