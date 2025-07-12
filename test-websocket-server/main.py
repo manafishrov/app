@@ -13,6 +13,7 @@ roll_stabilization = False
 depth_stabilization = False
 
 on_going_thruster_tests = {}
+on_going_regulator_autotune = None
 
 rov_config = {
     "fluidType": "Saltwater",
@@ -232,8 +233,61 @@ async def handle_client(websocket):
                     if task:
                         task.cancel()
                 elif msg_type == "startRegulatorAutoTuning":
-                    await log("info", "Auto-tuning started")
+                    global on_going_regulator_autotune
+                    if on_going_regulator_autotune:
+                        on_going_regulator_autotune.cancel()
+
+                    async def regulator_autotune_task():
+                        try:
+                            await log("info", "Auto-tuning started")
+                            for i in range(1, 11):
+                                progress = i * 10
+                                await toast(
+                                    "autotune",
+                                    "loading",
+                                    f"Regulator auto-tuning {progress}%",
+                                    None,
+                                    {"command": "cancelRegulatorAutoTuning"},
+                                )
+                                if i < 10:
+                                    await asyncio.sleep(1)
+                            await toast(
+                                "autotune",
+                                "success",
+                                "Regulator auto-tuning finished",
+                                None,
+                                None,
+                            )
+                            suggestions = {
+                                "pitch": {"kp": 0.65, "ki": 0.18, "kd": 0.09},
+                                "roll": {"kp": 0.5, "ki": 0.15, "kd": 0.07},
+                                "depth": {"kp": 0.8, "ki": 0.22, "kd": 0.11},
+                            }
+                            regulator_msg = {
+                                "type": "regulatorSuggestions",
+                                "payload": suggestions,
+                            }
+                            if clients:
+                                await asyncio.gather(
+                                    *[
+                                        client.send(json.dumps(regulator_msg))
+                                        for client in clients
+                                    ],
+                                    return_exceptions=True,
+                                )
+                        except asyncio.CancelledError:
+                            pass
+                        finally:
+                            global on_going_regulator_autotune
+                            on_going_regulator_autotune = None
+
+                    on_going_regulator_autotune = asyncio.create_task(
+                        regulator_autotune_task()
+                    )
                 elif msg_type == "cancelRegulatorAutoTuning":
+                    global on_going_regulator_autotune
+                    if on_going_regulator_autotune:
+                        on_going_regulator_autotune.cancel()
                     await log("info", "Auto-tuning cancelled")
                 elif msg_type == "runAction1":
                     await log("info", "Run Action 1 triggered")
