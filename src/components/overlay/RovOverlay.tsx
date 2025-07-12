@@ -3,6 +3,7 @@ import { ConnectionStatusIndicator } from '@/components/overlay/ConnectionStatus
 import { DepthIndicator } from '@/components/overlay/DepthIndicator';
 import { StabilizationIndicator } from '@/components/overlay/StabilizationIndicator';
 import { TemperatureIndicator } from '@/components/overlay/TemperatureIndicator';
+import { BatteryIndicator } from '@/components/overlay/BatteryIndicator';
 
 function RovOverlay() {
   return (
@@ -19,6 +20,7 @@ function RovOverlay() {
       <div className='absolute right-2 bottom-2 flex flex-row gap-2'>
         <DepthIndicator />
         <TemperatureIndicator />
+        <BatteryIndicator />
       </div>
     </>
   );
