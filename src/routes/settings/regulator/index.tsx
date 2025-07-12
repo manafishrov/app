@@ -7,9 +7,11 @@ import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
+import { requestRovConfig } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/regulator/')({
   component: Regulator,
+  loader: requestRovConfig,
 });
 
 function Regulator() {

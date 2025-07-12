@@ -64,3 +64,5 @@ pub struct RovConfig {
 }
 
 pub type ThrusterTest = u8;
+
+pub type FirmwareVersion = String;
