@@ -4,11 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
 
-import {
-  type GamepadBindings,
-  configStore,
-  updateConfig,
-} from '@/stores/configStore';
+import { type GamepadBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   moveHorizontal: 'leftStick',
@@ -26,10 +22,7 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
 };
 
 function GamepadSettings() {
-  const config = useStore(configStore);
-  const [localBindings, setLocalBindings] = useState<GamepadBindings | null>(
-    null,
-  );
+  const gamepad = useStore(configStore, (state) => state?.gamepad);
   const [isControllerConnected, setIsControllerConnected] = useState(() => {
     const gamepads = navigator.getGamepads();
     return Array.from(gamepads).some((gamepad) => gamepad !== null);
@@ -51,7 +44,7 @@ function GamepadSettings() {
     };
   }, []);
 
-  if (!config) return;
+  if (!gamepad) return;
 
   if (!isControllerConnected) {
     return (
@@ -67,19 +60,18 @@ function GamepadSettings() {
     );
   }
 
-  const currentBindings = localBindings ?? config.gamepad;
-
   async function handleBindingChange(
     key: keyof GamepadBindings,
     value: string,
   ) {
-    const newBindings = {
-      ...currentBindings,
+    if (!gamepad) return;
+
+    const newGamepad = {
+      ...gamepad,
       [key]: value,
     };
 
-    setLocalBindings(newBindings);
-    await updateConfig({ gamepad: newBindings });
+    await setConfig({ gamepad: newGamepad });
   }
 
   return (
@@ -89,7 +81,7 @@ function GamepadSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
           <GamepadBindInput
             label='Move Horizontal'
-            bind={currentBindings.moveHorizontal}
+            bind={gamepad.moveHorizontal}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveHorizontal}
             onBindChange={(newBind) =>
               handleBindingChange('moveHorizontal', newBind)
@@ -98,13 +90,13 @@ function GamepadSettings() {
           />
           <GamepadBindInput
             label='Move Up'
-            bind={currentBindings.moveUp}
+            bind={gamepad.moveUp}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveUp}
             onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
           />
           <GamepadBindInput
             label='Move Down'
-            bind={currentBindings.moveDown}
+            bind={gamepad.moveDown}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveDown}
             onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
           />
@@ -115,7 +107,7 @@ function GamepadSettings() {
           </h3>
           <GamepadBindInput
             label='Stabilize Pitch'
-            bind={currentBindings.stabilizePitch}
+            bind={gamepad.stabilizePitch}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizePitch}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizePitch', newBind)
@@ -123,7 +115,7 @@ function GamepadSettings() {
           />
           <GamepadBindInput
             label='Stabilize Roll'
-            bind={currentBindings.stabilizeRoll}
+            bind={gamepad.stabilizeRoll}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeRoll}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizeRoll', newBind)
@@ -131,7 +123,7 @@ function GamepadSettings() {
           />
           <GamepadBindInput
             label='Stabilize Depth'
-            bind={currentBindings.stabilizeDepth}
+            bind={gamepad.stabilizeDepth}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeDepth}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizeDepth', newBind)
@@ -144,7 +136,7 @@ function GamepadSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Pitch & Yaw</h3>
           <GamepadBindInput
             label='Pitch/Yaw'
-            bind={currentBindings.pitchYaw}
+            bind={gamepad.pitchYaw}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchYaw}
             onBindChange={(newBind) => handleBindingChange('pitchYaw', newBind)}
             isJoystick
@@ -154,13 +146,13 @@ function GamepadSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
           <GamepadBindInput
             label='Roll Left'
-            bind={currentBindings.rollLeft}
+            bind={gamepad.rollLeft}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
             onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
           />
           <GamepadBindInput
             label='Roll Right'
-            bind={currentBindings.rollRight}
+            bind={gamepad.rollRight}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
             onBindChange={(newBind) =>
               handleBindingChange('rollRight', newBind)
@@ -171,19 +163,19 @@ function GamepadSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
           <GamepadBindInput
             label='Action 1'
-            bind={currentBindings.action1}
+            bind={gamepad.action1}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1}
             onBindChange={(newBind) => handleBindingChange('action1', newBind)}
           />
           <GamepadBindInput
             label='Action 2'
-            bind={currentBindings.action2}
+            bind={gamepad.action2}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2}
             onBindChange={(newBind) => handleBindingChange('action2', newBind)}
           />
           <GamepadBindInput
             label='Record'
-            bind={currentBindings.record}
+            bind={gamepad.record}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.record}
             onBindChange={(newBind) => handleBindingChange('record', newBind)}
           />

@@ -2,10 +2,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
+import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { SettingsButton } from '@/components/settings/SettingsButton';
-import { StatusOverlay } from '@/components/status/StatusOverlay';
 
-import { useMovementInput } from '@/hooks/useMovementInput';
+import { useSendMovementCommand } from '@/hooks/useSendMovementCommand';
 
 import { cx } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  useMovementInput();
+  useSendMovementCommand();
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
@@ -77,7 +77,7 @@ function Home() {
         onMouseMove={handleMouseMove}
       >
         <VideoStream />
-        <StatusOverlay />
+        <RovOverlay />
         <SettingsButton
           className={cx(
             'absolute top-2 right-2 z-10 transition-opacity',

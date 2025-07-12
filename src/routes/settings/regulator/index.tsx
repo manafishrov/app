@@ -1,24 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
-import { MovementCoefficientsForm } from '@/components/settings/drone/MovementCoefficientsForm';
-import { PidForm } from '@/components/settings/drone/PidForm';
+import { MovementCoefficientsForm } from '@/components/settings/rov/MovementCoefficientsForm';
+import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@/components/ui/Spinner';
 
-import {
-  droneConfigStore,
-  requestRegulatorConfig,
-} from '@/stores/droneConfigStore';
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovConfigStore } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/regulator/')({
   component: Regulator,
-  loader: requestRegulatorConfig,
 });
 
 function Regulator() {
-  const { isConnected } = useStore(webSocketConnectionStore);
-  const { regulator, movementCoefficients } = useStore(droneConfigStore);
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
+  const rovConfig = useStore(rovConfigStore);
   return (
     <>
       <div className='mb-6 flex flex-col gap-2'>
@@ -27,7 +26,7 @@ function Regulator() {
           Adjust the regulator settings for the ROV.
         </p>
       </div>
-      {!isConnected || !regulator || !movementCoefficients ? (
+      {!isConnected || !rovConfig ? (
         <div className='flex h-96 w-full items-center justify-center'>
           <Spinner size='lg' />
         </div>

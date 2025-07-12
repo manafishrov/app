@@ -2,13 +2,10 @@ import { useStore } from '@tanstack/react-store';
 import { useEffect } from 'react';
 import { z } from 'zod';
 
-import { RegulatorFieldButtons } from '@/components/settings/drone/RegulatorFieldButtons';
+import { RegulatorFieldButtons } from '@/components/settings/rov/RegulatorFieldButtons';
 import { useAppForm } from '@/components/ui/Form';
 
-import {
-  droneConfigStore,
-  movementCoefficientsUpdate,
-} from '@/stores/droneConfigStore';
+import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
 
 const formSchema = z.object({
   horizontal: z
@@ -32,7 +29,10 @@ const formSchema = z.object({
 });
 
 function MovementCoefficientsForm() {
-  const { movementCoefficients } = useStore(droneConfigStore);
+  const movementCoefficients = useStore(
+    rovConfigStore,
+    (state) => state?.movementCoefficients,
+  );
 
   const form = useAppForm({
     validators: {
@@ -46,7 +46,7 @@ function MovementCoefficientsForm() {
       yaw: movementCoefficients?.yaw ?? 0,
       roll: movementCoefficients?.roll ?? 0,
     },
-    onSubmit: ({ value }) => movementCoefficientsUpdate(value),
+    onSubmit: ({ value }) => setRovConfig({ movementCoefficients: value }),
   });
 
   useEffect(() => {

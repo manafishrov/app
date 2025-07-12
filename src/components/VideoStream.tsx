@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { logInfo } from '@/lib/log';
 
-import { configStore } from '@/stores/configStore';
+import { configStore } from '@/stores/config';
 
 const RETRY_DELAY = 3000;
 
@@ -13,7 +13,15 @@ function VideoStream() {
   const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const config = useStore(configStore);
+  const config = useStore(configStore, (state) =>
+    state
+      ? {
+          ipAddress: state.ipAddress,
+          webrtcSignalingApiPort: state.webrtcSignalingApiPort,
+          webrtcSignalingApiPath: state.webrtcSignalingApiPath,
+        }
+      : null,
+  );
 
   async function setupWebRTCConnection() {
     try {
@@ -127,9 +135,9 @@ function VideoStream() {
         <div className='absolute inset-0 flex items-center justify-center'>
           <div className='text-center'>
             {isLoading ? (
-              <p>Connecting to Manafish drone camera...</p>
+              <p>Connecting to Manafish ROV camera...</p>
             ) : (
-              <p>Unable to connect to drone camera. Retrying...</p>
+              <p>Unable to connect to ROV camera. Retrying...</p>
             )}
           </div>
         </div>

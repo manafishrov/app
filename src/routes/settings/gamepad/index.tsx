@@ -12,7 +12,7 @@ function Gamepad() {
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>Gamepad</h1>
         <p className='text-muted-foreground'>
-          Configure your gamepad bindings for controlling the drone.
+          Configure your gamepad bindings for controlling the ROV.
         </p>
       </div>
       <GamepadSettings />

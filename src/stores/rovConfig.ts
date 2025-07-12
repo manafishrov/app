@@ -43,7 +43,7 @@ type Power = {
   batteryMaxVoltage: number;
 };
 
-type DroneConfig = {
+type RovConfig = {
   fluidType: 'saltwater' | 'freshwater';
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;
@@ -52,46 +52,49 @@ type DroneConfig = {
   power: Power;
 };
 
-const droneConfigStore = new Store<DroneConfig | null>(null);
+const rovConfigStore = new Store<RovConfig | null>(null);
 
-async function requestDroneConfig() {
+async function requestRovConfig() {
   try {
-    await invoke('request_drone_config');
+    await invoke('request_rov_config');
   } catch (error) {
-    logError('Failed to request drone config:', error);
-    toast.error('Failed to request drone config');
+    logError('Failed to request ROV config:', error);
+    toast.error('Failed to request ROV config');
   }
 }
 
-async function setDroneConfig(newConfigOptions: Partial<DroneConfig>) {
-  const currentDroneConfig = droneConfigStore.state;
-  if (!currentDroneConfig) {
-    logError('Current drone config is null');
-    toast.error('Current drone config is null');
+async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
+  const currentRovConfig = rovConfigStore.state;
+  if (!currentRovConfig) {
+    logError('Current ROV config is null');
+    toast.error('Current ROV config is null');
     return;
   }
 
-  const newDroneConfig = {
-    ...currentDroneConfig,
+  const newRovConfig = {
+    ...currentRovConfig,
     ...newConfigOptions,
   };
+
+  rovConfigStore.setState(() => newRovConfig);
+
   try {
-    await invoke('set_drone_config', { droneConfig: newDroneConfig });
-    droneConfigStore.setState(() => newDroneConfig);
-    toast.success('Drone config set successfully');
+    await invoke('set_rov_config', { rovConfig: newRovConfig });
+    toast.success('ROV config set successfully');
   } catch (error) {
-    logError('Failed to set drone config:', error);
-    toast.error('Failed to set drone config');
+    rovConfigStore.setState(() => currentRovConfig);
+    logError('Failed to set ROV config:', error);
+    toast.error('Failed to set ROV config. Changes reverted.');
   }
 }
 
 export {
-  droneConfigStore,
-  requestDroneConfig,
-  setDroneConfig,
+  rovConfigStore,
+  requestRovConfig,
+  setRovConfig,
   type Regulator,
   type MovementCoefficients,
-  type DroneConfig,
+  type RovConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,
   type Row,

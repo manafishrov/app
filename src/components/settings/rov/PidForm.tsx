@@ -2,12 +2,13 @@ import { useStore } from '@tanstack/react-store';
 import { useEffect } from 'react';
 import { z } from 'zod';
 
-import { RegulatorFieldButtons } from '@/components/settings/drone/RegulatorFieldButtons';
+import { RegulatorFieldButtons } from '@/components/settings/rov/RegulatorFieldButtons';
 import { Button } from '@/components/ui/Button';
 import { useAppForm } from '@/components/ui/Form';
 
-import { droneConfigStore, regulatorUpdate } from '@/stores/droneConfigStore';
-import { settingsStateStore } from '@/stores/settingsStateStore';
+import { useRegulatorSuggestionsListener } from '@/hooks/useRegulatorSuggestionsListener';
+
+import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
 
 const pidSchema = z.object({
   kp: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
@@ -16,20 +17,25 @@ const pidSchema = z.object({
 });
 
 const formSchema = z.object({
+  turnSpeed: z
+    .number()
+    .min(0, 'Must be at least 0')
+    .max(360, 'Must be at most 360'),
   pitch: pidSchema,
   roll: pidSchema,
   depth: pidSchema,
 });
 
 function PidForm() {
-  const { regulator } = useStore(droneConfigStore);
-  const { regulatorSuggestions } = useStore(settingsStateStore);
+  const regulator = useStore(rovConfigStore, (state) => state?.regulator);
+  const regulatorSuggestions = useRegulatorSuggestionsListener();
 
   const form = useAppForm({
     validators: {
       onSubmit: formSchema,
     },
     defaultValues: {
+      turnSpeed: regulator?.turnSpeed ?? 0,
       pitch: {
         kp: regulator?.pitch.kp ?? 0,
         ki: regulator?.pitch.ki ?? 0,
@@ -46,12 +52,13 @@ function PidForm() {
         kd: regulator?.depth.kd ?? 0,
       },
     },
-    onSubmit: ({ value }) => regulatorUpdate(value),
+    onSubmit: ({ value }) => setRovConfig({ regulator: value }),
   });
 
   useEffect(() => {
     if (regulator) {
       form.reset({
+        turnSpeed: regulator.turnSpeed,
         pitch: {
           kp: regulator.pitch.kp,
           ki: regulator.pitch.ki,
@@ -93,6 +100,18 @@ function PidForm() {
         className='relative space-y-4'
       >
         <form.AppForm>
+          <form.AppField name='turnSpeed'>
+            {(field) => (
+              <div className='flex items-center gap-4'>
+                <field.NumberField label='Turn Speed' />
+                <RegulatorFieldButtons
+                  defaultValue={40}
+                  onChange={field.handleChange}
+                  label='Turn Speed'
+                />
+              </div>
+            )}
+          </form.AppField>
           <div>
             <h4 className='text-lg font-medium'>Pitch</h4>
             <p className='text-muted-foreground mb-2 text-xs'>

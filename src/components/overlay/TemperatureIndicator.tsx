@@ -1,12 +1,15 @@
 import { useStore } from '@tanstack/react-store';
 import { ThermometerIcon } from 'lucide-react';
 
-import { statusStore } from '@/stores/statusStore';
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function TemperatureIndicator() {
-  const { temperature } = useStore(statusStore);
-  const { isConnected } = useStore(webSocketConnectionStore);
+  const temperature = useStore(rovTelemetryStore, (state) => state.temperature);
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
 
   if (!isConnected) return;
 

@@ -5,8 +5,14 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/Toaster';
+import { useGamepadListener } from '@/hooks/useGamepadListener';
+import { useToastListener } from '@/hooks/useToastListener';
+import { useLogListener } from '@/hooks/useLogListener';
+import { useConnectionStatusListener } from '@/hooks/useConnectionStatusListener';
+import { useRovTelemetryListener } from '@/hooks/useRovTelemetryListener';
+import { useRovStatusUpdateListener } from '@/hooks/useRovStatusUpdateListener';
 
-import { getConfig } from '@/stores/configStore';
+import { getConfig } from '@/stores/config';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -16,6 +22,12 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
+  useGamepadListener();
+  useLogListener();
+  useToastListener();
+  useConnectionStatusListener();
+  useRovTelemetryListener();
+  useRovStatusUpdateListener();
   return (
     <>
       <ThemeProvider>

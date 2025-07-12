@@ -1,5 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { useEffect } from 'react';
+
+import { toast } from '@/components/ui/Toaster';
+
+import { logError } from '@/lib/log';
 
 type GamepadEventType =
   | 'connected'
@@ -65,11 +70,33 @@ function handleGamepadEvent({ payload }: { payload: GamepadData }) {
   }
 }
 
-async function initializeGamepadListener() {
-  await invoke('request_gamepad');
-  navigator.getGamepads = getGamepads;
+function useGamepadListener() {
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    navigator.getGamepads = getGamepads;
 
-  await listen<GamepadData>('gamepad_retrieved', handleGamepadEvent);
+    void (async () => {
+      try {
+        await invoke('start_gamepad_stream');
+      } catch (error) {
+        logError('Failed to start gamepad stream:', error);
+        toast.error('Failed to start gamepad stream');
+      }
+      try {
+        unlisten = await listen<GamepadData>(
+          'gamepad_event',
+          handleGamepadEvent,
+        );
+      } catch (error) {
+        logError('Failed to listen for gamepad events:', error);
+        toast.error('Failed to listen for gamepad events');
+      }
+    })();
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
 }
 
-void initializeGamepadListener();
+export { useGamepadListener };

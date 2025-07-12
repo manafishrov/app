@@ -22,12 +22,15 @@ import { logWarn } from '@/lib/log';
 
 import {
   type ThrusterAllocation,
-  droneConfigStore,
-  thrusterAllocationUpdate,
-} from '@/stores/droneConfigStore';
+  rovConfigStore,
+  setRovConfig,
+} from '@/stores/rovConfig';
 
 function ThrusterAllocationTable() {
-  const { thrusterAllocation } = useStore(droneConfigStore);
+  const thrusterAllocation = useStore(
+    rovConfigStore,
+    (state) => state?.thrusterAllocation,
+  );
   const [displayAllocation, setDisplayAllocation] = useState<string[][] | null>(
     null,
   );
@@ -37,10 +40,6 @@ function ThrusterAllocationTable() {
       row.map((cell) => String(cell)),
     );
     setDisplayAllocation(initialDisplay);
-  }
-
-  if (!thrusterAllocation || !displayAllocation) {
-    return;
   }
 
   const rowLabels = [
@@ -70,9 +69,7 @@ function ThrusterAllocationTable() {
     colIndex: number,
     value: string,
   ) {
-    if (!displayAllocation || !thrusterAllocation) {
-      return;
-    }
+    if (!displayAllocation || !thrusterAllocation) return;
 
     let displayValue = value;
     let numericValue: number;
@@ -122,12 +119,9 @@ function ThrusterAllocationTable() {
       }
       return row;
     }) as ThrusterAllocation;
-
-    droneConfigStore.setState((config) => ({
-      ...config,
-      thrusterAllocation: newAllocation,
-    }));
   }
+
+  if (!thrusterAllocation || !displayAllocation) return;
 
   return (
     <>
@@ -229,7 +223,7 @@ function ThrusterAllocationTable() {
             );
             return;
           }
-          await thrusterAllocationUpdate(thrusterAllocation);
+          await setRovConfig({ thrusterAllocation });
         }}
       >
         Update thrusters

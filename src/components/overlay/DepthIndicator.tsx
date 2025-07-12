@@ -1,12 +1,15 @@
 import { useStore } from '@tanstack/react-store';
 import { WavesIcon } from 'lucide-react';
 
-import { statusStore } from '@/stores/statusStore';
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function DepthIndicator() {
-  const { depth } = useStore(statusStore);
-  const { isConnected } = useStore(webSocketConnectionStore);
+  const depth = useStore(rovTelemetryStore, (state) => state.depth);
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
 
   if (!isConnected) return;
 

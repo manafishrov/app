@@ -1,24 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
-import { ThrusterAllocationTable } from '@/components/settings/drone/ThrusterAllocationTable';
-import { ThrusterPinSetupTable } from '@/components/settings/drone/ThrusterPinSetupTable';
+import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
+import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
 import { Spinner } from '@/components/ui/Spinner';
 
-import {
-  droneConfigStore,
-  requestThrusterConfig,
-} from '@/stores/droneConfigStore';
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovConfigStore } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/calibration/')({
   component: Calibration,
-  loader: requestThrusterConfig,
 });
 
 function Calibration() {
-  const { isConnected } = useStore(webSocketConnectionStore);
-  const { thrusterPinSetup, thrusterAllocation } = useStore(droneConfigStore);
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
+  const rovConfig = useStore(rovConfigStore);
   return (
     <>
       <div className='mb-6 flex flex-col gap-2'>
@@ -27,7 +26,7 @@ function Calibration() {
           Calibrate the thrusters of the ROV.
         </p>
       </div>
-      {!isConnected || !thrusterPinSetup || !thrusterAllocation ? (
+      {!isConnected || !rovConfig ? (
         <div className='flex h-96 w-full items-center justify-center'>
           <Spinner size='lg' />
         </div>

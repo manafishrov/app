@@ -82,13 +82,15 @@ async function setConfig(newConfigOptions: Partial<Config>) {
     ...newConfigOptions,
   };
 
+  configStore.setState(() => newConfig);
+
   try {
     await invoke('set_config', { payload: newConfig });
-    configStore.setState(() => newConfig);
     toast.success('Config set successfully');
   } catch (error) {
+    configStore.setState(() => currentConfig);
     logError('Failed to set config:', error);
-    toast.error('Failed to set config');
+    toast.error('Failed to set config. Changes reverted.');
   }
 }
 

@@ -1,15 +1,17 @@
 import { Store } from '@tanstack/react-store';
 
-type States = {
+type RovStatus = {
   pitchStabilization: boolean;
   rollStabilization: boolean;
   depthStabilization: boolean;
+  batteryPercentage: number;
 };
 
-const stateStore = new Store<States>({
+const rovStatusStore = new Store<RovStatus>({
   pitchStabilization: false,
   rollStabilization: false,
   depthStabilization: false,
+  batteryPercentage: 0,
 });
 
-export { stateStore, type States };
+export { rovStatusStore, type RovStatus };

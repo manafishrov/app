@@ -6,27 +6,27 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
-import { type ControlSource, configStore } from '@/stores/configStore';
+import { type ControlSource, configStore } from '@/stores/config';
 import {
-  type MovementInputArray,
-  movementInputStore,
-} from '@/stores/movementInputStore';
+  type MovementCommand,
+  movementCommandStore,
+} from '@/stores/movementCommandStore';
 
-const EMPTY_INPUT: MovementInputArray = [0, 0, 0, 0, 0, 0];
+const EMPTY_INPUT: MovementCommand = [0, 0, 0, 0, 0, 0];
 
 function clamp(value: number) {
   return Math.max(-1, Math.min(1, value));
 }
 
-function useMovementInput() {
+function useSendMovementCommand() {
   const config = useStore(configStore);
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
 
-  const getKeyboardInput = useCallback((): MovementInputArray => {
+  const getKeyboardInputCommand = useCallback((): MovementCommand => {
     if (!config) return [...EMPTY_INPUT];
 
-    const input: MovementInputArray = [...EMPTY_INPUT];
+    const input: MovementCommand = [...EMPTY_INPUT];
     const keys = pressedKeys.current;
 
     input[0] =
@@ -51,12 +51,12 @@ function useMovementInput() {
     return input;
   }, [config]);
 
-  const processGamepadInput = useCallback((): MovementInputArray => {
+  const getGamepadInputCommand = useCallback((): MovementCommand => {
     if (!config) return [...EMPTY_INPUT];
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return [...EMPTY_INPUT];
 
-    const input: MovementInputArray = [...EMPTY_INPUT];
+    const input: MovementCommand = [...EMPTY_INPUT];
 
     const handleMoveHorizontal = (source: ControlSource) => {
       switch (source) {
@@ -131,30 +131,30 @@ function useMovementInput() {
       (gamepad.buttons[rollRightButton]?.value ?? 0) +
       -(gamepad.buttons[rollLeftButton]?.value ?? 0);
 
-    return input.map(clamp) as MovementInputArray;
+    return input.map(clamp) as MovementCommand;
   }, [config]);
 
-  function mergeInputs(
-    keyboard: MovementInputArray,
-    gamepad: MovementInputArray,
+  function mergeInputCommands(
+    keyboard: MovementCommand,
+    gamepad: MovementCommand,
   ) {
     return keyboard.map((k, i) =>
       clamp(k + (gamepad[i] ?? 0)),
-    ) as MovementInputArray;
+    ) as MovementCommand;
   }
 
-  const lastMovementInputErrorRef = useRef(0);
+  const lastMovementCommandErrorRef = useRef(0);
 
-  async function sendInput(input: MovementInputArray) {
-    movementInputStore.setState(() => input);
+  async function sendMovementCommand(command: MovementCommand) {
+    movementCommandStore.setState(() => command);
     try {
-      await invoke('send_movement_input', { payload: input });
+      await invoke('send_movement_command', { payload: command });
     } catch (error) {
       const now = Date.now();
-      if (now - lastMovementInputErrorRef.current > 10000) {
-        lastMovementInputErrorRef.current = now;
-        logError('Failed to send movement input:', error);
-        toast.error('Failed to send movement input');
+      if (now - lastMovementCommandErrorRef.current > 10000) {
+        lastMovementCommandErrorRef.current = now;
+        logError('Failed to send movement command:', error);
+        toast.error('Failed to send movement command');
       }
     }
   }
@@ -187,11 +187,14 @@ function useMovementInput() {
 
   useEffect(() => {
     function sendLoop() {
-      const keyboardInput = getKeyboardInput();
-      const gamepadInput = processGamepadInput();
-      const mergedInput = mergeInputs(keyboardInput, gamepadInput);
+      const keyboardInputCommand = getKeyboardInputCommand();
+      const gamepadInputCommand = getGamepadInputCommand();
+      const mergedInputCommand = mergeInputCommands(
+        keyboardInputCommand,
+        gamepadInputCommand,
+      );
 
-      void sendInput(mergedInput);
+      void sendMovementCommand(mergedInputCommand);
       animationFrameRef.current = requestAnimationFrame(sendLoop);
     }
 
@@ -201,10 +204,10 @@ function useMovementInput() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      void sendInput(EMPTY_INPUT);
-      movementInputStore.setState(() => EMPTY_INPUT);
+      void sendMovementCommand(EMPTY_INPUT);
+      movementCommandStore.setState(() => EMPTY_INPUT);
     };
-  }, [config, getKeyboardInput, processGamepadInput]);
+  }, [config, getKeyboardInputCommand, getGamepadInputCommand]);
 }
 
-export { useMovementInput };
+export { useSendMovementCommand };

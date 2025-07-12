@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
 
-import { configStore, updateConfig } from '@/stores/configStore';
+import { configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
   ipAddress: z.string().ip('Invalid IP address'),
@@ -24,7 +24,16 @@ const formSchema = z.object({
 });
 
 function ConnectionSettingsForm() {
-  const config = useStore(configStore);
+  const config = useStore(configStore, (state) =>
+    state
+      ? {
+          ipAddress: state.ipAddress,
+          webrtcSignalingApiPort: state.webrtcSignalingApiPort,
+          webrtcSignalingApiPath: state.webrtcSignalingApiPath,
+          webSocketPort: state.webSocketPort,
+        }
+      : null,
+  );
 
   const form = useAppForm({
     validators: {
@@ -36,7 +45,7 @@ function ConnectionSettingsForm() {
       webrtcSignalingApiPath: config?.webrtcSignalingApiPath ?? '',
       webSocketPort: config?.webSocketPort ?? 0,
     },
-    onSubmit: ({ value }) => updateConfig(value),
+    onSubmit: ({ value }) => setConfig(value),
   });
 
   useEffect(() => {

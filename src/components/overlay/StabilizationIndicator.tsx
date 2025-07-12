@@ -1,12 +1,19 @@
 import { useStore } from '@tanstack/react-store';
 
-import { stateStore } from '@/stores/stateStore';
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovStatusStore } from '@/stores/rovStatus';
 
 function StabilizationIndicator() {
   const { pitchStabilization, rollStabilization, depthStabilization } =
-    useStore(stateStore);
-  const { isConnected } = useStore(webSocketConnectionStore);
+    useStore(rovStatusStore, (state) => ({
+      pitchStabilization: state.pitchStabilization,
+      rollStabilization: state.rollStabilization,
+      depthStabilization: state.depthStabilization,
+    }));
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
 
   if (!isConnected) return;
 

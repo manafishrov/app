@@ -18,8 +18,8 @@ import { logError, logWarn } from '@/lib/log';
 import {
   type AttitudeIndicator,
   configStore,
-  updateConfig,
-} from '@/stores/configStore';
+  setConfig,
+} from '@/stores/config';
 
 export const Route = createFileRoute('/settings/')({
   component: General,
@@ -53,7 +53,7 @@ function General() {
         defaultPath: config?.videoDirectory,
       });
       if (typeof result === 'string') {
-        await updateConfig({ videoDirectory: result });
+        await setConfig({ videoDirectory: result });
       }
     } catch (error) {
       logError('Error opening file picker dialog:', error);
@@ -91,7 +91,7 @@ function General() {
               id='autoUpdate'
               checked={config.autoUpdate ?? false}
               onCheckedChange={() =>
-                updateConfig({ autoUpdate: !config.autoUpdate })
+                setConfig({ autoUpdate: !config.autoUpdate })
               }
             />
             <Label htmlFor='autoUpdate'>Enable automatic app updates</Label>
@@ -153,7 +153,7 @@ function General() {
               <RadioGroup
                 value={config.attitudeIndicator}
                 onValueChange={(value) =>
-                  updateConfig({
+                  setConfig({
                     attitudeIndicator: value as AttitudeIndicator,
                   })
                 }

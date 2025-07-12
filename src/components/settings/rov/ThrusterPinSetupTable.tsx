@@ -3,8 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { FanIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import { IdentifierSelect } from '@/components/settings/drone/IdentifierSelect';
-import { SpinDirectionSelect } from '@/components/settings/drone/SpinDirectionSelect';
+import { IdentifierSelect } from '@/components/settings/rov/IdentifierSelect';
+import { SpinDirectionSelect } from '@/components/settings/rov/SpinDirectionSelect';
 import { Button } from '@/components/ui/Button';
 import {
   Table,
@@ -23,61 +23,47 @@ import {
 
 import { logError } from '@/lib/log';
 
-import { type Row, droneConfigStore } from '@/stores/droneConfigStore';
-import { statusStore } from '@/stores/statusStore';
+import { type Row, rovConfigStore, setRovConfig } from '@/stores/rovConfig';
+import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const THRUSTER_POLE_PAIRS = 6;
 
 function ThrusterPinSetupTable() {
-  const { thrusterPinSetup } = useStore(droneConfigStore);
-  const { thrusterErpms } = useStore(statusStore);
+  const thrusterPinSetup = useStore(
+    rovConfigStore,
+    (state) => state?.thrusterPinSetup,
+  );
+  const thrusterErpms = useStore(
+    rovTelemetryStore,
+    (state) => state?.thrusterErpms,
+  );
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
   const [testDisabled, setTestDisabled] = useState<boolean[]>(
     Array(pinNumbers.length).fill(false),
   );
 
   async function handleIdentifierChange(index: number, value: number) {
-    if (!thrusterPinSetup) {
-      return;
-    }
+    if (!thrusterPinSetup) return;
+
     const newIdentifiers = [...thrusterPinSetup.identifiers];
     newIdentifiers[index] = value;
     const newThrusterPinSetup = {
       ...thrusterPinSetup,
       identifiers: newIdentifiers as Row,
     };
-    droneConfigStore.setState((config) => ({
-      ...config,
-      thrusterPinSetup: newThrusterPinSetup,
-    }));
-    try {
-      await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
-    } catch (error) {
-      logError('Failed to set thruster pin setup:', error);
-      toast.error('Failed to set thruster pin setup');
-    }
+    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
   }
 
   async function handleSpinDirectionChange(index: number, value: number) {
-    if (!thrusterPinSetup) {
-      return;
-    }
+    if (!thrusterPinSetup) return;
+
     const newSpinDirections = [...thrusterPinSetup.spinDirections];
     newSpinDirections[index] = value;
     const newThrusterPinSetup = {
       ...thrusterPinSetup,
       spinDirections: newSpinDirections as Row,
     };
-    droneConfigStore.setState((config) => ({
-      ...config,
-      thrusterPinSetup: newThrusterPinSetup,
-    }));
-    try {
-      await invoke('thruster_pin_setup', { payload: newThrusterPinSetup });
-    } catch (error) {
-      logError('Failed to set thruster pin setup', error);
-      toast.error('Failed to set thruster pin setup');
-    }
+    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
   }
 
   async function testThruster(identifier: number, index: number) {
@@ -101,6 +87,8 @@ function ThrusterPinSetupTable() {
       }, 2000);
     }
   }
+
+    if (!thrusterPinSetup) return;
 
   return (
     <>

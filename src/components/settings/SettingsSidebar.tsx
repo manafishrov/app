@@ -27,11 +27,14 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/Sidebar';
 
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
 
 function SettingsSidebar() {
   const matches = useMatches();
-  const { isConnected } = useStore(webSocketConnectionStore);
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
@@ -105,7 +108,7 @@ function SettingsSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Drone</SidebarGroupLabel>
+          <SidebarGroupLabel>ROV</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>

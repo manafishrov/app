@@ -12,7 +12,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct WebSocketConnection {
+struct ConnectionStatus {
   is_connected: bool,
   delay: Option<u128>,
 }
@@ -42,8 +42,8 @@ pub async fn start_websocket_client(
         log_info!("WebSocket connect error: {}. Retrying...", e);
         app
           .emit(
-            "websocket_connection",
-            WebSocketConnection {
+            "rov_connection_status_updated",
+            ConnectionStatus {
               is_connected: false,
               delay: None,
             },
@@ -58,8 +58,8 @@ pub async fn start_websocket_client(
         log_info!("WebSocket connect timeout. Retrying...");
         app
           .emit(
-            "websocket_connection",
-            WebSocketConnection {
+            "rov_connection_status_updated",
+            ConnectionStatus {
               is_connected: false,
               delay: None,
             },
@@ -88,8 +88,8 @@ pub async fn start_websocket_client(
               config = new_config;
               app
                 .emit(
-                  "websocket_connection",
-                  WebSocketConnection {
+            "rov_connection_status_updated",
+                  ConnectionStatus {
                     is_connected: false,
                     delay: None,
                   },
@@ -110,7 +110,7 @@ pub async fn start_websocket_client(
 
               if let Err(e) = write.send(Message::Text(message_text.into())).await {
                   log_warn!("Websocket send error: {}. Reconnecting...", e);
-                  app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+                      app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                   break;
               }
           }
@@ -123,7 +123,7 @@ pub async fn start_websocket_client(
 
               if let Err(e) = write.send(Message::Ping(ping_data.into())).await {
                   log_warn!("Failed to send ping: {}. Reconnecting...", e);
-                  app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+                      app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                   break;
               }
           }
@@ -134,13 +134,13 @@ pub async fn start_websocket_client(
                           if let Some(response) = handle_message(&app, msg).await {
                               if let Err(e) = write.send(response).await {
                                   log_warn!("Websocket send error: {}. Reconnecting...", e);
-                                  app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+                      app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                                   break;
                               }
                           }
                       } else if msg.is_close() {
                           log_warn!("Websocket connection closed by peer. Reconnecting...");
-                          app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+                      app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                           break;
                       }
                       else if msg.is_pong() {
@@ -149,7 +149,7 @@ pub async fn start_websocket_client(
                                   let now_ms = SystemTime::now().duration_since(UNIX_EPOCH)
                                       .unwrap_or_default().as_millis();
                                   let rtt = now_ms.saturating_sub(sent_timestamp_ms);
-                                  app.emit("websocket_connection", WebSocketConnection {
+                                  app.emit("rov_connection_status_updated", ConnectionStatus {
                                       is_connected: true,
                                       delay: Some(rtt),
                                   }).unwrap();
@@ -159,7 +159,7 @@ pub async fn start_websocket_client(
                   }
                   Err(e) => {
                       log_warn!("Websocket read error: {}. Reconnecting...", e);
-                      app.emit("websocket_connection", WebSocketConnection { is_connected: false, delay: None }).unwrap();
+                      app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                       break;
                   }
               }

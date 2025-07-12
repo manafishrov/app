@@ -1,9 +1,9 @@
 import { useStore } from '@tanstack/react-store';
 
-import { webSocketConnectionStore } from '@/stores/webSocketConnectionStore';
+import { connectionStatusStore } from '@/stores/connectionStatus';
 
-function WebSocketConnectionIndicator() {
-  const { isConnected, delay } = useStore(webSocketConnectionStore);
+function ConnectionStatusIndicator() {
+  const { isConnected, delay } = useStore(connectionStatusStore);
 
   return (
     <div className='flex items-center space-x-2'>
@@ -21,4 +21,4 @@ function WebSocketConnectionIndicator() {
   );
 }
 
-export { WebSocketConnectionIndicator };
+export { ConnectionStatusIndicator };

@@ -4,11 +4,14 @@ import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 import { SidebarProvider } from '@/components/ui/Sidebar';
 
+import { useRovConfigListener } from '@/hooks/useRovConfigListener';
+
 export const Route = createFileRoute('/settings')({
   component: SidebarLayout,
 });
 
 function SidebarLayout() {
+  useRovConfigListener();
   return (
     <SidebarProvider
       collapseOnMobile

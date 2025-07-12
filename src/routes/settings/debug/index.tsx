@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Switch } from '@/components/ui/Switch';
 
-import { type LogMessage, clearLogMessages, getLogMessages } from '@/lib/log';
+import {
+  type LogRecord,
+  clearAllLogRecords,
+  getAllLogRecords,
+} from '@/lib/log';
 
-import { configStore, updateConfig } from '@/stores/configStore';
+import { configStore, setConfig } from '@/stores/config';
 
 export const Route = createFileRoute('/settings/debug/')({
   component: Debug,
@@ -19,40 +23,40 @@ const ANSI_RED = '\x1b[31m';
 const ANSI_ORANGE = '\x1b[33m';
 const ANSI_RESET = '\x1b[0m';
 
-function formatLogMessage(log: LogMessage) {
+function formatLogRecord(log: LogRecord) {
   const date = new Date(log.timestamp);
   const timestamp = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 
-  let formattedMessage = `[${log.origin.toUpperCase()}] [${log.level.toUpperCase()}] [${timestamp}]: ${log.message}`;
+  let formattedRecord = `[${log.origin.toUpperCase()}] [${log.level.toUpperCase()}] [${timestamp}]: ${log.message}`;
 
   switch (log.level.toUpperCase()) {
     case 'ERROR':
-      formattedMessage = `${ANSI_RED}${formattedMessage}${ANSI_RESET}`;
+      formattedRecord = `${ANSI_RED}${formattedRecord}${ANSI_RESET}`;
       break;
     case 'WARN':
-      formattedMessage = `${ANSI_ORANGE}${formattedMessage}${ANSI_RESET}`;
+      formattedRecord = `${ANSI_ORANGE}${formattedRecord}${ANSI_RESET}`;
       break;
   }
 
-  return formattedMessage;
+  return formattedRecord;
 }
 
 function Debug() {
-  const config = useStore(configStore)
+  const config = useStore(configStore);
   const logRef = useRef<LazyLog>(null);
   const [text, setText] = useState('');
 
   function handleClear() {
-    void clearLogMessages();
+    void clearAllLogRecords();
     logRef.current?.clear();
     setText('');
   }
 
   useEffect(() => {
     async function loadInitialLog() {
-      const messages = await getLogMessages();
-      if (messages.length > 0) {
-        const formattedLogs = messages.map(formatLogMessage).join('\n');
+      const logRecords = await getAllLogRecords();
+      if (logRecords.length > 0) {
+        const formattedLogs = logRecords.map(formatLogRecord).join('\n');
         setText(formattedLogs);
       }
     }
@@ -60,19 +64,19 @@ function Debug() {
   }, []);
 
   useEffect(() => {
-    function handleNewMessage(event: Event) {
-      const customEvent = event as CustomEvent<LogMessage>;
-      const newMessage = customEvent.detail;
-      if (newMessage) {
-        const formattedMessage = formatLogMessage(newMessage);
-        logRef.current?.appendLines([formattedMessage]);
+    function handleNewLogRecord(event: Event) {
+      const customEvent = event as CustomEvent<LogRecord>;
+      const newRecord = customEvent.detail;
+      if (newRecord) {
+        const formattedReord = formatLogRecord(newRecord);
+        logRef.current?.appendLines([formattedReord]);
       }
     }
 
-    window.addEventListener('logmessage', handleNewMessage);
+    window.addEventListener('log:added', handleNewLogRecord);
 
     return () => {
-      window.removeEventListener('logmessage', handleNewMessage);
+      window.removeEventListener('log:added', handleNewLogRecord);
     };
   }, []);
 
@@ -94,7 +98,7 @@ function Debug() {
           id='info-logs'
           checked={config?.infoLogging ?? false}
           onCheckedChange={() =>
-            updateConfig({ infoLogging: !config?.infoLogging })
+            setConfig({ infoLogging: !config?.infoLogging })
           }
         />
         <Label htmlFor='info-logs'>Enable Info level Logging</Label>

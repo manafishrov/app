@@ -1,6 +1,7 @@
 use crate::models::gamepad::{GamepadData, GamepadEventType};
-use gilrs::{Axis, Button, EventType, Gamepad, MappingSource};
+use gilrs::{Axis, Button, Event, EventType, Gamepad, Gilrs, MappingSource};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::{AppHandle, Emitter, Runtime};
 
 pub const BTN_UNKNOWN: u16 = 0;
 pub const BTN_SOUTH: u16 = 1;
@@ -125,5 +126,20 @@ pub fn gamepad_to_json(gamepad: Gamepad, event: EventType, time: SystemTime) -> 
     axes,
     mapping,
     power_info,
+  }
+}
+
+pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
+  let mut gilrs = Gilrs::new().unwrap();
+
+  loop {
+    while let Some(Event {
+      id, event, time, ..
+    }) = gilrs.next_event()
+    {
+      let gamepad = gilrs.gamepad(id);
+      let payload = gamepad_to_json(gamepad, event, time);
+      app.emit("gamepad_event", payload).unwrap();
+    }
   }
 }

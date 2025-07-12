@@ -1,6 +1,6 @@
 import { Store } from '@tanstack/react-store';
 
-type Status = {
+type RovTelemetry = {
   pitch: number;
   roll: number;
   desiredPitch: number;
@@ -19,7 +19,7 @@ type Status = {
   ];
 };
 
-const statusStore = new Store<Status>({
+const rovTelemetryStore = new Store<RovTelemetry>({
   pitch: 0,
   roll: 0,
   desiredPitch: 0,
@@ -29,4 +29,4 @@ const statusStore = new Store<Status>({
   thrusterErpms: [0, 0, 0, 0, 0, 0, 0, 0],
 });
 
-export { statusStore, type Status };
+export { rovTelemetryStore, type RovTelemetry };

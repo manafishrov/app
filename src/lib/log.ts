@@ -6,40 +6,43 @@ import {
   openDB,
 } from 'idb';
 
-import { configStore } from '@/stores/configStore';
+import { configStore } from '@/stores/config';
 
 type LogLevel = 'info' | 'warn' | 'error';
-
 type LogOrigin = 'frontend' | 'backend' | 'firmware';
 
-type Log = {
+type LogEntry = {
+  origin: LogOrigin;
   level: LogLevel;
   message: string;
 };
 
-type LogMessage = {
+type LogRecord = {
   id: number;
+  origin: LogOrigin;
   level: LogLevel;
   message: string;
-  origin: LogOrigin;
   timestamp: Date;
 };
 
+type NewLogRecord = Omit<LogRecord, 'id'>;
+
 type LogDatabase = {
-  logMessages: {
+  logRecords: {
     key: number;
-    value: LogMessage;
+    value: LogRecord;
     indexes: { timestamp: Date };
   };
 } & DBSchema;
 
-const DB_NAME = 'manafish-db';
+const DB_NAME = 'ManafishLogsDB';
 const DB_VERSION = 1;
+const LOG_STORE_NAME = 'logRecords';
 
 const dbCallbacks: OpenDBCallbacks<LogDatabase> = {
   upgrade(db) {
-    if (!db.objectStoreNames.contains('logMessages')) {
-      const store = db.createObjectStore('logMessages', {
+    if (!db.objectStoreNames.contains(LOG_STORE_NAME)) {
+      const store = db.createObjectStore(LOG_STORE_NAME, {
         keyPath: 'id',
         autoIncrement: true,
       });
@@ -76,37 +79,31 @@ async function withErrorHandling<T>(
   }
 }
 
-async function addLogMessage(
-  message: string,
-  level: LogLevel,
-  origin: LogOrigin,
-) {
-  if (level === 'info' && !configStore.state?.infoLogging) {
+async function createLogRecord(logEntry: LogEntry): Promise<void> {
+  if (logEntry.level === 'info' && !configStore.state?.infoLogging) {
     return;
   }
 
   await withErrorHandling(async (db) => {
-    const newLogEntry = {
-      message,
-      level,
-      origin,
+    const newRecord: NewLogRecord = {
+      ...logEntry,
       timestamp: new Date(),
     };
 
-    const id = await db.add('logMessages', newLogEntry as LogMessage);
-    const fullMessage = await db.get('logMessages', id);
+    const id = await db.add(LOG_STORE_NAME, newRecord as LogRecord);
+    const fullRecord = await db.get(LOG_STORE_NAME, id);
 
-    if (fullMessage) {
+    if (fullRecord) {
       window.dispatchEvent(
-        new CustomEvent<LogMessage>('logmessage', {
-          detail: fullMessage,
+        new CustomEvent<LogRecord>('log:added', {
+          detail: fullRecord,
         }),
       );
     }
   });
 }
 
-function formatLog(...args: unknown[]) {
+function formatLog(...args: unknown[]): string {
   return args
     .map((arg) => {
       if (arg instanceof Error) {
@@ -124,33 +121,45 @@ function formatLog(...args: unknown[]) {
     .join(' ');
 }
 
-function logInfo(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'info', 'frontend');
+function logInfo(...args: unknown[]): void {
+  void createLogRecord({
+    message: formatLog(...args),
+    level: 'info',
+    origin: 'frontend',
+  });
 }
 
-function logWarn(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'warn', 'frontend');
+function logWarn(...args: unknown[]): void {
+  void createLogRecord({
+    message: formatLog(...args),
+    level: 'warn',
+    origin: 'frontend',
+  });
 }
 
-function logError(...args: unknown[]) {
-  void addLogMessage(formatLog(...args), 'error', 'frontend');
+function logError(...args: unknown[]): void {
+  void createLogRecord({
+    message: formatLog(...args),
+    level: 'error',
+    origin: 'frontend',
+  });
 }
 
-async function getLogMessages() {
-  return withErrorHandling((db) => db.getAll('logMessages'));
+async function getAllLogRecords(): Promise<LogRecord[]> {
+  return withErrorHandling((db) => db.getAll(LOG_STORE_NAME));
 }
 
-async function clearLogMessages() {
-  await withErrorHandling((db) => db.clear('logMessages'));
+async function clearAllLogRecords(): Promise<void> {
+  await withErrorHandling((db) => db.clear(LOG_STORE_NAME));
 }
 
 export {
-  addLogMessage,
   logInfo,
   logWarn,
   logError,
-  getLogMessages,
-  clearLogMessages,
-  type Log,
-  type LogMessage,
+  getAllLogRecords,
+  clearAllLogRecords,
+  createLogRecord,
+  type LogRecord,
+  type LogEntry,
 };

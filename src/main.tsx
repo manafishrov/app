@@ -1,11 +1,3 @@
-import '@/listeners/droneConfig';
-import '@/listeners/gamepad';
-import '@/listeners/log';
-import '@/listeners/settingsState';
-import '@/listeners/states';
-import '@/listeners/status';
-import '@/listeners/toast';
-import '@/listeners/webSocketConnection';
 import { routeTree } from '@/routeTree.gen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouter } from '@tanstack/react-router';

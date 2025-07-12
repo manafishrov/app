@@ -12,7 +12,7 @@ function Keyboard() {
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>Keyboard</h1>
         <p className='text-muted-foreground'>
-          Configure your keyboard bindings for controlling the drone.
+          Configure your keyboard bindings for controlling the ROV.
         </p>
       </div>
       <KeyboardSettings />

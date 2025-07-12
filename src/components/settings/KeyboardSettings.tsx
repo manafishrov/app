@@ -1,13 +1,8 @@
 import { useStore } from '@tanstack/react-store';
-import { useState } from 'react';
 
 import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
 
-import {
-  type KeyboardBindings,
-  configStore,
-  updateConfig,
-} from '@/stores/configStore';
+import { type KeyboardBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   moveForward: 'KeyW',
@@ -31,27 +26,23 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
 };
 
 function KeyboardSettings() {
-  const config = useStore(configStore);
-  const [localBindings, setLocalBindings] = useState<KeyboardBindings | null>(
-    null,
-  );
-
-  if (!config) return;
-
-  const currentBindings = localBindings ?? config.keyboard;
+  const keyboard = useStore(configStore, (state) => state?.keyboard);
 
   async function handleBindingChange(
     key: keyof KeyboardBindings,
     value: string,
   ) {
-    const newBindings = {
-      ...currentBindings,
+    if (!keyboard) return;
+
+    const newKeyboard = {
+      ...keyboard,
       [key]: value,
     };
 
-    setLocalBindings(newBindings);
-    await updateConfig({ keyboard: newBindings });
+    await setConfig({ keyboard: newKeyboard });
   }
+
+  if (!keyboard) return;
 
   return (
     <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
@@ -60,7 +51,7 @@ function KeyboardSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
           <KeyboardBindInput
             label='Move Forward'
-            bind={currentBindings.moveForward}
+            bind={keyboard.moveForward}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveForward}
             onBindChange={(newBind) =>
               handleBindingChange('moveForward', newBind)
@@ -68,13 +59,13 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Move Left'
-            bind={currentBindings.moveLeft}
+            bind={keyboard.moveLeft}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveLeft}
             onBindChange={(newBind) => handleBindingChange('moveLeft', newBind)}
           />
           <KeyboardBindInput
             label='Move Backward'
-            bind={currentBindings.moveBackward}
+            bind={keyboard.moveBackward}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveBackward}
             onBindChange={(newBind) =>
               handleBindingChange('moveBackward', newBind)
@@ -82,7 +73,7 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Move Right'
-            bind={currentBindings.moveRight}
+            bind={keyboard.moveRight}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveRight}
             onBindChange={(newBind) =>
               handleBindingChange('moveRight', newBind)
@@ -90,13 +81,13 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Move Up'
-            bind={currentBindings.moveUp}
+            bind={keyboard.moveUp}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveUp}
             onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
           />
           <KeyboardBindInput
             label='Move Down'
-            bind={currentBindings.moveDown}
+            bind={keyboard.moveDown}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveDown}
             onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
           />
@@ -107,7 +98,7 @@ function KeyboardSettings() {
           </h3>
           <KeyboardBindInput
             label='Stabilize Pitch'
-            bind={currentBindings.stabilizePitch}
+            bind={keyboard.stabilizePitch}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizePitch}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizePitch', newBind)
@@ -115,7 +106,7 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Stabilize Roll'
-            bind={currentBindings.stabilizeRoll}
+            bind={keyboard.stabilizeRoll}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizeRoll}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizeRoll', newBind)
@@ -123,7 +114,7 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Stabilize Depth'
-            bind={currentBindings.stabilizeDepth}
+            bind={keyboard.stabilizeDepth}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizeDepth}
             onBindChange={(newBind) =>
               handleBindingChange('stabilizeDepth', newBind)
@@ -136,19 +127,19 @@ function KeyboardSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Pitch & Yaw</h3>
           <KeyboardBindInput
             label='Pitch Up'
-            bind={currentBindings.pitchUp}
+            bind={keyboard.pitchUp}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchUp}
             onBindChange={(newBind) => handleBindingChange('pitchUp', newBind)}
           />
           <KeyboardBindInput
             label='Yaw Left'
-            bind={currentBindings.yawLeft}
+            bind={keyboard.yawLeft}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.yawLeft}
             onBindChange={(newBind) => handleBindingChange('yawLeft', newBind)}
           />
           <KeyboardBindInput
             label='Pitch Down'
-            bind={currentBindings.pitchDown}
+            bind={keyboard.pitchDown}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchDown}
             onBindChange={(newBind) =>
               handleBindingChange('pitchDown', newBind)
@@ -156,7 +147,7 @@ function KeyboardSettings() {
           />
           <KeyboardBindInput
             label='Yaw Right'
-            bind={currentBindings.yawRight}
+            bind={keyboard.yawRight}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.yawRight}
             onBindChange={(newBind) => handleBindingChange('yawRight', newBind)}
           />
@@ -165,13 +156,13 @@ function KeyboardSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
           <KeyboardBindInput
             label='Roll Left'
-            bind={currentBindings.rollLeft}
+            bind={keyboard.rollLeft}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollLeft}
             onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
           />
           <KeyboardBindInput
             label='Roll Right'
-            bind={currentBindings.rollRight}
+            bind={keyboard.rollRight}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollRight}
             onBindChange={(newBind) =>
               handleBindingChange('rollRight', newBind)
@@ -182,19 +173,19 @@ function KeyboardSettings() {
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
           <KeyboardBindInput
             label='Action 1'
-            bind={currentBindings.action1}
+            bind={keyboard.action1}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action1}
             onBindChange={(newBind) => handleBindingChange('action1', newBind)}
           />
           <KeyboardBindInput
             label='Action 2'
-            bind={currentBindings.action2}
+            bind={keyboard.action2}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2}
             onBindChange={(newBind) => handleBindingChange('action2', newBind)}
           />
           <KeyboardBindInput
             label='Record'
-            bind={currentBindings.record}
+            bind={keyboard.record}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.record}
             onBindChange={(newBind) => handleBindingChange('record', newBind)}
           />
