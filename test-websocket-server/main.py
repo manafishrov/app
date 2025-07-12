@@ -70,7 +70,7 @@ async def log(level, message):
 
 async def toast(id, toast_type, message, description, cancel):
     toast_msg = {
-        "type": "toast",
+        "type": "showToast",
         "payload": {
             "id": id,
             "toastType": toast_type,

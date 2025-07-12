@@ -1,14 +1,28 @@
 import { useStore } from '@tanstack/react-store';
+import { invoke } from '@tauri-apps/api/core';
 import { useEffect } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 
 import { RegulatorFieldButtons } from '@/components/settings/rov/RegulatorFieldButtons';
 import { Button } from '@/components/ui/Button';
 import { useAppForm } from '@/components/ui/Form';
+import { toast } from '@/components/ui/Toaster';
 
 import { useRegulatorSuggestionsListener } from '@/hooks/useRegulatorSuggestionsListener';
 
+import { logError } from '@/lib/log';
+
 import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
+
+async function startRegulatorAutoTuning() {
+  try {
+    await invoke('start_regulator_auto_tuning');
+  } catch (error) {
+    logError('Failed to start regulator auto tuning:', error);
+    toast.error('Failed to start regulator auto tuning');
+  }
+}
 
 const pidSchema = z.object({
   kp: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
@@ -29,6 +43,7 @@ const formSchema = z.object({
 function PidForm() {
   const regulator = useStore(rovConfigStore, (state) => state?.regulator);
   const regulatorSuggestions = useRegulatorSuggestionsListener();
+  const [autoTuningDisabled, setAutoTuningDisabled] = useState(false);
 
   const form = useAppForm({
     validators: {
@@ -278,7 +293,18 @@ function PidForm() {
             <form.SubmitButton className='w-44'>
               Update Regulator PID
             </form.SubmitButton>
-            <Button className='w-44' variant='outline'>
+            {/* Auto Tuning button with 2s disable logic */}
+            <Button
+              className='w-44'
+              variant='outline'
+              onClick={async (e) => {
+                e.preventDefault();
+                setAutoTuningDisabled(true);
+                await startRegulatorAutoTuning();
+                setTimeout(() => setAutoTuningDisabled(false), 2000);
+              }}
+              disabled={autoTuningDisabled}
+            >
               Run Auto Tuning
             </Button>
           </div>

@@ -1,5 +1,3 @@
-'use client';
-
 import * as ToasterPrimitive from 'sonner';
 
 import { useTheme } from '@/components/providers/ThemeProvider';

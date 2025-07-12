@@ -1,5 +1,3 @@
-'use client';
-
 import { cx } from '@/lib/utils';
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
