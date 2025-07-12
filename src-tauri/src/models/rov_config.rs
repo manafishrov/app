@@ -27,6 +27,7 @@ pub struct Pid {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Regulator {
+  pub turn_speed: u16,
   pub pitch: Pid,
   pub roll: Pid,
   pub depth: Pid,

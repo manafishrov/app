@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
 import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
-import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTableForm';
+import { ThrusterPinSetupTableForm } from '@/components/settings/rov/ThrusterPinSetupTableForm';
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
@@ -32,7 +32,7 @@ function Calibration() {
         </div>
       ) : (
         <div className='w-[calc(100svw-7rem)] max-w-full space-y-8 md:w-[calc(100svw-14rem)] lg:w-full'>
-          <ThrusterPinSetupTable />
+          <ThrusterPinSetupTableForm />
           <ThrusterAllocationTable />
         </div>
       )}

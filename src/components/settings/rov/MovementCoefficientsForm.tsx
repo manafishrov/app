@@ -85,74 +85,86 @@ function MovementCoefficientsForm() {
         <form.AppForm>
           <form.AppField name='horizontal'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Horizontal' />
-                <RegulatorFieldButtons
-                  defaultValue={0.8}
-                  onChange={field.handleChange}
-                  label='Horizontal Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Horizontal'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.8}
+                    onChange={field.handleChange}
+                    label='Horizontal Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.AppField name='strafe'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Strafe' />
-                <RegulatorFieldButtons
-                  defaultValue={0.35}
-                  onChange={field.handleChange}
-                  label='Strafe Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Strafe'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.35}
+                    onChange={field.handleChange}
+                    label='Strafe Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.AppField name='vertical'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Vertical' />
-                <RegulatorFieldButtons
-                  defaultValue={0.5}
-                  onChange={field.handleChange}
-                  label='Vertial Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Vertical'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.5}
+                    onChange={field.handleChange}
+                    label='Vertial Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.AppField name='pitch'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Pitch' />
-                <RegulatorFieldButtons
-                  defaultValue={0.4}
-                  onChange={field.handleChange}
-                  label='Pitch Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Pitch'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.4}
+                    onChange={field.handleChange}
+                    label='Pitch Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.AppField name='yaw'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Yaw' />
-                <RegulatorFieldButtons
-                  defaultValue={0.3}
-                  onChange={field.handleChange}
-                  label='Yaw Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Yaw'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.3}
+                    onChange={field.handleChange}
+                    label='Yaw Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.AppField name='roll'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Roll' />
-                <RegulatorFieldButtons
-                  defaultValue={0.8}
-                  onChange={field.handleChange}
-                  label='Roll Movement Coefficient'
-                />
-              </div>
+              <field.NumberField
+                label='Roll'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={0.8}
+                    onChange={field.handleChange}
+                    label='Roll Movement Coefficient'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <form.SubmitButton className='w-60'>

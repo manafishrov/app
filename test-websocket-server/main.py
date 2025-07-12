@@ -32,9 +32,10 @@ rov_config = {
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
     ],
     "regulator": {
-        "pitch": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
-        "roll": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
-        "depth": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+        "turnSpeed": 40,
+        "pitch": {"kp": 1, "ki": 0.0, "kd": 0.0},
+        "roll": {"kp": 5, "ki": 0.0, "kd": 0.0},
+        "depth": {"kp": 8, "ki": 2.8, "kd": 0.0},
     },
     "movementCoefficients": {
         "horizontal": 0.0,
@@ -158,7 +159,7 @@ async def handle_client(websocket):
                 msg_type = msg_data.get("type")
                 payload = msg_data.get("payload")
 
-                if msg_type == "MovementCommand":
+                if msg_type == "movementCommand":
                     if (
                         last_movement_command is not None
                         and payload != last_movement_command

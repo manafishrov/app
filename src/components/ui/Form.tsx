@@ -27,7 +27,7 @@ const { fieldContext, useFieldContext, formContext, useFormContext } =
 
 type BaseFieldProps = {
   className?: string;
-  label: string;
+  label?: string;
   description?: string;
   labelSibling?: React.ReactNode;
   fieldSuffix?: React.ReactNode;
@@ -121,7 +121,7 @@ type TextFieldProps = Omit<
   React.ComponentProps<typeof Input>,
   'type' | 'value' | 'onChange' | 'onBlur'
 > & {
-  label: string;
+  label?: string;
   labelSibling?: React.ReactNode;
   fieldSuffix?: React.ReactNode;
   description?: string;
@@ -160,7 +160,7 @@ type NumberFieldProps = Omit<
   React.ComponentProps<typeof Input>,
   'type' | 'value' | 'onChange' | 'onBlur'
 > & {
-  label: string;
+  label?: string;
   labelSibling?: React.ReactNode;
   fieldSuffix?: React.ReactNode;
   description?: string;
@@ -259,7 +259,7 @@ type TextAreaFieldProps = Omit<
   React.ComponentProps<typeof Textarea>,
   'value' | 'onChange' | 'onBlur'
 > & {
-  label: string;
+  label?: string;
   labelSibling?: React.ReactNode;
   fieldSuffix?: React.ReactNode;
   description?: string;
@@ -299,7 +299,7 @@ type SelectOption = {
 };
 
 type SelectFieldProps = {
-  label: string;
+  label?: string;
   className?: string;
   placeholder?: string;
   options: SelectOption[];
@@ -367,7 +367,7 @@ type RadioOption = {
 };
 
 type RadioGroupFieldProps = {
-  label: string;
+  label?: string;
   className?: string;
   options: RadioOption[];
   labelSibling?: React.ReactNode;
@@ -413,7 +413,7 @@ type CheckboxFieldProps = Omit<
   React.ComponentProps<typeof Checkbox>,
   'checked' | 'onCheckedChange' | 'onBlur'
 > & {
-  label: string;
+  label?: string;
   labelSibling?: React.ReactNode;
   fieldSuffix?: React.ReactNode;
   description?: string;

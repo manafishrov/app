@@ -233,7 +233,6 @@ function ThrusterPinSetupTableForm() {
                     <form.AppField name={identifierFieldNames[index]!}>
                       {(field) => (
                         <field.SelectField
-                          label='Thruster Identifier'
                           options={[
                             { value: '0', label: 'None' },
                             ...Array.from({ length: 8 }, (_, i) => ({
@@ -241,7 +240,6 @@ function ThrusterPinSetupTableForm() {
                               label: String(i + 1),
                             })),
                           ]}
-                          required={false}
                         />
                       )}
                     </form.AppField>
@@ -250,13 +248,11 @@ function ThrusterPinSetupTableForm() {
                     <form.AppField name={spinDirectionFieldNames[index]!}>
                       {(field) => (
                         <field.SelectField
-                          label='Default Spin Direction'
                           options={[
                             { value: '0', label: 'None' },
                             { value: '1', label: 'Normal' },
                             { value: '-1', label: 'Reversed' },
                           ]}
-                          required={false}
                         />
                       )}
                     </form.AppField>

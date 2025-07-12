@@ -102,14 +102,17 @@ function PidForm() {
         <form.AppForm>
           <form.AppField name='turnSpeed'>
             {(field) => (
-              <div className='flex items-center gap-4'>
-                <field.NumberField label='Turn Speed' />
-                <RegulatorFieldButtons
-                  defaultValue={40}
-                  onChange={field.handleChange}
-                  label='Turn Speed'
-                />
-              </div>
+              <field.NumberField
+                label='Turn Speed'
+                description='The speed of which the ROV will try to reach the desired position by the PID controller.'
+                fieldSuffix={
+                  <RegulatorFieldButtons
+                    defaultValue={40}
+                    onChange={field.handleChange}
+                    label='Turn Speed'
+                  />
+                }
+              />
             )}
           </form.AppField>
           <div>
@@ -120,41 +123,47 @@ function PidForm() {
             <div className='space-y-4'>
               <form.AppField name='pitch.kp'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' />
-                    <RegulatorFieldButtons
-                      defaultValue={5}
-                      suggestionValue={regulatorSuggestions?.pitch.kp}
-                      onChange={field.handleChange}
-                      label='Pitch Kp'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kp'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={5}
+                        suggestionValue={regulatorSuggestions?.pitch.kp}
+                        onChange={field.handleChange}
+                        label='Pitch Kp'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='pitch.ki'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' />
-                    <RegulatorFieldButtons
-                      defaultValue={0.5}
-                      suggestionValue={regulatorSuggestions?.pitch.ki}
-                      onChange={field.handleChange}
-                      label='Pitch Ki'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Ki'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0.5}
+                        suggestionValue={regulatorSuggestions?.pitch.ki}
+                        onChange={field.handleChange}
+                        label='Pitch Ki'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='pitch.kd'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' />
-                    <RegulatorFieldButtons
-                      defaultValue={1}
-                      suggestionValue={regulatorSuggestions?.pitch.kd}
-                      onChange={field.handleChange}
-                      label='Pitch Kd'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kd'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={1}
+                        suggestionValue={regulatorSuggestions?.pitch.kd}
+                        onChange={field.handleChange}
+                        label='Pitch Kd'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
             </div>
@@ -167,41 +176,47 @@ function PidForm() {
             <div className='space-y-4'>
               <form.AppField name='roll.kp'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' />
-                    <RegulatorFieldButtons
-                      defaultValue={1.5}
-                      suggestionValue={regulatorSuggestions?.roll.kp}
-                      onChange={field.handleChange}
-                      label='Roll Kp'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kp'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={1.5}
+                        suggestionValue={regulatorSuggestions?.roll.kp}
+                        onChange={field.handleChange}
+                        label='Roll Kp'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='roll.ki'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' />
-                    <RegulatorFieldButtons
-                      defaultValue={0.1}
-                      suggestionValue={regulatorSuggestions?.roll.ki}
-                      onChange={field.handleChange}
-                      label='Roll Ki'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Ki'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0.1}
+                        suggestionValue={regulatorSuggestions?.roll.ki}
+                        onChange={field.handleChange}
+                        label='Roll Ki'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='roll.kd'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' />
-                    <RegulatorFieldButtons
-                      defaultValue={0.4}
-                      suggestionValue={regulatorSuggestions?.roll.kd}
-                      onChange={field.handleChange}
-                      label='Roll Kd'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kd'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0.4}
+                        suggestionValue={regulatorSuggestions?.roll.kd}
+                        onChange={field.handleChange}
+                        label='Roll Kd'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
             </div>
@@ -214,41 +229,47 @@ function PidForm() {
             <div className='space-y-4'>
               <form.AppField name='depth.kp'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kp' />
-                    <RegulatorFieldButtons
-                      defaultValue={0}
-                      suggestionValue={regulatorSuggestions?.depth.kp}
-                      onChange={field.handleChange}
-                      label='Depth Kp'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kp'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0}
+                        suggestionValue={regulatorSuggestions?.depth.kp}
+                        onChange={field.handleChange}
+                        label='Depth Kp'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='depth.ki'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Ki' />
-                    <RegulatorFieldButtons
-                      defaultValue={0.05}
-                      suggestionValue={regulatorSuggestions?.depth.ki}
-                      onChange={field.handleChange}
-                      label='Depth Ki'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Ki'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0.05}
+                        suggestionValue={regulatorSuggestions?.depth.ki}
+                        onChange={field.handleChange}
+                        label='Depth Ki'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
               <form.AppField name='depth.kd'>
                 {(field) => (
-                  <div className='flex items-center gap-4'>
-                    <field.NumberField label='Kd' />
-                    <RegulatorFieldButtons
-                      defaultValue={0.1}
-                      suggestionValue={regulatorSuggestions?.depth.kd}
-                      onChange={field.handleChange}
-                      label='Depth Kd'
-                    />
-                  </div>
+                  <field.NumberField
+                    label='Kd'
+                    fieldSuffix={
+                      <RegulatorFieldButtons
+                        defaultValue={0.1}
+                        suggestionValue={regulatorSuggestions?.depth.kd}
+                        onChange={field.handleChange}
+                        label='Depth Kd'
+                      />
+                    }
+                  />
                 )}
               </form.AppField>
             </div>

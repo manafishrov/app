@@ -19,7 +19,7 @@ function RegulatorFieldButtons({
   label,
 }: RegulatorFieldButtonsProps) {
   return (
-    <div className='mt-3.5 flex gap-2'>
+    <div className='ml-4 flex gap-2'>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
