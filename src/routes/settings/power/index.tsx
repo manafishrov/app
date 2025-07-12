@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
+import { PowerSettingsForm } from '@/components/settings/PowerSettingsForm';
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { rovConfigStore} from '@/stores/rovConfig';
+import { rovConfigStore } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/power/')({
   component: Power,
@@ -29,7 +30,7 @@ function Power() {
           <Spinner size='lg' />
         </div>
       ) : (
-        <div></div>
+        <PowerSettingsForm />
       )}
     </>
   );

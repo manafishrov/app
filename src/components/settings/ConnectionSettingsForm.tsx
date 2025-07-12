@@ -59,15 +59,13 @@ function ConnectionSettingsForm() {
     }
   }, [config, form]);
 
-  if (!config) return;
-
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         void form.handleSubmit();
       }}
-      className='relative grow space-y-8'
+      className='relative space-y-8'
     >
       <form.AppForm>
         <form.AppField name='ipAddress'>
