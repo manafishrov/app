@@ -180,7 +180,7 @@ async def handle_client(websocket):
                     rov_config = payload
                     await log("info", f"ROV config updated: {rov_config}")
                     await toast(
-                        None, "success", "ROV config updated successfully", None, None
+                        None, "success", "ROV config set successfully", None, None
                     )
                 elif msg_type == "getFirmwareVersion":
                     firmware_msg = {

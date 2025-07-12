@@ -86,7 +86,6 @@ async function setConfig(newConfigOptions: Partial<Config>) {
 
   try {
     await invoke('set_config', { payload: newConfig });
-    toast.success('Config set successfully');
   } catch (error) {
     configStore.setState(() => currentConfig);
     logError('Failed to set config:', error);

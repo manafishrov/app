@@ -110,7 +110,6 @@ function ThrusterPinSetupTableForm() {
       await setRovConfig({
         thrusterPinSetup: value as { identifiers: Row; spinDirections: Row },
       });
-      toast.success('Thruster pin setup saved');
     },
   });
 

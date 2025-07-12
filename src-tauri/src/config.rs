@@ -1,4 +1,5 @@
 use crate::models::config::Config;
+use crate::toast::toast_success;
 use crate::toast::toast_warn;
 use crate::{log_error, log_warn};
 use std::fs;
@@ -72,6 +73,8 @@ pub async fn set_config_to_file(
   fs::write(&config_path, &content).map_err(|e| e.to_string())?;
 
   state.tx.send(payload).await.map_err(|e| e.to_string())?;
+
+  toast_success(None, "Config set successfully".to_string(), None, None);
 
   Ok(())
 }
