@@ -1,7 +1,7 @@
 use crate::models::{
   actions::RovMovementCommand,
   log::LogEntry,
-  rov_config::{FirmwareVersion, Regulator, RovConfig, ThrusterTest},
+  rov_config::{FirmwareVersion, RegulatorSuggestions, RovConfig, ThrusterTest},
   rov_status::RovStatus,
   rov_telemetry::RovTelemetry,
   toast::Toast,
@@ -19,7 +19,7 @@ pub enum WebsocketMessage {
   CancelThrusterTest(ThrusterTest),
   StartRegulatorAutoTuning,
   CancelRegulatorAutoTuning,
-  RegulatorSuggestions(Regulator),
+  RegulatorSuggestions(RegulatorSuggestions),
   ShowToast(Toast),
   LogMessage(LogEntry),
   StatusUpdate(RovStatus),

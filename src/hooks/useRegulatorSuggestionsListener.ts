@@ -7,14 +7,18 @@ import { logError } from '@/lib/log';
 
 import { type Regulator } from '@/stores/rovConfig';
 
+type RegulatorSuggestions = Omit<Regulator, 'turnSpeed'>;
+
 function useRegulatorSuggestionsListener() {
-  const [suggestions, setSuggestions] = useState<Regulator | null>(null);
+  const [suggestions, setSuggestions] = useState<RegulatorSuggestions | null>(
+    null,
+  );
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<Regulator>(
+        unlisten = await listen<RegulatorSuggestions>(
           'regulator_suggestions_received',
           (event) => {
             setSuggestions(event.payload);

@@ -36,34 +36,42 @@ pub struct Regulator {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MovementCoefficients {
-  horizontal: f32,
-  strafe: f32,
-  vertical: f32,
-  pitch: f32,
-  yaw: f32,
-  roll: f32,
+  pub horizontal: f32,
+  pub strafe: f32,
+  pub vertical: f32,
+  pub pitch: f32,
+  pub yaw: f32,
+  pub roll: f32,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Power {
-  user_max_power: f32,
-  regulator_max_power: f32,
-  battery_min_voltage: f32,
-  battery_max_voltage: f32,
+  pub user_max_power: f32,
+  pub regulator_max_power: f32,
+  pub battery_min_voltage: f32,
+  pub battery_max_voltage: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
-  fluid_type: FluidType,
-  thruster_pin_setup: ThrusterPinSetup,
-  thruster_allocation: ThrusterAllocation,
-  regulator: Regulator,
-  movement_coefficients: MovementCoefficients,
-  power: Power,
+  pub fluid_type: FluidType,
+  pub thruster_pin_setup: ThrusterPinSetup,
+  pub thruster_allocation: ThrusterAllocation,
+  pub regulator: Regulator,
+  pub movement_coefficients: MovementCoefficients,
+  pub power: Power,
 }
 
 pub type ThrusterTest = u8;
 
 pub type FirmwareVersion = String;
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RegulatorSuggestions {
+  pub pitch: Pid,
+  pub roll: Pid,
+  pub depth: Pid,
+}
