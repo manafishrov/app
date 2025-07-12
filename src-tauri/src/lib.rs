@@ -39,7 +39,10 @@ mod log;
 mod toast;
 mod updater;
 
-use commands::actions::send_movement_command;
+use commands::actions::{
+  send_action1_command, send_action2_command, send_movement_command, toggle_depth_stabilization,
+  toggle_pitch_stabilization, toggle_roll_stabilization,
+};
 use commands::config::{get_config, set_config};
 use commands::gamepad::start_gamepad_stream;
 use commands::rov_config::{
@@ -98,6 +101,11 @@ pub fn run() {
       cancel_regulator_auto_tuning,
       send_movement_command,
       request_firmware_version,
+      send_action1_command,
+      send_action2_command,
+      toggle_pitch_stabilization,
+      toggle_roll_stabilization,
+      toggle_depth_stabilization,
     ])
     .setup(setup_handlers);
 

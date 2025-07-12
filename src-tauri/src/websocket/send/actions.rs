@@ -14,3 +14,58 @@ pub async fn handle_send_movement_command(
   }
   Ok(())
 }
+
+pub async fn handle_send_action1_command(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  let message = WebsocketMessage::RunAction1;
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send RunAction1: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}
+
+pub async fn handle_send_action2_command(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  let message = WebsocketMessage::RunAction2;
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send RunAction2: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}
+
+pub async fn handle_toggle_pitch_stabilization(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  let message = WebsocketMessage::TogglePitchStabilization;
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send TogglePitchStabilization: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}
+
+pub async fn handle_toggle_roll_stabilization(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  let message = WebsocketMessage::ToggleRollStabilization;
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send ToggleRollStabilization: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}
+
+pub async fn handle_toggle_depth_stabilization(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  let message = WebsocketMessage::ToggleDepthStabilization;
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send ToggleDepthStabilization: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}

@@ -5,6 +5,7 @@ import { VideoStream } from '@/components/VideoStream';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { SettingsButton } from '@/components/settings/SettingsButton';
 
+import { useSendActionCommands } from '@/hooks/useSendActionCommands';
 import { useSendMovementCommand } from '@/hooks/useSendMovementCommand';
 
 import { cx } from '@/lib/utils';
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   useSendMovementCommand();
+  useSendActionCommands();
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');

@@ -26,4 +26,9 @@ pub enum WebsocketMessage {
   Telemetry(RovTelemetry),
   GetFirmwareVersion,
   FirmwareVersionResponse(FirmwareVersion),
+  RunAction1,
+  RunAction2,
+  TogglePitchStabilization,
+  ToggleRollStabilization,
+  ToggleDepthStabilization,
 }
