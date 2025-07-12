@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
 import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
-import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
+import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTableForm';
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
