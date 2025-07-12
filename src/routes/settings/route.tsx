@@ -6,8 +6,11 @@ import { SidebarProvider } from '@/components/ui/Sidebar';
 
 import { useRovConfigListener } from '@/hooks/useRovConfigListener';
 
+import { requestRovConfig } from '@/stores/rovConfig';
+
 export const Route = createFileRoute('/settings')({
   component: SidebarLayout,
+  loader: requestRovConfig,
 });
 
 function SidebarLayout() {

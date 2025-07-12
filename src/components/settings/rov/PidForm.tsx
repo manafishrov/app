@@ -85,10 +85,10 @@ function PidForm() {
           PID (Proportional-Integral-Derivative) controller
         </h3>
         <p className='text-muted-foreground text-sm'>
-          Use this page to fine-tune how your drone responds to movement
+          Use this page to fine-tune how your ROV responds to movement
           commands. Adjust the Kp, Ki, and Kd values for pitch, roll, and depth
-          to control how strongly and smoothly the drone corrects its position.
-          Enter your own values or run auto-tuning when the drone is in still
+          to control how strongly and smoothly the ROV corrects its position.
+          Enter your own values or run auto-tuning when the ROV is in still
           water to automatically determine sane defaults.
         </p>
       </div>

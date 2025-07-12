@@ -4,11 +4,10 @@ import { useStore } from '@tanstack/react-store';
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { rovConfigStore, requestRovConfig } from '@/stores/rovConfig';
+import { rovConfigStore} from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/power/')({
   component: Power,
-  loader: requestRovConfig,
 });
 
 function Power() {

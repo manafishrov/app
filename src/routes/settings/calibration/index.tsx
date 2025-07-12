@@ -6,11 +6,10 @@ import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetu
 import { Spinner } from '@/components/ui/Spinner';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { rovConfigStore, requestRovConfig } from '@/stores/rovConfig';
+import { rovConfigStore } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/calibration/')({
   component: Calibration,
-  loader: requestRovConfig,
 });
 
 function Calibration() {

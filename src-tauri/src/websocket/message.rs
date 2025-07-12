@@ -1,7 +1,7 @@
 use crate::models::{
   log::LogEntry,
   rov_actions::RovMovementCommand,
-  rov_config::{Regulator, RovConfig, ThrusterTest},
+  rov_config::{FirmwareVersion, Regulator, RovConfig, ThrusterTest},
   rov_status::RovStatus,
   rov_telemetry::RovTelemetry,
   toast::Toast,
@@ -24,4 +24,6 @@ pub enum WebsocketMessage {
   LogMessage(LogEntry),
   StatusUpdate(RovStatus),
   Telemetry(RovTelemetry),
+  GetFirmwareVersion,
+  FirmwareVersionResponse(FirmwareVersion),
 }

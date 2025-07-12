@@ -88,7 +88,7 @@ function ThrusterPinSetupTable() {
     }
   }
 
-    if (!thrusterPinSetup) return;
+  if (!thrusterPinSetup) return;
 
   return (
     <>
@@ -97,7 +97,7 @@ function ThrusterPinSetupTable() {
           Thruster pin setup
         </h3>
         <p className='text-muted-foreground text-sm'>
-          Use this table to configure each thruster connected to your drone. For
+          Use this table to configure each thruster connected to your ROV. For
           each pin, choose the identifier by observing which thruster spins when
           you test it and adjust the spin direction so that the thruster rotates
           forward according to your propeller type.

@@ -21,8 +21,8 @@ function useRegulatorSuggestionsListener() {
           },
         );
       } catch (error) {
-        logError('Failed to listen for ROV Regulator Suggestions:', error);
-        toast.error('Failed to listen for ROV Regulator Suggestions');
+        logError('Failed to listen for ROV regulator suggestions:', error);
+        toast.error('Failed to listen for ROV regulator suggestions');
       }
     })();
     return () => {

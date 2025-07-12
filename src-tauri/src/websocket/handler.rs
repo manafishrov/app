@@ -1,6 +1,8 @@
 use super::message::WebsocketMessage;
 use super::receive::{
-  config::{handle_config_response, handle_regulator_suggestions},
+  config::{
+    handle_config_response, handle_firmware_version_response, handle_regulator_suggestions,
+  },
   log::handle_log_message,
   status::handle_status_update,
   telemetry::handle_telemetry,
@@ -21,6 +23,9 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
         WebsocketMessage::ConfigResponse(payload) => handle_config_response(app_handle, &payload),
         WebsocketMessage::RegulatorSuggestions(payload) => {
           handle_regulator_suggestions(app_handle, &payload)
+        }
+        WebsocketMessage::FirmwareVersionResponse(payload) => {
+          handle_firmware_version_response(app_handle, &payload)
         }
         other => {
           log_warn!("Received unhandled message type: {:?}", other);

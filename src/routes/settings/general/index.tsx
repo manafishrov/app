@@ -1,10 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { requestRovConfig } from '@/stores/rovConfig';
-
 export const Route = createFileRoute('/settings/general/')({
   component: General,
-  loader: requestRovConfig,
 });
 
 function General() {

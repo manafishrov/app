@@ -1,4 +1,4 @@
-use crate::models::rov_config::{Regulator, RovConfig};
+use crate::models::rov_config::{FirmwareVersion, Regulator, RovConfig};
 use tauri::{AppHandle, Emitter};
 use tokio_tungstenite::tungstenite::Message;
 
@@ -13,6 +13,16 @@ pub fn handle_regulator_suggestions(
 ) -> Option<Message> {
   app_handle
     .emit("regulator_suggestions_received", payload)
+    .unwrap();
+  None
+}
+
+pub fn handle_firmware_version_response(
+  app_handle: &AppHandle,
+  payload: &FirmwareVersion,
+) -> Option<Message> {
+  app_handle
+    .emit("firmware_version_retrieved", payload)
     .unwrap();
   None
 }
