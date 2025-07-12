@@ -1,15 +1,15 @@
 mod commands {
+  pub mod actions;
   pub mod config;
   pub mod gamepad;
-  pub mod rov_actions;
   pub mod rov_config;
 }
 
 mod models {
+  pub mod actions;
   pub mod config;
   pub mod gamepad;
   pub mod log;
-  pub mod rov_actions;
   pub mod rov_config;
   pub mod rov_status;
   pub mod rov_telemetry;
@@ -39,9 +39,9 @@ mod log;
 mod toast;
 mod updater;
 
+use commands::actions::send_movement_command;
 use commands::config::{get_config, set_config};
 use commands::gamepad::start_gamepad_stream;
-use commands::rov_actions::send_movement_command;
 use commands::rov_config::{
   cancel_regulator_auto_tuning, cancel_thruster_test, request_firmware_version, request_rov_config,
   set_rov_config, start_regulator_auto_tuning, start_thruster_test,

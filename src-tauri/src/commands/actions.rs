@@ -1,4 +1,4 @@
-use crate::models::rov_actions::RovMovementCommand;
+use crate::models::actions::RovMovementCommand;
 use crate::websocket::{
   client::MessageSendChannelState, send::actions::handle_send_movement_command,
 };

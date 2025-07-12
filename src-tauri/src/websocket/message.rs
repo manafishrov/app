@@ -1,6 +1,6 @@
 use crate::models::{
+  actions::RovMovementCommand,
   log::LogEntry,
-  rov_actions::RovMovementCommand,
   rov_config::{FirmwareVersion, Regulator, RovConfig, ThrusterTest},
   rov_status::RovStatus,
   rov_telemetry::RovTelemetry,
