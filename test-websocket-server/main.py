@@ -8,50 +8,62 @@ import signal
 clients = set()
 shutdown = False
 
+pitch_stabilization = False
+roll_stabilization = False
+depth_stabilization = False
+
 on_going_thruster_tests = {}
 
-thruster_pin_setup = {
-    "identifiers": [5, 4, 3, 1, 2, 7, 6, 8],
-    "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],
+rov_config = {
+    "fluidType": "Saltwater",
+    "thrusterPinSetup": {
+        "identifiers": [5, 4, 3, 1, 2, 7, 6, 8],
+        "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],
+    },
+    "thrusterAllocation": [
+        [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    ],
+    "regulator": {
+        "pitch": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+        "roll": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+        "depth": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
+    },
+    "movementCoefficients": {
+        "horizontal": 0.0,
+        "strafe": 0.0,
+        "vertical": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0,
+        "roll": 0.0,
+    },
+    "power": {
+        "userMaxPower": 1.0,
+        "regulatorMaxPower": 1.0,
+        "batteryMinVoltage": 10.0,
+        "batteryMaxVoltage": 16.8,
+    },
 }
 
-thruster_allocation = [
-    [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-]
 
-regulator = {
-    "pitch": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
-    "roll": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
-    "depth": {"kp": 0.0, "ki": 0.0, "kd": 0.0},
-}
-
-movement_coefficients = {
-    "horizontal": 0.0,
-    "strafe": 0.0,
-    "vertical": 0.0,
-    "pitch": 0.0,
-    "yaw": 0.0,
-    "roll": 0.0,
-}
-
-
-async def log_firmware(level, message):
+async def log(level, message):
     log_msg = {
-        "type": "logFirmware",
-        "payload": {"level": level, "message": str(message)},
+        "type": "logMessage",
+        "payload": {"origin": "firmware", "level": level, "message": str(message)},
     }
     if clients:
         await asyncio.gather(
             *[client.send(json.dumps(log_msg)) for client in clients],
             return_exceptions=True,
         )
+    else:
+        print(f"[{level}] {message}")
 
 
 async def toast(id, toast_type, message, description, cancel):
@@ -73,15 +85,14 @@ async def toast(id, toast_type, message, description, cancel):
 
 
 async def handle_client(websocket):
-    global thruster_allocation
-    global regulator
-    global movement_coefficients
-    await log_firmware(
+    global rov_config, pitch_stabilization, roll_stabilization, depth_stabilization
+    last_movement_command = None
+    await log(
         "info", f"Client connected from Manafish App at {websocket.remote_address}!"
     )
     clients.add(websocket)
 
-    async def send_status_updates():
+    async def send_telemetry():
         while not shutdown:
             try:
                 current_time = time.time()
@@ -95,7 +106,7 @@ async def handle_client(websocket):
                 thruster_erpm_values = [0, 937, 1875, 3750, 7500, 15000, 30000, 60000]
 
                 status_msg = {
-                    "type": "status",
+                    "type": "telemetry",
                     "payload": {
                         "pitch": round(pitch, 2),
                         "roll": round(roll, 2),
@@ -110,29 +121,32 @@ async def handle_client(websocket):
                 await asyncio.sleep(1 / 60)
             except Exception as e:
                 if not shutdown:
-                    await log_firmware("Error", f"Status update error: {e}")
+                    await log("Error", f"Telemetry error: {e}")
                 break
 
-    async def send_states_updates():
+    async def send_status_update():
         while not shutdown:
             try:
+                current_time = time.time()
+                battery_percentage = int((math.sin(current_time / 5) + 1) * 50)
                 states_msg = {
-                    "type": "states",
+                    "type": "statusUpdate",
                     "payload": {
-                        "pitchStabilization": True,
-                        "rollStabilization": True,
-                        "depthStabilization": True,
+                        "pitchStabilization": pitch_stabilization,
+                        "rollStabilization": roll_stabilization,
+                        "depthStabilization": depth_stabilization,
+                        "batteryPercentage": battery_percentage,
                     },
                 }
                 await websocket.send(json.dumps(states_msg))
                 await asyncio.sleep(0.5)
             except Exception as e:
                 if not shutdown:
-                    await log_firmware("error", f"Settings update error: {e}")
+                    await log("error", f"Status update error: {e}")
                 break
 
-    status_task = asyncio.create_task(send_status_updates())
-    settings_task = asyncio.create_task(send_states_updates())
+    telemetry_task = asyncio.create_task(send_telemetry())
+    status_task = asyncio.create_task(send_status_update())
 
     try:
         async for message in websocket:
@@ -143,90 +157,41 @@ async def handle_client(websocket):
                 msg_type = msg_data.get("type")
                 payload = msg_data.get("payload")
 
-                await log_firmware(
-                    "info",
-                    f"Received message of type '{msg_type}' with payload: {payload}",
-                )
-
-                if msg_type == "getThrusterConfig":
-                    await log_firmware("info", "Sending thruster configuration")
-                    pin_setup_msg = {
-                        "type": "thrusterPinSetup",
-                        "payload": thruster_pin_setup,
+                if msg_type == "MovementCommand":
+                    if (
+                        last_movement_command is not None
+                        and payload != last_movement_command
+                    ):
+                        await log(
+                            "info",
+                            f"MovementCommand changed: old={last_movement_command}, new={payload}",
+                        )
+                    last_movement_command = payload
+                elif msg_type == "getConfig":
+                    await log("info", "Sending full ROV config")
+                    config_msg = {
+                        "type": "configResponse",
+                        "payload": rov_config,
                     }
-                    allocation_msg = {
-                        "type": "thrusterAllocation",
-                        "payload": thruster_allocation,
+                    await websocket.send(json.dumps(config_msg))
+                elif msg_type == "setConfig":
+                    rov_config = payload
+                    await log("info", f"ROV config updated: {rov_config}")
+                    await toast(
+                        None, "success", "ROV config updated successfully", None, None
+                    )
+                elif msg_type == "getFirmwareVersion":
+                    firmware_msg = {
+                        "type": "firmwareVersionResponse",
+                        "payload": "0.6.9",
                     }
-                    await websocket.send(json.dumps(pin_setup_msg))
-                    await websocket.send(json.dumps(allocation_msg))
-                elif msg_type == "getRegulatorConfig":
-                    await log_firmware(
-                        "info",
-                        "Sending regulator and movement coefficients configuration",
-                    )
-                    regulator_msg = {
-                        "type": "regulator",
-                        "payload": regulator,
-                    }
-                    movement_coefficients_msg = {
-                        "type": "movementCoefficients",
-                        "payload": movement_coefficients,
-                    }
-                    await websocket.send(json.dumps(regulator_msg))
-                    await websocket.send(json.dumps(movement_coefficients_msg))
-                elif msg_type == "thrusterPinSetup":
-                    thruster_pin_setup.update(payload)
-                    await log_firmware(
-                        "info", f"Updated thruster pin setup: {thruster_pin_setup}"
-                    )
-                    await toast(
-                        None,
-                        "success",
-                        "Thruster pin setup updated successfully",
-                        None,
-                        None,
-                    )
-                elif msg_type == "thrusterAllocation":
-                    thruster_allocation = payload
-                    await log_firmware(
-                        "info", f"Updated thruster allocation: {thruster_allocation}"
-                    )
-                    await toast(
-                        None,
-                        "success",
-                        "Thruster allocation updated successfully",
-                        None,
-                        None,
-                    )
-                elif msg_type == "regulator":
-                    regulator = payload
-                    await log_firmware("info", f"Updated regulator: {regulator}")
-                    await toast(
-                        None,
-                        "success",
-                        "Regulator updated successfully",
-                        None,
-                        None,
-                    )
-                elif msg_type == "movementCoefficients":
-                    movement_coefficients = payload
-                    await log_firmware(
-                        "info",
-                        f"Updated movement coefficients: {movement_coefficients}",
-                    )
-                    await toast(
-                        None,
-                        "success",
-                        "Movement coefficients updated successfully",
-                        None,
-                        None,
-                    )
-                elif msg_type == "testThruster":
+                    await websocket.send(json.dumps(firmware_msg))
+                elif msg_type == "startThrusterTest":
+                    thruster_id = payload
 
                     async def test_thruster_task(thruster_id):
                         try:
-                            await log_firmware(
+                            await log(
                                 "info",
                                 f"Testing thruster with identifier: {thruster_id}",
                             )
@@ -238,7 +203,7 @@ async def handle_client(websocket):
                                     f"Testing thruster {thruster_id} {progress}%",
                                     None,
                                     {
-                                        "command": "cancelTestThruster",
+                                        "command": "cancelThrusterTest",
                                         "payload": thruster_id,
                                     },
                                 )
@@ -256,35 +221,61 @@ async def handle_client(websocket):
                         finally:
                             on_going_thruster_tests.pop(thruster_id, None)
 
-                    existing = on_going_thruster_tests.get(payload)
+                    existing = on_going_thruster_tests.get(thruster_id)
                     if existing:
                         existing.cancel()
-                    task = asyncio.create_task(test_thruster_task(payload))
-                    on_going_thruster_tests[payload] = task
-                elif msg_type == "cancelTestThruster":
+                    task = asyncio.create_task(test_thruster_task(thruster_id))
+                    on_going_thruster_tests[thruster_id] = task
+                elif msg_type == "cancelThrusterTest":
                     thruster_id = payload
                     task = on_going_thruster_tests.get(thruster_id)
                     if task:
                         task.cancel()
+                elif msg_type == "startRegulatorAutoTuning":
+                    await log("info", "Auto-tuning started")
+                elif msg_type == "cancelRegulatorAutoTuning":
+                    await log("info", "Auto-tuning cancelled")
+                elif msg_type == "runAction1":
+                    await log("info", "Run Action 1 triggered")
+                elif msg_type == "runAction2":
+                    await log("info", "Run Action 2 triggered")
+                elif msg_type == "togglePitchStabilization":
+                    pitch_stabilization = not pitch_stabilization
+                    await log(
+                        "info", f"Pitch stabilization set to {pitch_stabilization}"
+                    )
+                elif msg_type == "toggleRollStabilization":
+                    roll_stabilization = not roll_stabilization
+                    await log("info", f"Roll stabilization set to {roll_stabilization}")
+                elif msg_type == "toggleDepthStabilization":
+                    depth_stabilization = not depth_stabilization
+                    await log(
+                        "info", f"Depth stabilization set to {depth_stabilization}"
+                    )
+                else:
+                    await log(
+                        "warn",
+                        f"Unhandled message type: {msg_type} with payload: {payload}",
+                    )
             except json.JSONDecodeError:
-                await log_firmware("warn", f"Received non-JSON message: {message}")
+                await log("warn", f"Received non-JSON message: {message}")
 
     except websockets.exceptions.ConnectionClosed as e:
         if not shutdown:
-            await log_firmware("info", f"Client disconnected: {e}")
+            await log("info", f"Client disconnected: {e}")
     finally:
         clients.remove(websocket)
+        telemetry_task.cancel()
         status_task.cancel()
-        settings_task.cancel()
 
 
 async def shutdown_server(server):
     global shutdown
     shutdown = True
     if clients:
-        print("Closing client connections...")
+        await log("info", "Closing client connections...")
         await asyncio.gather(*(ws.close() for ws in clients))
-    print("Stopping server...")
+    await log("info", "Stopping server...")
     server.close()
     await server.wait_closed()
 
@@ -294,23 +285,35 @@ async def main():
     shutdown_event = asyncio.Event()
 
     def signal_handler():
-        print("Shutdown signal received")
+        if not clients:
+            print("[info] Shutdown signal received")
+        else:
+            asyncio.create_task(log("info", "Shutdown signal received"))
         shutdown_event.set()
 
     try:
         server = await websockets.serve(handle_client, "127.0.0.1", 9000)
-        print("Test server running on 127.0.0.1:9000")
+        if not clients:
+            print("[info] Test server running on 127.0.0.1:9000")
+        else:
+            await log("info", "Test server running on 127.0.0.1:9000")
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, signal_handler)
         await shutdown_event.wait()
         await shutdown_server(server)
     except Exception as e:
-        print(f"Server error: {e}")
+        if not clients:
+            print(f"[error] Server error: {e}")
+        else:
+            await log("error", f"Server error: {e}")
     finally:
         if server and not shutdown:
             await shutdown_server(server)
-        print("Server shutdown complete")
+        if not clients:
+            print("[info] Server shutdown complete")
+        else:
+            await log("info", "Server shutdown complete")
 
 
 if __name__ == "__main__":
@@ -319,4 +322,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        print("Exiting...")
+        import asyncio
+
+        if not clients:
+            print("[info] Exiting...")
+        else:
+            asyncio.run(log("info", "Exiting..."))
