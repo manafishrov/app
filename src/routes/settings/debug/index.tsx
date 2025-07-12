@@ -42,7 +42,7 @@ function formatLogRecord(log: LogRecord) {
 }
 
 function Debug() {
-  const config = useStore(configStore);
+  const infoLogging = useStore(configStore, (state) => state?.infoLogging);
   const logRef = useRef<LazyLog>(null);
   const [text, setText] = useState('');
 
@@ -96,10 +96,8 @@ function Debug() {
       <div className='mb-4 flex items-center space-x-2'>
         <Switch
           id='info-logs'
-          checked={config?.infoLogging ?? false}
-          onCheckedChange={() =>
-            setConfig({ infoLogging: !config?.infoLogging })
-          }
+          checked={infoLogging ?? false}
+          onCheckedChange={() => setConfig({ infoLogging: !infoLogging })}
         />
         <Label htmlFor='info-logs'>Enable Info level Logging</Label>
       </div>

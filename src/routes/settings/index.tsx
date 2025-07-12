@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
-import { useEffect, useState } from 'react';
 
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { Badge } from '@/components/ui/Badge';
@@ -21,26 +20,31 @@ import {
   setConfig,
 } from '@/stores/config';
 
+async function fetchVersion() {
+  try {
+    return await getVersion();
+  } catch (error) {
+    logWarn('Error fetching app version:', error);
+  }
+}
+
 export const Route = createFileRoute('/settings/')({
   component: General,
+  loader: fetchVersion,
 });
 
 function General() {
-  const config = useStore(configStore);
+  const config = useStore(configStore, (state) =>
+    state
+      ? {
+          videoDirectory: state.videoDirectory,
+          autoUpdate: state.autoUpdate,
+          attitudeIndicator: state.attitudeIndicator,
+        }
+      : null,
+  );
+  const appVersion = Route.useLoaderData();
   const { theme, setTheme } = useTheme();
-  const [appVersion, setAppVersion] = useState<string>('');
-
-  useEffect(() => {
-    async function fetchVersion() {
-      try {
-        const version = await getVersion();
-        setAppVersion(version);
-      } catch (error) {
-        logWarn('Error fetching app version:', error);
-      }
-    }
-    void fetchVersion();
-  }, []);
 
   if (!config) return;
 
