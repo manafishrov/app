@@ -47,6 +47,7 @@ type GamepadBindings = {
 type Config = {
   autoUpdate: boolean;
   attitudeIndicator: AttitudeIndicator;
+  thrusterRpmOverlay: boolean;
   videoDirectory: string;
   ipAddress: string;
   webrtcSignalingApiPort: number;

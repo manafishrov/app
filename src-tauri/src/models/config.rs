@@ -62,6 +62,7 @@ pub struct GamepadBindings {
 pub struct Config {
   pub auto_update: bool,
   pub attitude_indicator: AttitudeIndicator,
+  pub thruster_rpm_overlay: bool,
   pub video_directory: String,
   pub ip_address: String,
   pub webrtc_signaling_api_port: u16,
@@ -94,6 +95,7 @@ impl Default for Config {
     Config {
       auto_update: false,
       attitude_indicator: AttitudeIndicator::Scientific,
+      thruster_rpm_overlay: false,
       video_directory,
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,

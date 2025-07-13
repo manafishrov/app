@@ -3,6 +3,7 @@ import { ConnectionStatusIndicator } from '@/components/overlay/ConnectionStatus
 import { DepthIndicator } from '@/components/overlay/DepthIndicator';
 import { StabilizationIndicator } from '@/components/overlay/StabilizationIndicator';
 import { TemperatureIndicator } from '@/components/overlay/TemperatureIndicator';
+import { ThrusterRpmOverlay } from '@/components/overlay/ThrusterRpmOverlay';
 import { BatteryIndicator } from '@/components/overlay/BatteryIndicator';
 
 function RovOverlay() {
@@ -16,6 +17,9 @@ function RovOverlay() {
       </div>
       <div className='absolute top-1/2 left-2 -translate-y-1/2'>
         <StabilizationIndicator />
+      </div>
+      <div className='absolute top-1/2 right-2 -translate-y-1/2'>
+        <ThrusterRpmOverlay />
       </div>
       <div className='absolute right-2 bottom-2 flex flex-row gap-2'>
         <DepthIndicator />

@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { Switch } from '@/components/ui/Switch';
 import { toast } from '@/components/ui/Toaster';
 
 import { logError, logWarn } from '@/lib/log';
@@ -40,6 +41,7 @@ function General() {
           videoDirectory: state.videoDirectory,
           autoUpdate: state.autoUpdate,
           attitudeIndicator: state.attitudeIndicator,
+          thrusterRpmOverlay: state.thrusterRpmOverlay,
         }
       : null,
   );
@@ -176,6 +178,22 @@ function General() {
                   <Label htmlFor='ai-disabled'>Disabled</Label>
                 </div>
               </RadioGroup>
+            </div>
+            <div>
+              <h4 className='text-lg font-medium'>Thruster RPM Overlay</h4>
+
+              <div className='mt-2 flex items-center gap-2'>
+                <Switch
+                  id='thruster-rpm-overlay'
+                  checked={config.thrusterRpmOverlay ?? false}
+                  onCheckedChange={() =>
+                    setConfig({
+                      thrusterRpmOverlay: !config.thrusterRpmOverlay,
+                    })
+                  }
+                />
+                <Label htmlFor='thruster-rpm-overlay'>Enable overlay</Label>
+              </div>
             </div>
           </div>
         </div>
