@@ -101,7 +101,7 @@ async def handle_client(websocket):
     await websocket.send(json.dumps(firmware_msg))
 
     config_msg = {
-        "type": "configResponse",
+        "type": "config",
         "payload": rov_config,
     }
     await websocket.send(json.dumps(config_msg))
@@ -184,7 +184,7 @@ async def handle_client(websocket):
                 elif msg_type == "getConfig":
                     await log("info", "Sending full ROV config")
                     config_msg = {
-                        "type": "configResponse",
+                        "type": "config",
                         "payload": rov_config,
                     }
                     await websocket.send(json.dumps(config_msg))
