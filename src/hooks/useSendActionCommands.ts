@@ -57,7 +57,7 @@ function useSendActionCommands() {
     ) {
       const last = lastActionStateRef.current;
       if (action === 'record' && isPressed && !last.record) {
-        logInfo('toggle-recording');
+        toast('Coming soon: Recording feature is not yet implemented');
         last.record = true;
       } else if (action === 'record' && !isPressed) {
         last.record = false;
