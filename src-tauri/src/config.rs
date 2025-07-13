@@ -37,7 +37,15 @@ pub fn get_config_from_file() -> Config {
           None,
           None,
         );
-        Config::default()
+        let default_config = Config::default();
+        if let Ok(content) = serde_json::to_string(&default_config) {
+          if let Err(e) = fs::write(&config_path, &content) {
+            log_warn!("Failed to save default config to file: {}", e);
+          }
+        } else {
+          log_warn!("Failed to serialize default config to JSON");
+        }
+        default_config
       }
     },
     Err(e) => {
