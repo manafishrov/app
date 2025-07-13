@@ -11,16 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
-import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-import { logWarn } from '@/lib/log';
-
 import {
+  type Row,
   type ThrusterAllocation,
   rovConfigStore,
   setRovConfig,
@@ -35,7 +33,7 @@ function ThrusterAllocationTable() {
     null,
   );
 
-  if (thrusterAllocation && displayAllocation === null) {
+  if (thrusterAllocation && !displayAllocation) {
     const initialDisplay = thrusterAllocation.map((row) =>
       row.map((cell) => String(cell)),
     );
@@ -72,16 +70,12 @@ function ThrusterAllocationTable() {
     if (!displayAllocation || !thrusterAllocation) return;
 
     let displayValue = value;
-    let numericValue: number;
 
-    if (value === '' || value === '-') {
-      numericValue = NaN;
-    } else {
+    if (value !== '' && value !== '-') {
       const hasMultipleDots = (value.match(/\./g) ?? []).length > 1;
       const hasMisplacedMinus = value.lastIndexOf('-') > 0;
 
       if (hasMultipleDots || hasMisplacedMinus) {
-        numericValue = 0;
         displayValue = '0';
       } else {
         const parts = value.split('.');
@@ -89,13 +83,11 @@ function ThrusterAllocationTable() {
           displayValue = `${parts[0]}.${parts[1].substring(0, 2)}`;
         }
 
-        numericValue = Number.parseFloat(displayValue);
+        const parsedValue = Number.parseFloat(displayValue);
 
-        if (numericValue > 1) {
-          numericValue = 1;
+        if (parsedValue > 1) {
           displayValue = '1';
-        } else if (numericValue < -1) {
-          numericValue = -1;
+        } else if (parsedValue < -1) {
           displayValue = '-1';
         }
       }
@@ -107,21 +99,7 @@ function ThrusterAllocationTable() {
         : row,
     );
     setDisplayAllocation(newDisplayAllocation);
-
-    const newAllocation = thrusterAllocation.map((row, rIndex) => {
-      if (rIndex === rowIndex) {
-        return row.map((cell, cIndex) => {
-          if (cIndex === colIndex) {
-            return numericValue;
-          }
-          return cell;
-        });
-      }
-      return row;
-    }) as ThrusterAllocation;
   }
-
-  if (!thrusterAllocation || !displayAllocation) return;
 
   return (
     <>
@@ -173,7 +151,7 @@ function ThrusterAllocationTable() {
                   <Input
                     className='w-14 text-center'
                     inputMode='numeric'
-                    value={displayAllocation[rowIndex]?.[colIndex] ?? ''}
+                    value={displayAllocation?.[rowIndex]?.[colIndex] ?? ''}
                     onChange={(event) =>
                       handleAllocationChange(
                         rowIndex,
@@ -193,37 +171,20 @@ function ThrusterAllocationTable() {
       <Button
         className='w-40'
         onClick={async () => {
-          let invalidCell: {
-            rowLabel: string;
-            colIndex: number;
-            value: number | null | undefined;
-          } | null = null;
-          for (let r = 0; r < (thrusterAllocation?.length ?? 0); r++) {
-            for (let c = 0; c < (thrusterAllocation?.[r]?.length ?? 0); c++) {
-              const cell = thrusterAllocation?.[r]?.[c];
-              if (cell === undefined || cell === null || isNaN(cell)) {
-                invalidCell = {
-                  rowLabel: rowLabels?.[r] ?? '',
-                  colIndex: c + 1,
-                  value: cell,
-                };
-                break;
-              }
-            }
-            if (invalidCell) break;
-          }
-          if (invalidCell) {
-            logWarn(
-              `Aborting update: Invalid value in "${invalidCell.rowLabel}" row, column #${invalidCell.colIndex}. Value:`,
-              invalidCell.value,
-              thrusterAllocation,
-            );
-            toast.warning(
-              `Invalid thruster allocation value [${invalidCell.rowLabel}, ${invalidCell.colIndex}]`,
-            );
-            return;
-          }
-          await setRovConfig({ thrusterAllocation });
+          if (!displayAllocation) return;
+
+          const newThrusterAllocation = displayAllocation.map(
+            (row: string[]) =>
+              row.map((cell) => {
+                const parsedValue = Number.parseFloat(cell);
+                return Number.isNaN(parsedValue) ? 0 : parsedValue;
+              }) as Row,
+          ) as ThrusterAllocation;
+
+          await setRovConfig({ thrusterAllocation: newThrusterAllocation });
+          setDisplayAllocation(
+            newThrusterAllocation.map((row) => row.map(String)),
+          );
         }}
       >
         Update thrusters

@@ -151,7 +151,7 @@ async def handle_client(websocket):
     status_task = asyncio.create_task(send_status_update())
 
     try:
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
 
         firmware_msg = {
             "type": "firmwareVersion",
