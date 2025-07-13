@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
 
-import { logError, logInfo } from '@/lib/log';
+import { logError } from '@/lib/log';
 
 import { configStore } from '@/stores/config';
 
