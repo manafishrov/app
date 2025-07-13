@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
-import { invoke } from '@tauri-apps/api/core';
 
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -13,27 +12,13 @@ import {
   SelectValue,
 } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
-import { toast } from '@/components/ui/Toaster';
-
-import { useFirmwareVersionListener } from '@/hooks/useFirmwareVersionListener';
-
-import { logError } from '@/lib/log';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
+import { firmwareVersionStore } from '@/stores/firmwareVersion';
 import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
-
-async function requestFirmwareVersion() {
-  try {
-    await invoke('request_firmware_version');
-  } catch (error) {
-    logError('Failed to request firmware version:', error);
-    toast.error('Failed to request firmware version');
-  }
-}
 
 export const Route = createFileRoute('/settings/general/')({
   component: General,
-  loader: requestFirmwareVersion,
 });
 
 function General() {
@@ -48,7 +33,7 @@ function General() {
         }
       : null,
   );
-  const firmwareVersion = useFirmwareVersionListener();
+  const firmwareVersion = useStore(firmwareVersionStore);
 
   return (
     <>

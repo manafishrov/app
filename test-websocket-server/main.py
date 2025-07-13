@@ -94,6 +94,18 @@ async def handle_client(websocket):
     )
     clients.add(websocket)
 
+    firmware_msg = {
+        "type": "firmwareVersion",
+        "payload": "0.6.9",
+    }
+    await websocket.send(json.dumps(firmware_msg))
+
+    config_msg = {
+        "type": "configResponse",
+        "payload": rov_config,
+    }
+    await websocket.send(json.dumps(config_msg))
+
     async def send_telemetry():
         while not shutdown:
             try:
@@ -182,12 +194,6 @@ async def handle_client(websocket):
                     await toast(
                         None, "success", "ROV config set successfully", None, None
                     )
-                elif msg_type == "getFirmwareVersion":
-                    firmware_msg = {
-                        "type": "firmwareVersionResponse",
-                        "payload": "0.6.9",
-                    }
-                    await websocket.send(json.dumps(firmware_msg))
                 elif msg_type == "startThrusterTest":
                     thruster_id = payload
 

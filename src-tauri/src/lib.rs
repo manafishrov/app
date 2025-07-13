@@ -46,8 +46,8 @@ use commands::actions::{
 use commands::config::{get_config, set_config};
 use commands::gamepad::start_gamepad_stream;
 use commands::rov_config::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, request_firmware_version, request_rov_config,
-  set_rov_config, start_regulator_auto_tuning, start_thruster_test,
+  cancel_regulator_auto_tuning, cancel_thruster_test, request_rov_config, set_rov_config,
+  start_regulator_auto_tuning, start_thruster_test,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -100,7 +100,6 @@ pub fn run() {
       start_regulator_auto_tuning,
       cancel_regulator_auto_tuning,
       send_movement_command,
-      request_firmware_version,
       send_action1_command,
       send_action2_command,
       toggle_pitch_stabilization,

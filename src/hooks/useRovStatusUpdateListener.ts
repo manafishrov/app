@@ -10,8 +10,8 @@ function useRovStatusUpdateListener() {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<RovStatus>('rov_status_update', (event) => {
-          rovStatusStore.setState(() => event.payload);
+        unlisten = await listen<RovStatus>('rov_status_update', ({payload}) => {
+          rovStatusStore.setState(() => payload);
         });
       } catch (error) {
         logWarn('Failed to listen to ROV status updates:', error);

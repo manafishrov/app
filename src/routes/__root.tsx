@@ -5,12 +5,14 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/Toaster';
-import { useGamepadListener } from '@/hooks/useGamepadListener';
-import { useToastListener } from '@/hooks/useToastListener';
-import { useLogListener } from '@/hooks/useLogListener';
+
 import { useConnectionStatusListener } from '@/hooks/useConnectionStatusListener';
-import { useRovTelemetryListener } from '@/hooks/useRovTelemetryListener';
+import { useFirmwareVersionListener } from '@/hooks/useFirmwareVersionListener';
+import { useGamepadListener } from '@/hooks/useGamepadListener';
+import { useLogListener } from '@/hooks/useLogListener';
 import { useRovStatusUpdateListener } from '@/hooks/useRovStatusUpdateListener';
+import { useRovTelemetryListener } from '@/hooks/useRovTelemetryListener';
+import { useToastListener } from '@/hooks/useToastListener';
 
 import { getConfig } from '@/stores/config';
 
@@ -28,6 +30,7 @@ function RootComponent() {
   useConnectionStatusListener();
   useRovTelemetryListener();
   useRovStatusUpdateListener();
+  useFirmwareVersionListener();
   return (
     <>
       <ThemeProvider>

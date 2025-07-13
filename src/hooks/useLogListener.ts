@@ -10,8 +10,8 @@ function useLogListener() {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<LogEntry>('log_message', (event) => {
-          void createLogRecord(event.payload);
+        unlisten = await listen<LogEntry>('log_message', ({ payload }) => {
+          void createLogRecord(payload);
         });
       } catch (error) {
         logError('Failed to listen to log messages:', error);

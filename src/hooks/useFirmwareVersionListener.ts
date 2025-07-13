@@ -1,21 +1,22 @@
 import { listen } from '@tauri-apps/api/event';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
-function useFirmwareVersionListener() {
-  const [firmwareVersion, setFirmwareVersion] = useState<string | null>(null);
+import { firmwareVersionStore } from '@/stores/firmwareVersion';
 
+function useFirmwareVersionListener() {
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+
     void (async () => {
       try {
         unlisten = await listen<string>(
-          'firmware_version_retrieved',
-          (event) => {
-            setFirmwareVersion(event.payload);
+          'firmware_version_recieved',
+          ({ payload }) => {
+            firmwareVersionStore.setState(() => payload);
           },
         );
       } catch (error) {
@@ -27,8 +28,6 @@ function useFirmwareVersionListener() {
       if (unlisten) unlisten();
     };
   }, []);
-
-  return firmwareVersion;
 }
 
 export { useFirmwareVersionListener };

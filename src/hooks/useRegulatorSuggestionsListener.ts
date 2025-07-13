@@ -20,8 +20,8 @@ function useRegulatorSuggestionsListener() {
       try {
         unlisten = await listen<RegulatorSuggestions>(
           'regulator_suggestions_received',
-          (event) => {
-            setSuggestions(event.payload);
+          ({payload}) => {
+            setSuggestions(payload);
           },
         );
       } catch (error) {

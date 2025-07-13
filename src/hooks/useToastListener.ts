@@ -30,7 +30,7 @@ function useToastListener() {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<Toast>('show_toast', (event) => {
+        unlisten = await listen<Toast>('show_toast', ({ payload }) => {
           const typeMethodMap = {
             success: toast.success,
             info: toast.info,
@@ -84,7 +84,7 @@ function useToastListener() {
             };
           }
 
-          const { id, toastType = 'message', message } = event.payload;
+          const { id, toastType = 'message', message } = payload;
           const toastMethod =
             typeMethodMap[toastType as keyof typeof typeMethodMap] ||
             toast.message;
@@ -106,7 +106,7 @@ function useToastListener() {
             activeLoadingToasts.set(id, timeout);
           }
 
-          toastMethod(message, getToastOptions(event.payload));
+          toastMethod(message, getToastOptions(payload));
         });
       } catch (error) {
         logError('Failed to listen to toast messages:', error);

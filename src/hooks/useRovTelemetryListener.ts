@@ -10,8 +10,8 @@ function useRovTelemetryListener() {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<RovTelemetry>('rov_telemetry', (event) => {
-          rovTelemetryStore.setState(() => event.payload);
+        unlisten = await listen<RovTelemetry>('rov_telemetry', ({payload}) => {
+          rovTelemetryStore.setState(() => payload);
         });
       } catch (error) {
         logWarn('Failed to listen to ROV telemetry:', error);

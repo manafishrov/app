@@ -71,14 +71,3 @@ pub async fn handle_cancel_regulator_auto_tuning(
   }
   Ok(())
 }
-
-pub async fn handle_request_firmware_version(
-  state: &State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  let message = WebsocketMessage::GetFirmwareVersion;
-  if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send GetFirmwareVersion: {}", e);
-    return Err(e.to_string());
-  }
-  Ok(())
-}

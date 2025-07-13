@@ -5,6 +5,8 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
+import { connectionStatusStore } from '@/stores/connectionStatus';
+
 type Row = [number, number, number, number, number, number, number, number];
 
 type ThrusterPinSetup = {
@@ -55,6 +57,8 @@ type RovConfig = {
 const rovConfigStore = new Store<RovConfig | null>(null);
 
 async function requestRovConfig() {
+  if (!connectionStatusStore.state.isConnected) return;
+
   try {
     await invoke('request_rov_config');
   } catch (error) {

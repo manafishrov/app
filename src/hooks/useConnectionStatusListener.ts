@@ -15,8 +15,8 @@ function useConnectionStatusListener() {
       try {
         unlisten = await listen<ConnectionStatus>(
           'rov_connection_status_updated',
-          (event) => {
-            connectionStatusStore.setState(() => event.payload);
+          ({ payload }) => {
+            connectionStatusStore.setState(() => payload);
           },
         );
       } catch (error) {
