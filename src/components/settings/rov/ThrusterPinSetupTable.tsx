@@ -1,8 +1,8 @@
 import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
-import { FanIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
+import { ThrusterRpm } from '@/components/composites/ThrusterRpm';
 import { Button } from '@/components/ui/Button';
 import {
   Select,
@@ -25,13 +25,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
+
 import { logError } from '@/lib/log';
+
 import { type Row, rovConfigStore, setRovConfig } from '@/stores/rovConfig';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-const THRUSTER_POLE_PAIRS = 6;
-
-function ThrusterPinSetupTableForm() {
+function ThrusterPinSetupTable() {
   const thrusterPinSetup = useStore(
     rovConfigStore,
     (state) => state?.thrusterPinSetup,
@@ -41,32 +41,33 @@ function ThrusterPinSetupTableForm() {
     (state) => state?.thrusterErpms,
   );
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
-
-  const [identifiers, setIdentifiers] = useState<Row>(
-    thrusterPinSetup?.identifiers ?? [1, 2, 3, 4, 5, 6, 7, 8],
-  );
-  const [spinDirections, setSpinDirections] = useState<Row>(
-    thrusterPinSetup?.spinDirections ?? [1, 1, 1, 1, 1, 1, 1, 1],
-  );
   const [testDisabled, setTestDisabled] = useState<boolean[]>(
     Array(pinNumbers.length).fill(false),
   );
 
-  useEffect(() => {
-    if (thrusterPinSetup) {
-      setIdentifiers(thrusterPinSetup.identifiers);
-      setSpinDirections(thrusterPinSetup.spinDirections);
-    }
-  }, [thrusterPinSetup]);
+  async function handleIdentifierChange(index: number, value: number) {
+    if (!thrusterPinSetup) return;
 
-  const handleConfigChange = async (newValues: {
-    identifiers: Row;
-    spinDirections: Row;
-  }) => {
-    await setRovConfig({
-      thrusterPinSetup: newValues,
-    });
-  };
+    const newIdentifiers = [...thrusterPinSetup.identifiers];
+    newIdentifiers[index] = value;
+    const newThrusterPinSetup = {
+      ...thrusterPinSetup,
+      identifiers: newIdentifiers as Row,
+    };
+    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
+  }
+
+  async function handleSpinDirectionChange(index: number, value: number) {
+    if (!thrusterPinSetup) return;
+
+    const newSpinDirections = [...thrusterPinSetup.spinDirections];
+    newSpinDirections[index] = value;
+    const newThrusterPinSetup = {
+      ...thrusterPinSetup,
+      spinDirections: newSpinDirections as Row,
+    };
+    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
+  }
 
   async function testThruster(identifier: number, index: number) {
     setTestDisabled((prev: boolean[]): boolean[] => {
@@ -169,16 +170,10 @@ function ThrusterPinSetupTableForm() {
                 <TableCell className='text-center'>GP{pin}</TableCell>
                 <TableCell>
                   <Select
-                    value={String(identifiers[index])}
-                    onValueChange={(value) => {
-                      const newIdentifiers = [...identifiers] as Row;
-                      newIdentifiers[index] = Number(value);
-                      setIdentifiers(newIdentifiers);
-                      void handleConfigChange({
-                        identifiers: newIdentifiers,
-                        spinDirections,
-                      });
-                    }}
+                    value={String(thrusterPinSetup.identifiers[index])}
+                    onValueChange={(value) =>
+                      void handleIdentifierChange(index, Number(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -197,16 +192,10 @@ function ThrusterPinSetupTableForm() {
                 </TableCell>
                 <TableCell>
                   <Select
-                    value={String(spinDirections[index])}
-                    onValueChange={(value) => {
-                      const newSpinDirections = [...spinDirections] as Row;
-                      newSpinDirections[index] = Number(value);
-                      setSpinDirections(newSpinDirections);
-                      void handleConfigChange({
-                        identifiers,
-                        spinDirections: newSpinDirections,
-                      });
-                    }}
+                    value={String(thrusterPinSetup.spinDirections[index])}
+                    onValueChange={(value) =>
+                      void handleSpinDirectionChange(index, Number(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -226,9 +215,11 @@ function ThrusterPinSetupTableForm() {
                       (thrusterErpms[index] ?? 0) !== 0
                     }
                     onClick={async () => {
-                      const identifier = identifiers[index];
-                      if (identifier) {
-                        await testThruster(identifier, index);
+                      if (thrusterPinSetup?.identifiers[index]) {
+                        await testThruster(
+                          thrusterPinSetup.identifiers[index],
+                          index,
+                        );
                       }
                     }}
                   >
@@ -236,22 +227,7 @@ function ThrusterPinSetupTableForm() {
                   </Button>
                 </TableCell>
                 <TableCell className='flex items-center gap-2'>
-                  <FanIcon
-                    className={(
-                      (thrusterErpms[index] ?? 0) > 0 ? 'animate-spin' : ''
-                    ).toString()}
-                    style={{
-                      animationDuration: `${
-                        (thrusterErpms[index] ?? 0) > 0
-                          ? 60_000 /
-                            ((thrusterErpms[index] ?? 0) /
-                              THRUSTER_POLE_PAIRS /
-                              60)
-                          : 0
-                      }ms`,
-                    }}
-                  />
-                  {Math.round((thrusterErpms[index] ?? 0) / 6)}
+                  <ThrusterRpm erpm={thrusterErpms[index] ?? 0} />
                 </TableCell>
               </TableRow>
             ))}
@@ -262,4 +238,4 @@ function ThrusterPinSetupTableForm() {
   );
 }
 
-export { ThrusterPinSetupTableForm };
+export { ThrusterPinSetupTable };
