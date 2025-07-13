@@ -13,7 +13,7 @@ function Link({
   VariantProps<typeof buttonVariants>) {
   return (
     <Button className={className} variant={variant} size={size} asChild>
-      <LinkPrimitive {...props} />
+      <LinkPrimitive preload={false} {...props} />
     </Button>
   );
 }

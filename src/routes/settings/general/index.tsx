@@ -63,8 +63,7 @@ function General() {
           <div>
             <h4 className='text-lg font-medium'>Fluid type</h4>
             <p className='text-muted-foreground text-sm'>
-              Set correctfluidtype to get accurate pressure and temperature
-              readings.
+              Set correct fluid type to get accurate water pressure readings.
             </p>
             <div className='mt-2 flex items-center gap-3'>
               <Select
