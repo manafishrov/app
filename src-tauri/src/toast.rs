@@ -65,7 +65,7 @@ pub fn toast_loading(
   toast_message(id, Some(ToastType::Loading), message, description, cancel);
 }
 
-pub fn toast_message(
+fn toast_message(
   id: Option<String>,
   toast_type: Option<ToastType>,
   message: String,
