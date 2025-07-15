@@ -21,10 +21,15 @@ pub struct MessageSendChannelState {
   pub tx: mpsc::Sender<WebsocketMessage>,
 }
 
+pub struct MovementCommandSendChannelState {
+  pub tx: mpsc::Sender<WebsocketMessage>,
+}
+
 pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
   mut message_rx: Receiver<WebsocketMessage>,
+  mut movement_rx: Receiver<WebsocketMessage>,
 ) {
   let mut config = get_config_from_file();
 
@@ -111,6 +116,21 @@ pub async fn start_websocket_client(
               if let Err(e) = write.send(Message::Text(message_text.into())).await {
                   log_warn!("Websocket send error: {}. Reconnecting...", e);
                       app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
+                  break;
+              }
+          }
+          Some(movement_message) = movement_rx.recv() => {
+              let message_text = match serde_json::to_string(&movement_message) {
+                  Ok(text) => text,
+                  Err(e) => {
+                      log_warn!("Failed to serialize movement message: {}", e);
+                      continue;
+                  }
+              };
+
+              if let Err(e) = write.send(Message::Text(message_text.into())).await {
+                  log_warn!("Websocket send error (movement): {}. Reconnecting...", e);
+                  app.emit("rov_connection_status_updated", ConnectionStatus { is_connected: false, delay: None }).unwrap();
                   break;
               }
           }

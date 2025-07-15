@@ -1,10 +1,10 @@
 use crate::log_error;
 use crate::models::actions::RovMovementCommand;
-use crate::websocket::{client::MessageSendChannelState, message::WebsocketMessage};
+use crate::websocket::{client::{MessageSendChannelState, MovementCommandSendChannelState}, message::WebsocketMessage};
 use tauri::State;
 
 pub async fn handle_send_movement_command(
-  state: &State<'_, MessageSendChannelState>,
+  state: &State<'_, MovementCommandSendChannelState>,
   payload: RovMovementCommand,
 ) -> Result<(), String> {
   let message = WebsocketMessage::MovementCommand(payload);

@@ -57,8 +57,9 @@ use tauri::{generate_handler, App, Builder, Manager};
 use toast::toast_init;
 use tokio::sync::mpsc::channel;
 use updater::update_app;
-use websocket::client::{start_websocket_client, MessageSendChannelState};
+use websocket::client::{start_websocket_client, MessageSendChannelState, MovementCommandSendChannelState};
 use websocket::message::WebsocketMessage;
+use models::actions::RovMovementCommand;
 
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let log_handle = app.app_handle().clone();
@@ -77,8 +78,10 @@ fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   app.manage(ConfigSendChannelState { tx: config_tx });
   let (message_tx, message_rx) = channel::<WebsocketMessage>(1);
   app.manage(MessageSendChannelState { tx: message_tx });
+  let (movement_tx, movement_rx) = channel::<WebsocketMessage>(8);
+  app.manage(MovementCommandSendChannelState { tx: movement_tx });
   spawn(async move {
-    start_websocket_client(websocket_handle, config_rx, message_rx).await;
+    start_websocket_client(websocket_handle, config_rx, message_rx, movement_rx).await;
   });
 
   Ok(())
