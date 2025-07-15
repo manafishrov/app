@@ -1,3 +1,4 @@
+use crate::log_error;
 use crate::models::toast::{Cancel, Toast, ToastType};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
@@ -85,6 +86,6 @@ pub fn toast_message(
       )
       .unwrap();
   } else {
-    eprintln!("ERROR: {}", message);
+    log_error!("Toast system not initialized. Cannot send toast message.");
   }
 }
