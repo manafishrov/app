@@ -71,7 +71,7 @@ function ConnectionSettingsForm() {
         <form.AppField name='ipAddress'>
           {(field) => (
             <field.TextField
-              label='IP address'
+              label='IP Address'
               placeholder='10.10.10.10'
               description='The IP address of your Manafish.'
             />
@@ -80,7 +80,7 @@ function ConnectionSettingsForm() {
         <form.AppField name='webrtcSignalingApiPort'>
           {(field) => (
             <field.NumberField
-              label='WebRTC signaling API port'
+              label='WebRTC Signaling API Port'
               placeholder='1984'
               description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
             />
@@ -89,7 +89,7 @@ function ConnectionSettingsForm() {
         <form.AppField name='webrtcSignalingApiPath'>
           {(field) => (
             <field.TextField
-              label='WebRTC signaling API path'
+              label='WebRTC Signaling API Path'
               placeholder='/api/webrtc?src=cam'
               description='The path for the WebRTC signaling API.'
             />
@@ -98,7 +98,7 @@ function ConnectionSettingsForm() {
         <form.AppField name='webSocketPort'>
           {(field) => (
             <field.NumberField
-              label='WebSocket port'
+              label='WebSocket Port'
               placeholder='5000'
               description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
             />

@@ -97,7 +97,7 @@ function ThrusterPinSetupTable() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          Thruster pin setup
+          Thruster Pin Setup
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this table to configure each thruster connected to your ROV. For

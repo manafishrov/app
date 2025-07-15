@@ -97,7 +97,7 @@ function PidForm() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          PID (Proportional-Integral-Derivative) controller
+          PID (Proportional-Integral-Derivative) Controller
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this page to fine-tune how your ROV responds to movement commands.

@@ -105,7 +105,7 @@ function ThrusterAllocationTable() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          Thruster allocation
+          Thruster Allocation
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this matrix to control how each thruster responds to different
@@ -187,7 +187,7 @@ function ThrusterAllocationTable() {
           );
         }}
       >
-        Update thrusters
+        Update Thrusters
       </Button>
     </>
   );
