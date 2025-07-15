@@ -180,7 +180,7 @@ function ThrusterPinSetupTable() {
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 8 }, (_, i) => ({
-                        value: String(i + 1),
+                        value: String(i),
                         label: String(i + 1),
                       })).map((option) => (
                         <SelectItem key={option.value} value={option.value}>
