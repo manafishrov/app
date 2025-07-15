@@ -2,7 +2,7 @@
   "name": "manafish",
   "description": "An app for controlling the Manafish ROV",
   "private": true,
-  "version": "0.1.5",
+  "version": "1.0.0",
   "type": "module",
   "license": "AGPL-3.0-or-later",
   "scripts": {
