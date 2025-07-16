@@ -215,7 +215,10 @@ function ThrusterPinSetupTable() {
                       (thrusterErpms[index] ?? 0) !== 0
                     }
                     onClick={async () => {
-                      if (thrusterPinSetup?.identifiers[index]) {
+                      if (
+                        thrusterPinSetup?.identifiers[index] !== undefined &&
+                        thrusterPinSetup?.identifiers[index] !== null
+                      ) {
                         await testThruster(
                           thrusterPinSetup.identifiers[index],
                           index,
