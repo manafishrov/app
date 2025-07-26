@@ -18,8 +18,6 @@ type KeyboardBindings = {
   yawRight: string;
   rollLeft: string;
   rollRight: string;
-  action1: string;
-  action2: string;
   stabilizePitch: string;
   stabilizeRoll: string;
   stabilizeDepth: string;
@@ -36,8 +34,6 @@ type GamepadBindings = {
   pitchYaw: ControlSource;
   rollLeft: string;
   rollRight: string;
-  action1: string;
-  action2: string;
   stabilizePitch: string;
   stabilizeRoll: string;
   stabilizeDepth: string;

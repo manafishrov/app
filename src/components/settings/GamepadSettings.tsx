@@ -13,11 +13,9 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   pitchYaw: 'rightStick',
   rollLeft: '4',
   rollRight: '5',
-  action1: '0',
-  action2: '1',
-  stabilizePitch: '12',
-  stabilizeRoll: '15',
-  stabilizeDepth: '13',
+  stabilizePitch: '0',
+  stabilizeRoll: '0',
+  stabilizeDepth: '1',
   record: '9',
 };
 
@@ -161,18 +159,6 @@ function GamepadSettings() {
         </div>
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
-          <GamepadBindInput
-            label='Action 1'
-            bind={gamepad.action1}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1}
-            onBindChange={(newBind) => handleBindingChange('action1', newBind)}
-          />
-          <GamepadBindInput
-            label='Action 2'
-            bind={gamepad.action2}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2}
-            onBindChange={(newBind) => handleBindingChange('action2', newBind)}
-          />
           <GamepadBindInput
             label='Record'
             bind={gamepad.record}

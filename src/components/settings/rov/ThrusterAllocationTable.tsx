@@ -58,8 +58,8 @@ function ThrusterAllocationTable() {
     'Contribution of each thruster to pitching (tilting forward/backward) movement.',
     'Contribution of each thruster to yawing (turning left/right) movement.',
     'Contribution of each thruster to rolling (tilting side to side) movement.',
-    'Contribution of each thruster to the first custom action.',
-    'Contribution of each thruster to the second custom action.',
+    'Contribution of each thruster to for action 1.',
+    'Contribution of each thruster to for action 2.',
   ];
 
   function handleAllocationChange(

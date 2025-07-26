@@ -13,8 +13,6 @@ function useSendActionCommands() {
   const pressedKeys = useRef(new Set<string>());
   const lastActionStateRef = useRef({
     record: false,
-    action1: false,
-    action2: false,
     stabilizeDepth: false,
     stabilizePitch: false,
     stabilizeRoll: false,
@@ -44,8 +42,6 @@ function useSendActionCommands() {
     let raf: number;
     const actions = [
       'record',
-      'action1',
-      'action2',
       'stabilizeDepth',
       'stabilizePitch',
       'stabilizeRoll',
@@ -94,28 +90,6 @@ function useSendActionCommands() {
         last.stabilizeRoll = true;
       } else if (action === 'stabilizeRoll' && !isPressed) {
         last.stabilizeRoll = false;
-      }
-      if (action === 'action1' && isPressed && !last.action1) {
-        try {
-          await invoke('send_action1_command');
-        } catch (error) {
-          logError('Failed to send action1 command:', error);
-          toast.error('Failed to send action1 command');
-        }
-        last.action1 = true;
-      } else if (action === 'action1' && !isPressed) {
-        last.action1 = false;
-      }
-      if (action === 'action2' && isPressed && !last.action2) {
-        try {
-          await invoke('send_action2_command');
-        } catch (error) {
-          logError('Failed to send action2 command:', error);
-          toast.error('Failed to send action2 command');
-        }
-        last.action2 = true;
-      } else if (action === 'action2' && !isPressed) {
-        last.action2 = false;
       }
     }
 

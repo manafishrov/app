@@ -17,11 +17,9 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   yawRight: 'KeyL',
   rollLeft: 'KeyQ',
   rollRight: 'KeyE',
-  action1: 'KeyU',
-  action2: 'KeyO',
-  stabilizePitch: 'Digit1',
-  stabilizeRoll: 'Digit2',
-  stabilizeDepth: 'Digit3',
+  stabilizePitch: 'KeyU',
+  stabilizeRoll: 'KeyU',
+  stabilizeDepth: 'KeyO',
   record: 'KeyR',
 };
 
@@ -171,18 +169,6 @@ function KeyboardSettings() {
         </div>
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
-          <KeyboardBindInput
-            label='Action 1'
-            bind={keyboard.action1}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action1}
-            onBindChange={(newBind) => handleBindingChange('action1', newBind)}
-          />
-          <KeyboardBindInput
-            label='Action 2'
-            bind={keyboard.action2}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2}
-            onBindChange={(newBind) => handleBindingChange('action2', newBind)}
-          />
           <KeyboardBindInput
             label='Record'
             bind={keyboard.record}
