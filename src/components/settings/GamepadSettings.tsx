@@ -13,9 +13,13 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   pitchYaw: 'rightStick',
   rollLeft: '4',
   rollRight: '5',
-  stabilizePitch: '0',
-  stabilizeRoll: '0',
-  stabilizeDepth: '1',
+  action1Positive: '0',
+  action1Negative: '1',
+  action2Positive: '2',
+  action2Negative: '3',
+  stabilizePitch: '12',
+  stabilizeRoll: '12',
+  stabilizeDepth: '13',
   record: '9',
 };
 
@@ -159,6 +163,38 @@ function GamepadSettings() {
         </div>
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
+          <GamepadBindInput
+            label='Action 1 Positive'
+            bind={gamepad.action1Positive}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1Positive}
+            onBindChange={(newBind) =>
+              handleBindingChange('action1Positive', newBind)
+            }
+          />
+          <GamepadBindInput
+            label='Action 1 Negative'
+            bind={gamepad.action1Negative}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
+            onBindChange={(newBind) =>
+              handleBindingChange('action1Negative', newBind)
+            }
+          />
+          <GamepadBindInput
+            label='Action 2 Positive'
+            bind={gamepad.action2Positive}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Positive}
+            onBindChange={(newBind) =>
+              handleBindingChange('action2Positive', newBind)
+            }
+          />
+          <GamepadBindInput
+            label='Action 2 Negative'
+            bind={gamepad.action2Negative}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
+            onBindChange={(newBind) =>
+              handleBindingChange('action2Negative', newBind)
+            }
+          />
           <GamepadBindInput
             label='Record'
             bind={gamepad.record}

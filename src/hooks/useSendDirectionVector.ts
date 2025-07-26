@@ -23,7 +23,7 @@ function useSendDirectionVector() {
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
 
-  const getKeyboardInputCommand = useCallback((): DirectionVector => {
+  const getKeyboardInput = useCallback((): DirectionVector => {
     if (!config) return [...EMPTY_INPUT];
 
     const input: DirectionVector = [...EMPTY_INPUT];
@@ -51,7 +51,7 @@ function useSendDirectionVector() {
     return input;
   }, [config]);
 
-  const getGamepadInputCommand = useCallback((): DirectionVector => {
+  const getGamepadInput = useCallback((): DirectionVector => {
     if (!config) return [...EMPTY_INPUT];
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return [...EMPTY_INPUT];
@@ -134,10 +134,7 @@ function useSendDirectionVector() {
     return input.map(clamp) as DirectionVector;
   }, [config]);
 
-  function mergeInputCommands(
-    keyboard: DirectionVector,
-    gamepad: DirectionVector,
-  ) {
+  function mergeInput(keyboard: DirectionVector, gamepad: DirectionVector) {
     return keyboard.map((k, i) =>
       clamp(k + (gamepad[i] ?? 0)),
     ) as DirectionVector;
@@ -187,14 +184,11 @@ function useSendDirectionVector() {
 
   useEffect(() => {
     function sendLoop() {
-      const keyboardInputCommand = getKeyboardInputCommand();
-      const gamepadInputCommand = getGamepadInputCommand();
-      const mergedInputCommand = mergeInputCommands(
-        keyboardInputCommand,
-        gamepadInputCommand,
-      );
+      const keyboardInput = getKeyboardInput();
+      const gamepadInput = getGamepadInput();
+      const mergedInput = mergeInput(keyboardInput, gamepadInput);
 
-      void sendDirectionVector(mergedInputCommand);
+      void sendDirectionVector(mergedInput);
       animationFrameRef.current = requestAnimationFrame(sendLoop);
     }
 
@@ -207,7 +201,7 @@ function useSendDirectionVector() {
       void sendDirectionVector(EMPTY_INPUT);
       directionVectorStore.setState(() => EMPTY_INPUT);
     };
-  }, [config, getKeyboardInputCommand, getGamepadInputCommand]);
+  }, [config, getKeyboardInput, getGamepadInput]);
 }
 
 export { useSendDirectionVector };

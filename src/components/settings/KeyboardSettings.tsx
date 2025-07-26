@@ -17,6 +17,10 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   yawRight: 'KeyL',
   rollLeft: 'KeyQ',
   rollRight: 'KeyE',
+  action1Positive: 'Digit1',
+  action1Negative: 'Digit2',
+  action2Positive: 'Digit3',
+  action2Negative: 'Digit4',
   stabilizePitch: 'KeyU',
   stabilizeRoll: 'KeyU',
   stabilizeDepth: 'KeyO',
@@ -169,6 +173,38 @@ function KeyboardSettings() {
         </div>
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
+          <KeyboardBindInput
+            label='Action 1 Positive'
+            bind={keyboard.action1Positive}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action1Positive}
+            onBindChange={(newBind) =>
+              handleBindingChange('action1Positive', newBind)
+            }
+          />
+          <KeyboardBindInput
+            label='Action 1 Negative'
+            bind={keyboard.action1Negative}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
+            onBindChange={(newBind) =>
+              handleBindingChange('action1Negative', newBind)
+            }
+          />
+          <KeyboardBindInput
+            label='Action 2 Positive'
+            bind={keyboard.action2Positive}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Positive}
+            onBindChange={(newBind) =>
+              handleBindingChange('action2Positive', newBind)
+            }
+          />
+          <KeyboardBindInput
+            label='Action 2 Negative'
+            bind={keyboard.action2Negative}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
+            onBindChange={(newBind) =>
+              handleBindingChange('action2Negative', newBind)
+            }
+          />
           <KeyboardBindInput
             label='Record'
             bind={keyboard.record}
