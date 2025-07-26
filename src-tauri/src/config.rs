@@ -27,8 +27,13 @@ pub fn get_config_from_file() -> Config {
     Ok(content) => match serde_json::from_str(&content) {
       Ok(config) => config,
       Err(e) => {
-        if let Err(delete_err) = fs::remove_file(&config_path) {
-          log_warn!("Failed to delete corrupted config: {}", delete_err);
+        match fs::remove_file(&config_path) {
+          Ok(_) => {
+            log_warn!("Deleted corrupted config file.");
+          }
+          Err(delete_err) => {
+            log_warn!("Failed to delete corrupted config: {}", delete_err);
+          }
         }
         log_warn!("Failed to parse config: {}. Using default config.", e);
         toast_warn(
@@ -38,12 +43,15 @@ pub fn get_config_from_file() -> Config {
           None,
         );
         let default_config = Config::default();
-        if let Ok(content) = serde_json::to_string(&default_config) {
-          if let Err(e) = fs::write(&config_path, &content) {
-            log_warn!("Failed to save default config to file: {}", e);
+        match serde_json::to_string(&default_config) {
+          Ok(content) => {
+            if let Err(e) = fs::write(&config_path, &content) {
+              log_warn!("Failed to save default config to file: {}", e);
+            }
           }
-        } else {
-          log_warn!("Failed to serialize default config to JSON");
+          Err(e) => {
+            log_warn!("Failed to serialize default config to JSON: {}", e);
+          }
         }
         default_config
       }
