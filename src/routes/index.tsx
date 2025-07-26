@@ -5,8 +5,8 @@ import { VideoStream } from '@/components/VideoStream';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { SettingsButton } from '@/components/settings/SettingsButton';
 
-import { useSendActionCommands } from '@/hooks/useSendActionCommands';
 import { useSendDirectionVector } from '@/hooks/useSendDirectionVector';
+import { useSendStateUpdates } from '@/hooks/useSendStateUpdates';
 
 import { cx } from '@/lib/utils';
 
@@ -16,7 +16,7 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   useSendDirectionVector();
-  useSendActionCommands();
+  useSendStateUpdates();
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
