@@ -47,6 +47,12 @@ function useSendDirectionVector() {
     input[5] =
       (keys.has(config.keyboard.rollRight) ? 1 : 0) +
       (keys.has(config.keyboard.rollLeft) ? -1 : 0);
+    input[6] =
+      (keys.has(config.keyboard.action1Positive) ? 1 : 0) +
+      (keys.has(config.keyboard.action1Negative) ? -1 : 0);
+    input[7] =
+      (keys.has(config.keyboard.action2Positive) ? 1 : 0) +
+      (keys.has(config.keyboard.action2Negative) ? -1 : 0);
 
     return input;
   }, [config]);
@@ -130,6 +136,18 @@ function useSendDirectionVector() {
     input[5] =
       (gamepad.buttons[rollRightButton]?.value ?? 0) +
       -(gamepad.buttons[rollLeftButton]?.value ?? 0);
+
+    const action1PositiveButton = parseInt(config.gamepad.action1Positive);
+    const action1NegativeButton = parseInt(config.gamepad.action1Negative);
+    input[6] =
+      (gamepad.buttons[action1PositiveButton]?.value ?? 0) +
+      -(gamepad.buttons[action1NegativeButton]?.value ?? 0);
+
+    const action2PositiveButton = parseInt(config.gamepad.action2Positive);
+    const action2NegativeButton = parseInt(config.gamepad.action2Negative);
+    input[7] =
+      (gamepad.buttons[action2PositiveButton]?.value ?? 0) +
+      -(gamepad.buttons[action2NegativeButton]?.value ?? 0);
 
     return input.map(clamp) as DirectionVector;
   }, [config]);
