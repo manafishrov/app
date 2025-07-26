@@ -100,10 +100,10 @@ function PidForm() {
           PID (Proportional-Integral-Derivative) Controller
         </h3>
         <p className='text-muted-foreground text-sm'>
-          Use this page to fine-tune how your ROV responds to movement commands.
-          Adjust the Kp, Ki, and Kd values for pitch, roll, and depth to control
-          how strongly and smoothly the ROV corrects its position. Enter your
-          own values or run auto-tuning when the ROV is in still water to
+          Use this page to fine-tune how your ROV stabilizes itself. Adjust the
+          Kp, Ki, and Kd values for pitch, roll, and depth to control how
+          strongly and smoothly the ROV corrects its position. Enter your own
+          values or run auto-tuning when the ROV is in still water to
           automatically determine sane defaults.
         </p>
       </div>
@@ -239,7 +239,7 @@ function PidForm() {
           <div>
             <h4 className='text-lg font-medium'>Depth</h4>
             <p className='text-muted-foreground mb-2 text-xs'>
-              Controls vertical movement.
+              Controls vertical position hold.
             </p>
             <div className='space-y-4'>
               <form.AppField name='depth.kp'>

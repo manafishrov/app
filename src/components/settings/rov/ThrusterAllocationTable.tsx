@@ -52,14 +52,14 @@ function ThrusterAllocationTable() {
   ];
 
   const rowLabelTooltips = [
-    'Contribution of each thruster to horizontal (forward/backward) movement.',
-    'Contribution of each thruster to strafing (sideways) movement.',
-    'Contribution of each thruster to vertical (ascent/descent) movement.',
-    'Contribution of each thruster to pitching (tilting forward/backward) movement.',
-    'Contribution of each thruster to yawing (turning left/right) movement.',
-    'Contribution of each thruster to rolling (tilting side to side) movement.',
-    'Contribution of each thruster to for action 1.',
-    'Contribution of each thruster to for action 2.',
+    'Contribution of each thruster to horizontal (forward/backward) input.',
+    'Contribution of each thruster to strafing (sideways) input.',
+    'Contribution of each thruster to vertical (ascent/descent) input.',
+    'Contribution of each thruster to pitching (tilting forward/backward) input.',
+    'Contribution of each thruster to yawing (turning left/right) input.',
+    'Contribution of each thruster to rolling (tilting side to side) input.',
+    'Contribution of each thruster for action 1.',
+    'Contribution of each thruster for action 2.',
   ];
 
   function handleAllocationChange(
@@ -109,10 +109,10 @@ function ThrusterAllocationTable() {
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this matrix to control how each thruster responds to different
-          movement commands. For each action, assign a value between -1 and 1 to
-          specify the amount of thrust each thruster should provide: positive
-          values produce forward thrust, negative values produce reverse thrust,
-          and 0 disables the thruster for that action.
+          movement input. Assign a value between -1 and 1 to specify the amount
+          of thrust each thruster should provide: positive values produce
+          forward thrust, negative values produce reverse thrust, and 0 disables
+          the thruster for that action.
         </p>
       </div>
       <Table className='border'>

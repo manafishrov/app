@@ -8,25 +8,25 @@ import { logError } from '@/lib/log';
 
 import { type ControlSource, configStore } from '@/stores/config';
 import {
-  type MovementCommand,
-  movementCommandStore,
-} from '@/stores/movementCommandStore';
+  type DirectionVector,
+  directionVectorStore,
+} from '@/stores/directionVector';
 
-const EMPTY_INPUT: MovementCommand = [0, 0, 0, 0, 0, 0];
+const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
 
 function clamp(value: number) {
   return Math.max(-1, Math.min(1, value));
 }
 
-function useSendMovementCommand() {
+function useSendDirectionVector() {
   const config = useStore(configStore);
   const pressedKeys = useRef(new Set<string>());
   const animationFrameRef = useRef<number | undefined>(undefined);
 
-  const getKeyboardInputCommand = useCallback((): MovementCommand => {
+  const getKeyboardInputCommand = useCallback((): DirectionVector => {
     if (!config) return [...EMPTY_INPUT];
 
-    const input: MovementCommand = [...EMPTY_INPUT];
+    const input: DirectionVector = [...EMPTY_INPUT];
     const keys = pressedKeys.current;
 
     input[0] =
@@ -51,12 +51,12 @@ function useSendMovementCommand() {
     return input;
   }, [config]);
 
-  const getGamepadInputCommand = useCallback((): MovementCommand => {
+  const getGamepadInputCommand = useCallback((): DirectionVector => {
     if (!config) return [...EMPTY_INPUT];
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return [...EMPTY_INPUT];
 
-    const input: MovementCommand = [...EMPTY_INPUT];
+    const input: DirectionVector = [...EMPTY_INPUT];
 
     const handleMoveHorizontal = (source: ControlSource) => {
       switch (source) {
@@ -131,30 +131,30 @@ function useSendMovementCommand() {
       (gamepad.buttons[rollRightButton]?.value ?? 0) +
       -(gamepad.buttons[rollLeftButton]?.value ?? 0);
 
-    return input.map(clamp) as MovementCommand;
+    return input.map(clamp) as DirectionVector;
   }, [config]);
 
   function mergeInputCommands(
-    keyboard: MovementCommand,
-    gamepad: MovementCommand,
+    keyboard: DirectionVector,
+    gamepad: DirectionVector,
   ) {
     return keyboard.map((k, i) =>
       clamp(k + (gamepad[i] ?? 0)),
-    ) as MovementCommand;
+    ) as DirectionVector;
   }
 
-  const lastMovementCommandErrorRef = useRef(0);
+  const lastDirectionVectorErrorRef = useRef(0);
 
-  async function sendMovementCommand(command: MovementCommand) {
-    movementCommandStore.setState(() => command);
+  async function sendDirectionVector(command: DirectionVector) {
+    directionVectorStore.setState(() => command);
     try {
-      await invoke('send_movement_command', { payload: command });
+      await invoke('send_direction_vector', { payload: command });
     } catch (error) {
       const now = Date.now();
-      if (now - lastMovementCommandErrorRef.current > 10000) {
-        lastMovementCommandErrorRef.current = now;
-        logError('Failed to send movement command:', error);
-        toast.error('Failed to send movement command');
+      if (now - lastDirectionVectorErrorRef.current > 10000) {
+        lastDirectionVectorErrorRef.current = now;
+        logError('Failed to send direction vector:', error);
+        toast.error('Failed to send direction vector');
       }
     }
   }
@@ -194,7 +194,7 @@ function useSendMovementCommand() {
         gamepadInputCommand,
       );
 
-      void sendMovementCommand(mergedInputCommand);
+      void sendDirectionVector(mergedInputCommand);
       animationFrameRef.current = requestAnimationFrame(sendLoop);
     }
 
@@ -204,10 +204,10 @@ function useSendMovementCommand() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      void sendMovementCommand(EMPTY_INPUT);
-      movementCommandStore.setState(() => EMPTY_INPUT);
+      void sendDirectionVector(EMPTY_INPUT);
+      directionVectorStore.setState(() => EMPTY_INPUT);
     };
   }, [config, getKeyboardInputCommand, getGamepadInputCommand]);
 }
 
-export { useSendMovementCommand };
+export { useSendDirectionVector };

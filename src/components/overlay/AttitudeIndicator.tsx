@@ -7,7 +7,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { movementCommandStore } from '@/stores/movementCommandStore';
+import { directionVectorStore } from '@/stores/directionVector';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function AttitudeIndicator() {
@@ -21,7 +21,7 @@ function AttitudeIndicator() {
     }),
   );
   const config = useStore(configStore);
-  const movementCommand = useStore(movementCommandStore);
+  const directionVector = useStore(directionVectorStore);
   const isConnected = useStore(
     connectionStatusStore,
     (state) => state.isConnected,
@@ -49,7 +49,7 @@ function AttitudeIndicator() {
           size={size}
           pitch={pitch}
           roll={roll}
-          rawYawInput={movementCommand[4]}
+          rawYawInput={directionVector[4]}
         />
       );
     default:

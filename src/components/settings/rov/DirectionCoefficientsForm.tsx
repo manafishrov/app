@@ -28,10 +28,10 @@ const formSchema = z.object({
   roll: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
 });
 
-function MovementCoefficientsForm() {
-  const movementCoefficients = useStore(
+function DirectionCoefficientsForm() {
+  const directionCoefficients = useStore(
     rovConfigStore,
-    (state) => state?.movementCoefficients,
+    (state) => state?.directionCoefficients,
   );
 
   const form = useAppForm({
@@ -39,28 +39,28 @@ function MovementCoefficientsForm() {
       onSubmit: formSchema,
     },
     defaultValues: {
-      horizontal: movementCoefficients?.horizontal ?? 0,
-      strafe: movementCoefficients?.strafe ?? 0,
-      vertical: movementCoefficients?.vertical ?? 0,
-      pitch: movementCoefficients?.pitch ?? 0,
-      yaw: movementCoefficients?.yaw ?? 0,
-      roll: movementCoefficients?.roll ?? 0,
+      horizontal: directionCoefficients?.horizontal ?? 0,
+      strafe: directionCoefficients?.strafe ?? 0,
+      vertical: directionCoefficients?.vertical ?? 0,
+      pitch: directionCoefficients?.pitch ?? 0,
+      yaw: directionCoefficients?.yaw ?? 0,
+      roll: directionCoefficients?.roll ?? 0,
     },
-    onSubmit: ({ value }) => setRovConfig({ movementCoefficients: value }),
+    onSubmit: ({ value }) => setRovConfig({ directionCoefficients: value }),
   });
 
   useEffect(() => {
-    if (movementCoefficients) {
+    if (directionCoefficients) {
       form.reset({
-        horizontal: movementCoefficients.horizontal,
-        strafe: movementCoefficients.strafe,
-        vertical: movementCoefficients.vertical,
-        pitch: movementCoefficients.pitch,
-        yaw: movementCoefficients.yaw,
-        roll: movementCoefficients.roll,
+        horizontal: directionCoefficients.horizontal,
+        strafe: directionCoefficients.strafe,
+        vertical: directionCoefficients.vertical,
+        pitch: directionCoefficients.pitch,
+        yaw: directionCoefficients.yaw,
+        roll: directionCoefficients.roll,
       });
     }
-  }, [movementCoefficients, form]);
+  }, [directionCoefficients, form]);
 
   return (
     <>
@@ -176,4 +176,4 @@ function MovementCoefficientsForm() {
   );
 }
 
-export { MovementCoefficientsForm };
+export { DirectionCoefficientsForm };

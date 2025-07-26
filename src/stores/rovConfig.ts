@@ -29,7 +29,7 @@ type Regulator = {
   depth: pid;
 };
 
-type MovementCoefficients = {
+type DirectionCoefficients = {
   horizontal: number;
   strafe: number;
   vertical: number;
@@ -50,7 +50,7 @@ type RovConfig = {
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;
   regulator: Regulator;
-  movementCoefficients: MovementCoefficients;
+  directionCoefficients: DirectionCoefficients;
   power: Power;
 };
 
@@ -96,7 +96,7 @@ export {
   requestRovConfig,
   setRovConfig,
   type Regulator,
-  type MovementCoefficients,
+  type DirectionCoefficients,
   type RovConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,

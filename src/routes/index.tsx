@@ -6,7 +6,7 @@ import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { SettingsButton } from '@/components/settings/SettingsButton';
 
 import { useSendActionCommands } from '@/hooks/useSendActionCommands';
-import { useSendMovementCommand } from '@/hooks/useSendMovementCommand';
+import { useSendDirectionVector } from '@/hooks/useSendDirectionVector';
 
 import { cx } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  useSendMovementCommand();
+  useSendDirectionVector();
   useSendActionCommands();
 
   const mainRef = useRef<HTMLElement>(null);

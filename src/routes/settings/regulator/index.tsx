@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
-import { MovementCoefficientsForm } from '@/components/settings/rov/MovementCoefficientsForm';
+import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
 import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -33,7 +33,7 @@ function Regulator() {
       ) : (
         <div className='space-y-8'>
           <PidForm />
-          <MovementCoefficientsForm />
+          <DirectionCoefficientsForm />
         </div>
       )}
     </>
