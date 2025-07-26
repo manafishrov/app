@@ -6,7 +6,7 @@ use super::receive::{
   telemetry::handle_telemetry,
   toast::handle_show_toast,
 };
-use crate::{log_error, log_warn};
+use crate::log_warn;
 use tauri::AppHandle;
 use tokio_tungstenite::tungstenite::Message;
 

@@ -1,8 +1,8 @@
-use crate::models::actions::RovMovementCommand;
+use crate::models::actions::{DirectionVector, CustomAction};
 use crate::websocket::{
-  client::{MessageSendChannelState, MovementCommandSendChannelState},
+  client::{MessageSendChannelState, DirectionVectorSendChannelState},
   send::actions::{
-    handle_send_action1_command, handle_send_action2_command, handle_send_movement_command,
+    handle_send_custom_action, handle_send_direction_vector,
     handle_toggle_depth_stabilization, handle_toggle_pitch_stabilization,
     handle_toggle_roll_stabilization,
   },
@@ -10,21 +10,19 @@ use crate::websocket::{
 use tauri::{command, State};
 
 #[command]
-pub async fn send_movement_command(
-  state: State<'_, MovementCommandSendChannelState>,
-  payload: RovMovementCommand,
+pub async fn send_direction_vector(
+  state: State<'_, DirectionVectorSendChannelState>,
+  payload: DirectionVector,
 ) -> Result<(), String> {
-  handle_send_movement_command(&state, payload).await
+  handle_send_direction_vector(&state, payload).await
 }
 
 #[command]
-pub async fn send_action1_command(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
-  handle_send_action1_command(&state).await
-}
-
-#[command]
-pub async fn send_action2_command(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
-  handle_send_action2_command(&state).await
+pub async fn send_custom_action(
+  state: State<'_, MessageSendChannelState>,
+  payload: CustomAction,
+) -> Result<(), String> {
+  handle_send_custom_action(&state, payload).await
 }
 
 #[command]

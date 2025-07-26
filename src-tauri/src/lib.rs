@@ -40,7 +40,7 @@ mod toast;
 mod updater;
 
 use commands::actions::{
-  send_action1_command, send_action2_command, send_movement_command, toggle_depth_stabilization,
+  send_custom_action, send_direction_vector, toggle_depth_stabilization,
   toggle_pitch_stabilization, toggle_roll_stabilization,
 };
 use commands::config::{get_config, set_config};
@@ -57,9 +57,10 @@ use tauri::{generate_handler, App, Builder, Manager};
 use toast::toast_init;
 use tokio::sync::mpsc::channel;
 use updater::update_app;
-use websocket::client::{start_websocket_client, MessageSendChannelState, MovementCommandSendChannelState};
+use websocket::client::{
+  start_websocket_client, DirectionVectorSendChannelState, MessageSendChannelState,
+};
 use websocket::message::WebsocketMessage;
-use models::actions::RovMovementCommand;
 
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let log_handle = app.app_handle().clone();
@@ -78,10 +79,12 @@ fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   app.manage(ConfigSendChannelState { tx: config_tx });
   let (message_tx, message_rx) = channel::<WebsocketMessage>(1);
   app.manage(MessageSendChannelState { tx: message_tx });
-  let (movement_tx, movement_rx) = channel::<WebsocketMessage>(8);
-  app.manage(MovementCommandSendChannelState { tx: movement_tx });
+  let (direction_vector_tx, direction_vector_rx) = channel::<WebsocketMessage>(8);
+  app.manage(DirectionVectorSendChannelState {
+    tx: direction_vector_tx,
+  });
   spawn(async move {
-    start_websocket_client(websocket_handle, config_rx, message_rx, movement_rx).await;
+    start_websocket_client(websocket_handle, config_rx, message_rx, direction_vector_rx).await;
   });
 
   Ok(())
@@ -102,9 +105,8 @@ pub fn run() {
       cancel_thruster_test,
       start_regulator_auto_tuning,
       cancel_regulator_auto_tuning,
-      send_movement_command,
-      send_action1_command,
-      send_action2_command,
+      send_direction_vector,
+      send_custom_action,
       toggle_pitch_stabilization,
       toggle_roll_stabilization,
       toggle_depth_stabilization,

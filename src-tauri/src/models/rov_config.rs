@@ -35,7 +35,7 @@ pub struct Regulator {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct MovementCoefficients {
+pub struct DirectionCoefficients {
   pub horizontal: f32,
   pub strafe: f32,
   pub vertical: f32,
@@ -60,7 +60,7 @@ pub struct RovConfig {
   pub thruster_pin_setup: ThrusterPinSetup,
   pub thruster_allocation: ThrusterAllocation,
   pub regulator: Regulator,
-  pub movement_coefficients: MovementCoefficients,
+  pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
 }
 

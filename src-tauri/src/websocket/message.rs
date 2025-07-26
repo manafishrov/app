@@ -1,5 +1,5 @@
 use crate::models::{
-  actions::RovMovementCommand,
+  actions::{CustomAction, DirectionVector},
   log::LogEntry,
   rov_config::{FirmwareVersion, RegulatorSuggestions, RovConfig, ThrusterTest},
   rov_status::RovStatus,
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum WebsocketMessage {
-  MovementCommand(RovMovementCommand),
+  DirectionVector(DirectionVector),
   GetConfig,
   SetConfig(RovConfig),
   Config(RovConfig),
@@ -25,8 +25,7 @@ pub enum WebsocketMessage {
   StatusUpdate(RovStatus),
   Telemetry(RovTelemetry),
   FirmwareVersion(FirmwareVersion),
-  RunAction1,
-  RunAction2,
+  CustomAction(CustomAction),
   TogglePitchStabilization,
   ToggleRollStabilization,
   ToggleDepthStabilization,

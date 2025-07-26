@@ -1,37 +1,30 @@
 use crate::log_error;
-use crate::models::actions::RovMovementCommand;
-use crate::websocket::{client::{MessageSendChannelState, MovementCommandSendChannelState}, message::WebsocketMessage};
+use crate::models::actions::{CustomAction, DirectionVector};
+use crate::websocket::{
+  client::{DirectionVectorSendChannelState, MessageSendChannelState},
+  message::WebsocketMessage,
+};
 use tauri::State;
 
-pub async fn handle_send_movement_command(
-  state: &State<'_, MovementCommandSendChannelState>,
-  payload: RovMovementCommand,
+pub async fn handle_send_direction_vector(
+  state: &State<'_, DirectionVectorSendChannelState>,
+  payload: DirectionVector,
 ) -> Result<(), String> {
-  let message = WebsocketMessage::MovementCommand(payload);
+  let message = WebsocketMessage::DirectionVector(payload);
   if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send MovementCommand: {}", e);
+    log_error!("Failed to send DirectionVector: {}", e);
     return Err(e.to_string());
   }
   Ok(())
 }
 
-pub async fn handle_send_action1_command(
+pub async fn handle_send_custom_action(
   state: &State<'_, MessageSendChannelState>,
+  payload: CustomAction,
 ) -> Result<(), String> {
-  let message = WebsocketMessage::RunAction1;
+  let message = WebsocketMessage::CustomAction(payload);
   if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send RunAction1: {}", e);
-    return Err(e.to_string());
-  }
-  Ok(())
-}
-
-pub async fn handle_send_action2_command(
-  state: &State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  let message = WebsocketMessage::RunAction2;
-  if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send RunAction2: {}", e);
+    log_error!("Failed to send CustomAction: {}", e);
     return Err(e.to_string());
   }
   Ok(())
