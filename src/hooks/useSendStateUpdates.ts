@@ -8,10 +8,10 @@ import { logError } from '@/lib/log';
 
 import { configStore } from '@/stores/config';
 
-function useSendActionCommands() {
+function useSendStateUpdates() {
   const config = useStore(configStore);
   const pressedKeys = useRef(new Set<string>());
-  const lastActionStateRef = useRef({
+  const lastStateUpdateRef = useRef({
     record: false,
     stabilizeDepth: false,
     stabilizePitch: false,
@@ -39,26 +39,30 @@ function useSendActionCommands() {
   }, []);
 
   useEffect(() => {
-    let raf: number;
-    const actions = [
+    let animationFrame: number;
+    const states = [
       'record',
       'stabilizeDepth',
       'stabilizePitch',
       'stabilizeRoll',
     ] as const;
 
-    async function handleActions(
+    async function handleStateUpdates(
       isPressed: boolean,
-      action: (typeof actions)[number],
+      stateUpdate: (typeof states)[number],
     ) {
-      const last = lastActionStateRef.current;
-      if (action === 'record' && isPressed && !last.record) {
+      const last = lastStateUpdateRef.current;
+      if (stateUpdate === 'record' && isPressed && !last.record) {
         toast('Coming soon: Recording feature is not yet implemented');
         last.record = true;
-      } else if (action === 'record' && !isPressed) {
+      } else if (stateUpdate === 'record' && !isPressed) {
         last.record = false;
       }
-      if (action === 'stabilizeDepth' && isPressed && !last.stabilizeDepth) {
+      if (
+        stateUpdate === 'stabilizeDepth' &&
+        isPressed &&
+        !last.stabilizeDepth
+      ) {
         try {
           await invoke('toggle_depth_stabilization');
         } catch (error) {
@@ -66,10 +70,14 @@ function useSendActionCommands() {
           toast.error('Failed to toggle depth stabilization');
         }
         last.stabilizeDepth = true;
-      } else if (action === 'stabilizeDepth' && !isPressed) {
+      } else if (stateUpdate === 'stabilizeDepth' && !isPressed) {
         last.stabilizeDepth = false;
       }
-      if (action === 'stabilizePitch' && isPressed && !last.stabilizePitch) {
+      if (
+        stateUpdate === 'stabilizePitch' &&
+        isPressed &&
+        !last.stabilizePitch
+      ) {
         try {
           await invoke('toggle_pitch_stabilization');
         } catch (error) {
@@ -77,10 +85,10 @@ function useSendActionCommands() {
           toast.error('Failed to toggle pitch stabilization');
         }
         last.stabilizePitch = true;
-      } else if (action === 'stabilizePitch' && !isPressed) {
+      } else if (stateUpdate === 'stabilizePitch' && !isPressed) {
         last.stabilizePitch = false;
       }
-      if (action === 'stabilizeRoll' && isPressed && !last.stabilizeRoll) {
+      if (stateUpdate === 'stabilizeRoll' && isPressed && !last.stabilizeRoll) {
         try {
           await invoke('toggle_roll_stabilization');
         } catch (error) {
@@ -88,34 +96,34 @@ function useSendActionCommands() {
           toast.error('Failed to toggle roll stabilization');
         }
         last.stabilizeRoll = true;
-      } else if (action === 'stabilizeRoll' && !isPressed) {
+      } else if (stateUpdate === 'stabilizeRoll' && !isPressed) {
         last.stabilizeRoll = false;
       }
     }
 
     function poll() {
       if (config) {
-        actions.forEach((action) => {
-          const key = config.keyboard[action];
-          void handleActions(pressedKeys.current.has(key), action);
+        states.forEach((stateUpdate) => {
+          const key = config.keyboard[stateUpdate];
+          void handleStateUpdates(pressedKeys.current.has(key), stateUpdate);
         });
         const gamepad = navigator.getGamepads?.()[0];
         if (gamepad) {
-          actions.forEach((action) => {
-            const btnStr = config.gamepad[action];
+          states.forEach((stateUpdate) => {
+            const btnStr = config.gamepad[stateUpdate];
             const btnIdx = parseInt(btnStr, 10);
             const isPressed = Boolean(gamepad.buttons[btnIdx]?.pressed);
-            void handleActions(isPressed, action);
+            void handleStateUpdates(isPressed, stateUpdate);
           });
         }
       }
-      raf = requestAnimationFrame(poll);
+      animationFrame = requestAnimationFrame(poll);
     }
     poll();
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(animationFrame);
     };
   }, [config]);
 }
 
-export { useSendActionCommands };
+export { useSendStateUpdates };
