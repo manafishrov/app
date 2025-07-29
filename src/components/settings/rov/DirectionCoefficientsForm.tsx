@@ -66,7 +66,7 @@ function DirectionCoefficientsForm() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          Movement Coefficients
+          Direction Coefficients
         </h3>
         <p className='text-muted-foreground text-sm'>
           Set the relative power for moving or turning in each direction. The{' '}
@@ -91,7 +91,7 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.8}
                     onChange={field.handleChange}
-                    label='Horizontal Movement Coefficient'
+                    label='Horizontal Direction Coefficient'
                   />
                 }
               />
@@ -105,7 +105,7 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.35}
                     onChange={field.handleChange}
-                    label='Strafe Movement Coefficient'
+                    label='Strafe Direction Coefficient'
                   />
                 }
               />
@@ -119,7 +119,7 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.5}
                     onChange={field.handleChange}
-                    label='Vertial Movement Coefficient'
+                    label='Vertial Direction Coefficient'
                   />
                 }
               />
@@ -133,7 +133,7 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.4}
                     onChange={field.handleChange}
-                    label='Pitch Movement Coefficient'
+                    label='Pitch Direction Coefficient'
                   />
                 }
               />
@@ -147,7 +147,7 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.3}
                     onChange={field.handleChange}
-                    label='Yaw Movement Coefficient'
+                    label='Yaw Direction Coefficient'
                   />
                 }
               />
@@ -161,14 +161,14 @@ function DirectionCoefficientsForm() {
                   <RegulatorFieldButtons
                     defaultValue={0.8}
                     onChange={field.handleChange}
-                    label='Roll Movement Coefficient'
+                    label='Roll Direction Coefficient'
                   />
                 }
               />
             )}
           </form.AppField>
           <form.SubmitButton className='w-60'>
-            Update Movement Coefficients
+            Update Direction Coefficients
           </form.SubmitButton>
         </form.AppForm>
       </form>
