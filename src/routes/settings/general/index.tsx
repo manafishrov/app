@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ function General() {
   const rovConfig = useStore(rovConfigStore, (state) =>
     state
       ? {
+          microcontrollerFirmwareVariant: state.microcontrollerFirmwareVariant,
           fluidType: state.fluidType,
         }
       : null,
@@ -61,7 +63,45 @@ function General() {
             </div>
           )}
           <div>
-            <h4 className='text-lg font-medium'>Fluid type</h4>
+            <h4 className='text-lg font-medium'>Microcontroller Firmware</h4>
+            <p className='text-muted-foreground text-sm'>
+              Select and flash the firmware with the specified output protocol
+              for the microcontroller that generates the control signals for the
+              thrusters. <strong>DSHOT</strong> is a modern digital protocol
+              that supports bi-directional communication, allowing reading of
+              thruster RPM. However, it can be more sensitive to noise and may
+              introduce higher latency if the ESCs are not powerful enough.{' '}
+              <strong>PWM</strong> is the older analog protocol and does not
+              support feedback, but it is generally more robust. It is
+              recommended to use DSHOT first, and switch to PWM only if you
+              encounter issues.
+            </p>
+            <div className='mt-2 flex items-center gap-3'>
+              <Select
+                value={rovConfig.microcontrollerFirmwareVariant}
+                onValueChange={(value) =>
+                  setRovConfig({
+                    microcontrollerFirmwareVariant: value as 'pwm' | 'dshot300',
+                  })
+                }
+                disabled={!rovConfig}
+              >
+                <SelectTrigger className='w-40'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Firmware</SelectLabel>
+                    <SelectItem value='pwm'>PWM</SelectItem>
+                    <SelectItem value='dshot300'>DSHOT300</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button>Flash</Button>
+            </div>
+          </div>
+          <div>
+            <h4 className='text-lg font-medium'>Fluid Type</h4>
             <p className='text-muted-foreground text-sm'>
               Set correct fluid type to get accurate water pressure readings.
             </p>
@@ -76,7 +116,7 @@ function General() {
                 disabled={!rovConfig}
               >
                 <SelectTrigger className='w-40'>
-                  <SelectValue placeholder='Select fluid type' />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

@@ -3,7 +3,7 @@ use tauri::{AppHandle, Emitter};
 use tokio_tungstenite::tungstenite::Message;
 
 pub fn handle_config(app_handle: &AppHandle, payload: &RovConfig) -> Option<Message> {
-  app_handle.emit("rov_config_recieved", payload).unwrap();
+  app_handle.emit("rov_config_received", payload).unwrap();
   None
 }
 

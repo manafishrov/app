@@ -14,7 +14,7 @@ function useRovConfigListener() {
     void (async () => {
       try {
         unlisten = await listen<RovConfig>(
-          'rov_config_recieved',
+          'rov_config_received',
           ({ payload }) => {
             rovConfigStore.setState(() => payload);
           },
