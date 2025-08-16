@@ -47,7 +47,7 @@ use commands::config::{get_config, set_config};
 use commands::gamepad::start_gamepad_stream;
 use commands::rov_config::{
   cancel_regulator_auto_tuning, cancel_thruster_test, request_rov_config, set_rov_config,
-  start_regulator_auto_tuning, start_thruster_test,
+  start_regulator_auto_tuning, start_thruster_test, flash_microcontroller_firmware,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -110,6 +110,7 @@ pub fn run() {
       toggle_pitch_stabilization,
       toggle_roll_stabilization,
       toggle_depth_stabilization,
+        flash_microcontroller_firmware,
     ])
     .setup(setup_handlers);
 

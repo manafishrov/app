@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
+import { invoke } from '@tauri-apps/api/core';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
+import { toast } from '@/components/ui/Toaster';
+
+import { logError } from '@/lib/log';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';
@@ -36,6 +40,17 @@ function General() {
       : null,
   );
   const firmwareVersion = useStore(firmwareVersionStore);
+
+  async function flashMicrocontrollerFirmware() {
+    try {
+      await invoke('flash_microcontroller_firmware', {
+        payload: rovConfig?.microcontrollerFirmwareVariant,
+      });
+    } catch (error) {
+      logError('Failed to flash microcontroller firmware:', error);
+      toast.error('Failed to flash microcontroller firmware');
+    }
+  }
 
   return (
     <>
@@ -97,7 +112,7 @@ function General() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <Button>Flash</Button>
+              <Button onClick={flashMicrocontrollerFirmware}>Flash</Button>
             </div>
           </div>
           <div>

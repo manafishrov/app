@@ -313,6 +313,11 @@ async def handle_client(websocket):
                     await log(
                         "info", f"Depth stabilization set to {depth_stabilization}"
                     )
+                elif msg_type == "flashMicrocontrollerFirmware":
+                    await log(
+                        "info",
+                        f"Microcontroller firmware should be flashed with variant: {payload}",
+                    )
                 else:
                     await log(
                         "warn",

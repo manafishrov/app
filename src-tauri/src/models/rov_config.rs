@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum MicroControllerFirmwareVariant {
+pub enum MicrocontrollerFirmwareVariant {
   Pwm,
   Dshot300,
 }
@@ -63,7 +63,7 @@ pub struct Power {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
-  pub microcontroller_firmware_variant: MicroControllerFirmwareVariant,
+  pub microcontroller_firmware_variant: MicrocontrollerFirmwareVariant,
   pub fluid_type: FluidType,
   pub thruster_pin_setup: ThrusterPinSetup,
   pub thruster_allocation: ThrusterAllocation,

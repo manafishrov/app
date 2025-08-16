@@ -1,5 +1,5 @@
 use crate::log_error;
-use crate::models::rov_config::{RovConfig, ThrusterTest};
+use crate::models::rov_config::{RovConfig, ThrusterTest, MicrocontrollerFirmwareVariant};
 use crate::websocket::{client::MessageSendChannelState, message::WebsocketMessage};
 use tauri::State;
 
@@ -67,6 +67,18 @@ pub async fn handle_cancel_regulator_auto_tuning(
   let message = WebsocketMessage::CancelRegulatorAutoTuning;
   if let Err(e) = state.tx.send(message).await {
     log_error!("Failed to send CancelRegulatorAutoTuning: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}
+
+pub async fn handle_flash_microcontroller_firmware(
+  state: &State<'_, MessageSendChannelState>,
+  payload: MicrocontrollerFirmwareVariant,
+) -> Result<(), String> {
+  let message = WebsocketMessage::FlashMicrocontrollerFirmware(payload);
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to flash MicrocontrollerFirmware: {}", e);
     return Err(e.to_string());
   }
   Ok(())

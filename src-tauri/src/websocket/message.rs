@@ -1,7 +1,7 @@
 use crate::models::{
   actions::{CustomAction, DirectionVector},
   log::LogEntry,
-  rov_config::{FirmwareVersion, RegulatorSuggestions, RovConfig, ThrusterTest},
+  rov_config::{FirmwareVersion, RegulatorSuggestions, RovConfig, ThrusterTest, MicrocontrollerFirmwareVariant},
   rov_status::RovStatus,
   rov_telemetry::RovTelemetry,
   toast::Toast,
@@ -29,4 +29,5 @@ pub enum WebsocketMessage {
   TogglePitchStabilization,
   ToggleRollStabilization,
   ToggleDepthStabilization,
+  FlashMicrocontrollerFirmware(MicrocontrollerFirmwareVariant),
 }

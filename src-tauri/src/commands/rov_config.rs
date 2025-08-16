@@ -1,9 +1,9 @@
-use crate::models::rov_config::{RovConfig, ThrusterTest};
+use crate::models::rov_config::{RovConfig, ThrusterTest, MicrocontrollerFirmwareVariant};
 use crate::websocket::{
   client::MessageSendChannelState,
   send::config::{
     handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_request_rov_config,
-    handle_set_rov_config, handle_start_regulator_auto_tuning, handle_start_thruster_test, 
+    handle_set_rov_config, handle_start_regulator_auto_tuning, handle_start_thruster_test, handle_flash_microcontroller_firmware,
   },
 };
 use tauri::{command, State};
@@ -49,4 +49,12 @@ pub async fn cancel_regulator_auto_tuning(
   state: State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
   handle_cancel_regulator_auto_tuning(&state).await
+}
+
+#[command]
+pub async fn flash_microcontroller_firmware(
+  state: State<'_, MessageSendChannelState>,
+  payload: MicrocontrollerFirmwareVariant,
+) -> Result<(), String> {
+  handle_flash_microcontroller_firmware(&state, payload).await
 }
