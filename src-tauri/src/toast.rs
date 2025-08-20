@@ -11,6 +11,7 @@ pub fn toast_init(app_handle: AppHandle) {
   }
 }
 
+#[allow(dead_code)]
 pub fn toast(
   id: Option<String>,
   message: String,
@@ -20,6 +21,7 @@ pub fn toast(
   toast_message(id, None, message, description, cancel);
 }
 
+#[allow(dead_code)]
 pub fn toast_success(
   id: Option<String>,
   message: String,
@@ -29,6 +31,7 @@ pub fn toast_success(
   toast_message(id, Some(ToastType::Success), message, description, cancel);
 }
 
+#[allow(dead_code)]
 pub fn toast_info(
   id: Option<String>,
   message: String,
@@ -38,6 +41,7 @@ pub fn toast_info(
   toast_message(id, Some(ToastType::Info), message, description, cancel);
 }
 
+#[allow(dead_code)]
 pub fn toast_warn(
   id: Option<String>,
   message: String,
@@ -47,6 +51,7 @@ pub fn toast_warn(
   toast_message(id, Some(ToastType::Warn), message, description, cancel);
 }
 
+#[allow(dead_code)]
 pub fn toast_error(
   id: Option<String>,
   message: String,
@@ -56,6 +61,7 @@ pub fn toast_error(
   toast_message(id, Some(ToastType::Error), message, description, cancel);
 }
 
+#[allow(dead_code)]
 pub fn toast_loading(
   id: Option<String>,
   message: String,

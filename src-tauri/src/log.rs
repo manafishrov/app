@@ -10,6 +10,7 @@ pub fn log_init(app_handle: AppHandle) {
   }
 }
 
+#[allow(dead_code)]
 pub fn log_info(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
@@ -27,6 +28,7 @@ pub fn log_info(message: &str) {
   }
 }
 
+#[allow(dead_code)]
 pub fn log_warn(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
@@ -44,6 +46,7 @@ pub fn log_warn(message: &str) {
   }
 }
 
+#[allow(dead_code)]
 pub fn log_error(message: &str) {
   if let Some(handle) = APP_HANDLE.get() {
     handle
