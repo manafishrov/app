@@ -46,6 +46,39 @@ function Debug() {
   const logRef = useRef<LazyLog>(null);
   const [text, setText] = useState('');
 
+  function handleHighlight(range: unknown, logText: string) {
+    let arr: number[] | undefined;
+    if (Array.isArray(range)) {
+      arr = range;
+    } else if (
+      range &&
+      typeof range === 'object' &&
+      'toArray' in range &&
+      typeof (range as { toArray?: unknown }).toArray === 'function'
+    ) {
+      arr = (range as { toArray: () => unknown }).toArray() as number[];
+    } else if (
+      range &&
+      typeof range === 'object' &&
+      'toJS' in range &&
+      typeof (range as { toJS?: unknown }).toJS === 'function'
+    ) {
+      arr = (range as { toJS: () => unknown }).toJS() as number[];
+    } else {
+      arr = undefined;
+    }
+    if (!arr || arr.length === 0) return;
+    const lines = logText.split('\n');
+    const selectedText = arr
+      .map((lineNumber: number) => lines[lineNumber] ?? '')
+      .filter((line: string) => line !== '')
+      .join('\n');
+    if (selectedText) {
+      console.log(selectedText);
+      void navigator.clipboard.writeText(selectedText);
+    }
+  }
+
   function handleClear() {
     void clearAllLogRecords();
     logRef.current?.clear();
@@ -112,11 +145,13 @@ function Debug() {
                 enableSearch
                 lineNumbers
                 wrapLines
+                selectableLines
                 extraLines={1}
                 rowHeight={20}
                 text={text}
                 follow={follow}
                 onScroll={onScroll}
+                onHighlight={(range) => handleHighlight(range, text)}
               />
             )}
           />
