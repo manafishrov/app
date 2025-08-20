@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Switch } from '@/components/ui/Switch';
+import { toast } from '@/components/ui/Toaster';
 
 import {
   type LogRecord,
@@ -74,8 +75,8 @@ function Debug() {
       .filter((line: string) => line !== '')
       .join('\n');
     if (selectedText) {
-      console.log(selectedText);
       void navigator.clipboard.writeText(selectedText);
+      toast.success('Copied highlight to clipboard');
     }
   }
 
