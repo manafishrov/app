@@ -12,7 +12,7 @@ declare const process: {
 
 const host = process.env.TAURI_DEV_HOST;
 
-const config = defineConfig(() => ({
+const config = defineConfig({
   plugins: [
     TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
     react(),
@@ -40,6 +40,6 @@ const config = defineConfig(() => ({
       ignored: ['**/src-tauri/**'],
     },
   },
-}));
+});
 
 export default config;
