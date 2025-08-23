@@ -1,5 +1,5 @@
 {
-  "name": "manafish",
+  "name": "manafish-app",
   "description": "An app for controlling the Manafish ROV",
   "private": true,
   "version": "1.0.0",

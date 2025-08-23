@@ -1,5 +1,5 @@
 [package]
-name = "manafish"
+name = "manafish-app"
 description = "An app for controlling the Manafish ROV"
 version = "1.0.0"
 license = "AGPL-3.0-or-later"
