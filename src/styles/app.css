@@ -121,9 +121,6 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   .react-lazylog {
     @apply scrollbar-thin scrollbar-thumb-[#7e7e7e] scrollbar-hover:scrollbar-thumb-[#464646] scrollbar-track-[#222222] scrollbar-thumb-rounded-full;
   }
