@@ -19,11 +19,11 @@ import { getConfig } from '@/stores/config';
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
-  component: RootComponent,
+  component: Root,
   loader: getConfig,
 });
 
-function RootComponent() {
+function Root() {
   useGamepadListener();
   useLogListener();
   useToastListener();
