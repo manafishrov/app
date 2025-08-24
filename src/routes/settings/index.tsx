@@ -2,8 +2,9 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useTheme } from '@/components/providers/ThemeProvider';
+import { type Theme, useTheme } from '@/components/providers/ThemeProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -34,6 +35,34 @@ export const Route = createFileRoute('/settings/')({
   loader: fetchVersion,
 });
 
+export function createAnimation(): string {
+  return `
+    ::view-transition-group(root) {
+      animation-timing-function: var(--expo-out);
+    }
+
+    ::view-transition-new(root) {
+      mask: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="0" cy="0" r="20" fill="white"/></svg>') top left / 0 no-repeat;
+      mask-origin: content-box;
+      animation: scale-top-left 1s;
+      transform-origin: top left;
+    }
+
+    ::view-transition-old(root),
+    .dark::view-transition-old(root) {
+      animation: scale-top-left 1s;
+      transform-origin: top left;
+      z-index: -1;
+    }
+
+    @keyframes scale-top-left {
+      to {
+        mask-size: 350vmax;
+      }
+    }
+  `;
+}
+
 function General() {
   const config = useStore(configStore, (state) =>
     state
@@ -47,6 +76,50 @@ function General() {
   );
   const appVersion = Route.useLoaderData();
   const { theme, setTheme } = useTheme();
+
+  const [radioSelectedTheme, setRadioSelectedTheme] = useState<Theme>(theme);
+
+  useEffect(() => {
+    if (theme !== radioSelectedTheme) {
+      setRadioSelectedTheme(theme);
+    }
+  }, [theme]);
+
+  const styleId = 'theme-transition-styles';
+
+  const updateStyles = useCallback((css: string) => {
+    if (typeof window === 'undefined') return;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+
+    styleElement.textContent = css;
+  }, []);
+
+  const setThemeWithAnimation = useCallback(
+    (theme: Theme) => {
+      const animation = createAnimation();
+
+      updateStyles(animation);
+
+      if (typeof window === 'undefined') return;
+
+      const switchTheme = () => {
+        setTheme(theme);
+      };
+
+      if (!document.startViewTransition) {
+        switchTheme();
+        return;
+      }
+
+      document.startViewTransition(switchTheme);
+    },
+    [setTheme, updateStyles],
+  );
 
   if (!config) return;
 
@@ -131,10 +204,12 @@ function General() {
                 Select the color scheme for the application.
               </p>
               <RadioGroup
-                value={theme}
-                onValueChange={(value) =>
-                  setTheme(value as 'light' | 'dark' | 'system')
-                }
+                value={radioSelectedTheme}
+                onValueChange={(value) => {
+                  const next = value as Theme;
+                  setRadioSelectedTheme(next);
+                  setThemeWithAnimation(next);
+                }}
                 className='mt-2 space-y-1'
               >
                 <div className='flex items-center gap-3'>
