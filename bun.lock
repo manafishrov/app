@@ -4,6 +4,9 @@
     "": {
       "name": "manafish",
       "dependencies": {
+        "@fontsource-variable/exo": "^5.2.6",
+        "@fontsource-variable/inter": "^5.2.6",
+        "@fontsource/chakra-petch": "^5.2.6",
         "@melloware/react-logviewer": "^6.3.0",
         "@radix-ui/react-checkbox": "^1.3.1",
         "@radix-ui/react-dialog": "^1.1.14",
@@ -213,6 +216,12 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.2", "", { "dependencies": { "@floating-ui/dom": "^1.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-06okr5cgPzMNBy+Ycse2A6udMi4bqwW/zgBF/rwjcNqWkyr82Mcg8b0vjX8OJpZFy/FKjJmw6wV7t44kK6kW7A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.9", "", {}, "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="],
+
+    "@fontsource-variable/exo": ["@fontsource-variable/exo@5.2.6", "", {}, "sha512-3TmpBFTGuo5dRmorWgZXaxlAR/3gvCwHMCyrVjMWEUyzLoxfIq9on3O/lOtF5xo6gOz2R6pa19bsEQph1BFmjw=="],
+
+    "@fontsource-variable/inter": ["@fontsource-variable/inter@5.2.6", "", {}, "sha512-jks/bficUPQ9nn7GvXvHtlQIPudW7Wx8CrlZoY8bhxgeobNxlQan8DclUJuYF2loYRrGpfrhCIZZspXYysiVGg=="],
+
+    "@fontsource/chakra-petch": ["@fontsource/chakra-petch@5.2.6", "", {}, "sha512-vtVU+kNam7bvrzxQ6CY4vGWUkJTtacMSuU52mw8JXok3BKGWQWNjVzdADh2tM4O7cYruQZ/205N/74j/XVodXg=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 
