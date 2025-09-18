@@ -166,7 +166,7 @@ function General() {
             Enable or disable automatic updates on startup.
           </p>
           <div className='mt-2 flex items-center gap-3'>
-            <Checkbox
+            <Switch
               id='autoUpdate'
               checked={config.autoUpdate ?? false}
               onCheckedChange={() =>
