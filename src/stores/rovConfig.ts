@@ -46,7 +46,7 @@ type Power = {
 };
 
 type RovConfig = {
-  microcontrollerFirmwareVariant: 'pwm' | 'dshot300';
+  microcontrollerFirmwareVariant: 'pwm' | 'dshot';
   fluidType: 'saltwater' | 'freshwater';
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;

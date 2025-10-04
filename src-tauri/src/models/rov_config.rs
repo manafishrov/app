@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub enum MicrocontrollerFirmwareVariant {
   Pwm,
-  Dshot300,
+  Dshot,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

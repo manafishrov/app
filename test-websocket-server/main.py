@@ -17,7 +17,7 @@ on_going_regulator_autotune = None
 
 rov_config = {
     "fluidType": "saltwater",
-    "microcontrollerFirmwareVariant": "dshot300",
+    "microcontrollerFirmwareVariant": "dshot",
     "thrusterPinSetup": {
         "identifiers": [5, 4, 3, 1, 2, 7, 6, 0],
         "spinDirections": [1, -1, 1, -1, 1, -1, 1, -1],

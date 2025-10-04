@@ -96,7 +96,7 @@ function General() {
                 value={rovConfig.microcontrollerFirmwareVariant}
                 onValueChange={(value) =>
                   setRovConfig({
-                    microcontrollerFirmwareVariant: value as 'pwm' | 'dshot300',
+                    microcontrollerFirmwareVariant: value as 'pwm' | 'dshot',
                   })
                 }
                 disabled={!rovConfig}
@@ -108,7 +108,7 @@ function General() {
                   <SelectGroup>
                     <SelectLabel>Firmware</SelectLabel>
                     <SelectItem value='pwm'>PWM</SelectItem>
-                    <SelectItem value='dshot300'>DSHOT300</SelectItem>
+                    <SelectItem value='dshot'>DSHOT</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
