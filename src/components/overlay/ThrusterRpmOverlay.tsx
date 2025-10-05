@@ -7,9 +7,9 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function ThrusterRpmOverlay() {
-  const thrusterErpms = useStore(
+  const thrusterRpms = useStore(
     rovTelemetryStore,
-    (state) => state.thrusterErpms,
+    (state) => state.thrusterRpms,
   );
   const isConnected = useStore(
     connectionStatusStore,
@@ -24,13 +24,13 @@ function ThrusterRpmOverlay() {
 
   return (
     <div className='flex flex-col gap-2 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
-      {thrusterErpms.map((erpm, index) => (
+      {thrusterRpms.map((rpm, index) => (
         <div
           key={`thruster-${index + 1}`}
           className='flex items-center gap-1 text-xs'
         >
           <span>T{index + 1}:</span>
-          <ThrusterRpm erpm={erpm} />
+          <ThrusterRpm rpm={rpm} />
         </div>
       ))}
     </div>

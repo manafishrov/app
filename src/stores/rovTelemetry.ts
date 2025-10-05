@@ -7,7 +7,7 @@ type RovTelemetry = {
   desiredRoll: number;
   depth: number;
   temperature: number;
-  thrusterErpms: [
+  thrusterRpms: [
     number,
     number,
     number,
@@ -26,7 +26,7 @@ const rovTelemetryStore = new Store<RovTelemetry>({
   desiredRoll: 0,
   depth: 0,
   temperature: 0,
-  thrusterErpms: [0, 0, 0, 0, 0, 0, 0, 0],
+  thrusterRpms: [0, 0, 0, 0, 0, 0, 0, 0],
 });
 
 export { rovTelemetryStore, type RovTelemetry };

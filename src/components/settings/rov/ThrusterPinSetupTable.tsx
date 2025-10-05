@@ -36,9 +36,9 @@ function ThrusterPinSetupTable() {
     rovConfigStore,
     (state) => state?.thrusterPinSetup,
   );
-  const thrusterErpms = useStore(
+  const thrusterRpms = useStore(
     rovTelemetryStore,
-    (state) => state?.thrusterErpms,
+    (state) => state?.thrusterRpms,
   );
   const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
   const [testDisabled, setTestDisabled] = useState<boolean[]>(
@@ -212,7 +212,7 @@ function ThrusterPinSetupTable() {
                     variant='outline'
                     disabled={
                       (testDisabled[index] ?? false) ||
-                      (thrusterErpms[index] ?? 0) !== 0
+                      (thrusterRpms[index] ?? 0) !== 0
                     }
                     onClick={async () => {
                       if (
@@ -230,7 +230,7 @@ function ThrusterPinSetupTable() {
                   </Button>
                 </TableCell>
                 <TableCell className='flex items-center gap-2'>
-                  <ThrusterRpm erpm={thrusterErpms[index] ?? 0} />
+                  <ThrusterRpm rpm={thrusterRpms[index] ?? 0} />
                 </TableCell>
               </TableRow>
             ))}
