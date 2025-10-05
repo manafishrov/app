@@ -72,7 +72,7 @@ pub struct RovConfig {
   pub power: Power,
 }
 
-pub type ThrusterTest = u8;
+pub type ThrusterTest = u8
 
 pub type FirmwareVersion = String;
 

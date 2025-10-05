@@ -11,7 +11,7 @@ function camelToSnake(str: string): string {
 }
 
 type Cancel = {
-  command: string;
+  type: string;
   payload?: Record<string, unknown>;
 };
 
@@ -52,10 +52,10 @@ function useToastListener() {
                             label: 'Cancel',
                             onClick: async (event: React.MouseEvent) => {
                               event.preventDefault();
-                              if (payload.cancel?.command) {
+                              if (payload.cancel?.type) {
                                 try {
                                   await invoke(
-                                    camelToSnake(payload.cancel.command),
+                                    camelToSnake(payload.cancel.type),
                                     { payload: payload.cancel.payload },
                                   );
                                 } catch (error) {

@@ -1,5 +1,5 @@
 use crate::log_error;
-use crate::models::toast::{Cancel, Toast, ToastType};
+use crate::models::toast::{ToastCancel, Toast, ToastType};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
 
@@ -16,7 +16,7 @@ pub fn toast(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, None, message, description, cancel);
 }
@@ -26,7 +26,7 @@ pub fn toast_success(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, Some(ToastType::Success), message, description, cancel);
 }
@@ -36,7 +36,7 @@ pub fn toast_info(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, Some(ToastType::Info), message, description, cancel);
 }
@@ -46,7 +46,7 @@ pub fn toast_warn(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, Some(ToastType::Warn), message, description, cancel);
 }
@@ -56,7 +56,7 @@ pub fn toast_error(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, Some(ToastType::Error), message, description, cancel);
 }
@@ -66,7 +66,7 @@ pub fn toast_loading(
   id: Option<String>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   toast_message(id, Some(ToastType::Loading), message, description, cancel);
 }
@@ -76,7 +76,7 @@ fn toast_message(
   toast_type: Option<ToastType>,
   message: String,
   description: Option<String>,
-  cancel: Option<Cancel>,
+  cancel: Option<ToastCancel>,
 ) {
   if let Some(handle) = APP_HANDLE.get() {
     handle

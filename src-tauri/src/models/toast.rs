@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use crate::models::rov_config::ThrusterTest;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -11,19 +11,19 @@ pub enum ToastType {
   Loading,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Cancel {
-  pub command: String,
-  pub payload: Option<Value>,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(tag = "type", content = "payload", rename_all = "camelCase")]
+pub enum ToastCancel {
+  CancelThrusterTest(ThrusterTest),
+  CancelRegulatorAutoTuning,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Toast {
   pub id: Option<String>,
   pub toast_type: Option<ToastType>,
   pub message: String,
   pub description: Option<String>,
-  pub cancel: Option<Cancel>,
+  pub cancel: Option<ToastCancel>,
 }

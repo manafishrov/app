@@ -214,7 +214,7 @@ async def handle_client(websocket):
                                     f"Testing thruster {thruster_id} {progress}%",
                                     None,
                                     {
-                                        "command": "cancelThrusterTest",
+                                        "type": "cancelThrusterTest",
                                         "payload": thruster_id,
                                     },
                                 )
@@ -257,7 +257,7 @@ async def handle_client(websocket):
                                     "loading",
                                     f"Regulator auto-tuning {progress}%",
                                     None,
-                                    {"command": "cancelRegulatorAutoTuning"},
+                                    {"type": "cancelRegulatorAutoTuning"},
                                 )
                                 if i < 10:
                                     await asyncio.sleep(1)
