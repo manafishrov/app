@@ -115,7 +115,7 @@ function ThrusterPinSetupTable() {
                   <TooltipTrigger>Pin</TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      The general purpose pin on the Raspberry Pi Pico that the
+                      The general purpose pin on the microcontroller that the
                       thruster is connected to.
                     </p>
                   </TooltipContent>
