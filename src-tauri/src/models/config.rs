@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyboardBindings {
-  pub move_forward: String,
-  pub move_backward: String,
-  pub move_left: String,
-  pub move_right: String,
-  pub move_up: String,
-  pub move_down: String,
+  pub surge_forward: String,
+  pub surge_backward: String,
+  pub sway_left: String,
+  pub sway_right: String,
+  pub heave_up: String,
+  pub heave_down: String,
   pub yaw_left: String,
   pub yaw_right: String,
   pub pitch_up: String,
@@ -45,9 +45,9 @@ pub enum AttitudeIndicator {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
-  pub move_horizontal: ControlSource,
-  pub move_up: String,
-  pub move_down: String,
+  pub surge_sway: ControlSource,
+  pub heave_up: String,
+  pub heave_down: String,
   pub pitch_yaw: ControlSource,
   pub roll_left: String,
   pub roll_right: String,
@@ -107,12 +107,12 @@ impl Default for Config {
       web_socket_port: 9000,
       info_logging: false,
       keyboard: KeyboardBindings {
-        move_forward: "KeyW".to_string(),
-        move_backward: "KeyS".to_string(),
-        move_left: "KeyA".to_string(),
-        move_right: "KeyD".to_string(),
-        move_up: "Space".to_string(),
-        move_down: "ShiftLeft".to_string(),
+        surge_forward: "KeyW".to_string(),
+        surge_backward: "KeyS".to_string(),
+        sway_left: "KeyA".to_string(),
+        sway_right: "KeyD".to_string(),
+        heave_up: "Space".to_string(),
+        heave_down: "ShiftLeft".to_string(),
         pitch_up: "KeyI".to_string(),
         pitch_down: "KeyK".to_string(),
         yaw_left: "KeyJ".to_string(),
@@ -129,9 +129,9 @@ impl Default for Config {
         record: "KeyR".to_string(),
       },
       gamepad: GamepadBindings {
-        move_horizontal: ControlSource::LeftStick,
-        move_up: "7".to_string(),
-        move_down: "6".to_string(),
+        surge_sway: ControlSource::LeftStick,
+        heave_up: "7".to_string(),
+        heave_down: "6".to_string(),
         pitch_yaw: ControlSource::RightStick,
         roll_left: "4".to_string(),
         roll_right: "5".to_string(),

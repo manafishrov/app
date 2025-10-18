@@ -43,9 +43,9 @@ pub struct Regulator {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectionCoefficients {
-  pub horizontal: f32,
-  pub strafe: f32,
-  pub vertical: f32,
+  pub surge: f32,
+  pub sway: f32,
+  pub heave: f32,
   pub pitch: f32,
   pub yaw: f32,
   pub roll: f32,
@@ -72,7 +72,7 @@ pub struct RovConfig {
   pub power: Power,
 }
 
-pub type ThrusterTest = u8
+pub type ThrusterTest = u8;
 
 pub type FirmwareVersion = String;
 
