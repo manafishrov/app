@@ -7,9 +7,9 @@ import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
 import { type GamepadBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
-  moveHorizontal: 'leftStick',
-  moveUp: '7',
-  moveDown: '6',
+  surgeSway: 'leftStick',
+  heaveUp: '7',
+  heaveDown: '6',
   pitchYaw: 'rightStick',
   rollLeft: '4',
   rollRight: '5',
@@ -82,25 +82,25 @@ function GamepadSettings() {
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
           <GamepadBindInput
-            label='Move Horizontal'
-            bind={gamepad.moveHorizontal}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveHorizontal}
+            label='Surge/Sway'
+            bind={gamepad.surgeSway}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.surgeSway}
             onBindChange={(newBind) =>
-              handleBindingChange('moveHorizontal', newBind)
+              handleBindingChange('surgeSway', newBind)
             }
             isJoystick
           />
           <GamepadBindInput
-            label='Move Up'
-            bind={gamepad.moveUp}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveUp}
-            onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
+            label='Heave Up'
+            bind={gamepad.heaveUp}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveUp}
+            onBindChange={(newBind) => handleBindingChange('heaveUp', newBind)}
           />
           <GamepadBindInput
-            label='Move Down'
-            bind={gamepad.moveDown}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.moveDown}
-            onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
+            label='Heave Down'
+            bind={gamepad.heaveDown}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveDown}
+            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
           />
         </div>
         <div className='space-y-2'>

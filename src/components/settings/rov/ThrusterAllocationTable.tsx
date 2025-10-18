@@ -41,9 +41,9 @@ function ThrusterAllocationTable() {
   }
 
   const rowLabels = [
-    'Horizontal',
-    'Strafe',
-    'Vertical',
+    'Surge',
+    'Sway',
+    'Heave',
     'Pitch',
     'Yaw',
     'Roll',
@@ -52,14 +52,14 @@ function ThrusterAllocationTable() {
   ];
 
   const rowLabelTooltips = [
-    'Contribution of each thruster to horizontal (forward/backward) input.',
-    'Contribution of each thruster to strafing (sideways) input.',
-    'Contribution of each thruster to vertical (ascent/descent) input.',
-    'Contribution of each thruster to pitching (tilting forward/backward) input.',
-    'Contribution of each thruster to yawing (turning left/right) input.',
-    'Contribution of each thruster to rolling (tilting side to side) input.',
-    'Contribution of each thruster for action 1.',
-    'Contribution of each thruster for action 2.',
+    'Contribution of each thruster to surge (forward/backward translation).',
+    'Contribution of each thruster to sway (left/right translation).',
+    'Contribution of each thruster to heave (up/down translation).',
+    'Contribution of each thruster to pitch (rotation about the lateral axis, nose up/down).',
+    'Contribution of each thruster to yaw (rotation about the vertical axis, turning left/right).',
+    'Contribution of each thruster to roll (rotation about the longitudinal axis, tilting side to side).',
+    'Contribution of each thruster to action 1 (custom or auxiliary function).',
+    'Contribution of each thruster to action 2 (custom or auxiliary function).',
   ];
 
   function handleAllocationChange(
