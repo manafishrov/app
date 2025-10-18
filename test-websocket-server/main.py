@@ -39,9 +39,9 @@ rov_config = {
         "depth": {"kp": 8, "ki": 2.8, "kd": 0.0},
     },
     "directionCoefficients": {
-        "horizontal": 0.0,
-        "strafe": 0.0,
-        "vertical": 0.0,
+        "surge": 0.0,
+        "sway": 0.0,
+        "heave": 0.0,
         "pitch": 0.0,
         "yaw": 0.0,
         "roll": 0.0,
