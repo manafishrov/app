@@ -8,15 +8,12 @@ import { useAppForm } from '@/components/ui/Form';
 import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
 
 const formSchema = z.object({
-  horizontal: z
+  surge: z
     .number()
     .min(0, 'Must be at least 0')
     .max(100, 'Must be at most 100'),
-  strafe: z
-    .number()
-    .min(0, 'Must be at least 0')
-    .max(100, 'Must be at most 100'),
-  vertical: z
+  sway: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
+  heave: z
     .number()
     .min(0, 'Must be at least 0')
     .max(100, 'Must be at most 100'),
@@ -39,9 +36,9 @@ function DirectionCoefficientsForm() {
       onSubmit: formSchema,
     },
     defaultValues: {
-      horizontal: directionCoefficients?.horizontal ?? 0,
-      strafe: directionCoefficients?.strafe ?? 0,
-      vertical: directionCoefficients?.vertical ?? 0,
+      surge: directionCoefficients?.surge ?? 0,
+      sway: directionCoefficients?.sway ?? 0,
+      heave: directionCoefficients?.heave ?? 0,
       pitch: directionCoefficients?.pitch ?? 0,
       yaw: directionCoefficients?.yaw ?? 0,
       roll: directionCoefficients?.roll ?? 0,
@@ -52,9 +49,9 @@ function DirectionCoefficientsForm() {
   useEffect(() => {
     if (directionCoefficients) {
       form.reset({
-        horizontal: directionCoefficients.horizontal,
-        strafe: directionCoefficients.strafe,
-        vertical: directionCoefficients.vertical,
+        surge: directionCoefficients.surge,
+        sway: directionCoefficients.sway,
+        heave: directionCoefficients.heave,
         pitch: directionCoefficients.pitch,
         yaw: directionCoefficients.yaw,
         roll: directionCoefficients.roll,
@@ -83,43 +80,43 @@ function DirectionCoefficientsForm() {
         className='relative space-y-4'
       >
         <form.AppForm>
-          <form.AppField name='horizontal'>
+          <form.AppField name='surge'>
             {(field) => (
               <field.NumberField
-                label='Horizontal'
+                label='Surge'
                 fieldSuffix={
                   <RegulatorFieldButtons
                     defaultValue={0.8}
                     onChange={field.handleChange}
-                    label='Horizontal Direction Coefficient'
+                    label='Surge Direction Coefficient'
                   />
                 }
               />
             )}
           </form.AppField>
-          <form.AppField name='strafe'>
+          <form.AppField name='sway'>
             {(field) => (
               <field.NumberField
-                label='Strafe'
+                label='Sway'
                 fieldSuffix={
                   <RegulatorFieldButtons
                     defaultValue={0.35}
                     onChange={field.handleChange}
-                    label='Strafe Direction Coefficient'
+                    label='Sway Direction Coefficient'
                   />
                 }
               />
             )}
           </form.AppField>
-          <form.AppField name='vertical'>
+          <form.AppField name='heave'>
             {(field) => (
               <field.NumberField
-                label='Vertical'
+                label='Heave'
                 fieldSuffix={
                   <RegulatorFieldButtons
                     defaultValue={0.5}
                     onChange={field.handleChange}
-                    label='Vertial Direction Coefficient'
+                    label='Heave Direction Coefficient'
                   />
                 }
               />

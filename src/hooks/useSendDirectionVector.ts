@@ -30,14 +30,14 @@ function useSendDirectionVector() {
     const keys = pressedKeys.current;
 
     input[0] =
-      (keys.has(config.keyboard.moveForward) ? 1 : 0) +
-      (keys.has(config.keyboard.moveBackward) ? -1 : 0);
+      (keys.has(config.keyboard.surgeForward) ? 1 : 0) +
+      (keys.has(config.keyboard.surgeBackward) ? -1 : 0);
     input[1] =
-      (keys.has(config.keyboard.moveRight) ? 1 : 0) +
-      (keys.has(config.keyboard.moveLeft) ? -1 : 0);
+      (keys.has(config.keyboard.swayRight) ? 1 : 0) +
+      (keys.has(config.keyboard.swayLeft) ? -1 : 0);
     input[2] =
-      (keys.has(config.keyboard.moveUp) ? 1 : 0) +
-      (keys.has(config.keyboard.moveDown) ? -1 : 0);
+      (keys.has(config.keyboard.heaveUp) ? 1 : 0) +
+      (keys.has(config.keyboard.heaveDown) ? -1 : 0);
     input[3] =
       (keys.has(config.keyboard.pitchUp) ? 1 : 0) +
       (keys.has(config.keyboard.pitchDown) ? -1 : 0);
@@ -64,7 +64,7 @@ function useSendDirectionVector() {
 
     const input: DirectionVector = [...EMPTY_INPUT];
 
-    const handleMoveHorizontal = (source: ControlSource) => {
+    const handleSurgeSway = (source: ControlSource) => {
       switch (source) {
         case 'leftStick':
           input[0] = -(gamepad.axes[1] ?? 0);
@@ -122,14 +122,14 @@ function useSendDirectionVector() {
       }
     };
 
-    handleMoveHorizontal(config.gamepad.moveHorizontal);
+    handleSurgeSway(config.gamepad.surgeSway);
     handlePitchYaw(config.gamepad.pitchYaw);
 
-    const upButton = parseInt(config.gamepad.moveUp);
-    const downButton = parseInt(config.gamepad.moveDown);
+    const heaveUpButton = parseInt(config.gamepad.heaveUp);
+    const heaveDownButton = parseInt(config.gamepad.heaveDown);
     input[2] =
-      (gamepad.buttons[upButton]?.value ?? 0) +
-      -(gamepad.buttons[downButton]?.value ?? 0);
+      (gamepad.buttons[heaveUpButton]?.value ?? 0) +
+      -(gamepad.buttons[heaveDownButton]?.value ?? 0);
 
     const rollRightButton = parseInt(config.gamepad.rollRight);
     const rollLeftButton = parseInt(config.gamepad.rollLeft);

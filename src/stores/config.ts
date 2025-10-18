@@ -6,12 +6,12 @@ import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 
 type KeyboardBindings = {
-  moveForward: string;
-  moveBackward: string;
-  moveLeft: string;
-  moveRight: string;
-  moveUp: string;
-  moveDown: string;
+  surgeForward: string;
+  surgeBackward: string;
+  swayLeft: string;
+  swayRight: string;
+  heaveUp: string;
+  heaveDown: string;
   pitchUp: string;
   pitchDown: string;
   yawLeft: string;
@@ -32,9 +32,9 @@ type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
 type AttitudeIndicator = 'scientific' | 'dimensional3D' | 'disabled';
 
 type GamepadBindings = {
-  moveHorizontal: ControlSource;
-  moveUp: string;
-  moveDown: string;
+  surgeSway: ControlSource;
+  heaveUp: string;
+  heaveDown: string;
   pitchYaw: ControlSource;
   rollLeft: string;
   rollRight: string;

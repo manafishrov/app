@@ -30,9 +30,9 @@ type Regulator = {
 };
 
 type DirectionCoefficients = {
-  horizontal: number;
-  strafe: number;
-  vertical: number;
+  surge: number;
+  sway: number;
+  heave: number;
   pitch: number;
   yaw: number;
   roll: number;

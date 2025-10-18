@@ -5,12 +5,12 @@ import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
 import { type KeyboardBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
-  moveForward: 'KeyW',
-  moveBackward: 'KeyS',
-  moveLeft: 'KeyA',
-  moveRight: 'KeyD',
-  moveUp: 'Space',
-  moveDown: 'ShiftLeft',
+  surgeForward: 'KeyW',
+  surgeBackward: 'KeyS',
+  swayLeft: 'KeyA',
+  swayRight: 'KeyD',
+  heaveUp: 'Space',
+  heaveDown: 'ShiftLeft',
   pitchUp: 'KeyI',
   pitchDown: 'KeyK',
   yawLeft: 'KeyJ',
@@ -52,46 +52,48 @@ function KeyboardSettings() {
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
           <KeyboardBindInput
-            label='Move Forward'
-            bind={keyboard.moveForward}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveForward}
+            label='Surge Forward'
+            bind={keyboard.surgeForward}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeForward}
             onBindChange={(newBind) =>
-              handleBindingChange('moveForward', newBind)
+              handleBindingChange('surgeForward', newBind)
             }
           />
           <KeyboardBindInput
-            label='Move Left'
-            bind={keyboard.moveLeft}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveLeft}
-            onBindChange={(newBind) => handleBindingChange('moveLeft', newBind)}
+            label='Sway Left'
+            bind={keyboard.swayLeft}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.swayLeft}
+            onBindChange={(newBind) => handleBindingChange('swayLeft', newBind)}
           />
           <KeyboardBindInput
-            label='Move Backward'
-            bind={keyboard.moveBackward}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveBackward}
+            label='Surge Backward'
+            bind={keyboard.surgeBackward}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeBackward}
             onBindChange={(newBind) =>
-              handleBindingChange('moveBackward', newBind)
+              handleBindingChange('surgeBackward', newBind)
             }
           />
           <KeyboardBindInput
-            label='Move Right'
-            bind={keyboard.moveRight}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveRight}
+            label='Sway Right'
+            bind={keyboard.swayRight}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.swayRight}
             onBindChange={(newBind) =>
-              handleBindingChange('moveRight', newBind)
+              handleBindingChange('swayRight', newBind)
             }
           />
           <KeyboardBindInput
-            label='Move Up'
-            bind={keyboard.moveUp}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveUp}
-            onBindChange={(newBind) => handleBindingChange('moveUp', newBind)}
+            label='Heave Up'
+            bind={keyboard.heaveUp}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.heaveUp}
+            onBindChange={(newBind) => handleBindingChange('heaveUp', newBind)}
           />
           <KeyboardBindInput
-            label='Move Down'
-            bind={keyboard.moveDown}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.moveDown}
-            onBindChange={(newBind) => handleBindingChange('moveDown', newBind)}
+            label='Heave Down'
+            bind={keyboard.heaveDown}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.heaveDown}
+            onBindChange={(newBind) =>
+              handleBindingChange('heaveDown', newBind)
+            }
           />
         </div>
         <div className='space-y-2'>
