@@ -6,13 +6,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-function StabilizationButtons() {
+import { cx } from '@/lib/utils';
+
+function StabilizationButtons({ className }: { className?: string }) {
   return (
-    <>
+    <div className={cx('flex gap-2', className)}>
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button>Stabilization</Button>
+            <Button variant='outline'>Stabilization</Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Stabilize pitch & roll</p>
@@ -20,16 +22,16 @@ function StabilizationButtons() {
         </Tooltip>
       </TooltipProvider>
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button>Depth Hold</Button>
+            <Button variant='outline'>Depth Hold</Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Hold at current depth</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </>
+    </div>
   );
 }
 
