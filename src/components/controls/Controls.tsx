@@ -6,7 +6,7 @@ function Controls({ showControls }: { showControls: boolean }) {
   return (
     <div
       className={cx(
-        'z-10 h-full w-full transition-opacity hover:opacity-100',
+        'z-10 transition-opacity hover:opacity-100',
 
         showControls ? 'opacity-100' : 'opacity-0',
       )}
