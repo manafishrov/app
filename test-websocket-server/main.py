@@ -106,7 +106,7 @@ async def handle_client(websocket):
                 desired_roll = 20 * math.cos(current_time / 3)
                 depth = 10 + 5 * math.sin(current_time / 4)
                 temperature = 20 + 5 * math.cos(current_time / 5)
-                thruster_rpm_values = [0, 937, 1875, 3750, 7500, 15000, 30000, 60000]
+                thruster_rpm_values = [0, 156, 312, 625, 1250, 2500, 5000, 10000]
 
                 status_msg = {
                     "type": "telemetry",

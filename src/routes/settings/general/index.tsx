@@ -84,12 +84,12 @@ function General() {
               for the microcontroller that generates the control signals for the
               thrusters. <strong>DSHOT</strong> is a modern digital protocol
               that supports bi-directional communication, allowing reading of
-              thruster RPM. However, it can be more sensitive to noise and may
-              introduce higher latency if the ESCs are not powerful enough.{' '}
-              <strong>PWM</strong> is the older analog protocol and does not
-              support feedback, but it is generally more robust. It is
-              recommended to use DSHOT first, and switch to PWM only if you
-              encounter issues.
+              thruster RPM, voltage, current and temperature. However, it can be
+              more sensitive to noise and may introduce higher latency if the
+              ESCs are not powerful enough. <strong>PWM</strong> is the older
+              analog protocol and does not support feedback, but it is generally
+              more robust. It is recommended to use DSHOT first, and switch to
+              PWM only if you encounter issues.
             </p>
             <div className='mt-2 flex items-center gap-3'>
               <Select

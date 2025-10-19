@@ -6,7 +6,7 @@ function ThrusterRpm({ rpm }: { rpm: number }) {
       <FanIcon
         className={rpm > 0 ? 'animate-spin' : ''}
         style={{
-          animationDuration: `${rpm > 0 ? 60_000 / (rpm / 60) : 0}ms`,
+          animationDuration: `${rpm > 0 ? 60_000 / (rpm / 30) : 0}ms`,
         }}
       />
       {Math.round(rpm)}
