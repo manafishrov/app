@@ -19,9 +19,9 @@ pub struct KeyboardBindings {
   pub action1_negative: String,
   pub action2_positive: String,
   pub action2_negative: String,
-  pub stabilize_pitch: String,
-  pub stabilize_roll: String,
-  pub stabilize_depth: String,
+  pub pitch_stabilization: String,
+  pub roll_stabilization: String,
+  pub depth_hold: String,
   pub record: String,
 }
 
@@ -55,14 +55,14 @@ pub struct GamepadBindings {
   pub action1_negative: String,
   pub action2_positive: String,
   pub action2_negative: String,
-  pub stabilize_pitch: String,
-  pub stabilize_roll: String,
-  pub stabilize_depth: String,
+  pub pitch_stabilization: String,
+  pub roll_stabilization: String,
+  pub depth_hold: String,
   pub record: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
   pub auto_update: bool,
   pub attitude_indicator: AttitudeIndicator,
@@ -123,9 +123,9 @@ impl Default for Config {
         action1_negative: "Digit2".to_string(),
         action2_positive: "Digit3".to_string(),
         action2_negative: "Digit4".to_string(),
-        stabilize_pitch: "KeyU".to_string(),
-        stabilize_roll: "KeyU".to_string(),
-        stabilize_depth: "KeyO".to_string(),
+        pitch_stabilization: "KeyU".to_string(),
+        roll_stabilization: "KeyU".to_string(),
+        depth_hold: "KeyO".to_string(),
         record: "KeyR".to_string(),
       },
       gamepad: GamepadBindings {
@@ -139,9 +139,9 @@ impl Default for Config {
         action1_negative: "1".to_string(),
         action2_positive: "2".to_string(),
         action2_negative: "3".to_string(),
-        stabilize_pitch: "12".to_string(),
-        stabilize_roll: "12".to_string(),
-        stabilize_depth: "13".to_string(),
+        pitch_stabilization: "12".to_string(),
+        roll_stabilization: "12".to_string(),
+        depth_hold: "13".to_string(),
         record: "9".to_string(),
       },
     }
