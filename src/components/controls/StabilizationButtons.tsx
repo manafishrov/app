@@ -1,4 +1,7 @@
+import { invoke } from '@tauri-apps/api/core';
+
 import { Button } from '@/components/ui/Button';
+import { toast } from '@/components/ui/Toaster';
 import {
   Tooltip,
   TooltipContent,
@@ -9,12 +12,31 @@ import {
 import { cx } from '@/lib/utils';
 
 function StabilizationButtons({ className }: { className?: string }) {
+  async function handleStabilizationClick() {
+    try {
+      await invoke('toggle_pitch_stabilization');
+      await invoke('toggle_roll_stabilization');
+    } catch {
+      toast.error('Failed to toggle stabilization');
+    }
+  }
+
+  async function handleDepthHoldClick() {
+    try {
+      await invoke('toggle_depth_hold');
+    } catch {
+      toast.error('Failed to toggle depth hold');
+    }
+  }
+
   return (
     <div className={cx('flex gap-2', className)}>
       <TooltipProvider>
         <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button variant='outline'>Stabilization</Button>
+            <Button variant='outline' onClick={handleStabilizationClick}>
+              Stabilization
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Stabilize pitch & roll</p>
@@ -24,7 +46,9 @@ function StabilizationButtons({ className }: { className?: string }) {
       <TooltipProvider>
         <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button variant='outline'>Depth Hold</Button>
+            <Button variant='outline' onClick={handleDepthHoldClick}>
+              Depth Hold
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Hold at current depth</p>
