@@ -3,12 +3,12 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
-import { SettingsButton } from '@/components/settings/SettingsButton';
 
 import { useSendDirectionVector } from '@/hooks/useSendDirectionVector';
 import { useSendStateUpdates } from '@/hooks/useSendStateUpdates';
 
 import { cx } from '@/lib/utils';
+import { Controls } from '@/components/controls/Controls';
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -20,8 +20,6 @@ function Home() {
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
-  const [showSettingsLink, setShowSettingsLink] = useState(false);
-  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useLayoutEffect(() => {
     const mainEl = mainRef.current;
@@ -56,15 +54,6 @@ function Home() {
     };
   }, []);
 
-  function handleMouseMove() {
-    setShowSettingsLink(true);
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-    }
-    hideTimeoutRef.current = setTimeout(() => {
-      setShowSettingsLink(false);
-    }, 2000);
-  }
 
   return (
     <main
@@ -76,17 +65,10 @@ function Home() {
           'bg-card dark text-foreground relative aspect-4/3 rounded-lg',
           sizeClass,
         )}
-        onMouseMove={handleMouseMove}
       >
         <VideoStream />
         <RovOverlay />
-        <SettingsButton
-          className={cx(
-            'absolute top-2 right-2 z-10 transition-opacity',
-            showSettingsLink ? 'opacity-100' : 'opacity-0',
-            'hover:opacity-100',
-          )}
-        />
+        <Controls/>
       </div>
     </main>
   );
