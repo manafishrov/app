@@ -17,9 +17,9 @@ const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   action1Negative: '1',
   action2Positive: '2',
   action2Negative: '3',
-  stabilizePitch: '12',
-  stabilizeRoll: '12',
-  stabilizeDepth: '13',
+  pitchStabilization: '12',
+  rollStabilization: '12',
+  depthHold: '13',
   record: '9',
 };
 
@@ -115,27 +115,27 @@ function GamepadSettings() {
             Stabilization
           </h3>
           <GamepadBindInput
-            label='Stabilize Pitch'
-            bind={gamepad.stabilizePitch}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizePitch}
+            label='Pitch Stabilization'
+            bind={gamepad.pitchStabilization}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchStabilization}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizePitch', newBind)
+              handleBindingChange('pitchStabilization', newBind)
             }
           />
           <GamepadBindInput
-            label='Stabilize Roll'
-            bind={gamepad.stabilizeRoll}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeRoll}
+            label='Roll Stabilization'
+            bind={gamepad.rollStabilization}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollStabilization}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizeRoll', newBind)
+              handleBindingChange('rollStabilization', newBind)
             }
           />
           <GamepadBindInput
-            label='Stabilize Depth'
-            bind={gamepad.stabilizeDepth}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.stabilizeDepth}
+            label='Depth Hold'
+            bind={gamepad.depthHold}
+            defaultBind={DEFAULT_GAMEPAD_BINDINGS.depthHold}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizeDepth', newBind)
+              handleBindingChange('depthHold', newBind)
             }
           />
         </div>

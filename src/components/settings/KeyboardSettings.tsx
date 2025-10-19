@@ -21,9 +21,9 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   action1Negative: 'Digit2',
   action2Positive: 'Digit3',
   action2Negative: 'Digit4',
-  stabilizePitch: 'KeyU',
-  stabilizeRoll: 'KeyU',
-  stabilizeDepth: 'KeyO',
+  pitchStabilization: 'KeyU',
+  rollStabilization: 'KeyU',
+  depthHold: 'KeyO',
   record: 'KeyR',
 };
 
@@ -107,27 +107,27 @@ function KeyboardSettings() {
             Stabilization
           </h3>
           <KeyboardBindInput
-            label='Stabilize Pitch'
-            bind={keyboard.stabilizePitch}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizePitch}
+            label='Pitch Stabilization'
+            bind={keyboard.pitchStabilization}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchStabilization}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizePitch', newBind)
+              handleBindingChange('pitchStabilization', newBind)
             }
           />
           <KeyboardBindInput
-            label='Stabilize Roll'
-            bind={keyboard.stabilizeRoll}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizeRoll}
+            label='Roll Stabilization'
+            bind={keyboard.rollStabilization}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollStabilization}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizeRoll', newBind)
+              handleBindingChange('rollStabilization', newBind)
             }
           />
           <KeyboardBindInput
-            label='Stabilize Depth'
-            bind={keyboard.stabilizeDepth}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.stabilizeDepth}
+            label='Depth Hold'
+            bind={keyboard.depthHold}
+            defaultBind={DEFAULT_KEYBOARD_BINDINGS.depthHold}
             onBindChange={(newBind) =>
-              handleBindingChange('stabilizeDepth', newBind)
+              handleBindingChange('depthHold', newBind)
             }
           />
         </div>

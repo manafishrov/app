@@ -22,9 +22,9 @@ type KeyboardBindings = {
   action1Negative: string;
   action2Positive: string;
   action2Negative: string;
-  stabilizePitch: string;
-  stabilizeRoll: string;
-  stabilizeDepth: string;
+  pitchStabilization: string;
+  rollStabilization: string;
+  depthHold: string;
   record: string;
 };
 
@@ -42,9 +42,9 @@ type GamepadBindings = {
   action1Negative: string;
   action2Positive: string;
   action2Negative: string;
-  stabilizePitch: string;
-  stabilizeRoll: string;
-  stabilizeDepth: string;
+  pitchStabilization: string;
+  rollStabilization: string;
+  depthHold: string;
   record: string;
 };
 

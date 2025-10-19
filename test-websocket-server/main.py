@@ -10,7 +10,7 @@ shutdown = False
 
 pitch_stabilization = False
 roll_stabilization = False
-depth_stabilization = False
+depth_hold = False
 
 on_going_thruster_tests = {}
 on_going_regulator_autotune = None
@@ -88,7 +88,7 @@ async def toast(id, toast_type, message, description, cancel):
 
 
 async def handle_client(websocket):
-    global rov_config, pitch_stabilization, roll_stabilization, depth_stabilization
+    global rov_config, pitch_stabilization, roll_stabilization, depth_hold
     last_direction_vector = None
     await log(
         "info", f"Client connected from Manafish App at {websocket.remote_address}!"
@@ -137,7 +137,7 @@ async def handle_client(websocket):
                     "payload": {
                         "pitchStabilization": pitch_stabilization,
                         "rollStabilization": roll_stabilization,
-                        "depthStabilization": depth_stabilization,
+                        "depthHold": depth_hold,
                         "batteryPercentage": battery_percentage,
                     },
                 }
@@ -308,11 +308,9 @@ async def handle_client(websocket):
                 elif msg_type == "toggleRollStabilization":
                     roll_stabilization = not roll_stabilization
                     await log("info", f"Roll stabilization set to {roll_stabilization}")
-                elif msg_type == "toggleDepthStabilization":
-                    depth_stabilization = not depth_stabilization
-                    await log(
-                        "info", f"Depth stabilization set to {depth_stabilization}"
-                    )
+                elif msg_type == "toggleDepthHold":
+                    depth_hold = not depth_hold
+                    await log("info", f"Depth hold set to {depth_hold}")
                 elif msg_type == "flashMicrocontrollerFirmware":
                     await log(
                         "info",

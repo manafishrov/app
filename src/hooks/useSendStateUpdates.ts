@@ -12,10 +12,10 @@ function useSendStateUpdates() {
   const config = useStore(configStore);
   const pressedKeys = useRef(new Set<string>());
   const lastStateUpdateRef = useRef({
+    pitchStabilization: false,
+    rollStabilization: false,
+    depthHold: false,
     record: false,
-    stabilizeDepth: false,
-    stabilizePitch: false,
-    stabilizeRoll: false,
   });
 
   useEffect(() => {
@@ -41,10 +41,10 @@ function useSendStateUpdates() {
   useEffect(() => {
     let animationFrame: number;
     const states = [
+      'pitchStabilization',
+      'rollStabilization',
+      'depthHold',
       'record',
-      'stabilizeDepth',
-      'stabilizePitch',
-      'stabilizeRoll',
     ] as const;
 
     async function handleStateUpdates(
@@ -58,25 +58,21 @@ function useSendStateUpdates() {
       } else if (stateUpdate === 'record' && !isPressed) {
         last.record = false;
       }
-      if (
-        stateUpdate === 'stabilizeDepth' &&
-        isPressed &&
-        !last.stabilizeDepth
-      ) {
+      if (stateUpdate === 'depthHold' && isPressed && !last.depthHold) {
         try {
-          await invoke('toggle_depth_stabilization');
+          await invoke('toggle_depth_hold');
         } catch (error) {
-          logError('Failed to toggle depth stabilization:', error);
-          toast.error('Failed to toggle depth stabilization');
+          logError('Failed to toggle depth hold:', error);
+          toast.error('Failed to toggle depth hold');
         }
-        last.stabilizeDepth = true;
-      } else if (stateUpdate === 'stabilizeDepth' && !isPressed) {
-        last.stabilizeDepth = false;
+        last.depthHold = true;
+      } else if (stateUpdate === 'depthHold' && !isPressed) {
+        last.depthHold = false;
       }
       if (
-        stateUpdate === 'stabilizePitch' &&
+        stateUpdate === 'pitchStabilization' &&
         isPressed &&
-        !last.stabilizePitch
+        !last.pitchStabilization
       ) {
         try {
           await invoke('toggle_pitch_stabilization');
@@ -84,20 +80,24 @@ function useSendStateUpdates() {
           logError('Failed to toggle pitch stabilization:', error);
           toast.error('Failed to toggle pitch stabilization');
         }
-        last.stabilizePitch = true;
-      } else if (stateUpdate === 'stabilizePitch' && !isPressed) {
-        last.stabilizePitch = false;
+        last.pitchStabilization = true;
+      } else if (stateUpdate === 'pitchStabilization' && !isPressed) {
+        last.pitchStabilization = false;
       }
-      if (stateUpdate === 'stabilizeRoll' && isPressed && !last.stabilizeRoll) {
+      if (
+        stateUpdate === 'rollStabilization' &&
+        isPressed &&
+        !last.rollStabilization
+      ) {
         try {
           await invoke('toggle_roll_stabilization');
         } catch (error) {
           logError('Failed to toggle roll stabilization:', error);
           toast.error('Failed to toggle roll stabilization');
         }
-        last.stabilizeRoll = true;
-      } else if (stateUpdate === 'stabilizeRoll' && !isPressed) {
-        last.stabilizeRoll = false;
+        last.rollStabilization = true;
+      } else if (stateUpdate === 'rollStabilization' && !isPressed) {
+        last.rollStabilization = false;
       }
     }
 
