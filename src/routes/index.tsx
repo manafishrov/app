@@ -2,13 +2,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import { VideoStream } from '@/components/VideoStream';
+import { Controls } from '@/components/controls/Controls';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
 
 import { useSendDirectionVector } from '@/hooks/useSendDirectionVector';
 import { useSendStateUpdates } from '@/hooks/useSendStateUpdates';
 
 import { cx } from '@/lib/utils';
-import { Controls } from '@/components/controls/Controls';
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -20,7 +20,8 @@ function Home() {
 
   const mainRef = useRef<HTMLElement>(null);
   const [sizeClass, setSizeClass] = useState<'w-full' | 'h-full'>('w-full');
-
+  const [showControls, setShowControls] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   useLayoutEffect(() => {
     const mainEl = mainRef.current;
     if (!mainEl) return;
@@ -54,11 +55,20 @@ function Home() {
     };
   }, []);
 
-
+  function handleMouseMove() {
+    setShowControls(true);
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 2000);
+  }
   return (
     <main
       ref={mainRef}
       className='flex h-full w-full items-center justify-center p-1'
+      onMouseMove={handleMouseMove}
     >
       <div
         className={cx(
@@ -68,7 +78,7 @@ function Home() {
       >
         <VideoStream />
         <RovOverlay />
-        <Controls/>
+        <Controls showControls={showControls} />
       </div>
     </main>
   );
