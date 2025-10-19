@@ -223,11 +223,13 @@ function NumberField({
   }
 
   function handleBlur() {
-    const num = Number.parseFloat(draftValue ?? '');
-    if (!isNaN(num)) {
-      field.handleChange(num);
-    } else {
-      field.handleChange(NaN);
+    if (draftValue !== null) {
+      const num = Number.parseFloat(draftValue);
+      if (!isNaN(num)) {
+        field.handleChange(num);
+      } else {
+        field.handleChange(NaN);
+      }
     }
     field.handleBlur();
     setDraftValue(null);
