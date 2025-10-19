@@ -7,7 +7,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { type Theme, useTheme } from '@/components/providers/ThemeProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
