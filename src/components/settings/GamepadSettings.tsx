@@ -80,7 +80,9 @@ function GamepadSettings() {
     <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
       <div className='space-y-6'>
         <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Movement</h3>
+          <h3 className='text-2xl font-semibold tracking-tight'>
+            Surge & Sway
+          </h3>
           <GamepadBindInput
             label='Surge/Sway'
             bind={gamepad.surgeSway}
@@ -90,6 +92,9 @@ function GamepadSettings() {
             }
             isJoystick
           />
+        </div>
+        <div className='space-y-2'>
+          <h3 className='text-2xl font-semibold tracking-tight'>Heave</h3>
           <GamepadBindInput
             label='Heave Up'
             bind={gamepad.heaveUp}
@@ -100,7 +105,9 @@ function GamepadSettings() {
             label='Heave Down'
             bind={gamepad.heaveDown}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveDown}
-            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
+            onBindChange={(newBind) =>
+              handleBindingChange('heaveDown', newBind)
+            }
           />
         </div>
         <div className='space-y-2'>
