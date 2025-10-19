@@ -1,10 +1,9 @@
-use crate::models::actions::{DirectionVector, CustomAction};
+use crate::models::actions::{CustomAction, DirectionVector};
 use crate::websocket::{
-  client::{MessageSendChannelState, DirectionVectorSendChannelState},
+  client::{DirectionVectorSendChannelState, MessageSendChannelState},
   send::actions::{
-    handle_send_custom_action, handle_send_direction_vector,
-    handle_toggle_depth_stabilization, handle_toggle_pitch_stabilization,
-    handle_toggle_roll_stabilization,
+    handle_send_custom_action, handle_send_direction_vector, handle_toggle_depth_hold,
+    handle_toggle_pitch_stabilization, handle_toggle_roll_stabilization,
   },
 };
 use tauri::{command, State};
@@ -40,8 +39,6 @@ pub async fn toggle_roll_stabilization(
 }
 
 #[command]
-pub async fn toggle_depth_stabilization(
-  state: State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  handle_toggle_depth_stabilization(&state).await
+pub async fn toggle_depth_hold(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
+  handle_toggle_depth_hold(&state).await
 }

@@ -3,14 +3,14 @@ import { Store } from '@tanstack/react-store';
 type RovStatus = {
   pitchStabilization: boolean;
   rollStabilization: boolean;
-  depthStabilization: boolean;
+  depthHold: boolean;
   batteryPercentage: number;
 };
 
 const rovStatusStore = new Store<RovStatus>({
   pitchStabilization: false,
   rollStabilization: false,
-  depthStabilization: false,
+  depthHold: false,
   batteryPercentage: 0,
 });
 

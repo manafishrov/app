@@ -4,12 +4,14 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 function StabilizationIndicator() {
-  const { pitchStabilization, rollStabilization, depthStabilization } =
-    useStore(rovStatusStore, (state) => ({
+  const { pitchStabilization, rollStabilization, depthHold } = useStore(
+    rovStatusStore,
+    (state) => ({
       pitchStabilization: state.pitchStabilization,
       rollStabilization: state.rollStabilization,
-      depthStabilization: state.depthStabilization,
-    }));
+      depthHold: state.depthHold,
+    }),
+  );
   const isConnected = useStore(
     connectionStatusStore,
     (state) => state.isConnected,
@@ -38,7 +40,7 @@ function StabilizationIndicator() {
       <div className='flex items-center gap-2'>
         <span
           className={`h-2 w-2 rounded-full ${
-            depthStabilization ? 'bg-green-500' : 'bg-red-500'
+            depthHold ? 'bg-green-500' : 'bg-red-500'
           }`}
         />
         <span>Depth</span>

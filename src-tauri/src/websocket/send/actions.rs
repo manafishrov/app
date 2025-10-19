@@ -52,12 +52,12 @@ pub async fn handle_toggle_roll_stabilization(
   Ok(())
 }
 
-pub async fn handle_toggle_depth_stabilization(
+pub async fn handle_toggle_depth_hold(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
-  let message = WebsocketMessage::ToggleDepthStabilization;
+  let message = WebsocketMessage::ToggleDepthHold;
   if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send ToggleDepthStabilization: {}", e);
+    log_error!("Failed to send ToggleDepthHold: {}", e);
     return Err(e.to_string());
   }
   Ok(())

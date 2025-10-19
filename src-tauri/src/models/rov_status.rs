@@ -5,6 +5,6 @@ use serde::{Deserialize, Serialize};
 pub struct RovStatus {
   pub pitch_stabilization: bool,
   pub roll_stabilization: bool,
-  pub depth_stabilization: bool,
+  pub depth_hold: bool,
   pub battery_percentage: u8,
 }
