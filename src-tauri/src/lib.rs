@@ -40,8 +40,8 @@ mod toast;
 mod updater;
 
 use commands::actions::{
-  send_custom_action, send_direction_vector, toggle_depth_hold, toggle_pitch_stabilization,
-  toggle_roll_stabilization,
+  save_recording, send_custom_action, send_direction_vector, toggle_depth_hold,
+  toggle_pitch_stabilization, toggle_roll_stabilization,
 };
 use commands::config::{get_config, set_config};
 use commands::gamepad::start_gamepad_stream;
@@ -94,6 +94,7 @@ pub fn run() {
   let builder = Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .invoke_handler(generate_handler![
       start_gamepad_stream,
@@ -111,6 +112,7 @@ pub fn run() {
       toggle_roll_stabilization,
       toggle_depth_hold,
       flash_microcontroller_firmware,
+      save_recording,
     ])
     .setup(setup_handlers);
 
