@@ -6,9 +6,13 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "updater:default",
+    "dialog:default",
     "fs:read-all",
     "fs:write-all",
-    "updater:default",
-    "dialog:default"
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-home-read-recursive",
+    "fs:allow-home-write-recursive"
   ]
 }
