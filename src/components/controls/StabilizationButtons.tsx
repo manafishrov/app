@@ -1,3 +1,4 @@
+import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 
 import { Button } from '@/components/ui/Button';
@@ -11,7 +12,13 @@ import {
 
 import { cx } from '@/lib/utils';
 
+import { connectionStatusStore } from '@/stores/connectionStatus';
+
 function StabilizationButtons({ className }: { className?: string }) {
+  const isConnected = useStore(
+    connectionStatusStore,
+    (state) => state.isConnected,
+  );
   async function handleStabilizationClick() {
     try {
       await invoke('toggle_pitch_stabilization');
@@ -28,6 +35,8 @@ function StabilizationButtons({ className }: { className?: string }) {
       toast.error('Failed to toggle depth hold');
     }
   }
+
+  if (!isConnected) return;
 
   return (
     <div className={cx('flex gap-2', className)}>

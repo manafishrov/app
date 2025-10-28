@@ -74,7 +74,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
 
   let input_path = Path::new(&temp_path);
   let output_path = input_path.with_file_name(format!(
-    "ROV_Recording_{}.mp4",
+    "Recording_{}.mp4",
     Utc::now().format("%Y-%m-%d_%H-%M-%S")
   ));
 
