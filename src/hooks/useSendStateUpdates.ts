@@ -7,9 +7,11 @@ import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 
 import { configStore } from '@/stores/config';
+import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function useSendStateUpdates() {
   const config = useStore(configStore);
+  const { isRecording } = useStore(recordingStore);
   const pressedKeys = useRef(new Set<string>());
   const lastStateUpdateRef = useRef({
     pitchStabilization: false,
@@ -53,7 +55,10 @@ function useSendStateUpdates() {
     ) {
       const last = lastStateUpdateRef.current;
       if (stateUpdate === 'record' && isPressed && !last.record) {
-        toast('Coming soon: Recording feature is not yet implemented');
+        setRecordingState({
+          isRecording: !isRecording,
+          startTime: isRecording ? null : Date.now(),
+        });
         last.record = true;
       } else if (stateUpdate === 'record' && !isPressed) {
         last.record = false;
@@ -123,7 +128,7 @@ function useSendStateUpdates() {
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [config]);
+  }, [config, isRecording]);
 }
 
 export { useSendStateUpdates };
