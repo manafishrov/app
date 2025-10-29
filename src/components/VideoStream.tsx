@@ -101,7 +101,6 @@ function VideoStream() {
         const uint8Array = new Uint8Array(buffer);
         await writeFile(tempFilePathRef.current, uint8Array);
         await invoke('save_recording', { tempPath: tempFilePathRef.current });
-        toast('Recording saved');
       } catch (error) {
         logError('Failed to save recording:', error);
         toast.error('Failed to save recording');
