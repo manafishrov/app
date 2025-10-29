@@ -95,9 +95,12 @@ function VideoStream() {
         try {
           const buffer = await event.data.arrayBuffer();
           const chunk = Array.from(new Uint8Array(buffer));
+
           await invoke('append_recording_chunk', {
             tempPath: tempFilePathRef.current,
             chunk,
+          }).catch((error) => {
+            logError('Failed to append recording chunk:', error);
           });
         } finally {
           pendingInvokesRef.current--;
@@ -113,7 +116,13 @@ function VideoStream() {
       mediaRecorderRef.current.onstop = async () => {
         await waitForPendingInvokes();
         if (tempFilePathRef.current) {
-          await invoke('save_recording', { tempPath: tempFilePathRef.current });
+          try {
+            await invoke('save_recording', {
+              tempPath: tempFilePathRef.current,
+            });
+          } catch {
+            toast.error('Failed to save recording');
+          }
           tempFilePathRef.current = null;
         }
       };
