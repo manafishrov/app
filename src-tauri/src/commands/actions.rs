@@ -198,7 +198,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
   toast_success(
     Some(toast_id),
     "Recording saved successfully".to_string(),
-    Some(format!("Saved to {}", output_path.display())),
+    Some(format!("{}", output_path.display())),
     None,
   );
 

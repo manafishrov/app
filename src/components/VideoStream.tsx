@@ -1,8 +1,9 @@
+import { useLocation } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { mkdir, writeFile } from '@tauri-apps/plugin-fs';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
 
@@ -34,8 +35,35 @@ function VideoStream() {
       : null,
   );
   const isRecording = useStore(recordingStore, (state) => state.isRecording);
+  const location = useLocation();
 
-  async function startRecording() {
+  const saveRecording = useCallback(async () => {
+    if (tempFilePathRef.current && recordedChunksRef.current.length > 0) {
+      try {
+        const blob = new Blob(recordedChunksRef.current, {
+          type: 'video/webm',
+        });
+        logInfo('Blob size:', blob.size);
+        const buffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+        await writeFile(tempFilePathRef.current, uint8Array);
+        await invoke('save_recording', {
+          tempPath: tempFilePathRef.current,
+        });
+      } catch (error) {
+        logError('Failed to save recording:', error);
+        toast.error('Failed to save recording');
+        setRecordingState({ isRecording: false, startTime: null });
+      }
+    } else {
+      logError('No recording data captured');
+      toast.error('No recording data captured');
+    }
+    tempFilePathRef.current = null;
+    recordedChunksRef.current = [];
+  }, []);
+
+  const startRecording = useCallback(async () => {
     if (!videoRef.current?.srcObject || !config) return;
 
     try {
@@ -77,44 +105,24 @@ function VideoStream() {
     };
 
     recorder.start();
-  }
+  }, [config]);
 
-  async function stopRecording() {
-    logInfo(
-      'Stopping recording, current chunks:',
-      recordedChunksRef.current.length,
-    );
+  const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+      if (mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.onstop = async () => {
+          await saveRecording();
+        };
+        mediaRecorderRef.current.stop();
+      } else if (
+        mediaRecorderRef.current.state === 'inactive' &&
+        recordedChunksRef.current.length > 0
+      ) {
+        await saveRecording();
+      }
       mediaRecorderRef.current = null;
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    if (tempFilePathRef.current && recordedChunksRef.current.length > 0) {
-      try {
-        const blob = new Blob(recordedChunksRef.current, {
-          type: 'video/webm',
-        });
-        logInfo('Blob size:', blob.size);
-        const buffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(buffer);
-        await writeFile(tempFilePathRef.current, uint8Array);
-        await invoke('save_recording', { tempPath: tempFilePathRef.current });
-      } catch (error) {
-        logError('Failed to save recording:', error);
-        toast.error('Failed to save recording');
-        setRecordingState({ isRecording: false, startTime: null });
-      }
-      tempFilePathRef.current = null;
-      recordedChunksRef.current = [];
-    } else {
-      logError('No recording data captured');
-      toast.error('No recording data captured');
-      tempFilePathRef.current = null;
-      recordedChunksRef.current = [];
-    }
-  }
+  }, [saveRecording]);
 
   async function setupWebRTCConnection() {
     try {
@@ -217,6 +225,9 @@ function VideoStream() {
         peerConnectionRef.current.close();
       }
     };
+
+    //eslint-disable-next-line react-compiler/react-compiler
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     config?.ipAddress,
     config?.webrtcSignalingApiPort,
@@ -233,7 +244,20 @@ function VideoStream() {
       void stopRecording();
     }
     prevIsRecordingRef.current = current;
+
+    //eslint-disable-next-line react-compiler/react-compiler
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording]);
+
+  useEffect(() => {
+    if (isRecording) {
+      void stopRecording();
+      setRecordingState({ isRecording: false, startTime: null });
+    }
+
+    //eslint-disable-next-line react-compiler/react-compiler
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   return (
     <>
