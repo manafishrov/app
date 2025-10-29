@@ -76,12 +76,10 @@ function useGamepadListener() {
     navigator.getGamepads = getGamepads;
 
     void (async () => {
-      try {
-        await invoke('start_gamepad_stream');
-      } catch (error) {
+      await invoke('start_gamepad_stream').catch((error) => {
         logError('Failed to start gamepad stream:', error);
         toast.error('Failed to start gamepad stream');
-      }
+      });
       try {
         unlisten = await listen<GamepadData>(
           'gamepad_event',

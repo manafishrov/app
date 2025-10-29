@@ -162,16 +162,16 @@ function useSendDirectionVector() {
 
   async function sendDirectionVector(command: DirectionVector) {
     directionVectorStore.setState(() => command);
-    try {
-      await invoke('send_direction_vector', { payload: command });
-    } catch (error) {
-      const now = Date.now();
-      if (now - lastDirectionVectorErrorRef.current > 10000) {
-        lastDirectionVectorErrorRef.current = now;
-        logError('Failed to send direction vector:', error);
-        toast.error('Failed to send direction vector');
-      }
-    }
+    await invoke('send_direction_vector', { payload: command }).catch(
+      (error) => {
+        const now = Date.now();
+        if (now - lastDirectionVectorErrorRef.current > 10000) {
+          lastDirectionVectorErrorRef.current = now;
+          logError('Failed to send direction vector:', error);
+          toast.error('Failed to send direction vector');
+        }
+      },
+    );
   }
 
   useEffect(() => {

@@ -75,12 +75,10 @@ function useSendStateUpdates() {
         last.record = false;
       }
       if (stateUpdate === 'depthHold' && isPressed && !last.depthHold) {
-        try {
-          await invoke('toggle_depth_hold');
-        } catch (error) {
+        await invoke('toggle_depth_hold').catch((error) => {
           logError('Failed to toggle depth hold:', error);
           toast.error('Failed to toggle depth hold');
-        }
+        });
         last.depthHold = true;
       } else if (stateUpdate === 'depthHold' && !isPressed) {
         last.depthHold = false;
@@ -90,12 +88,10 @@ function useSendStateUpdates() {
         isPressed &&
         !last.pitchStabilization
       ) {
-        try {
-          await invoke('toggle_pitch_stabilization');
-        } catch (error) {
+        await invoke('toggle_pitch_stabilization').catch((error) => {
           logError('Failed to toggle pitch stabilization:', error);
           toast.error('Failed to toggle pitch stabilization');
-        }
+        });
         last.pitchStabilization = true;
       } else if (stateUpdate === 'pitchStabilization' && !isPressed) {
         last.pitchStabilization = false;
@@ -105,12 +101,10 @@ function useSendStateUpdates() {
         isPressed &&
         !last.rollStabilization
       ) {
-        try {
-          await invoke('toggle_roll_stabilization');
-        } catch (error) {
+        await invoke('toggle_roll_stabilization').catch((error) => {
           logError('Failed to toggle roll stabilization:', error);
           toast.error('Failed to toggle roll stabilization');
-        }
+        });
         last.rollStabilization = true;
       } else if (stateUpdate === 'rollStabilization' && !isPressed) {
         last.rollStabilization = false;

@@ -42,14 +42,12 @@ function General() {
   const firmwareVersion = useStore(firmwareVersionStore);
 
   async function flashMicrocontrollerFirmware() {
-    try {
-      await invoke('flash_microcontroller_firmware', {
-        payload: rovConfig?.microcontrollerFirmwareVariant,
-      });
-    } catch (error) {
+    await invoke('flash_microcontroller_firmware', {
+      payload: rovConfig?.microcontrollerFirmwareVariant,
+    }).catch((error) => {
       logError('Failed to flash microcontroller firmware:', error);
       toast.error('Failed to flash microcontroller firmware');
-    }
+    });
   }
 
   return (

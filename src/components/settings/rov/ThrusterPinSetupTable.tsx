@@ -75,20 +75,20 @@ function ThrusterPinSetupTable() {
       updated[index] = true;
       return updated;
     });
-    try {
-      await invoke('start_thruster_test', { payload: identifier });
-    } catch (error) {
-      logError('Failed to start thruster test:', error);
-      toast.error('Failed to start thruster test');
-    } finally {
-      setTimeout(() => {
-        setTestDisabled((prev: boolean[]): boolean[] => {
-          const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
-          updated[index] = false;
-          return updated;
-        });
-      }, 2000);
-    }
+    await invoke('start_thruster_test', { payload: identifier })
+      .catch((error) => {
+        logError('Failed to start thruster test:', error);
+        toast.error('Failed to start thruster test');
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setTestDisabled((prev: boolean[]): boolean[] => {
+            const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
+            updated[index] = false;
+            return updated;
+          });
+        }, 2000);
+      });
   }
 
   if (!thrusterPinSetup) return;

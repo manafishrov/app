@@ -60,12 +60,10 @@ const rovConfigStore = new Store<RovConfig | null>(null);
 async function requestRovConfig() {
   if (!connectionStatusStore.state.isConnected) return;
 
-  try {
-    await invoke('request_rov_config');
-  } catch (error) {
+  await invoke('request_rov_config').catch((error) => {
     logError('Failed to request ROV config:', error);
     toast.error('Failed to request ROV config');
-  }
+  });
 }
 
 async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
@@ -83,13 +81,11 @@ async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
 
   rovConfigStore.setState(() => newRovConfig);
 
-  try {
-    await invoke('set_rov_config', { payload: newRovConfig });
-  } catch (error) {
+  await invoke('set_rov_config', { payload: newRovConfig }).catch((error) => {
     rovConfigStore.setState(() => currentRovConfig);
     logError('Failed to set ROV config:', error);
     toast.error('Failed to set ROV config. Changes reverted.');
-  }
+  });
 }
 
 export {

@@ -116,13 +116,9 @@ function VideoStream() {
       mediaRecorderRef.current.onstop = async () => {
         await waitForPendingInvokes();
         if (tempFilePathRef.current) {
-          try {
-            await invoke('save_recording', {
-              tempPath: tempFilePathRef.current,
-            });
-          } catch {
-            toast.error('Failed to save recording');
-          }
+          await invoke('save_recording', {
+            tempPath: tempFilePathRef.current,
+          }).catch(() => toast.error('Failed to save recording'));
           tempFilePathRef.current = null;
         }
       };

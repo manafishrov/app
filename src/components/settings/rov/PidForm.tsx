@@ -16,12 +16,10 @@ import { logError } from '@/lib/log';
 import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
 
 async function startRegulatorAutoTuning() {
-  try {
-    await invoke('start_regulator_auto_tuning');
-  } catch (error) {
+  await invoke('start_regulator_auto_tuning').catch((error) => {
     logError('Failed to start regulator auto tuning:', error);
     toast.error('Failed to start regulator auto tuning');
-  }
+  });
 }
 
 const pidSchema = z.object({

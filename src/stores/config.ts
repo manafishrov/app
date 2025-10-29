@@ -65,13 +65,12 @@ type Config = {
 const configStore = new Store<Config | null>(null);
 
 async function getConfig() {
-  try {
-    const payload = await invoke<Config>('get_config');
-    configStore.setState(() => payload);
-  } catch (error) {
-    logError('Failed to get config:', error);
-    toast.error('Failed to get config');
-  }
+  await invoke<Config>('get_config')
+    .then((payload) => configStore.setState(() => payload))
+    .catch((error) => {
+      logError('Failed to get config:', error);
+      toast.error('Failed to get config');
+    });
 }
 
 async function setConfig(newConfigOptions: Partial<Config>) {
@@ -89,13 +88,11 @@ async function setConfig(newConfigOptions: Partial<Config>) {
 
   configStore.setState(() => newConfig);
 
-  try {
-    await invoke('set_config', { payload: newConfig });
-  } catch (error) {
+  await invoke('set_config', { payload: newConfig }).catch((error) => {
     configStore.setState(() => currentConfig);
     logError('Failed to set config:', error);
     toast.error('Failed to set config. Changes reverted.');
-  }
+  });
 }
 
 export {

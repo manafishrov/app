@@ -53,12 +53,10 @@ function useToastListener() {
                             onClick: async (event: React.MouseEvent) => {
                               event.preventDefault();
                               if (payload.cancel?.type) {
-                                try {
-                                  await invoke(
-                                    camelToSnake(payload.cancel.type),
-                                    { payload: payload.cancel.payload },
-                                  );
-                                } catch (error) {
+                                await invoke(
+                                  camelToSnake(payload.cancel.type),
+                                  { payload: payload.cancel.payload },
+                                ).catch((error) => {
                                   logError(
                                     'Failed to invoke cancel command:',
                                     error,
@@ -66,7 +64,7 @@ function useToastListener() {
                                   toast.error(
                                     'Failed to invoke cancel command',
                                   );
-                                }
+                                });
                               }
                               if (
                                 payload.id &&

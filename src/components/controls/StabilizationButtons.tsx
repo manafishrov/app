@@ -28,20 +28,18 @@ function StabilizationButtons() {
   );
 
   async function handleStabilizationClick() {
-    try {
-      await invoke('toggle_pitch_stabilization');
-      await invoke('toggle_roll_stabilization');
-    } catch {
-      toast.error('Failed to toggle stabilization');
-    }
+    await invoke('toggle_pitch_stabilization').catch(() =>
+      toast.error('Failed to toggle stabilization'),
+    );
+    await invoke('toggle_roll_stabilization').catch(() =>
+      toast.error('Failed to toggle stabilization'),
+    );
   }
 
   async function handleDepthHoldClick() {
-    try {
-      await invoke('toggle_depth_hold');
-    } catch {
-      toast.error('Failed to toggle depth hold');
-    }
+    await invoke('toggle_depth_hold').catch(() =>
+      toast.error('Failed to toggle depth hold'),
+    );
   }
 
   if (!isConnected) return;
