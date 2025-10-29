@@ -10,15 +10,23 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-import { cx } from '@/lib/utils';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovStatusStore } from '@/stores/rovStatus';
 
-function StabilizationButtons({ className }: { className?: string }) {
+function StabilizationButtons() {
   const isConnected = useStore(
     connectionStatusStore,
     (state) => state.isConnected,
   );
+  const { pitchStabilization, rollStabilization, depthHold } = useStore(
+    rovStatusStore,
+    (state) => ({
+      pitchStabilization: state.pitchStabilization,
+      rollStabilization: state.rollStabilization,
+      depthHold: state.depthHold,
+    }),
+  );
+
   async function handleStabilizationClick() {
     try {
       await invoke('toggle_pitch_stabilization');
@@ -39,11 +47,17 @@ function StabilizationButtons({ className }: { className?: string }) {
   if (!isConnected) return;
 
   return (
-    <div className={cx('flex gap-2', className)}>
+    <div className='flex gap-2'>
       <TooltipProvider>
         <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button variant='outline' onClick={handleStabilizationClick}>
+            <Button
+              variant={
+                pitchStabilization && rollStabilization ? 'default' : 'outline'
+              }
+              onClick={handleStabilizationClick}
+              aria-label='Toggle pitch and roll stabilization'
+            >
               Stabilization
             </Button>
           </TooltipTrigger>
@@ -55,7 +69,11 @@ function StabilizationButtons({ className }: { className?: string }) {
       <TooltipProvider>
         <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
-            <Button variant='outline' onClick={handleDepthHoldClick}>
+            <Button
+              variant={depthHold ? 'default' : 'outline'}
+              onClick={handleDepthHoldClick}
+              aria-label='Toggle depth hold'
+            >
               Depth Hold
             </Button>
           </TooltipTrigger>

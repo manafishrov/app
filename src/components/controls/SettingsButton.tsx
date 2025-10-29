@@ -8,12 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
-type SettingsButtonProps = Omit<
-  React.ComponentProps<typeof Link>,
-  'to' | 'aria-label'
->;
-
-function SettingsButton(props: SettingsButtonProps) {
+function SettingsButton() {
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -22,8 +17,7 @@ function SettingsButton(props: SettingsButtonProps) {
             to='/settings'
             variant='outline'
             size='icon'
-            aria-label='Settings'
-            {...props}
+            aria-label='Open settings'
           >
             <SettingsIcon />
           </Link>
