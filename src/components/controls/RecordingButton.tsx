@@ -12,7 +12,7 @@ import {
 import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function RecordingButton() {
-  const { isRecording } = useStore(recordingStore);
+  const isRecording = useStore(recordingStore, (state) => state.isRecording);
 
   function handleRecordingClick() {
     setRecordingState({
