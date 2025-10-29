@@ -40,7 +40,7 @@ mod toast;
 mod updater;
 
 use commands::actions::{
-  save_recording, send_custom_action, send_direction_vector, toggle_depth_hold,
+  append_recording_chunk, save_recording, send_custom_action, send_direction_vector, toggle_depth_hold,
   toggle_pitch_stabilization, toggle_roll_stabilization,
 };
 use commands::config::{get_config, set_config};
@@ -110,6 +110,7 @@ pub fn run() {
       send_custom_action,
       toggle_pitch_stabilization,
       toggle_roll_stabilization,
+      append_recording_chunk,
       toggle_depth_hold,
       flash_microcontroller_firmware,
       save_recording,

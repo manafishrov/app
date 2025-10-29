@@ -8,7 +8,7 @@ use crate::websocket::{
   },
 };
 use crate::{log_error, log_info};
-use chrono::Utc;
+
 use ffmpeg_next as ffmpeg;
 use std::fs;
 use std::path::Path;
@@ -73,10 +73,8 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
   }
 
   let input_path = Path::new(&temp_path);
-  let output_path = input_path.with_file_name(format!(
-    "Recording_{}.mp4",
-    Utc::now().format("%Y-%m-%d_%H-%M-%S")
-  ));
+  let output_name = temp_path.replace("_temp.webm", ".mp4");
+  let output_path = Path::new(&output_name);
 
   if !input_path.exists() {
     log_error!("Recording file does not exist: {}", temp_path);
@@ -201,6 +199,28 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
     Some(format!("{}", output_path.display())),
     None,
   );
+
+  Ok(())
+}
+
+#[command]
+pub async fn append_recording_chunk(temp_path: String, chunk: Vec<u8>) -> Result<(), String> {
+  use std::fs::OpenOptions;
+  use std::io::Write;
+
+  let mut file = OpenOptions::new()
+    .create(true)
+    .append(true)
+    .open(&temp_path)
+    .map_err(|e| format!("Failed to open file: {}", e))?;
+
+  file
+    .write_all(&chunk)
+    .map_err(|e| format!("Failed to write chunk: {}", e))?;
+
+  file
+    .sync_all()
+    .map_err(|e| format!("Failed to sync file: {}", e))?;
 
   Ok(())
 }

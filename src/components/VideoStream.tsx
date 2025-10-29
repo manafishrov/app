@@ -2,7 +2,7 @@ import { useLocation } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
-import { mkdir, writeFile } from '@tauri-apps/plugin-fs';
+import { mkdir } from '@tauri-apps/plugin-fs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
@@ -20,8 +20,8 @@ function VideoStream() {
   const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const tempFilePathRef = useRef<string | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
   const prevIsRecordingRef = useRef(false);
+  const pendingInvokesRef = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const config = useStore(configStore, (state) =>
@@ -37,31 +37,17 @@ function VideoStream() {
   const isRecording = useStore(recordingStore, (state) => state.isRecording);
   const location = useLocation();
 
-  const saveRecording = useCallback(async () => {
-    if (tempFilePathRef.current && recordedChunksRef.current.length > 0) {
-      try {
-        const blob = new Blob(recordedChunksRef.current, {
-          type: 'video/webm',
-        });
-        logInfo('Blob size:', blob.size);
-        const buffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(buffer);
-        await writeFile(tempFilePathRef.current, uint8Array);
-        await invoke('save_recording', {
-          tempPath: tempFilePathRef.current,
-        });
-      } catch (error) {
-        logError('Failed to save recording:', error);
-        toast.error('Failed to save recording');
-        setRecordingState({ isRecording: false, startTime: null });
-      }
-    } else {
-      logError('No recording data captured');
-      toast.error('No recording data captured');
-    }
-    tempFilePathRef.current = null;
-    recordedChunksRef.current = [];
-  }, []);
+  const waitForPendingInvokes = () =>
+    new Promise<void>((resolve) => {
+      const check = () => {
+        if (pendingInvokesRef.current === 0) {
+          resolve();
+        } else {
+          requestAnimationFrame(check);
+        }
+      };
+      check();
+    });
 
   const startRecording = useCallback(async () => {
     if (!videoRef.current?.srcObject || !config) return;
@@ -91,38 +77,50 @@ function VideoStream() {
     const recorder = new MediaRecorder(stream);
     mediaRecorderRef.current = recorder;
 
+    const timestamp = new Date()
+      .toISOString()
+      .replace('T', '_')
+      .replace(/[:.]/g, '-')
+      .slice(0, 19);
     const tempPath = await join(
       config.videoDirectory,
-      `temp_recording_${Date.now()}.webm`,
+      `Recording_${timestamp}_temp.webm`,
     );
     tempFilePathRef.current = tempPath;
 
-    recorder.ondataavailable = (event) => {
+    recorder.ondataavailable = async (event) => {
       logInfo('Recording data available, size:', event.data.size);
-      if (event.data.size > 0) {
-        recordedChunksRef.current.push(event.data);
+      if (event.data.size > 0 && tempFilePathRef.current) {
+        pendingInvokesRef.current++;
+        try {
+          const buffer = await event.data.arrayBuffer();
+          const chunk = Array.from(new Uint8Array(buffer));
+          await invoke('append_recording_chunk', {
+            tempPath: tempFilePathRef.current,
+            chunk,
+          });
+        } finally {
+          pendingInvokesRef.current--;
+        }
       }
     };
 
-    recorder.start();
+    recorder.start(1000);
   }, [config]);
 
   const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current) {
-      if (mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.onstop = async () => {
-          await saveRecording();
-        };
-        mediaRecorderRef.current.stop();
-      } else if (
-        mediaRecorderRef.current.state === 'inactive' &&
-        recordedChunksRef.current.length > 0
-      ) {
-        await saveRecording();
-      }
+      mediaRecorderRef.current.onstop = async () => {
+        await waitForPendingInvokes();
+        if (tempFilePathRef.current) {
+          await invoke('save_recording', { tempPath: tempFilePathRef.current });
+          tempFilePathRef.current = null;
+        }
+      };
+      mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
     }
-  }, [saveRecording]);
+  }, []);
 
   async function setupWebRTCConnection() {
     try {
