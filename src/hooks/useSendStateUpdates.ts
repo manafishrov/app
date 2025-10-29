@@ -11,7 +11,13 @@ import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function useSendStateUpdates() {
   const config = useStore(configStore);
-  const { isRecording } = useStore(recordingStore);
+  const { isRecording, webrtcConnected } = useStore(
+    recordingStore,
+    (state) => ({
+      isRecording: state.isRecording,
+      webrtcConnected: state.webrtcConnected,
+    }),
+  );
   const pressedKeys = useRef(new Set<string>());
   const lastStateUpdateRef = useRef({
     pitchStabilization: false,
@@ -54,7 +60,12 @@ function useSendStateUpdates() {
       stateUpdate: (typeof states)[number],
     ) {
       const last = lastStateUpdateRef.current;
-      if (stateUpdate === 'record' && isPressed && !last.record) {
+      if (
+        stateUpdate === 'record' &&
+        isPressed &&
+        !last.record &&
+        webrtcConnected
+      ) {
         setRecordingState({
           isRecording: !isRecording,
           startTime: isRecording ? null : Date.now(),
@@ -128,7 +139,7 @@ function useSendStateUpdates() {
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [config, isRecording]);
+  }, [config, isRecording, webrtcConnected]);
 }
 
 export { useSendStateUpdates };

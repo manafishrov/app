@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-store';
 import { useEffect, useState } from 'react';
 
-import { recordingStore } from '@/stores/recording';
+import { getDuration, recordingStore } from '@/stores/recording';
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -21,7 +21,7 @@ function RecordingIndicator() {
     }
 
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+      setElapsed(Math.floor(getDuration() / 1000));
     }, 1000);
 
     return () => clearInterval(interval);

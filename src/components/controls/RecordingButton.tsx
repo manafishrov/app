@@ -12,7 +12,13 @@ import {
 import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function RecordingButton() {
-  const isRecording = useStore(recordingStore, (state) => state.isRecording);
+  const { isRecording, webrtcConnected } = useStore(
+    recordingStore,
+    (state) => ({
+      isRecording: state.isRecording,
+      webrtcConnected: state.webrtcConnected,
+    }),
+  );
 
   function handleRecordingClick() {
     setRecordingState({
@@ -20,6 +26,8 @@ function RecordingButton() {
       startTime: isRecording ? null : Date.now(),
     });
   }
+
+  if (!webrtcConnected) return;
 
   return (
     <TooltipProvider>

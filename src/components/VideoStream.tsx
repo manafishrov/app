@@ -120,6 +120,7 @@ function VideoStream() {
   async function setupWebRTCConnection() {
     try {
       if (!config) return;
+      setRecordingState({ webrtcConnected: false });
 
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
@@ -132,6 +133,7 @@ function VideoStream() {
         pc.ontrack = (event) => {
           logInfo('WebRTC track received, kind:', event.track.kind);
           setIsLoading(true);
+          setRecordingState({ webrtcConnected: true });
           const stream = event.streams[0];
           if (stream && videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -153,6 +155,7 @@ function VideoStream() {
           logInfo(
             `WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`,
           );
+          setRecordingState({ webrtcConnected: false });
           setHasError(true);
           setIsLoading(false);
           scheduleRetry();

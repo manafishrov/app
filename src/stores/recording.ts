@@ -3,11 +3,13 @@ import { Store } from '@tanstack/react-store';
 type RecordingState = {
   isRecording: boolean;
   startTime: number | null;
+  webrtcConnected: boolean;
 };
 
 const recordingStore = new Store<RecordingState>({
   isRecording: false,
   startTime: null,
+  webrtcConnected: false,
 });
 
 function setRecordingState(newState: Partial<RecordingState>) {
