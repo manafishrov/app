@@ -86,6 +86,7 @@ function SidebarProvider({
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
+        // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
         _setOpen(openState);
       }
     },

@@ -80,8 +80,11 @@ function General() {
 
   useEffect(() => {
     if (theme !== radioSelectedTheme) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
       setRadioSelectedTheme(theme);
     }
+    //eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
   const styleId = 'theme-transition-styles';
