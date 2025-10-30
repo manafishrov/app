@@ -1,5 +1,19 @@
+import { useNavigate } from '@tanstack/react-router';
+import { useStore } from '@tanstack/react-store';
 import { SettingsIcon } from 'lucide-react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/AlertDialog';
+import { Button } from '@/components/ui/Button';
 import { Link } from '@/components/ui/Link';
 import {
   Tooltip,
@@ -8,19 +22,57 @@ import {
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
 
+import { recordingStore } from '@/stores/recording';
+
 function SettingsButton() {
+  const isRecording = useStore(recordingStore, (state) => state.isRecording);
+  const navigate = useNavigate();
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link
-            to='/settings'
-            variant='outline'
-            size='icon'
-            aria-label='Open settings'
-          >
-            <SettingsIcon />
-          </Link>
+          {isRecording ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  aria-label='Open settings'
+                >
+                  <SettingsIcon />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Recording in Progress</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    If you navigate to settings, the recording will be stopped
+                    and saved.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      void navigate({ to: '/settings' });
+                    }}
+                  >
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <Link
+              to='/settings'
+              variant='outline'
+              size='icon'
+              aria-label='Open settings'
+            >
+              <SettingsIcon />
+            </Link>
+          )}
         </TooltipTrigger>
         <TooltipContent side='left'>
           <p>Settings</p>
