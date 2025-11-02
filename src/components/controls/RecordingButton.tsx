@@ -31,7 +31,7 @@ function RecordingButton() {
 
   return (
     <TooltipProvider>
-      <Tooltip delayDuration={700}>
+      <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
           <Button
             variant={isRecording ? 'destructive' : 'outline'}
