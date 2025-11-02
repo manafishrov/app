@@ -229,7 +229,7 @@ function ThrusterPinSetupTable() {
                     Test
                   </Button>
                 </TableCell>
-                <TableCell className='flex items-center gap-2'>
+                <TableCell className='flex w-24 items-center justify-end gap-2'>
                   <ThrusterRpm rpm={thrusterRpms[index] ?? 0} />
                 </TableCell>
               </TableRow>

@@ -23,14 +23,14 @@ function ThrusterRpmOverlay() {
   if (!isConnected || !thrusterRpmOverlay) return;
 
   return (
-    <div className='flex flex-col gap-2 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
+    <div className='flex flex-col items-end gap-2 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
       {thrusterRpms.map((rpm, index) => (
         <div
           key={`thruster-${index + 1}`}
           className='flex items-center gap-1 text-xs'
         >
-          <span>T{index + 1}:</span>
           <ThrusterRpm rpm={rpm} />
+          <span className='w-2'>T{index + 1}</span>
         </div>
       ))}
     </div>
