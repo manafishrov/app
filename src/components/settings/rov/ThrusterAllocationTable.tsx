@@ -18,11 +18,15 @@ import {
 } from '@/components/ui/Tooltip';
 
 import {
-  type Row,
   type ThrusterAllocation,
   rovConfigStore,
   setRovConfig,
 } from '@/stores/rovConfig';
+
+function transpose<T>(matrix: T[][]): T[][] {
+  if (!matrix.length || !matrix[0]?.length) return [];
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]!));
+}
 
 function ThrusterAllocationTable() {
   const thrusterAllocation = useStore(
@@ -173,17 +177,20 @@ function ThrusterAllocationTable() {
         onClick={async () => {
           if (!displayAllocation) return;
 
-          const newThrusterAllocation = displayAllocation.map(
-            (row: string[]) =>
-              row.map((cell) => {
-                const parsedValue = Number.parseFloat(cell);
-                return Number.isNaN(parsedValue) ? 0 : parsedValue;
-              }) as Row,
+          const parsedDisplay = displayAllocation.map((row: string[]) =>
+            row.map((cell) => {
+              const parsedValue = Number.parseFloat(cell);
+              return Number.isNaN(parsedValue) ? 0 : parsedValue;
+            }),
+          );
+
+          const newThrusterAllocation = transpose(
+            parsedDisplay,
           ) as ThrusterAllocation;
 
           await setRovConfig({ thrusterAllocation: newThrusterAllocation });
           setDisplayAllocation(
-            newThrusterAllocation.map((row) => row.map(String)),
+            transpose(newThrusterAllocation).map((row) => row.map(String)),
           );
         }}
       >
