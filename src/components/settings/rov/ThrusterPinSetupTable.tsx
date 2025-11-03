@@ -210,15 +210,9 @@ function ThrusterPinSetupTable() {
                   <Button
                     type='button'
                     variant='outline'
-                    disabled={
-                      (testDisabled[index] ?? false) ||
-                      (thrusterRpms[index] ?? 0) !== 0
-                    }
+                    disabled={testDisabled[index] ?? false}
                     onClick={async () => {
-                      if (
-                        thrusterPinSetup?.identifiers[index] !== undefined &&
-                        thrusterPinSetup?.identifiers[index] !== null
-                      ) {
+                      if (thrusterPinSetup?.identifiers[index]) {
                         await testThruster(
                           thrusterPinSetup.identifiers[index],
                           index,
