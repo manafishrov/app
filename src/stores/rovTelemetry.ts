@@ -5,8 +5,6 @@ type RovTelemetry = {
   roll: number;
   desiredPitch: number;
   desiredRoll: number;
-  depth: number;
-  temperature: number;
   thrusterRpms: [
     number,
     number,
@@ -17,6 +15,7 @@ type RovTelemetry = {
     number,
     number,
   ];
+  workIndicatorPercentage: number;
 };
 
 const rovTelemetryStore = new Store<RovTelemetry>({
@@ -24,9 +23,8 @@ const rovTelemetryStore = new Store<RovTelemetry>({
   roll: 0,
   desiredPitch: 0,
   desiredRoll: 0,
-  depth: 0,
-  temperature: 0,
   thrusterRpms: [0, 0, 0, 0, 0, 0, 0, 0],
+  workIndicatorPercentage: 0,
 });
 
 export { rovTelemetryStore, type RovTelemetry };
