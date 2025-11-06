@@ -15,8 +15,5 @@ pub struct RovStatus {
   pub roll_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
-  pub depth: f32,
-  pub water_temperature: f32,
-  pub electronics_temperature: f32,
   pub health: SystemHealth,
 }

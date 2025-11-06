@@ -7,6 +7,9 @@ pub struct RovTelemetry {
   pub roll: f32,
   pub desired_pitch: f32,
   pub desired_roll: f32,
+  pub depth: f32,
+  pub water_temperature: f32,
+  pub electronics_temperature: f32,
   pub thruster_rpms: [f32; 8],
   pub work_indicator_percentage: u8,
 }
