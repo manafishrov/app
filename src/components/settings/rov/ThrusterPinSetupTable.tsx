@@ -156,7 +156,7 @@ function ThrusterPinSetupTable() {
               </TableHead>
               <TableHead>
                 <Tooltip>
-                  <TooltipTrigger>RPM</TooltipTrigger>
+                  <TooltipTrigger className='ml-4'>RPM</TooltipTrigger>
                   <TooltipContent>
                     <p>The revolutions per minute of the thruster.</p>
                   </TooltipContent>
@@ -175,7 +175,7 @@ function ThrusterPinSetupTable() {
                       void handleIdentifierChange(index, Number(value))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-16'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -197,7 +197,7 @@ function ThrusterPinSetupTable() {
                       void handleSpinDirectionChange(index, Number(value))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-28'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
