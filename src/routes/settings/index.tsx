@@ -251,7 +251,7 @@ function General() {
                   <Label htmlFor='ai-3d'>3D</Label>
                 </div>
                 <div className='flex items-center gap-3'>
-                  <RadioGroupItem value='Disabled' id='ai-disabled' />
+                  <RadioGroupItem value='disabled' id='ai-disabled' />
                   <Label htmlFor='ai-disabled'>Disabled</Label>
                 </div>
               </RadioGroup>

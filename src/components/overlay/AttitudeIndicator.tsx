@@ -30,6 +30,7 @@ function AttitudeIndicator() {
   const size = isDesktop ? 220 : 160;
 
   let shadowStyle: React.CSSProperties = {};
+  let cornerIndicatorStyle: React.CSSProperties = {};
 
   if (workIndicatorPercentage > 0) {
     const shadowIntensity = workIndicatorPercentage / 100;
@@ -50,6 +51,11 @@ function AttitudeIndicator() {
 
     shadowStyle = {
       boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,
+    };
+
+    cornerIndicatorStyle = {
+      backgroundColor: `rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.3})`,
+      boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity}), inset 0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.5})`,
     };
   }
 
@@ -78,7 +84,9 @@ function AttitudeIndicator() {
         />
       );
     default:
-      return;
+      return (
+        <div className='h-4 w-4 rounded-full' style={cornerIndicatorStyle} />
+      );
   }
 }
 
