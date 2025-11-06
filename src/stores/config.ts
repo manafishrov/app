@@ -51,6 +51,7 @@ type GamepadBindings = {
 type Config = {
   autoUpdate: boolean;
   attitudeIndicator: AttitudeIndicator;
+  workIndicator: boolean;
   thrusterRpmOverlay: boolean;
   videoDirectory: string;
   ipAddress: string;

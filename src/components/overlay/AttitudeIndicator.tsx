@@ -19,7 +19,13 @@ function AttitudeIndicator() {
       desiredRoll: state.desiredRoll,
       workIndicatorPercentage: state.workIndicatorPercentage,
     }));
-  const config = useStore(configStore);
+  const { attitudeIndicator, workIndicator } = useStore(
+    configStore,
+    (state) => ({
+      attitudeIndicator: state?.attitudeIndicator,
+      workIndicator: state?.workIndicator,
+    }),
+  );
   const directionVector = useStore(directionVectorStore);
   const isConnected = useStore(
     connectionStatusStore,
@@ -32,7 +38,7 @@ function AttitudeIndicator() {
   let shadowStyle: React.CSSProperties = {};
   let cornerIndicatorStyle: React.CSSProperties = {};
 
-  if (workIndicatorPercentage > 0) {
+  if (workIndicator && workIndicatorPercentage > 0) {
     const shadowIntensity = workIndicatorPercentage / 100;
     const shadowBlur = shadowIntensity * 20;
     const shadowSpread = shadowIntensity * 10;
@@ -61,7 +67,7 @@ function AttitudeIndicator() {
 
   if (!isConnected) return;
 
-  switch (config?.attitudeIndicator) {
+  switch (attitudeIndicator) {
     case 'scientific':
       return (
         <ScientificAttitudeIndicator

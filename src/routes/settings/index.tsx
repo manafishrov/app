@@ -69,6 +69,7 @@ function General() {
           videoDirectory: state.videoDirectory,
           autoUpdate: state.autoUpdate,
           attitudeIndicator: state.attitudeIndicator,
+          workIndicator: state.workIndicator,
           thrusterRpmOverlay: state.thrusterRpmOverlay,
         }
       : null,
@@ -255,10 +256,21 @@ function General() {
                   <Label htmlFor='ai-disabled'>Disabled</Label>
                 </div>
               </RadioGroup>
+              <div className='mt-6 flex items-center gap-2'>
+                <Switch
+                  id='work-indicator'
+                  checked={config.workIndicator ?? false}
+                  onCheckedChange={() =>
+                    setConfig({
+                      workIndicator: !config.workIndicator,
+                    })
+                  }
+                />
+                <Label htmlFor='work-indicator'>Enable work indicator</Label>
+              </div>
             </div>
             <div>
               <h4 className='text-lg font-medium'>Thruster RPM Overlay</h4>
-
               <div className='mt-2 flex items-center gap-2'>
                 <Switch
                   id='thruster-rpm-overlay'
