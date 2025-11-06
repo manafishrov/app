@@ -4,6 +4,7 @@ type ScientificAttitudeIndicatorProps = {
   roll: number;
   desiredPitch: number;
   desiredRoll: number;
+  style?: React.CSSProperties;
 };
 
 function ScientificAttitudeIndicator({
@@ -12,6 +13,7 @@ function ScientificAttitudeIndicator({
   roll,
   desiredPitch,
   desiredRoll,
+  style,
 }: ScientificAttitudeIndicatorProps) {
   const center = size / 2;
   const pitchScale = size / 200;
@@ -19,7 +21,7 @@ function ScientificAttitudeIndicator({
   return (
     <div
       className='bg-muted relative rounded-2xl opacity-75'
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...style }}
     >
       <svg
         width={size}

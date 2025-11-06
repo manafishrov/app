@@ -11,6 +11,7 @@ type Dimensional3DAttitudeIndicatorProps = {
   pitch: number;
   roll: number;
   rawYawInput: number;
+  style?: React.CSSProperties;
 };
 
 function Model({
@@ -57,11 +58,12 @@ function Dimensional3DAttitudeIndicator({
   pitch,
   roll,
   rawYawInput,
+  style,
 }: Dimensional3DAttitudeIndicatorProps) {
   return (
     <div
       className='bg-muted relative rounded-2xl opacity-75'
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...style }}
     >
       <Canvas camera={{ position: [0, 0, 2.2] }}>
         <ambientLight intensity={0.5} />

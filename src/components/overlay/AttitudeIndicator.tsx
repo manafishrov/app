@@ -11,15 +11,14 @@ import { directionVectorStore } from '@/stores/directionVector';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function AttitudeIndicator() {
-  const { pitch, roll, desiredPitch, desiredRoll } = useStore(
-    rovTelemetryStore,
-    (state) => ({
+  const { pitch, roll, desiredPitch, desiredRoll, workIndicatorPercentage } =
+    useStore(rovTelemetryStore, (state) => ({
       pitch: state.pitch,
       roll: state.roll,
       desiredPitch: state.desiredPitch,
       desiredRoll: state.desiredRoll,
-    }),
-  );
+      workIndicatorPercentage: state.workIndicatorPercentage,
+    }));
   const config = useStore(configStore);
   const directionVector = useStore(directionVectorStore);
   const isConnected = useStore(
@@ -29,6 +28,30 @@ function AttitudeIndicator() {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const size = isDesktop ? 220 : 160;
+
+  let shadowStyle: React.CSSProperties = {};
+
+  if (workIndicatorPercentage > 0) {
+    const shadowIntensity = workIndicatorPercentage / 100;
+    const shadowBlur = shadowIntensity * 20;
+    const shadowSpread = shadowIntensity * 10;
+    const shadowOpacity = shadowIntensity * 0.8;
+
+    let r, g, b;
+    if (shadowIntensity <= 0.5) {
+      r = Math.round(shadowIntensity * 2 * 255);
+      g = 255;
+      b = 0;
+    } else {
+      r = 255;
+      g = Math.round((1 - shadowIntensity) * 2 * 255);
+      b = 0;
+    }
+
+    shadowStyle = {
+      boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,
+    };
+  }
 
   if (!isConnected) return;
 
@@ -41,6 +64,7 @@ function AttitudeIndicator() {
           roll={roll}
           desiredPitch={desiredPitch}
           desiredRoll={desiredRoll}
+          style={shadowStyle}
         />
       );
     case 'dimensional3D':
@@ -50,6 +74,7 @@ function AttitudeIndicator() {
           pitch={pitch}
           roll={roll}
           rawYawInput={directionVector[4]}
+          style={shadowStyle}
         />
       );
     default:
