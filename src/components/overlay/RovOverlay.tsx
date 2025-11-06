@@ -24,7 +24,7 @@ function RovOverlay() {
       <div className='absolute top-1/2 right-2 -translate-y-1/2'>
         <ThrusterRpmOverlay />
       </div>
-      <div className='absolute right-2 bottom-2 flex flex-row gap-2'>
+      <div className='absolute right-2 bottom-2 flex flex-row gap-6'>
         <DepthIndicator />
         <TemperatureIndicator />
         <BatteryIndicator />

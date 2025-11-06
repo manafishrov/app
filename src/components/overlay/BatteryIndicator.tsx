@@ -35,7 +35,7 @@ function BatteryIndicator() {
   return (
     <div
       className={cx(
-        'flex items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]',
+        'flex w-14 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]',
         batteryPercentage < 10 && 'text-destructive',
       )}
     >
