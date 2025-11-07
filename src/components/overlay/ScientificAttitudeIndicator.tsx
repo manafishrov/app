@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 type ScientificAttitudeIndicatorProps = {
   size: number;
   pitch: number;
@@ -7,7 +9,7 @@ type ScientificAttitudeIndicatorProps = {
   style?: React.CSSProperties;
 };
 
-function ScientificAttitudeIndicator({
+const ScientificAttitudeIndicator = memo(function ScientificAttitudeIndicator({
   size,
   pitch,
   roll,
@@ -196,6 +198,6 @@ function ScientificAttitudeIndicator({
       </svg>
     </div>
   );
-}
+});
 
 export { ScientificAttitudeIndicator };

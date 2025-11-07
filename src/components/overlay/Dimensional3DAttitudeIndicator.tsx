@@ -1,6 +1,6 @@
 import { useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Suspense, useRef } from 'react';
+import { Suspense, memo, useRef } from 'react';
 import type { Group } from 'three';
 
 const MOVE_SMOOTHING_FACTOR = 0.015;
@@ -53,50 +53,52 @@ function Model({
   return <primitive object={scene.clone()} ref={groupRef} />;
 }
 
-function Dimensional3DAttitudeIndicator({
-  size,
-  pitch,
-  roll,
-  rawYawInput,
-  style,
-}: Dimensional3DAttitudeIndicatorProps) {
-  return (
-    <div
-      className='bg-muted relative rounded-2xl opacity-75'
-      style={{ width: size, height: size, ...style }}
-    >
-      <Canvas camera={{ position: [0, 0, 2.2] }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <Suspense fallback={null}>
-          <Model pitch={pitch} roll={roll} rawYawInput={rawYawInput} />
-        </Suspense>
-      </Canvas>
-      <svg
-        width={size}
-        height={size}
-        viewBox={`-${size * 0.05} -${size * 0.05} ${size * 1.1} ${size * 1.1}`}
-        className='absolute top-0 left-0'
+const Dimensional3DAttitudeIndicator = memo(
+  function Dimensional3DAttitudeIndicator({
+    size,
+    pitch,
+    roll,
+    rawYawInput,
+    style,
+  }: Dimensional3DAttitudeIndicatorProps) {
+    return (
+      <div
+        className='bg-muted relative rounded-2xl opacity-75'
+        style={{ width: size, height: size, ...style }}
       >
-        <text
-          x={size * 0.1}
-          y={size - size * 0.05}
-          fill='oklch(0.985 0 0)'
-          fontSize={size * 0.06}
+        <Canvas camera={{ position: [0, 0, 2.2] }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <Suspense fallback={null}>
+            <Model pitch={pitch} roll={roll} rawYawInput={rawYawInput} />
+          </Suspense>
+        </Canvas>
+        <svg
+          width={size}
+          height={size}
+          viewBox={`-${size * 0.05} -${size * 0.05} ${size * 1.1} ${size * 1.1}`}
+          className='absolute top-0 left-0'
         >
-          Pitch: {pitch.toFixed(1)}°
-        </text>
-        <text
-          x={size - size * 0.4}
-          y={size - size * 0.05}
-          fill='oklch(0.985 0 0)'
-          fontSize={size * 0.06}
-        >
-          Roll: {roll.toFixed(1)}°
-        </text>
-      </svg>
-    </div>
-  );
-}
+          <text
+            x={size * 0.1}
+            y={size - size * 0.05}
+            fill='oklch(0.985 0 0)'
+            fontSize={size * 0.06}
+          >
+            Pitch: {pitch.toFixed(1)}°
+          </text>
+          <text
+            x={size - size * 0.4}
+            y={size - size * 0.05}
+            fill='oklch(0.985 0 0)'
+            fontSize={size * 0.06}
+          >
+            Roll: {roll.toFixed(1)}°
+          </text>
+        </svg>
+      </div>
+    );
+  },
+);
 
 export { Dimensional3DAttitudeIndicator };

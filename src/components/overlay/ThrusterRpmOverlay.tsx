@@ -1,4 +1,5 @@
 import { useStore } from '@tanstack/react-store';
+import { memo } from 'react';
 
 import { ThrusterRpm } from '@/components/composites/ThrusterRpm';
 
@@ -6,7 +7,7 @@ import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-function ThrusterItem({ index }: { index: number }) {
+const ThrusterItem = memo(function ThrusterItem({ index }: { index: number }) {
   const rpm = useStore(
     rovTelemetryStore,
     (state) => state.thrusterRpms[index]!,
@@ -18,9 +19,9 @@ function ThrusterItem({ index }: { index: number }) {
       <span className='w-2'>T{index + 1}</span>
     </div>
   );
-}
+});
 
-function ThrusterRpmOverlay() {
+const ThrusterRpmOverlay = memo(function ThrusterRpmOverlay() {
   const thrusterRpmsLength = useStore(
     rovTelemetryStore,
     (state) => state.thrusterRpms.length,
@@ -43,6 +44,6 @@ function ThrusterRpmOverlay() {
       ))}
     </div>
   );
-}
+});
 
 export { ThrusterRpmOverlay };

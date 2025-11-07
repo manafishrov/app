@@ -1,4 +1,5 @@
 import { useStore } from '@tanstack/react-store';
+import { memo, useMemo } from 'react';
 
 import { Dimensional3DAttitudeIndicator } from '@/components/overlay/Dimensional3DAttitudeIndicator';
 import { ScientificAttitudeIndicator } from '@/components/overlay/ScientificAttitudeIndicator';
@@ -10,7 +11,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { directionVectorStore } from '@/stores/directionVector';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-function AttitudeIndicator() {
+const AttitudeIndicator = memo(function AttitudeIndicator() {
   const { pitch, roll, desiredPitch, desiredRoll, workIndicatorPercentage } =
     useStore(rovTelemetryStore, (state) => ({
       pitch: state.pitch,
@@ -35,35 +36,39 @@ function AttitudeIndicator() {
 
   const size = isDesktop ? 220 : 160;
 
-  let shadowStyle: React.CSSProperties = {};
-  let cornerIndicatorStyle: React.CSSProperties = {};
+  const { shadowStyle, cornerIndicatorStyle } = useMemo(() => {
+    let shadowStyle: React.CSSProperties = {};
+    let cornerIndicatorStyle: React.CSSProperties = {};
 
-  if (workIndicator && workIndicatorPercentage > 0) {
-    const shadowIntensity = workIndicatorPercentage / 100;
-    const shadowBlur = shadowIntensity * 20;
-    const shadowSpread = shadowIntensity * 10;
-    const shadowOpacity = shadowIntensity * 0.8;
+    if (workIndicator && workIndicatorPercentage > 0) {
+      const shadowIntensity = workIndicatorPercentage / 100;
+      const shadowBlur = shadowIntensity * 20;
+      const shadowSpread = shadowIntensity * 10;
+      const shadowOpacity = shadowIntensity * 0.8;
 
-    let r, g, b;
-    if (shadowIntensity <= 0.5) {
-      r = Math.round(shadowIntensity * 2 * 255);
-      g = 255;
-      b = 0;
-    } else {
-      r = 255;
-      g = Math.round((1 - shadowIntensity) * 2 * 255);
-      b = 0;
+      let r, g, b;
+      if (shadowIntensity <= 0.5) {
+        r = Math.round(shadowIntensity * 2 * 255);
+        g = 255;
+        b = 0;
+      } else {
+        r = 255;
+        g = Math.round((1 - shadowIntensity) * 2 * 255);
+        b = 0;
+      }
+
+      shadowStyle = {
+        boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,
+      };
+
+      cornerIndicatorStyle = {
+        backgroundColor: `rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.3})`,
+        boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity}), inset 0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.5})`,
+      };
     }
 
-    shadowStyle = {
-      boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,
-    };
-
-    cornerIndicatorStyle = {
-      backgroundColor: `rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.3})`,
-      boxShadow: `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity}), inset 0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity * 0.5})`,
-    };
-  }
+    return { shadowStyle, cornerIndicatorStyle };
+  }, [workIndicator, workIndicatorPercentage]);
 
   if (!isConnected) return;
 
@@ -94,6 +99,6 @@ function AttitudeIndicator() {
         <div className='h-4 w-4 rounded-full' style={cornerIndicatorStyle} />
       );
   }
-}
+});
 
 export { AttitudeIndicator };

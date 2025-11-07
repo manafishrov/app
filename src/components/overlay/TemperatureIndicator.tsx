@@ -1,10 +1,11 @@
 import { useStore } from '@tanstack/react-store';
 import { CircuitBoardIcon, ThermometerIcon, WavesIcon } from 'lucide-react';
+import { memo } from 'react';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-function TemperatureIndicator() {
+const TemperatureIndicator = memo(function TemperatureIndicator() {
   const { waterTemperature, electronicsTemperature } = useStore(
     rovTelemetryStore,
     (state) => ({
@@ -37,6 +38,6 @@ function TemperatureIndicator() {
       </div>
     </>
   );
-}
+});
 
 export { TemperatureIndicator };

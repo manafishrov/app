@@ -1,10 +1,11 @@
 import { useStore } from '@tanstack/react-store';
 import { RulerDimensionLineIcon } from 'lucide-react';
+import { memo } from 'react';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-function DepthIndicator() {
+const DepthIndicator = memo(function DepthIndicator() {
   const depth = useStore(rovTelemetryStore, (state) => state.depth);
   const isConnected = useStore(
     connectionStatusStore,
@@ -19,6 +20,6 @@ function DepthIndicator() {
       <span className='text-xs'>{depth.toFixed(1)}m</span>
     </div>
   );
-}
+});
 
 export { DepthIndicator };
