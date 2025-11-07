@@ -38,7 +38,7 @@ function ThrusterAllocationTable() {
   );
 
   if (thrusterAllocation && !displayAllocation) {
-    const initialDisplay = thrusterAllocation.map((row) =>
+    const initialDisplay = transpose(thrusterAllocation).map((row) =>
       row.map((cell) => String(cell)),
     );
     setDisplayAllocation(initialDisplay);
