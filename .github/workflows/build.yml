@@ -21,15 +21,12 @@ jobs:
           - platform: macos-latest
             target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin
-
           - platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             args: ''
-
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             args: ''
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,6 +50,12 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install macOS dependencies
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew update
+          brew install ffmpeg pkg-config
+
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04'
         run: |
@@ -63,45 +66,21 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            nasm
+            nasm \
+            ffmpeg \
+            libavcodec-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswscale-dev \
+            libswresample-dev
 
-      - name: Download FFmpeg full_build-shared (Windows x64)
+      - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
-        shell: pwsh
+        shell: powershell
         run: |
-          $ErrorActionPreference = "Stop"
-
-          $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-win64-lgpl-shared-8.0.zip"
-
-          Invoke-WebRequest -Uri $url -OutFile "ffmpeg.zip"
-          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg-dist"
-
-          $dir = Get-ChildItem "ffmpeg-dist" |
-            Where-Object { $_.PSIsContainer } |
-            Select-Object -First 1
-
-          if (-not $dir) {
-            Write-Error "FFmpeg directory not found after extraction."
-          }
-
-          Rename-Item -Path $dir.FullName -NewName "ffmpeg"
-
-          Write-Host "FFmpeg extracted to ffmpeg-dist\\ffmpeg"
-          Get-ChildItem -Recurse "ffmpeg-dist\\ffmpeg"
-
-          if (-not (Test-Path "ffmpeg-dist\\ffmpeg\\include")) {
-            Write-Error "Missing include directory in FFmpeg dist."
-          }
-          if (-not (Test-Path "ffmpeg-dist\\ffmpeg\\lib")) {
-            Write-Error "Missing lib directory in FFmpeg dist."
-          }
-
-          $coreLibs = @("avcodec.lib","avformat.lib","avutil.lib","swscale.lib","swresample.lib")
-          foreach ($l in $coreLibs) {
-            if (-not (Get-ChildItem "ffmpeg-dist\\ffmpeg\\lib" -Filter $l -ErrorAction SilentlyContinue)) {
-              Write-Error "Required FFmpeg library $l not found in lib directory."
-            }
-          }
+          choco install ffmpeg --yes
+          $ffmpegPath = "C:\ProgramData\chocolatey\bin"
+          echo "$ffmpegPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -111,10 +90,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          FFMPEG_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg', github.workspace) || '' }}
-          FFMPEG_LIB_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\lib', github.workspace) || '' }}
-          FFMPEG_INCLUDE_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\include', github.workspace) || '' }}
-          FFMPEG_SYS_NEXT_DISABLE_BUILD: ${{ matrix.platform == 'windows-latest' && '1' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
