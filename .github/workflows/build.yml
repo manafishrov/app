@@ -71,7 +71,8 @@ jobs:
             libavutil-dev \
             libswscale-dev \
             libswresample-dev \
-            libavfilter-dev
+            libavfilter-dev \
+            libavdevice-dev
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
