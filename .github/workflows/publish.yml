@@ -82,6 +82,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          FFMPEG_CONFIGURE_OPTIONS: ${{ matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && '--enable-cross-compile --host=x86_64-apple-darwin --build=aarch64-apple-darwin' || '--enable-cross-compile' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
