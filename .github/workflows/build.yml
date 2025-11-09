@@ -66,8 +66,6 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            nasm \
-            ffmpeg \
             libavcodec-dev \
             libavformat-dev \
             libavutil-dev \
@@ -79,9 +77,11 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: powershell
         run: |
-          choco install ffmpeg --yes
-          $ffmpegPath = "C:\ProgramData\chocolatey\bin"
-          echo "$ffmpegPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          git clone https://github.com/microsoft/vcpkg.git $env:USERPROFILE\vcpkg
+          & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
+          & $env:USERPROFILE\vcpkg\vcpkg.exe install ffmpeg:x64-windows
+          echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
