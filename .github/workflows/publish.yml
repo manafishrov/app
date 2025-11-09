@@ -69,10 +69,10 @@ jobs:
       - name: Setup MSVC
         if: matrix.platform == 'windows-latest'
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-          echo "INCLUDE=$INCLUDE" >> $GITHUB_ENV
-          echo "LIB=$LIB" >> $GITHUB_ENV
-          echo "PATH=$PATH" >> $GITHUB_ENV
+          & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          Add-Content $env:GITHUB_ENV "INCLUDE=$env:INCLUDE"
+          Add-Content $env:GITHUB_ENV "LIB=$env:LIB"
+          Add-Content $env:GITHUB_ENV "PATH=$env:PATH"
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
