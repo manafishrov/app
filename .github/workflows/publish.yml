@@ -70,7 +70,9 @@ jobs:
 
       - name: Setup MSVC
         if: matrix.platform == 'windows-latest'
-        run: cmd /c 'call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 && echo INCLUDE=%INCLUDE% >> %GITHUB_ENV% && echo LIB=%LIB% >> %GITHUB_ENV% && echo PATH=%PATH% >> %GITHUB_ENV%'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -80,7 +82,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          FFMPEG_CONFIGURE_OPTIONS: ${{ matrix.platform == 'windows-latest' && '--enable-cross-compile' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
