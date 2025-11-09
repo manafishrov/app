@@ -21,9 +21,6 @@ jobs:
           - platform: macos-latest
             target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin
           - platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             args: ''
@@ -53,31 +50,14 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Add macOS x86_64 target
-        if: matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin'
-        run: rustup target add x86_64-apple-darwin
-
-      - name: Setup macOS x86_64 cross‑compile
-        if: matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin'
-        run: |
-          softwareupdate --install-rosetta --agree-to-license
-          brew install nasm yasm pkg-config
-          SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
-          echo "CC=clang -arch x86_64 -isysroot $SDK_PATH" >> $GITHUB_ENV
-          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=darwin --cc='clang -arch x86_64' --enable-cross-compile --sysroot=$SDK_PATH" >> $GITHUB_ENV
-
-      - name: Setup MSVC
-        if: matrix.platform == 'windows-latest'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         run: |
-          choco install llvm nasm yasm
-          echo "CC=clang-cl" >> $Env:GITHUB_ENV
-          echo "FFMPEG_CONFIGURE_OPTIONS=--target-os=win64 --toolchain=msvc --arch=x86_64 --extra-cflags=-nologo" >> $Env:GITHUB_ENV
+          choco install msys2 --no-progress
+          C:\tools\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm mingw-w64-x86_64-gcc nasm yasm pkg-config make"
+          echo "PATH=C:\\tools\\msys64\\mingw64\\bin;$Env:PATH" >> $Env:GITHUB_ENV
+          echo "CC=gcc" >> $Env:GITHUB_ENV
+          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=mingw64 --enable-cross-compile" >> $Env:GITHUB_ENV
         shell: pwsh
 
       - name: Install Linux dependencies
