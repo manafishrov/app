@@ -52,16 +52,14 @@ jobs:
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
-        shell: pwsh
         run: |
           choco install msys2 --no-progress
           C:\tools\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm mingw-w64-x86_64-gcc nasm yasm pkg-config make"
-          $env:Path = ($env:Path.Split(';') | Where-Object {$_ -notlike '*Microsoft Visual Studio*' -and $_ -notlike '*Windows Kits*'}) -join ';'
-          $mingwPath = 'C:\tools\msys64\mingw64\bin'
-          echo "PATH=$mingwPath;$env:Path" >> $Env:GITHUB_ENV
+          $env:Path = ($env:Path.Split(';') | Where-Object {$_ -notlike '*Microsoft Visual Studio*'}) -join ';'
+          echo "PATH=C:\\tools\\msys64\\mingw64\\bin;$env:Path" >> $Env:GITHUB_ENV
           echo "CC=gcc" >> $Env:GITHUB_ENV
-          echo "CXX=g++" >> $Env:GITHUB_ENV
           echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=mingw64 --enable-cross-compile --disable-programs" >> $Env:GITHUB_ENV
+        shell: pwsh
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04'
@@ -73,7 +71,12 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
+            nasm \
             yasm
+
+      - name: Install macOS ARM dependencies
+        if: matrix.platform == 'macos-latest' && matrix.target == 'aarch64-apple-darwin'
+        run: brew install nasm yasm pkg-config
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
