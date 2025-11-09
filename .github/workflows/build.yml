@@ -65,7 +65,7 @@ jobs:
             pkg-config \
             nasm
 
-      - name: Download FFmpeg 8.0 (Windows x64)
+      - name: Download FFmpeg full_build-shared (Windows x64)
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
@@ -76,20 +76,31 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile "ffmpeg.zip"
           Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg-dist"
 
-          $dir = Get-ChildItem "ffmpeg-dist" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+          $dir = Get-ChildItem "ffmpeg-dist" |
+            Where-Object { $_.PSIsContainer } |
+            Select-Object -First 1
+
           if (-not $dir) {
             Write-Error "FFmpeg directory not found after extraction."
           }
+
           Rename-Item -Path $dir.FullName -NewName "ffmpeg"
 
           Write-Host "FFmpeg extracted to ffmpeg-dist\\ffmpeg"
           Get-ChildItem -Recurse "ffmpeg-dist\\ffmpeg"
 
-          if (-not (Test-Path "ffmpeg-dist\\ffmpeg\\lib")) {
-            Write-Error "ffmpeg-dist\\ffmpeg\\lib not found."
+          if (-not (Test-Path "ffmpeg-dist\\ffmpeg\\include")) {
+            Write-Error "Missing include directory in FFmpeg dist."
           }
-          if (-not (Get-ChildItem "ffmpeg-dist\\ffmpeg\\lib" -Filter "avcodec.lib" -ErrorAction SilentlyContinue)) {
-            Write-Error "avcodec.lib not found in ffmpeg-dist\\ffmpeg\\lib."
+          if (-not (Test-Path "ffmpeg-dist\\ffmpeg\\lib")) {
+            Write-Error "Missing lib directory in FFmpeg dist."
+          }
+
+          $coreLibs = @("avcodec.lib","avformat.lib","avutil.lib","swscale.lib","swresample.lib")
+          foreach ($l in $coreLibs) {
+            if (-not (Get-ChildItem "ffmpeg-dist\\ffmpeg\\lib" -Filter $l -ErrorAction SilentlyContinue)) {
+              Write-Error "Required FFmpeg library $l not found in lib directory."
+            }
           }
 
       - name: Install frontend dependencies
@@ -100,12 +111,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-
-          FFMPEG_SYS_NEXT_DISABLE_BUILD: ${{ matrix.platform == 'windows-latest' && '1' || '' }}
           FFMPEG_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg', github.workspace) || '' }}
           FFMPEG_LIB_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\lib', github.workspace) || '' }}
           FFMPEG_INCLUDE_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\include', github.workspace) || '' }}
-
+          FFMPEG_SYS_NEXT_DISABLE_BUILD: ${{ matrix.platform == 'windows-latest' && '1' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
