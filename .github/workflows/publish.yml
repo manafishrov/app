@@ -51,13 +51,15 @@ jobs:
           toolchain: stable
 
       - name: Install Windows dependencies
+        run: |
         if: matrix.platform == 'windows-latest'
         run: |
           choco install msys2 --no-progress
           C:\tools\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm mingw-w64-x86_64-gcc nasm yasm pkg-config make"
-          echo "PATH=C:\\tools\\msys64\\mingw64\\bin;$Env:PATH" >> $Env:GITHUB_ENV
+          $env:Path = ($env:Path.Split(';') | Where-Object {$_ -notlike '*Microsoft Visual Studio*'}) -join ';'
+          echo "PATH=C:\\tools\\msys64\\mingw64\\bin;$env:Path" >> $Env:GITHUB_ENV
           echo "CC=gcc" >> $Env:GITHUB_ENV
-          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=mingw64 --enable-cross-compile" >> $Env:GITHUB_ENV
+          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=mingw64 --enable-cross-compile --disable-programs" >> $Env:GITHUB_ENV
         shell: pwsh
 
       - name: Install Linux dependencies
