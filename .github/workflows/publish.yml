@@ -52,6 +52,10 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Install macOS x86_64 dependencies
+        if: matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin'
+        run: brew install nasm
+
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04'
         run: |
