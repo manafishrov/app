@@ -27,6 +27,7 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             args: ''
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,6 +63,19 @@ jobs:
             pkg-config \
             nasm
 
+      - name: Download FFmpeg 8.0 (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/n8.0/ffmpeg-n8.0-latest-win64-lgpl-shared-8.0.zip"
+          Invoke-WebRequest -Uri $url -OutFile "ffmpeg.zip"
+          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "ffmpeg-dist"
+          $dir = Get-ChildItem "ffmpeg-dist" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+          Rename-Item -Path $dir.FullName -NewName "ffmpeg"
+          Write-Host "FFmpeg extracted to ffmpeg-dist\\ffmpeg"
+          Get-ChildItem -Recurse "ffmpeg-dist\\ffmpeg"
+
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
@@ -70,8 +84,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          CC: ${{ env.CC }}
-          FFMPEG_CONFIGURE_OPTIONS: ${{ env.FFMPEG_CONFIGURE_OPTIONS }}
+
+          FFMPEG_SYS_NEXT_DISABLE_BUILD: ${{ matrix.platform == 'windows-latest' && '1' || '' }}
+          FFMPEG_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg', github.workspace) || '' }}
+          FFMPEG_LIB_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\lib', github.workspace) || '' }}
+          FFMPEG_INCLUDE_DIR: ${{ matrix.platform == 'windows-latest' && format('{0}\\ffmpeg-dist\\ffmpeg\\include', github.workspace) || '' }}
+
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
