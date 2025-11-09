@@ -51,7 +51,6 @@ jobs:
           toolchain: stable
 
       - name: Install Windows dependencies
-        run: |
         if: matrix.platform == 'windows-latest'
         run: |
           choco install msys2 --no-progress
