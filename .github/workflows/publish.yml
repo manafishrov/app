@@ -82,7 +82,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          FFMPEG_CONFIGURE_OPTIONS: ${{ matrix.platform == 'windows-latest' && '--enable-cross-compile --cc=cl.exe' || (matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && '--enable-cross-compile --host=x86_64-apple-darwin --build=aarch64-apple-darwin --arch=x86_64 --cc=clang' || '--enable-cross-compile') }}
+          FFMPEG_CONFIGURE_OPTIONS: ${{ matrix.platform == 'windows-latest' && '--enable-cross-compile --cc=cl.exe' || (matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && '--enable-cross-compile --host=x86_64-apple-darwin --build=aarch64-apple-darwin --arch=x86_64 --cc=clang --os=darwin' || '--enable-cross-compile') }}
+          CC: ${{ matrix.platform == 'windows-latest' && 'cl.exe' || matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && 'clang' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
