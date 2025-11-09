@@ -94,10 +94,9 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          $BunPath = "$env:USERPROFILE\AppData\Roaming\bun\bin"
           C:\tools\msys64\usr\bin\bash.exe -lc "
             set -e
-            export PATH=$BunPath:/mingw64/bin:\$PATH
+            export PATH=/mingw64/bin:\$PATH
             export CC=gcc
             export CXX=g++
             export FFMPEG_CONFIGURE_OPTIONS='--arch=x86_64 --target-os=mingw64 --enable-cross-compile --disable-programs'
