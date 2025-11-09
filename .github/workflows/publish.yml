@@ -48,31 +48,53 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install Rust stable with targets
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Install macOS x86_64 dependencies
+      - name: Add macOS x86_64 target
         if: matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin'
-        run: brew install nasm
+        run: rustup target add x86_64-apple-darwin
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-24.04'
+      - name: Setup macOS x86_64 cross‑compile
+        if: matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev pkg-config nasm
-
-      - name: Install Windows dependencies
-        if: matrix.platform == 'windows-latest'
-        run: choco install nasm
+          softwareupdate --install-rosetta --agree-to-license
+          brew install nasm yasm pkg-config
+          echo "CC=clang -arch x86_64" >> $GITHUB_ENV
+          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=darwin --cc=clang -arch x86_64" >> $GITHUB_ENV
 
       - name: Setup MSVC
         if: matrix.platform == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+
+      - name: Install Windows dependencies
+        if: matrix.platform == 'windows-latest'
+        run: |
+          choco install llvm nasm yasm
+          echo "CC=clang-cl" >> $Env:GITHUB_ENV
+          echo "FFMPEG_CONFIGURE_OPTIONS=--target-os=win64 --toolchain=msvc --arch=x86_64" >> $Env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libudev-dev \
+            pkg-config \
+            nasm \
+            yasm
+
+      - name: Install macOS ARM dependencies
+        if: matrix.platform == 'macos-latest' && matrix.target == 'aarch64-apple-darwin'
+        run: brew install nasm yasm pkg-config
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -82,8 +104,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          FFMPEG_CONFIGURE_OPTIONS: ${{ matrix.platform == 'windows-latest' && '--enable-cross-compile --cc=cl.exe' || (matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && '--enable-cross-compile --host=x86_64-apple-darwin --build=aarch64-apple-darwin --arch=x86_64 --cc=clang --os=darwin' || '--enable-cross-compile') }}
-          CC: ${{ matrix.platform == 'windows-latest' && 'cl.exe' || matrix.platform == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && 'clang' }}
+          CC: ${{ env.CC }}
+          FFMPEG_CONFIGURE_OPTIONS: ${{ env.FFMPEG_CONFIGURE_OPTIONS }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
