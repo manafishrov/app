@@ -27,6 +27,7 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             args: ''
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,19 +51,6 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install Windows dependencies
-        if: matrix.platform == 'windows-latest'
-        shell: pwsh
-        run: |
-          choco install msys2 --no-progress
-          C:\tools\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm mingw-w64-x86_64-gcc nasm yasm pkg-config make"
-          $env:Path = ($env:Path.Split(';') | Where-Object {$_ -notlike '*Microsoft Visual Studio*' -and $_ -notlike '*Windows Kits*'}) -join ';'
-          $mingwPath = 'C:\tools\msys64\mingw64\bin'
-          echo "PATH=$mingwPath;$env:Path" >> $Env:GITHUB_ENV
-          echo "CC=gcc" >> $Env:GITHUB_ENV
-          echo "CXX=g++" >> $Env:GITHUB_ENV
-          echo "FFMPEG_CONFIGURE_OPTIONS=--arch=x86_64 --target-os=mingw64 --enable-cross-compile --disable-programs" >> $Env:GITHUB_ENV
-
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04'
         run: |
@@ -73,18 +61,18 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            yasm
+            nasm
 
       - name: Install frontend dependencies
+        if: matrix.platform != 'windows-latest'
         run: bun install --frozen-lockfile
 
-      - name: Build and Create Draft Release
+      - name: Build & Create Draft Release (macOS/Linux)
+        if: matrix.platform != 'windows-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          CC: ${{ env.CC }}
-          FFMPEG_CONFIGURE_OPTIONS: ${{ env.FFMPEG_CONFIGURE_OPTIONS }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
@@ -92,3 +80,35 @@ jobs:
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           args: ${{ matrix.args }}
+
+      - name: Install MSYS2 + GCC toolchain
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install msys2 --no-progress
+          C:\tools\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm mingw-w64-x86_64-gcc nasm yasm pkg-config make"
+          $env:Path = ($env:Path.Split(';') | Where-Object {$_ -notlike '*Microsoft Visual Studio*' -and $_ -notlike '*Windows Kits*'}) -join ';'
+          echo "PATH=C:\\tools\\msys64\\mingw64\\bin;$env:Path" >> $Env:GITHUB_ENV
+
+      - name: Build & Upload Release (Windows inside MSYS2)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          C:\tools\msys64\usr\bin\bash.exe -lc "
+            set -e
+            export PATH=/mingw64/bin:\$PATH
+            export CC=gcc
+            export CXX=g++
+            export FFMPEG_CONFIGURE_OPTIONS='--arch=x86_64 --target-os=mingw64 --enable-cross-compile --disable-programs'
+
+            bun install --frozen-lockfile
+
+            GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' \
+            TAURI_SIGNING_PRIVATE_KEY='${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' \
+            npx tauri-action -- \
+              --tag-name '${{ github.ref_name }}' \
+              --release-name '${{ github.ref_name }}' \
+              --release-body 'Release assets for ${{ github.ref_name }}.' \
+              --release-draft true \
+              ${{ matrix.args }}
+          "
