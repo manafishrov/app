@@ -33,7 +33,8 @@ futures-util = "0.3.31"
 gilrs = "0.11.0"
 uuid = "1.18.1"
 async-trait = "0.1.89"
-ffmpeg-next = { version = "8.0.0", features = ["build"] }
+ ffmpeg-next = { version = "8.0.0", features = ["build"] }
+ffmpeg-sys-next = { version = "8.0", default-features = false, features = ["disable-x86asm"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2.9.0"
