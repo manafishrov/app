@@ -77,14 +77,13 @@ jobs:
             -latest -property installationPath
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
 
-          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
-          Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
-          7z x ffmpeg-release-full-shared.7z
+          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z"
+          Invoke-WebRequest $url -OutFile ffmpeg-release-full.7z
+          7z x ffmpeg-release-full.7z
           mkdir ffmpeg
           mv ffmpeg-*/* ffmpeg/
 
-          Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
-          Add-Content $env:GITHUB_PATH "${pwd}\ffmpeg\bin`n"
+          Add-Content $env:GITHUB_ENV "PKG_CONFIG_PATH=${pwd}\ffmpeg\lib\pkgconfig`n"
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
