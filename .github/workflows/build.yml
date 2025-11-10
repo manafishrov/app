@@ -21,12 +21,19 @@ jobs:
           - platform: macos-latest
             target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin
-          - platform: ubuntu-24.04
+
+          - platform: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             args: ''
+            ffmpeg_image: jrottenberg/ffmpeg:latest
+
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             args: ''
+
+    container:
+      image: ${{ (matrix.platform == 'ubuntu-latest') && matrix.ffmpeg_image || '' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,32 +64,33 @@ jobs:
           brew install ffmpeg pkg-config
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-24.04'
+        if: matrix.platform == 'ubuntu-latest'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y --no-install-recommends \
             libwebkit2gtk-4.1-dev \
             libappindicator3-dev \
             librsvg2-dev \
             libudev-dev \
-            pkg-config \
-            libavcodec-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libavfilter-dev \
-            libavdevice-dev
+            pkg-config
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         shell: powershell
         run: |
-          git clone https://github.com/microsoft/vcpkg.git $env:USERPROFILE\vcpkg
-          & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
-          & $env:USERPROFILE\vcpkg\vcpkg.exe install ffmpeg:x64-windows
-          echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -property installationPath
+          Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
+
+          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
+          Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
+
+          7z x ffmpeg-release-full-shared.7z
+          mkdir ffmpeg
+          mv ffmpeg-*/* ffmpeg/
+
+          Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
+          Add-Content $env:GITHUB_PATH "${pwd}\ffmpeg\bin`n"
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
