@@ -45,12 +45,6 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install macOS dependencies
-        if: matrix.platform == 'macos-latest'
-        run: |
-          brew update
-          brew install ffmpeg pkg-config
-
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -61,29 +55,7 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            libavcodec-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libavfilter-dev \
-            libavdevice-dev
-
-      - name: Install Windows dependencies
-        if: matrix.platform == 'windows-latest'
-        shell: powershell
-        run: |
-          $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
-            -latest -property installationPath
-          Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=${VCINSTALLDIR}\VC\Tools\LLVM\x64\bin`n"
-
-          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z"
-          Invoke-WebRequest $url -OutFile ffmpeg-release-full.7z
-          7z x ffmpeg-release-full.7z
-          mkdir ffmpeg
-          mv ffmpeg-*/* ffmpeg/
-
-          Add-Content $env:GITHUB_ENV "PKG_CONFIG_PATH=${pwd}\ffmpeg\lib\pkgconfig`n"
+            nasm
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
