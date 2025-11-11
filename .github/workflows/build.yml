@@ -40,10 +40,12 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install Rust stable
+      - name: Install Rust stable (MSVC on Windows)
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+          targets: |
+            x86_64-pc-windows-msvc
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -56,6 +58,17 @@ jobs:
             libudev-dev \
             pkg-config \
             nasm
+
+      - name: Install Windows build tools for FFmpeg
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          choco install -y nasm
+          choco install -y strawberryperl
+
+      - name: Setup MSVC Developer Command Prompt
+        if: matrix.platform == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
