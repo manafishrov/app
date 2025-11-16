@@ -40,3 +40,4 @@ ffmpeg-next = { version = "8.0.0", features = ["build"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 ffmpeg-next = "8.0.0"
+windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
