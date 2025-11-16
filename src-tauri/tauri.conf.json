@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Manafish",
-        "width": 800,
-        "height": 600
+        "width": 1200,
+        "height": 675
       }
     ],
     "security": {
@@ -22,6 +22,7 @@
     }
   },
   "bundle": {
+    "resources": ["resources/*"],
     "active": true,
     "targets": "all",
     "icon": [

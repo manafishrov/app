@@ -59,16 +59,21 @@ jobs:
             pkg-config \
             nasm
 
-      - name: Install Windows build tools for FFmpeg
+      - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
-        shell: bash
+        shell: powershell
         run: |
-          choco install -y nasm
-          choco install -y strawberryperl
-
-      - name: Setup MSVC Developer Command Prompt
-        if: matrix.platform == 'windows-latest'
-        uses: ilammy/msvc-dev-cmd@v1
+          $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -property installationPath
+          Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=$VCINSTALLDIR\VC\Tools\LLVM\x64\bin`n"
+          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
+          Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
+          7z x ffmpeg-release-full-shared.7z
+          mkdir ffmpeg
+          mv ffmpeg-*/* ffmpeg/
+          Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
+          New-Item -ItemType Directory -Force -Path src-tauri/resources | Out-Null
+          Copy-Item "ffmpeg\bin\*.dll" src-tauri/resources/
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
