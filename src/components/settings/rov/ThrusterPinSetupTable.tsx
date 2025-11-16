@@ -211,14 +211,15 @@ function ThrusterPinSetupTable() {
                     type='button'
                     variant='outline'
                     disabled={testDisabled[index] ?? false}
-                    onClick={async () => {
-                      if (thrusterPinSetup?.identifiers[index]) {
-                        await testThruster(
-                          thrusterPinSetup.identifiers[index],
-                          index,
-                        );
-                      }
-                    }}
+                      onClick={async () => {
+                        // Allow identifier 0, so check for undefined instead of truthy
+                        if (thrusterPinSetup?.identifiers[index] !== undefined) {
+                         await testThruster(
+                           thrusterPinSetup.identifiers[index],
+                           index,
+                         );
+                       }
+                     }}
                   >
                     Test
                   </Button>
