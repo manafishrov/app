@@ -40,12 +40,10 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install Rust stable (MSVC on Windows)
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: |
-            x86_64-pc-windows-msvc
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -72,7 +70,6 @@ jobs:
           mkdir ffmpeg
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
-          New-Item -ItemType Directory -Force -Path src-tauri/resources | Out-Null
           Copy-Item "ffmpeg\bin\*.dll" src-tauri/resources/
 
       - name: Install frontend dependencies
