@@ -70,7 +70,7 @@ jobs:
           mkdir ffmpeg
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
-          Copy-Item "ffmpeg\bin\*.dll" src-tauri/resources/
+          copy-item "ffmpeg\bin\*.dll" src-tauri/
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile

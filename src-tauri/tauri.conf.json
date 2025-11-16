@@ -22,7 +22,6 @@
     }
   },
   "bundle": {
-    "resources": ["resources/*"],
     "active": true,
     "targets": "all",
     "icon": [
