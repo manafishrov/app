@@ -38,7 +38,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3OEFGMzdGMEVFNTU3RjYKUldUMlYrVU9mL09LeDBJbktpRy91ZU9oL1RKMElNWjN6Y3B1RzhkaldsVGo3VjcwRjlubHhMUDkK",
       "endpoints": [
-        "https://github.com/Lektr/manafish-app/releases/latest/download/latest.json"
+        "https://github.com/manafishrov/app/releases/latest/download/latest.json"
       ]
     }
   }
