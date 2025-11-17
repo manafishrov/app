@@ -69,13 +69,13 @@ function ThrusterPinSetupTable() {
     await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
   }
 
-  async function testThruster(identifier: number, index: number) {
+  async function testThruster(index: number) {
     setTestDisabled((prev: boolean[]): boolean[] => {
       const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
       updated[index] = true;
       return updated;
     });
-    await invoke('start_thruster_test', { payload: identifier })
+    await invoke('start_thruster_test', { payload: index })
       .catch((error) => {
         logError('Failed to start thruster test:', error);
         toast.error('Failed to start thruster test');
@@ -207,18 +207,12 @@ function ThrusterPinSetupTable() {
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={testDisabled[index] ?? false}
-                      onClick={async () => {
-                        // Allow identifier 0, so check for undefined instead of truthy
-                        if (thrusterPinSetup?.identifiers[index] !== undefined) {
-                         await testThruster(
-                           thrusterPinSetup.identifiers[index],
-                           index,
-                         );
-                       }
+                   <Button
+                     type='button'
+                     variant='outline'
+                     disabled={testDisabled[index] ?? false}
+                     onClick={async () => {
+                       await testThruster(index);
                      }}
                   >
                     Test
