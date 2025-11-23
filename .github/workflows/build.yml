@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Set bun hash
+        shell: bash
         run: |
           if [ -f bun.lock ]; then
             if [[ "$RUNNER_OS" == "macOS" ]]; then
