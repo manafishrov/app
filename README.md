@@ -1,4 +1,4 @@
-# Manafish App
+# App
 
 Make sure to have [Bun](https://bun.sh) and [Rust](https://www.rust-lang.org/tools/install) installed.
 
