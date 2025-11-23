@@ -65,6 +65,7 @@ pub struct Power {
 pub struct RovConfig {
   pub microcontroller_firmware_variant: MicrocontrollerFirmwareVariant,
   pub fluid_type: FluidType,
+  pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
   pub thruster_allocation: ThrusterAllocation,
   pub regulator: Regulator,

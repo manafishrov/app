@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ function General() {
       ? {
           microcontrollerFirmwareVariant: state.microcontrollerFirmwareVariant,
           fluidType: state.fluidType,
+          smoothingFactor: state.smoothingFactor,
         }
       : null,
   );
@@ -144,9 +146,24 @@ function General() {
           <div>
             <h4 className='text-lg font-medium'>Smoothing factor</h4>
             <p className='text-muted-foreground text-sm'>
-              Set correct fluid type to get accurate water pressure readings.
+              How much smoothing applied to the movement of the ROV. Smoothing
+              can be nice for getting smooth movement and camera shots, but it
+              can also make the ROV feel less responsive. 0 leads to no
+              smoothing. As the value approaches 1, the smoothing increases
+              exponentially.
             </p>
-            <div className='mt-2 flex items-center gap-3'></div>
+            <div className='mt-2 flex items-center gap-3'>
+              <Input
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value={rovConfig.smoothingFactor}
+                onChange={(e) => setRovConfig({ smoothingFactor: parseFloat(e.target.value) })}
+                disabled={!rovConfig}
+                className="w-40"
+              />
+            </div>
           </div>
         </div>
       )}
