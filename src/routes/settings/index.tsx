@@ -154,7 +154,7 @@ function General() {
       <div className='space-y-6'>
         {appVersion && (
           <div>
-            <h4 className='text-lg font-medium'>App Version</h4>
+            <h4 className='text-lg font-medium'>App version</h4>
             <p className='text-muted-foreground text-sm'>
               Current version of the Manafish application.
             </p>
@@ -164,7 +164,7 @@ function General() {
           </div>
         )}
         <div>
-          <h4 className='text-lg font-medium'>Automatic Updates</h4>
+          <h4 className='text-lg font-medium'>Automatic updates</h4>
           <p className='text-muted-foreground text-sm'>
             Enable or disable automatic updates on startup.
           </p>
@@ -180,7 +180,7 @@ function General() {
           </div>
         </div>
         <div>
-          <h4 className='text-lg font-medium'>Video Directory</h4>
+          <h4 className='text-lg font-medium'>Video directory</h4>
           <p className='text-muted-foreground text-sm'>
             Set the directory where recordings are stored.
           </p>
@@ -230,7 +230,7 @@ function General() {
               </RadioGroup>
             </div>
             <div>
-              <h4 className='text-lg font-medium'>Attitude Indicator</h4>
+              <h4 className='text-lg font-medium'>Attitude indicator</h4>
               <p className='text-muted-foreground text-sm'>
                 Select the style of the attitude indicator.
               </p>
@@ -270,7 +270,7 @@ function General() {
               </div>
             </div>
             <div>
-              <h4 className='text-lg font-medium'>Thruster RPM Overlay</h4>
+              <h4 className='text-lg font-medium'>Thruster RPM overlay</h4>
               <div className='mt-2 flex items-center gap-2'>
                 <Switch
                   id='thruster-rpm-overlay'

@@ -66,7 +66,7 @@ function General() {
         <div className='space-y-6'>
           {firmwareVersion && (
             <div>
-              <h4 className='text-lg font-medium'>Firmware Version</h4>
+              <h4 className='text-lg font-medium'>Firmware version</h4>
               <p className='text-muted-foreground text-sm'>
                 Current version of the Manafish ROV firmware.
               </p>
@@ -76,7 +76,7 @@ function General() {
             </div>
           )}
           <div>
-            <h4 className='text-lg font-medium'>Microcontroller Firmware</h4>
+            <h4 className='text-lg font-medium'>Microcontroller firmware</h4>
             <p className='text-muted-foreground text-sm'>
               Select and flash the firmware with the specified output protocol
               for the microcontroller that generates the control signals for the
@@ -114,7 +114,7 @@ function General() {
             </div>
           </div>
           <div>
-            <h4 className='text-lg font-medium'>Fluid Type</h4>
+            <h4 className='text-lg font-medium'>Fluid type</h4>
             <p className='text-muted-foreground text-sm'>
               Set correct fluid type to get accurate water pressure readings.
             </p>
@@ -140,6 +140,13 @@ function General() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <h4 className='text-lg font-medium'>Smoothing factor</h4>
+            <p className='text-muted-foreground text-sm'>
+              Set correct fluid type to get accurate water pressure readings.
+            </p>
+            <div className='mt-2 flex items-center gap-3'></div>
           </div>
         </div>
       )}

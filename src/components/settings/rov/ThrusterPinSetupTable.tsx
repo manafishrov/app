@@ -97,7 +97,7 @@ function ThrusterPinSetupTable() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          Thruster Pin Setup
+          Thruster pin setup
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this table to configure each thruster connected to your ROV. For
@@ -134,7 +134,7 @@ function ThrusterPinSetupTable() {
               </TableHead>
               <TableHead>
                 <Tooltip>
-                  <TooltipTrigger>Spin Direction</TooltipTrigger>
+                  <TooltipTrigger>Spin direction</TooltipTrigger>
                   <TooltipContent>
                     <p>
                       The default spin direction for the propeller on the
@@ -207,13 +207,13 @@ function ThrusterPinSetupTable() {
                   </Select>
                 </TableCell>
                 <TableCell>
-                   <Button
-                     type='button'
-                     variant='outline'
-                     disabled={testDisabled[index] ?? false}
-                     onClick={async () => {
-                       await testThruster(index);
-                     }}
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={testDisabled[index] ?? false}
+                    onClick={async () => {
+                      await testThruster(index);
+                    }}
                   >
                     Test
                   </Button>

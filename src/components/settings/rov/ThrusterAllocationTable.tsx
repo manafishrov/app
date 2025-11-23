@@ -56,14 +56,14 @@ function ThrusterAllocationTable() {
   ];
 
   const rowLabelTooltips = [
-    'Contribution of each thruster to surge (forward/backward translation).',
-    'Contribution of each thruster to sway (left/right translation).',
-    'Contribution of each thruster to heave (up/down translation).',
-    'Contribution of each thruster to pitch (rotation about the lateral axis, nose up/down).',
-    'Contribution of each thruster to yaw (rotation about the vertical axis, turning left/right).',
-    'Contribution of each thruster to roll (rotation about the longitudinal axis, tilting side to side).',
-    'Contribution of each thruster to action 1 (custom or auxiliary function).',
-    'Contribution of each thruster to action 2 (custom or auxiliary function).',
+    'Thrusters to activate to move forward',
+    'Thrusters to activate to move right',
+    'Thrusters to activate to move upwards',
+    'Thrusters to activate to pitch up',
+    'Thrusters to activate to yaw right',
+    'Thrusters to activate to roll right',
+    'Thrusters to activate for action 1 (custom or auxiliary function).',
+    'Thrusters to activate for action 2 (custom or auxiliary function).',
   ];
 
   function handleAllocationChange(
@@ -109,7 +109,7 @@ function ThrusterAllocationTable() {
     <>
       <div>
         <h3 className='text-2xl font-semibold tracking-tight'>
-          Thruster Allocation
+          Thruster allocation
         </h3>
         <p className='text-muted-foreground text-sm'>
           Use this matrix to control how each thruster responds to different

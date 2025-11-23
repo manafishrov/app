@@ -96,13 +96,13 @@ function GamepadSettings() {
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Heave</h3>
           <GamepadBindInput
-            label='Heave Up'
+            label='Heave up'
             bind={gamepad.heaveUp}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveUp}
             onBindChange={(newBind) => handleBindingChange('heaveUp', newBind)}
           />
           <GamepadBindInput
-            label='Heave Down'
+            label='Heave down'
             bind={gamepad.heaveDown}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveDown}
             onBindChange={(newBind) =>
@@ -115,7 +115,7 @@ function GamepadSettings() {
             Stabilization
           </h3>
           <GamepadBindInput
-            label='Pitch Stabilization'
+            label='Pitch stabilization'
             bind={gamepad.pitchStabilization}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchStabilization}
             onBindChange={(newBind) =>
@@ -123,7 +123,7 @@ function GamepadSettings() {
             }
           />
           <GamepadBindInput
-            label='Roll Stabilization'
+            label='Roll stabilization'
             bind={gamepad.rollStabilization}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollStabilization}
             onBindChange={(newBind) =>
@@ -131,7 +131,7 @@ function GamepadSettings() {
             }
           />
           <GamepadBindInput
-            label='Depth Hold'
+            label='Depth hold'
             bind={gamepad.depthHold}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.depthHold}
             onBindChange={(newBind) =>
@@ -154,13 +154,13 @@ function GamepadSettings() {
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
           <GamepadBindInput
-            label='Roll Left'
+            label='Roll left'
             bind={gamepad.rollLeft}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
             onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
           />
           <GamepadBindInput
-            label='Roll Right'
+            label='Roll right'
             bind={gamepad.rollRight}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
             onBindChange={(newBind) =>
@@ -171,7 +171,7 @@ function GamepadSettings() {
         <div className='space-y-2'>
           <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
           <GamepadBindInput
-            label='Action 1 Positive'
+            label='Action 1 positive'
             bind={gamepad.action1Positive}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1Positive}
             onBindChange={(newBind) =>
@@ -179,7 +179,7 @@ function GamepadSettings() {
             }
           />
           <GamepadBindInput
-            label='Action 1 Negative'
+            label='Action 1 negative'
             bind={gamepad.action1Negative}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
             onBindChange={(newBind) =>
@@ -187,7 +187,7 @@ function GamepadSettings() {
             }
           />
           <GamepadBindInput
-            label='Action 2 Positive'
+            label='Action 2 positive'
             bind={gamepad.action2Positive}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Positive}
             onBindChange={(newBind) =>
@@ -195,7 +195,7 @@ function GamepadSettings() {
             }
           />
           <GamepadBindInput
-            label='Action 2 Negative'
+            label='Action 2 negative'
             bind={gamepad.action2Negative}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
             onBindChange={(newBind) =>
