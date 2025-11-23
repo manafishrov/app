@@ -26,11 +26,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set bun hash
+        run: |
+          if [ -f bun.lock ]; then
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
+              HASH=$(shasum -a 256 bun.lock | cut -d' ' -f1)
+            else
+              HASH=$(sha256sum bun.lock | cut -d' ' -f1)
+            fi
+            echo "BUN_HASH=$HASH" >> $GITHUB_ENV
+          else
+            echo "BUN_HASH=no-lock" >> $GITHUB_ENV
+          fi
+
       - name: Cache bun dependencies
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          key: ${{ runner.os }}-bun-${{ env.BUN_HASH }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
