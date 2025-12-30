@@ -2,7 +2,11 @@ import { Gamepad2Icon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/Tooltip';
 
 import { cx } from '@/lib/utils';
 
@@ -94,14 +98,14 @@ function GamepadBindInput({
           if (gamepad.buttons[i]?.pressed) {
             if (isJoystick) {
               if (i >= 0 && i <= 3) {
-                setCurrentBind('FaceButtons');
+                setCurrentBind('Face Buttons');
                 setIsRecording(false);
-                onBindChange('FaceButtons');
+                onBindChange('Face Buttons');
                 return;
               } else if (i >= 12 && i <= 15) {
-                setCurrentBind('DPad');
+                setCurrentBind('D-Pad');
                 setIsRecording(false);
-                onBindChange('DPad');
+                onBindChange('D-Pad');
                 return;
               }
             } else {
@@ -120,16 +124,16 @@ function GamepadBindInput({
           const rightY = gamepad.axes[3] ?? 0;
 
           if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
-            setCurrentBind('LeftStick');
+            setCurrentBind('Left Stick');
             setIsRecording(false);
-            onBindChange('LeftStick');
+            onBindChange('Left Stick');
             return;
           }
 
           if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
-            setCurrentBind('RightStick');
+            setCurrentBind('Right Stick');
             setIsRecording(false);
-            onBindChange('RightStick');
+            onBindChange('Right Stick');
             return;
           }
         }
