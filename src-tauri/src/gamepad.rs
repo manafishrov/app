@@ -1,133 +1,20 @@
-use crate::models::gamepad::{GamepadData, GamepadEventType};
-use gilrs::{Axis, Button, Event, EventType, Gamepad, Gilrs, MappingSource};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 use tauri::{AppHandle, Emitter, Runtime};
 
-pub const BTN_A: u16 = 0;
-pub const BTN_B: u16 = 1;
-pub const BTN_X: u16 = 2;
-pub const BTN_Y: u16 = 3;
-pub const BTN_LB: u16 = 4;
-pub const BTN_RB: u16 = 5;
-pub const BTN_LT: u16 = 6;
-pub const BTN_RT: u16 = 7;
-pub const BTN_BACK: u16 = 8;
-pub const BTN_START: u16 = 9;
-pub const BTN_LS: u16 = 10;
-pub const BTN_RS: u16 = 11;
-pub const BTN_DPAD_UP: u16 = 12;
-pub const BTN_DPAD_DOWN: u16 = 13;
-pub const BTN_DPAD_LEFT: u16 = 14;
-pub const BTN_DPAD_RIGHT: u16 = 15;
-pub const BTN_HOME: u16 = 16;
-pub const BTN_C: u16 = 17;
-pub const BTN_Z: u16 = 18;
-
-pub const AXIS_LSTICKX: u16 = 0;
-pub const AXIS_LSTICKY: u16 = 1;
-pub const AXIS_RSTICKX: u16 = 2;
-pub const AXIS_RSTICKY: u16 = 3;
-pub const AXIS_DPADX: u16 = 4;
-pub const AXIS_DPADY: u16 = 5;
-pub const AXIS_LEFTZ: u16 = 6;
-pub const AXIS_RIGHTZ: u16 = 7;
+#[derive(Debug)]
+pub struct VibrateCommand {
+  pub index: u32,
+  pub low_freq: f32,
+  pub high_freq: f32,
+  pub duration_ms: u32,
+}
 
 static GAMEPAD_STREAM_RUNNING: AtomicBool = AtomicBool::new(false);
-
-fn button_from_u16(id: u16) -> Button {
-  match id {
-    BTN_A => Button::South,
-    BTN_B => Button::East,
-    BTN_X => Button::West,
-    BTN_Y => Button::North,
-    BTN_LB => Button::LeftTrigger,
-    BTN_RB => Button::RightTrigger,
-    BTN_LT => Button::LeftTrigger2,
-    BTN_RT => Button::RightTrigger2,
-    BTN_BACK => Button::Select,
-    BTN_START => Button::Start,
-    BTN_LS => Button::LeftThumb,
-    BTN_RS => Button::RightThumb,
-    BTN_DPAD_UP => Button::DPadUp,
-    BTN_DPAD_DOWN => Button::DPadDown,
-    BTN_DPAD_LEFT => Button::DPadLeft,
-    BTN_DPAD_RIGHT => Button::DPadRight,
-    BTN_HOME => Button::Mode,
-    BTN_C => Button::C,
-    BTN_Z => Button::Z,
-    _ => Button::Unknown,
-  }
-}
-
-fn axis_from_u16(id: u16) -> Axis {
-  match id {
-    AXIS_LSTICKX => Axis::LeftStickX,
-    AXIS_LSTICKY => Axis::LeftStickY,
-    AXIS_RSTICKX => Axis::RightStickX,
-    AXIS_RSTICKY => Axis::RightStickY,
-    AXIS_DPADX => Axis::DPadX,
-    AXIS_DPADY => Axis::DPadY,
-    AXIS_LEFTZ => Axis::LeftZ,
-    AXIS_RIGHTZ => Axis::RightZ,
-    _ => Axis::Unknown,
-  }
-}
-
-pub fn gamepad_to_json(gamepad: Gamepad, event: EventType, time: SystemTime) -> GamepadData {
-  let num_of_axes: u16 = 12;
-  let num_of_buttons: u16 = 20;
-
-  let id = gamepad.id().into();
-  let timestamp = time.duration_since(UNIX_EPOCH).unwrap().as_millis();
-  let name = gamepad.name().to_string();
-  let connected = gamepad.is_connected();
-  let vibration = gamepad.is_ff_supported();
-  let uuid = uuid::Uuid::from_bytes(gamepad.uuid())
-    .as_hyphenated()
-    .to_string();
-  let mapping = match gamepad.mapping_source() {
-    MappingSource::SdlMappings => "standard".to_string(),
-    _ => "".to_string(),
-  };
-  let power_info = format!("{:?}", gamepad.power_info());
-
-  let event = match event {
-    EventType::Connected => GamepadEventType::Connected,
-    EventType::Disconnected => GamepadEventType::Disconnected,
-    EventType::ButtonPressed(..) => GamepadEventType::ButtonPressed,
-    EventType::ButtonReleased(..) => GamepadEventType::ButtonReleased,
-    EventType::ButtonChanged(..) => GamepadEventType::ButtonChanged,
-    EventType::AxisChanged(..) => GamepadEventType::AxisChanged,
-    EventType::Dropped => GamepadEventType::Dropped,
-    _ => GamepadEventType::ButtonChanged,
-  };
-
-  let axes: Vec<f32> = (0..num_of_axes)
-    .map(|idx| gamepad.axis_data(axis_from_u16(idx)))
-    .map(|o| o.map_or(0.0, |axis| axis.value()))
-    .collect();
-
-  let buttons: Vec<f32> = (0..num_of_buttons)
-    .map(|idx| gamepad.button_data(button_from_u16(idx)))
-    .map(|o| o.map_or(0.0, |button| button.value()))
-    .collect();
-
-  GamepadData {
-    id,
-    uuid,
-    connected,
-    vibration,
-    event,
-    timestamp,
-    name,
-    buttons,
-    axes,
-    mapping,
-    power_info,
-  }
-}
+pub static VIBRATE_SENDER: std::sync::OnceLock<mpsc::Sender<VibrateCommand>> =
+  std::sync::OnceLock::new();
 
 pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
   if GAMEPAD_STREAM_RUNNING.load(Ordering::Relaxed) {
@@ -135,24 +22,160 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
   }
   GAMEPAD_STREAM_RUNNING.store(true, Ordering::Relaxed);
 
-  thread::spawn(move || {
-    let mut gilrs = Gilrs::new().unwrap();
+  let (tx, rx) = mpsc::channel::<VibrateCommand>();
+  VIBRATE_SENDER.set(tx).unwrap();
 
-    for (_, gamepad) in gilrs.gamepads() {
-      let payload = gamepad_to_json(gamepad, EventType::Connected, SystemTime::now());
-      app.emit("gamepad_event", payload).unwrap();
+  thread::spawn(move || {
+    let sdl_context = sdl2::init().unwrap();
+    let controller_subsystem = sdl_context.game_controller().unwrap();
+    let mut event_pump = sdl_context.event_pump().unwrap();
+
+    controller_subsystem
+      .load_mappings("assets/gamecontrollerdb.txt")
+      .ok();
+
+    let mut controllers: std::collections::HashMap<u32, sdl2::controller::GameController> =
+      std::collections::HashMap::new();
+
+    for i in 0..controller_subsystem.num_joysticks().unwrap_or(0) {
+      if controller_subsystem.is_game_controller(i) {
+        if let Ok(controller) = controller_subsystem.open(i) {
+          let instance_id = controller.instance_id();
+          controllers.insert(instance_id, controller);
+          let payload = gamepad_to_json(&controllers[&instance_id]);
+          app.emit("gamepad_event", payload).unwrap();
+        }
+      }
     }
 
     loop {
-      while let Some(Event {
-        id, event, time, ..
-      }) = gilrs.next_event()
-      {
-        let gamepad = gilrs.gamepad(id);
-        let payload = gamepad_to_json(gamepad, event, time);
+      while let Ok(cmd) = rx.try_recv() {
+        if let Some(controller) = controllers.get_mut(&cmd.index) {
+          let low = (cmd.low_freq * 65535.0) as u16;
+          let high = (cmd.high_freq * 65535.0) as u16;
+          controller.set_rumble(low, high, cmd.duration_ms).ok();
+        }
+      }
+
+      for event in event_pump.poll_iter() {
+        use sdl2::event::Event;
+        match event {
+          Event::ControllerDeviceAdded { which, .. } => {
+            if controller_subsystem.is_game_controller(which) {
+              if let Ok(controller) = controller_subsystem.open(which) {
+                let instance_id = controller.instance_id();
+                controllers.insert(instance_id, controller);
+                let payload = gamepad_to_json(&controllers[&instance_id]);
+                app.emit("gamepad_event", payload).unwrap();
+              }
+            }
+          }
+          Event::ControllerDeviceRemoved { which, .. } => {
+            if let Some(mut controller) = controllers.remove(&which) {
+              controller.set_rumble(0, 0, 0).ok(); // Stop rumble
+              let mut payload = gamepad_to_json(&controller);
+              if let serde_json::Value::Object(ref mut map) = payload {
+                map.insert("connected".to_string(), serde_json::Value::Bool(false));
+              }
+              app.emit("gamepad_event", payload).unwrap();
+            }
+          }
+          Event::ControllerAxisMotion { which, .. }
+          | Event::ControllerButtonDown { which, .. }
+          | Event::ControllerButtonUp { which, .. } => {
+            if let Some(controller) = controllers.get(&which) {
+              let payload = gamepad_to_json(controller);
+              app.emit("gamepad_event", payload).unwrap();
+            }
+          }
+          _ => {}
+        }
+      }
+
+      for controller in controllers.values() {
+        let payload = gamepad_to_json(controller);
         app.emit("gamepad_event", payload).unwrap();
       }
-      thread::sleep(Duration::from_millis(10));
+
+      thread::sleep(Duration::from_millis(16));
     }
   });
+}
+
+use sdl2::controller::{Axis, Button, GameController};
+use serde_json::json;
+
+pub fn gamepad_to_json(controller: &GameController) -> serde_json::Value {
+  fn normalize_axis(value: i16) -> f32 {
+    value as f32 / 32767.0
+  }
+
+  fn create_button_json(pressed: bool) -> serde_json::Value {
+    json!({"pressed": pressed, "value": if pressed { 1.0 } else { 0.0 }})
+  }
+
+  fn create_trigger_json(value: i16) -> serde_json::Value {
+    let normalized = normalize_axis(value);
+    json!({"pressed": value > 3277, "value": normalized})
+  }
+
+  let id = controller.name().clone();
+  let index = controller.instance_id();
+  let connected = controller.attached();
+  let mapping = controller.mapping();
+
+  let axes: Vec<f32> = vec![
+    normalize_axis(controller.axis(Axis::LeftX)),
+    normalize_axis(controller.axis(Axis::LeftY)),
+    normalize_axis(controller.axis(Axis::RightX)),
+    normalize_axis(controller.axis(Axis::RightY)),
+  ];
+
+  let mut buttons: Vec<serde_json::Value> = vec![
+    create_button_json(controller.button(Button::A)),
+    create_button_json(controller.button(Button::B)),
+    create_button_json(controller.button(Button::X)),
+    create_button_json(controller.button(Button::Y)),
+    create_button_json(controller.button(Button::LeftShoulder)),
+    create_button_json(controller.button(Button::RightShoulder)),
+    create_trigger_json(controller.axis(Axis::TriggerLeft)),
+    create_trigger_json(controller.axis(Axis::TriggerRight)),
+    create_button_json(controller.button(Button::Back)),
+    create_button_json(controller.button(Button::Start)),
+    create_button_json(controller.button(Button::LeftStick)),
+    create_button_json(controller.button(Button::RightStick)),
+    create_button_json(controller.button(Button::DPadUp)),
+    create_button_json(controller.button(Button::DPadDown)),
+    create_button_json(controller.button(Button::DPadLeft)),
+    create_button_json(controller.button(Button::DPadRight)),
+    create_button_json(controller.button(Button::Guide)),
+  ];
+
+  buttons.push(create_button_json(controller.button(Button::Paddle1)));
+  buttons.push(create_button_json(controller.button(Button::Paddle2)));
+  buttons.push(create_button_json(controller.button(Button::Paddle3)));
+  buttons.push(create_button_json(controller.button(Button::Paddle4)));
+  buttons.push(create_button_json(controller.button(Button::Touchpad)));
+
+  let timestamp = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .unwrap()
+    .as_millis();
+
+  let vibration_actuator = if controller.has_rumble() {
+    json!({"type": "dual-rumble"})
+  } else {
+    serde_json::Value::Null
+  };
+
+  serde_json::json!({
+      "id": id,
+      "index": index,
+      "connected": connected,
+      "mapping": mapping,
+      "axes": axes,
+      "buttons": buttons,
+      "timestamp": timestamp,
+      "vibrationActuator": vibration_actuator,
+  })
 }

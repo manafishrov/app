@@ -8,7 +8,6 @@ mod commands {
 mod models {
   pub mod actions;
   pub mod config;
-  pub mod gamepad;
   pub mod log;
   pub mod rov_config;
   pub mod rov_status;
@@ -40,11 +39,11 @@ mod toast;
 mod updater;
 
 use commands::actions::{
-  append_recording_chunk, save_recording, send_custom_action, send_direction_vector, toggle_depth_hold,
-  toggle_pitch_stabilization, toggle_roll_stabilization,
+  append_recording_chunk, save_recording, send_custom_action, send_direction_vector,
+  toggle_depth_hold, toggle_pitch_stabilization, toggle_roll_stabilization,
 };
 use commands::config::{get_config, set_config};
-use commands::gamepad::start_gamepad_stream;
+use commands::gamepad::{gamepad_vibrate, start_gamepad_stream};
 use commands::rov_config::{
   cancel_regulator_auto_tuning, cancel_thruster_test, flash_microcontroller_firmware,
   request_rov_config, set_rov_config, start_regulator_auto_tuning, start_thruster_test,
@@ -98,6 +97,7 @@ pub fn run() {
     .plugin(tauri_plugin_updater::Builder::new().build())
     .invoke_handler(generate_handler![
       start_gamepad_stream,
+      gamepad_vibrate,
       get_config,
       set_config,
       request_rov_config,

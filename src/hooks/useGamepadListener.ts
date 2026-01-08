@@ -6,27 +6,15 @@ import { toast } from '@/components/ui/Toaster';
 
 import { logError } from '@/lib/log';
 
-type GamepadEventType =
-  | 'connected'
-  | 'disconnected'
-  | 'buttonPressed'
-  | 'buttonReleased'
-  | 'buttonChanged'
-  | 'axisChanged'
-  | 'dropped';
-
 type GamepadData = {
-  id: number;
-  uuid: string;
+  id: string;
+  index: number;
   connected: boolean;
-  vibration: boolean;
-  event: GamepadEventType;
-  timestamp: number;
-  name: string;
-  buttons: ReadonlyArray<number>;
-  axes: ReadonlyArray<number>;
   mapping: string;
-  powerInfo: string;
+  axes: ReadonlyArray<number>;
+  buttons: ReadonlyArray<{ pressed: boolean; value: number }>;
+  timestamp: number;
+  vibrationActuator: { type: string } | null;
 };
 
 const gamepads: (Gamepad | null)[] = [null, null, null, null];
@@ -36,36 +24,63 @@ function getGamepads() {
 }
 
 function createGamepadFromEvent(event: GamepadData): Gamepad {
-  const { id, axes, connected, name, timestamp, uuid, mapping } = event;
+  const { id, index, axes, connected, mapping, timestamp, vibrationActuator } =
+    event;
   const buttons = event.buttons.map(
-    (value) => ({ value, touched: false, pressed: value > 0 }) as GamepadButton,
+    (btn) =>
+      ({
+        value: btn.value,
+        touched: btn.value > 0,
+        pressed: btn.pressed,
+      }) as GamepadButton,
   );
 
+  let vibrationActuatorObj = null;
+  if (vibrationActuator) {
+    vibrationActuatorObj = {
+      type: vibrationActuator.type,
+      playEffect: async (type: string, params: any) => {
+        if (type === 'dual-rumble') {
+          await invoke('gamepad_vibrate', {
+            index,
+            low_freq: params.weakMagnitude || 0,
+            high_freq: params.strongMagnitude || 0,
+            duration_ms: params.duration || 0,
+          });
+        }
+      },
+    };
+  }
+
   return {
-    index: id,
-    id: `${name} (${uuid})`,
+    index,
+    id,
     connected,
     axes,
     buttons,
     timestamp,
     mapping,
     hapticActuators: [],
-    vibrationActuator: null,
+    vibrationActuator: vibrationActuatorObj,
   } as unknown as Gamepad;
 }
 
 function handleGamepadEvent({ payload }: { payload: GamepadData }) {
   const gamepad = createGamepadFromEvent(payload);
+  const prevConnected = gamepads[gamepad.index]?.connected ?? false;
 
-  if (payload.event === 'connected') {
+  if (payload.connected && !prevConnected) {
+    // Connected
     gamepads[gamepad.index] = gamepad;
     const customEvent = new GamepadEvent('gamepadconnected', { gamepad });
     window.dispatchEvent(customEvent);
-  } else if (payload.event === 'disconnected') {
+  } else if (!payload.connected && prevConnected) {
+    // Disconnected
     gamepads[gamepad.index] = null;
     const customEvent = new GamepadEvent('gamepaddisconnected', { gamepad });
     window.dispatchEvent(customEvent);
   } else {
+    // Update
     gamepads[gamepad.index] = gamepad;
   }
 }
