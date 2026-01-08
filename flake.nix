@@ -34,11 +34,10 @@
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           rustToolchain
-          cmake
+          clang
           pkg-config
-          SDL2
-          SDL2.dev
           bun
+          ffmpeg
         ];
       };
     });
