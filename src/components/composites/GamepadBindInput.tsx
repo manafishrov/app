@@ -10,6 +10,8 @@ import {
 
 import { cx } from '@/lib/utils';
 
+import { ControlSource } from '@/stores/config';
+
 type GamepadBindInputProps = {
   label: string;
   bind: string;
@@ -98,14 +100,14 @@ function GamepadBindInput({
           if (gamepad.buttons[i]?.pressed) {
             if (isJoystick) {
               if (i >= 0 && i <= 3) {
-                setCurrentBind('Face Buttons');
+                setCurrentBind(ControlSource.faceButtons);
                 setIsRecording(false);
-                onBindChange('Face Buttons');
+                onBindChange(ControlSource.faceButtons);
                 return;
               } else if (i >= 12 && i <= 15) {
-                setCurrentBind('D-Pad');
+                setCurrentBind(ControlSource.dPad);
                 setIsRecording(false);
-                onBindChange('D-Pad');
+                onBindChange(ControlSource.dPad);
                 return;
               }
             } else {
@@ -124,16 +126,16 @@ function GamepadBindInput({
           const rightY = gamepad.axes[3] ?? 0;
 
           if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
-            setCurrentBind('Left Stick');
+            setCurrentBind(ControlSource.leftStick);
             setIsRecording(false);
-            onBindChange('Left Stick');
+            onBindChange(ControlSource.leftStick);
             return;
           }
 
           if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
-            setCurrentBind('Right Stick');
+            setCurrentBind(ControlSource.rightStick);
             setIsRecording(false);
-            onBindChange('Right Stick');
+            onBindChange(ControlSource.rightStick);
             return;
           }
         }
@@ -166,16 +168,16 @@ function GamepadBindInput({
     };
   }, [isRecording]);
 
-  const startRecording = () => {
+  function startRecording() {
     if (gamepadConnected) {
       setIsRecording(true);
     }
-  };
+  }
 
-  const resetToDefault = () => {
+  function resetToDefault() {
     setCurrentBind(defaultBind);
     onBindChange(defaultBind);
-  };
+  }
 
   return (
     <div className='space-y-2'>

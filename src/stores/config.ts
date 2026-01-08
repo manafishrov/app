@@ -29,7 +29,21 @@ type KeyboardBindings = {
 };
 
 type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
+
+const ControlSource = {
+  leftStick: 'leftStick',
+  rightStick: 'rightStick',
+  dPad: 'dPad',
+  faceButtons: 'faceButtons',
+};
+
 type AttitudeIndicator = 'scientific' | 'dimensional3D' | 'disabled';
+
+const AttitudeIndicator = {
+  scientific: 'scientific',
+  dimensional3D: 'dimensional3D',
+  disabled: 'disabled',
+};
 
 type GamepadBindings = {
   surgeSway: ControlSource;
@@ -100,9 +114,9 @@ export {
   configStore,
   getConfig,
   setConfig,
+  ControlSource,
+  AttitudeIndicator,
   type KeyboardBindings,
-  type ControlSource,
   type GamepadBindings,
   type Config,
-  type AttitudeIndicator,
 };

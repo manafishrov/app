@@ -9,6 +9,20 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 
 type Row = [number, number, number, number, number, number, number, number];
 
+type MicrocontrollerFirmwareVariant = 'pwm' | 'dshot';
+
+const MicrocontrollerFirmwareVariant = {
+  pwm: 'pwm',
+  dshot: 'dshot',
+};
+
+type FluidType = 'saltwater' | 'freshWater';
+
+const FluidType = {
+  saltWater: 'saltwater',
+  freshWater: 'freshwater',
+};
+
 type ThrusterPinSetup = {
   identifiers: Row;
   spinDirections: Row;
@@ -46,8 +60,8 @@ type Power = {
 };
 
 type RovConfig = {
-  microcontrollerFirmwareVariant: 'pwm' | 'dshot';
-  fluidType: 'saltwater' | 'freshwater';
+  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant;
+  fluidType: FluidType;
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;
@@ -93,6 +107,8 @@ export {
   rovConfigStore,
   requestRovConfig,
   setRovConfig,
+  FluidType,
+  MicrocontrollerFirmwareVariant,
   type Regulator,
   type DirectionCoefficients,
   type RovConfig,

@@ -21,7 +21,12 @@ import { logError } from '@/lib/log';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';
-import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
+import {
+  FluidType,
+  MicrocontrollerFirmwareVariant,
+  rovConfigStore,
+  setRovConfig,
+} from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings/general/')({
   component: General,
@@ -94,9 +99,10 @@ function General() {
             <div className='mt-2 flex items-center gap-3'>
               <Select
                 value={rovConfig.microcontrollerFirmwareVariant}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   setRovConfig({
-                    microcontrollerFirmwareVariant: value as 'pwm' | 'dshot',
+                    microcontrollerFirmwareVariant:
+                      value as MicrocontrollerFirmwareVariant,
                   })
                 }
                 disabled={!rovConfig}
@@ -107,8 +113,12 @@ function General() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Firmware</SelectLabel>
-                    <SelectItem value='pwm'>PWM</SelectItem>
-                    <SelectItem value='dshot'>DSHOT</SelectItem>
+                    <SelectItem value={MicrocontrollerFirmwareVariant.pwm}>
+                      PWM
+                    </SelectItem>
+                    <SelectItem value={MicrocontrollerFirmwareVariant.dshot}>
+                      DSHOT
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -123,9 +133,9 @@ function General() {
             <div className='mt-2 flex items-center gap-3'>
               <Select
                 value={rovConfig.fluidType}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   setRovConfig({
-                    fluidType: value as 'freshwater' | 'saltwater',
+                    fluidType: value as FluidType,
                   })
                 }
                 disabled={!rovConfig}
@@ -136,8 +146,12 @@ function General() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Fluid Type</SelectLabel>
-                    <SelectItem value='freshwater'>Freshwater</SelectItem>
-                    <SelectItem value='saltwater'>Saltwater</SelectItem>
+                    <SelectItem value={FluidType.freshWater}>
+                      Freshwater
+                    </SelectItem>
+                    <SelectItem value={FluidType.saltWater}>
+                      Saltwater
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -154,14 +168,16 @@ function General() {
             </p>
             <div className='mt-2 flex items-center gap-3'>
               <Input
-                type="number"
-                min="0"
-                max="1"
-                step="0.01"
+                type='number'
+                min='0'
+                max='1'
+                step='0.01'
                 value={rovConfig.smoothingFactor}
-                onChange={(e) => setRovConfig({ smoothingFactor: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  setRovConfig({ smoothingFactor: parseFloat(e.target.value) })
+                }
                 disabled={!rovConfig}
-                className="w-40"
+                className='w-40'
               />
             </div>
           </div>
