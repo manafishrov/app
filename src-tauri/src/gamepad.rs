@@ -1,8 +1,15 @@
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+
+use serde_json::json;
 use tauri::{AppHandle, Emitter, Runtime};
+
+use sdl2::controller::{Axis, Button, GameController};
+use sdl2::event::Event;
+use sdl2::joystick::Joystick;
 
 #[derive(Debug)]
 pub struct VibrateCommand {
@@ -18,95 +25,125 @@ pub static VIBRATE_SENDER: std::sync::OnceLock<mpsc::Sender<VibrateCommand>> =
 
 pub fn handle_gamepad_vibration(index: u32, low_freq: f32, high_freq: f32, duration_ms: u32) {
   if let Some(sender) = VIBRATE_SENDER.get() {
-    let cmd = VibrateCommand {
+    let _ = sender.send(VibrateCommand {
       index,
       low_freq,
       high_freq,
       duration_ms,
-    };
-    let _ = sender.send(cmd);
+    });
   }
 }
 
 pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
-  if GAMEPAD_STREAM_RUNNING.load(Ordering::Relaxed) {
+  if GAMEPAD_STREAM_RUNNING.swap(true, Ordering::Relaxed) {
     return;
   }
-  GAMEPAD_STREAM_RUNNING.store(true, Ordering::Relaxed);
 
   let (tx, rx) = mpsc::channel::<VibrateCommand>();
-  VIBRATE_SENDER.set(tx).unwrap();
+  let _ = VIBRATE_SENDER.set(tx);
 
   thread::spawn(move || {
-    let sdl_context = sdl2::init().unwrap();
-    let controller_subsystem = sdl_context.game_controller().unwrap();
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let sdl = sdl2::init().unwrap();
+
+    let controller_subsystem = sdl.game_controller().unwrap();
+    let joystick_subsystem = sdl.joystick().unwrap();
+    let mut event_pump = sdl.event_pump().unwrap();
 
     controller_subsystem
       .load_mappings("assets/gamecontrollerdb.txt")
       .ok();
 
-    let mut controllers: std::collections::HashMap<u32, sdl2::controller::GameController> =
-      std::collections::HashMap::new();
+    let mut controllers: HashMap<u32, GameController> = HashMap::new();
+    let mut joysticks: HashMap<u32, Joystick> = HashMap::new();
 
-    for i in 0..controller_subsystem.num_joysticks().unwrap_or(0) {
+    let num = joystick_subsystem.num_joysticks().unwrap_or(0);
+    for i in 0..num {
       if controller_subsystem.is_game_controller(i) {
-        if let Ok(controller) = controller_subsystem.open(i) {
-          let instance_id = controller.instance_id();
-          controllers.insert(instance_id, controller);
-          let payload = gamepad_to_json(&controllers[&instance_id]);
-          app.emit("gamepad_event", payload).unwrap();
+        if let Ok(c) = controller_subsystem.open(i) {
+          let id = c.instance_id();
+          controllers.insert(id, c);
+          app
+            .emit("gamepad_event", gamecontroller_to_json(&controllers[&id]))
+            .unwrap();
         }
+      } else if let Ok(j) = joystick_subsystem.open(i) {
+        let id = j.instance_id();
+        joysticks.insert(id, j);
+        app
+          .emit("gamepad_event", joystick_to_json(&joysticks[&id]))
+          .unwrap();
       }
     }
 
     loop {
       while let Ok(cmd) = rx.try_recv() {
-        if let Some(controller) = controllers.get_mut(&cmd.index) {
+        if let Some(c) = controllers.get_mut(&cmd.index) {
           let low = (cmd.low_freq * 65535.0) as u16;
           let high = (cmd.high_freq * 65535.0) as u16;
-          controller.set_rumble(low, high, cmd.duration_ms).ok();
+          let _ = c.set_rumble(low, high, cmd.duration_ms);
         }
       }
 
       for event in event_pump.poll_iter() {
-        use sdl2::event::Event;
         match event {
           Event::ControllerDeviceAdded { which, .. } => {
-            if controller_subsystem.is_game_controller(which) {
-              if let Ok(controller) = controller_subsystem.open(which) {
-                let instance_id = controller.instance_id();
-                controllers.insert(instance_id, controller);
-                let payload = gamepad_to_json(&controllers[&instance_id]);
-                app.emit("gamepad_event", payload).unwrap();
-              }
+            if let Ok(c) = controller_subsystem.open(which) {
+              let id = c.instance_id();
+              controllers.insert(id, c);
+              app
+                .emit("gamepad_event", gamecontroller_to_json(&controllers[&id]))
+                .unwrap();
             }
           }
+
           Event::ControllerDeviceRemoved { which, .. } => {
-            if let Some(mut controller) = controllers.remove(&which) {
-              controller.set_rumble(0, 0, 0).ok(); // Stop rumble
-              let mut payload = gamepad_to_json(&controller);
-              if let serde_json::Value::Object(ref mut map) = payload {
-                map.insert("connected".to_string(), serde_json::Value::Bool(false));
-              }
+            if let Some(c) = controllers.remove(&which) {
+              let mut payload = gamecontroller_to_json(&c);
+              payload["connected"] = json!(false);
               app.emit("gamepad_event", payload).unwrap();
             }
           }
+
+          Event::JoyDeviceAdded { which, .. } => {
+            if !controller_subsystem.is_game_controller(which) {
+              if let Ok(j) = joystick_subsystem.open(which) {
+                let id = j.instance_id();
+                joysticks.insert(id, j);
+                app
+                  .emit("gamepad_event", joystick_to_json(&joysticks[&id]))
+                  .unwrap();
+              }
+            }
+          }
+
+          Event::JoyDeviceRemoved { which, .. } => {
+            if let Some(j) = joysticks.remove(&which) {
+              let mut payload = joystick_to_json(&j);
+              payload["connected"] = json!(false);
+              app.emit("gamepad_event", payload).unwrap();
+            }
+          }
+
           Event::ControllerAxisMotion { which, .. }
           | Event::ControllerButtonDown { which, .. }
           | Event::ControllerButtonUp { which, .. } => {
-            if let Some(controller) = controllers.get(&which) {
-              let payload = gamepad_to_json(controller);
-              app.emit("gamepad_event", payload).unwrap();
+            if let Some(c) = controllers.get(&which) {
+              app
+                .emit("gamepad_event", gamecontroller_to_json(c))
+                .unwrap();
             }
           }
+
+          Event::JoyAxisMotion { which, .. }
+          | Event::JoyButtonDown { which, .. }
+          | Event::JoyButtonUp { which, .. } => {
+            if let Some(j) = joysticks.get(&which) {
+              app.emit("gamepad_event", joystick_to_json(j)).unwrap();
+            }
+          }
+
           _ => {}
         }
-      }
-
-      for controller in controllers.values() {
-        let payload = gamepad_to_json(controller);
-        app.emit("gamepad_event", payload).unwrap();
       }
 
       thread::sleep(Duration::from_millis(16));
@@ -114,80 +151,89 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
   });
 }
 
-use sdl2::controller::{Axis, Button, GameController};
-use serde_json::json;
+fn normalize_axis(v: i16) -> f32 {
+  v as f32 / 32767.0
+}
 
-pub fn gamepad_to_json(controller: &GameController) -> serde_json::Value {
-  fn normalize_axis(value: i16) -> f32 {
-    value as f32 / 32767.0
-  }
-
-  fn create_button_json(pressed: bool) -> serde_json::Value {
-    json!({"pressed": pressed, "value": if pressed { 1.0 } else { 0.0 }})
-  }
-
-  fn create_trigger_json(value: i16) -> serde_json::Value {
-    let normalized = normalize_axis(value);
-    json!({"pressed": value > 3277, "value": normalized})
-  }
-
-  let id = controller.name().clone();
-  let index = controller.instance_id();
-  let connected = controller.attached();
-  let mapping = controller.mapping();
-
-  let axes: Vec<f32> = vec![
-    normalize_axis(controller.axis(Axis::LeftX)),
-    normalize_axis(controller.axis(Axis::LeftY)),
-    normalize_axis(controller.axis(Axis::RightX)),
-    normalize_axis(controller.axis(Axis::RightY)),
-  ];
-
-  let mut buttons: Vec<serde_json::Value> = vec![
-    create_button_json(controller.button(Button::A)),
-    create_button_json(controller.button(Button::B)),
-    create_button_json(controller.button(Button::X)),
-    create_button_json(controller.button(Button::Y)),
-    create_button_json(controller.button(Button::LeftShoulder)),
-    create_button_json(controller.button(Button::RightShoulder)),
-    create_trigger_json(controller.axis(Axis::TriggerLeft)),
-    create_trigger_json(controller.axis(Axis::TriggerRight)),
-    create_button_json(controller.button(Button::Back)),
-    create_button_json(controller.button(Button::Start)),
-    create_button_json(controller.button(Button::LeftStick)),
-    create_button_json(controller.button(Button::RightStick)),
-    create_button_json(controller.button(Button::DPadUp)),
-    create_button_json(controller.button(Button::DPadDown)),
-    create_button_json(controller.button(Button::DPadLeft)),
-    create_button_json(controller.button(Button::DPadRight)),
-    create_button_json(controller.button(Button::Guide)),
-  ];
-
-  buttons.push(create_button_json(controller.button(Button::Paddle1)));
-  buttons.push(create_button_json(controller.button(Button::Paddle2)));
-  buttons.push(create_button_json(controller.button(Button::Paddle3)));
-  buttons.push(create_button_json(controller.button(Button::Paddle4)));
-  buttons.push(create_button_json(controller.button(Button::Touchpad)));
-
-  let timestamp = std::time::SystemTime::now()
+fn now_ms() -> u128 {
+  std::time::SystemTime::now()
     .duration_since(std::time::UNIX_EPOCH)
     .unwrap()
-    .as_millis();
+    .as_millis()
+}
 
-  let vibration_actuator = if controller.has_rumble() {
-    json!({"type": "dual-rumble"})
-  } else {
-    serde_json::Value::Null
-  };
+fn gamecontroller_to_json(c: &GameController) -> serde_json::Value {
+  json!({
+      "id": c.name(),
+      "index": c.instance_id(),
+      "connected": c.attached(),
+      "mapping": c.mapping(),
+      "axes": [
+          normalize_axis(c.axis(Axis::LeftX)),
+          normalize_axis(c.axis(Axis::LeftY)),
+          normalize_axis(c.axis(Axis::RightX)),
+          normalize_axis(c.axis(Axis::RightY))
+      ],
+      "buttons": [
+          button(c.button(Button::A)),
+          button(c.button(Button::B)),
+          button(c.button(Button::X)),
+          button(c.button(Button::Y)),
+          button(c.button(Button::LeftShoulder)),
+          button(c.button(Button::RightShoulder)),
+          trigger(c.axis(Axis::TriggerLeft)),
+          trigger(c.axis(Axis::TriggerRight)),
+          button(c.button(Button::Back)),
+          button(c.button(Button::Start)),
+          button(c.button(Button::LeftStick)),
+          button(c.button(Button::RightStick)),
+          button(c.button(Button::DPadUp)),
+          button(c.button(Button::DPadDown)),
+          button(c.button(Button::DPadLeft)),
+          button(c.button(Button::DPadRight)),
+          button(c.button(Button::Guide))
+      ],
+      "timestamp": now_ms(),
+      "vibrationActuator": if c.has_rumble() {
+          json!({ "type": "dual-rumble" })
+      } else {
+          serde_json::Value::Null
+      }
+  })
+}
 
-  serde_json::json!({
-      "id": id,
-      "index": index,
-      "connected": connected,
-      "mapping": mapping,
+fn joystick_to_json(j: &Joystick) -> serde_json::Value {
+  let axes = (0..j.num_axes())
+    .map(|i| normalize_axis(j.axis(i).unwrap_or(0)))
+    .collect::<Vec<_>>();
+
+  let buttons = (0..j.num_buttons())
+    .map(|i| button(j.button(i).unwrap_or(false)))
+    .collect::<Vec<_>>();
+
+  json!({
+      "id": j.name(),
+      "index": j.instance_id(),
+      "connected": j.attached(),
+      "mapping": serde_json::Value::Null,
       "axes": axes,
       "buttons": buttons,
-      "timestamp": timestamp,
-      "vibrationActuator": vibration_actuator,
+      "timestamp": now_ms(),
+      "vibrationActuator": serde_json::Value::Null
+  })
+}
+
+fn button(pressed: bool) -> serde_json::Value {
+  json!({
+      "pressed": pressed,
+      "value": if pressed { 1.0 } else { 0.0 }
+  })
+}
+
+fn trigger(v: i16) -> serde_json::Value {
+  let n = normalize_axis(v);
+  json!({
+      "pressed": v > 3277,
+      "value": n
   })
 }
