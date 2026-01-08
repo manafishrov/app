@@ -59,6 +59,12 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install macOS dependencies
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install ffmpeg
+          cp $(brew --prefix ffmpeg)/lib/libavcodec*.dylib $(brew --prefix ffmpeg)/lib/libavformat*.dylib $(brew --prefix ffmpeg)/lib/libavutil*.dylib $(brew --prefix ffmpeg)/lib/libswresample*.dylib $(brew --prefix ffmpeg)/lib/libswscale*.dylib src-tauri/
+
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -69,7 +75,9 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            nasm
+            nasm \
+            ffmpeg
+          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
