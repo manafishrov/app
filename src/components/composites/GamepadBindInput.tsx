@@ -53,7 +53,12 @@ function GamepadBindInput({
 }: GamepadBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingActive, setIsRecordingActive] = useState(false);
   const [gamepadConnected, setGamepadConnected] = useState(false);
+  const [initialGamepadState, setInitialGamepadState] = useState<{
+    buttons: boolean[];
+    axes: number[];
+  } | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const animationRef = useRef<number | undefined>(undefined);
 
@@ -88,7 +93,39 @@ function GamepadBindInput({
   }, []);
 
   useEffect(() => {
-    if (!isRecording || !gamepadConnected) return;
+    if (!isRecording || !gamepadConnected) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setIsRecordingActive(false);
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setInitialGamepadState(null);
+      return;
+    }
+
+    const gamepads = navigator.getGamepads();
+    for (const gamepad of gamepads) {
+      if (gamepad) {
+        // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+        setInitialGamepadState({
+          buttons: gamepad.buttons.map((btn) => btn?.pressed ?? false),
+          axes: [...gamepad.axes],
+        });
+        break;
+      }
+    }
+
+    const timeoutId = setTimeout(() => {
+      setIsRecordingActive(true);
+    }, 200);
+
+    return () => {
+      clearTimeout(timeoutId);
+      setIsRecordingActive(false);
+      setInitialGamepadState(null);
+    };
+  }, [isRecording, gamepadConnected]);
+
+  useEffect(() => {
+    if (!isRecordingActive || !gamepadConnected || !initialGamepadState) return;
 
     function checkGamepadInput() {
       const gamepads = navigator.getGamepads();
@@ -97,22 +134,28 @@ function GamepadBindInput({
         if (!gamepad) continue;
 
         for (let i = 0; i < gamepad.buttons.length; i++) {
-          if (gamepad.buttons[i]?.pressed) {
+          const isPressed = gamepad.buttons[i]?.pressed ?? false;
+          const wasInitiallyPressed = initialGamepadState?.buttons[i] ?? false;
+
+          if (isPressed && !wasInitiallyPressed) {
             if (isJoystick) {
               if (i >= 0 && i <= 3) {
                 setCurrentBind(ControlSource.faceButtons);
                 setIsRecording(false);
+                setIsRecordingActive(false);
                 onBindChange(ControlSource.faceButtons);
                 return;
               } else if (i >= 12 && i <= 15) {
                 setCurrentBind(ControlSource.dPad);
                 setIsRecording(false);
+                setIsRecordingActive(false);
                 onBindChange(ControlSource.dPad);
                 return;
               }
             } else {
               setCurrentBind(String(i));
               setIsRecording(false);
+              setIsRecordingActive(false);
               onBindChange(String(i));
               return;
             }
@@ -125,16 +168,29 @@ function GamepadBindInput({
           const rightX = gamepad.axes[2] ?? 0;
           const rightY = gamepad.axes[3] ?? 0;
 
-          if (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) {
+          const initialLeftX = initialGamepadState?.axes[0] ?? 0;
+          const initialLeftY = initialGamepadState?.axes[1] ?? 0;
+          const initialRightX = initialGamepadState?.axes[2] ?? 0;
+          const initialRightY = initialGamepadState?.axes[3] ?? 0;
+
+          if (
+            (Math.abs(leftX) > 0.7 || Math.abs(leftY) > 0.7) &&
+            !(Math.abs(initialLeftX) > 0.7 || Math.abs(initialLeftY) > 0.7)
+          ) {
             setCurrentBind(ControlSource.leftStick);
             setIsRecording(false);
+            setIsRecordingActive(false);
             onBindChange(ControlSource.leftStick);
             return;
           }
 
-          if (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) {
+          if (
+            (Math.abs(rightX) > 0.7 || Math.abs(rightY) > 0.7) &&
+            !(Math.abs(initialRightX) > 0.7 || Math.abs(initialRightY) > 0.7)
+          ) {
             setCurrentBind(ControlSource.rightStick);
             setIsRecording(false);
+            setIsRecordingActive(false);
             onBindChange(ControlSource.rightStick);
             return;
           }
@@ -151,7 +207,13 @@ function GamepadBindInput({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRecording, gamepadConnected, onBindChange, isJoystick]);
+  }, [
+    isRecordingActive,
+    gamepadConnected,
+    initialGamepadState,
+    onBindChange,
+    isJoystick,
+  ]);
 
   useEffect(() => {
     if (!isRecording) return;

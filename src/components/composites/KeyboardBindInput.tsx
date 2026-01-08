@@ -2,7 +2,11 @@ import { KeyboardIcon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/Tooltip';
 
 import { cx } from '@/lib/utils';
 
@@ -127,21 +131,41 @@ function KeyboardBindInput({
 }: KeyboardBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingActive, setIsRecordingActive] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording) {
+      // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
+      setIsRecordingActive(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setIsRecordingActive(true);
+    }, 200);
+
+    return () => {
+      clearTimeout(timeoutId);
+      setIsRecordingActive(false);
+    };
+  }, [isRecording]);
+
+  useEffect(() => {
+    if (!isRecordingActive) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       e.preventDefault();
 
       if (e.key === 'Escape') {
         setIsRecording(false);
+        setIsRecordingActive(false);
         return;
       }
 
       setCurrentBind(e.code);
       setIsRecording(false);
+      setIsRecordingActive(false);
       onBindChange(e.code);
     }
 
@@ -149,7 +173,7 @@ function KeyboardBindInput({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isRecording, onBindChange]);
+  }, [isRecordingActive, onBindChange]);
 
   useEffect(() => {
     if (!isRecording) return;
