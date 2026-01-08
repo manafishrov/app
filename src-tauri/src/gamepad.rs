@@ -16,6 +16,18 @@ static GAMEPAD_STREAM_RUNNING: AtomicBool = AtomicBool::new(false);
 pub static VIBRATE_SENDER: std::sync::OnceLock<mpsc::Sender<VibrateCommand>> =
   std::sync::OnceLock::new();
 
+pub fn handle_gamepad_vibration(index: u32, low_freq: f32, high_freq: f32, duration_ms: u32) {
+  if let Some(sender) = VIBRATE_SENDER.get() {
+    let cmd = VibrateCommand {
+      index,
+      low_freq,
+      high_freq,
+      duration_ms,
+    };
+    let _ = sender.send(cmd);
+  }
+}
+
 pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
   if GAMEPAD_STREAM_RUNNING.load(Ordering::Relaxed) {
     return;

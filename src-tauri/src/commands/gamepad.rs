@@ -1,4 +1,4 @@
-use crate::gamepad::{handle_start_gamepad_stream, VibrateCommand, VIBRATE_SENDER};
+use crate::gamepad::{handle_gamepad_vibration, handle_start_gamepad_stream};
 use tauri::{command, AppHandle, Runtime};
 
 #[command]
@@ -8,13 +8,5 @@ pub async fn start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
 
 #[command]
 pub fn gamepad_vibrate(index: u32, low_freq: f32, high_freq: f32, duration_ms: u32) {
-  if let Some(sender) = VIBRATE_SENDER.get() {
-    let cmd = VibrateCommand {
-      index,
-      low_freq,
-      high_freq,
-      duration_ms,
-    };
-    let _ = sender.send(cmd);
-  }
+  handle_gamepad_vibration(index, low_freq, high_freq, duration_ms);
 }
