@@ -63,8 +63,8 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install ffmpeg
-          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/libs/
-          DYLIBS=$(ls src-tauri/libs/*.dylib | sed 's|src-tauri/libs/|./libs/|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
+          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
+          DYLIBS=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
           echo "{\"bundle\": {\"macOS\": {\"frameworks\": [$DYLIBS]}}" > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
@@ -85,12 +85,12 @@ jobs:
             libswresample-dev \
             libswscale-dev
           mkdir -p src-tauri/libs
-          cp -P /usr/lib/x86_64-linux-gnu/libavcodec*.so* src-tauri/libs/
-          cp -P /usr/lib/x86_64-linux-gnu/libavdevice*.so* src-tauri/libs/
-          cp -P /usr/lib/x86_64-linux-gnu/libavfilter*.so* src-tauri/libs/
-          cp -P /usr/lib/x86_64-linux-gnu/libavformat*.so* src-tauri/libs/
-          cp -P /usr/lib/x86_64-linux-gnu/libavutil*.so* src-tauri/libs/
-          cp -P /usr/lib/x86_64-linux-gnu/libsw*.so* src-tauri/libs/
+          cp -P /usr/lib/x86_64-linux-gnu/libavcodec*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavdevice*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavfilter*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavformat*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavutil*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libsw*.so* src-tauri/
           echo '{"bundle": {"resources": ["*.so"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
