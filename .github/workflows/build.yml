@@ -65,7 +65,7 @@ jobs:
           brew install ffmpeg
           cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
           DYLIBS=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
-          echo "{\"bundle\": {\"macOS\": {\"frameworks\": [$DYLIBS]}}" > src-tauri/tauri.macos.conf.json
+          printf '%s' "{\"bundle\":{\"macOS\":{\"frameworks\":[$DYLIBS]}}" > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
