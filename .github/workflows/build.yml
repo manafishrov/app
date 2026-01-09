@@ -62,8 +62,7 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
         run: |
-          brew install cmake@3.30 ffmpeg
-          echo "/opt/homebrew/opt/cmake@3.30/bin" >> $GITHUB_PATH
+          brew install cmake ffmpeg
           cp /opt/homebrew/lib/libavcodec*.dylib /opt/homebrew/lib/libavformat*.dylib /opt/homebrew/lib/libavutil*.dylib /opt/homebrew/lib/libavfilter*.dylib /opt/homebrew/lib/libswresample*.dylib /opt/homebrew/lib/libswscale*.dylib src-tauri/
           echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
@@ -83,9 +82,10 @@ jobs:
             libavcodec-dev \
             libavformat-dev \
             libavfilter-dev \
+            libavdevice-dev \
             libswresample-dev \
             libswscale-dev
-          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
+          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libavdevice.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
           echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Install Windows dependencies
