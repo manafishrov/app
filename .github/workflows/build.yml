@@ -59,6 +59,13 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install macOS dependencies
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install ffmpeg
+          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
+          echo '{"bundle": {"resources": ["*.dylib"]}}' > src-tauri/tauri.macos.conf.json
+
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -69,7 +76,20 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            nasm
+            libavcodec-dev \
+            libavdevice-dev \
+            libavfilter-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswresample-dev \
+            libswscale-dev
+          cp -P /usr/lib/x86_64-linux-gnu/libavcodec*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavdevice*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavfilter*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavformat*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libavutil*.so* src-tauri/
+          cp -P /usr/lib/x86_64-linux-gnu/libsw*.so* src-tauri/
+          echo '{"bundle": {"resources": ["*.so", "*.so.*"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
@@ -85,6 +105,7 @@ jobs:
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
           copy-item "ffmpeg\bin\*.dll" src-tauri/
+          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["*.dll"]}}'
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile

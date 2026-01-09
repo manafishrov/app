@@ -34,9 +34,4 @@ futures-util = "0.3.31"
 uuid = "1.19.0"
 async-trait = "0.1.89"
 sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
-
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-ffmpeg-next = { version = "8.0.0", features = ["build"] }
-
-[target.'cfg(target_os = "windows")'.dependencies]
 ffmpeg-next = "8.0.0"
