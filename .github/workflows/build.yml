@@ -74,12 +74,20 @@ jobs:
           cd src-tauri
           for dylib in *.dylib; do
             install_name_tool -id "@rpath/$(basename $dylib)" "$dylib"
-            otool -L "$dylib" | grep "/opt/homebrew/lib" | awk '{print $1}' | while read dep; do
+            otool -L "$dylib" | grep "/opt/homebrew" | awk '{print $1}' | while read dep; do
               install_name_tool -change "$dep" "@rpath/$(basename $dep)" "$dylib"
             done
           done
+
+          mkdir -p pkgconfig
+          cp /opt/homebrew/lib/pkgconfig/libav*.pc pkgconfig/
+          cp /opt/homebrew/lib/pkgconfig/libsw*.pc pkgconfig/
+          cp /opt/homebrew/lib/pkgconfig/sdl2.pc pkgconfig/
+          sed -i '' "s|libdir=.*|libdir=$(pwd)|g" pkgconfig/*.pc
+
+          echo "PKG_CONFIG_PATH=$(pwd)/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LIBRARY_PATH=$(pwd):$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
           echo '{"bundle": {"resources": ["./*.dylib"]}}' > tauri.macos.conf.json
           echo "RUSTFLAGS=-C link-arg=-Wl,-rpath,@loader_path/../Resources" >> $GITHUB_ENV
           echo "/opt/homebrew/bin" >> $GITHUB_PATH
