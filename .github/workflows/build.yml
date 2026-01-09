@@ -75,6 +75,7 @@ jobs:
               src-tauri/
 
            echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+           echo "RUSTFLAGS=-L /opt/homebrew/lib" >> $GITHUB_ENV
 
            cd src-tauri
            echo '{"bundle": {"resources": ["./*.dylib"]}}' > tauri.macos.conf.json
@@ -119,7 +120,7 @@ jobs:
           $sdl2_url = "https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10-win32-x64.zip"
           Invoke-WebRequest $sdl2_url -OutFile sdl2.zip
           7z x sdl2.zip
-          $sdl2_dir = "${pwd}\SDL2-2.32.10"
+          $sdl2_dir = "${pwd}\SDL2-2.32.10-win32-x64"
           Add-Content $env:GITHUB_ENV "SDL2_PATH=$sdl2_dir`n"
           copy-item "$sdl2_dir\SDL2.dll" src-tauri/
           copy-item "ffmpeg\bin\*.dll" src-tauri/
