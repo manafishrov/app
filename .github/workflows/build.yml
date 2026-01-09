@@ -62,14 +62,13 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
         run: |
-          brew install cmake ffmpeg sdl2
+          brew install cmake ffmpeg
           cp /opt/homebrew/lib/libavcodec*.dylib \
              /opt/homebrew/lib/libavformat*.dylib \
              /opt/homebrew/lib/libavutil*.dylib \
              /opt/homebrew/lib/libavfilter*.dylib \
              /opt/homebrew/lib/libswresample*.dylib \
              /opt/homebrew/lib/libswscale*.dylib \
-             /opt/homebrew/lib/libSDL2*.dylib \
              src-tauri/
 
           cd src-tauri
