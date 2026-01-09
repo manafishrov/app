@@ -63,7 +63,8 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install cmake ffmpeg
-          cp $(brew --prefix ffmpeg)/lib/libavcodec*.dylib $(brew --prefix ffmpeg)/lib/libavformat*.dylib $(brew --prefix ffmpeg)/lib/libavutil*.dylib $(brew --prefix ffmpeg)/lib/libswresample*.dylib $(brew --prefix ffmpeg)/lib/libswscale*.dylib src-tauri/
+          cp /usr/local/lib/libavcodec*.dylib /usr/local/lib/libavformat*.dylib /usr/local/lib/libavutil*.dylib /usr/local/lib/libswresample*.dylib /usr/local/lib/libswscale*.dylib src-tauri/
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -79,13 +80,14 @@ jobs:
             cmake \
             ffmpeg
           cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
+          echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         shell: powershell
         run: |
           $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
-            -latest -property installationPath
+          -latest -property installationPath
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=$VCINSTALLDIR\VC\Tools\LLVM\x64\bin`n"
           $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
           Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
