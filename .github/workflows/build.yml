@@ -62,23 +62,16 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
         run: |
-          brew install cmake ffmpeg sdl2
-
-           cp /opt/homebrew/lib/libavcodec*.dylib \
-              /opt/homebrew/lib/libavformat*.dylib \
-              /opt/homebrew/lib/libavutil*.dylib \
-              /opt/homebrew/lib/libavfilter*.dylib \
-              /opt/homebrew/lib/libavdevice*.dylib \
-              /opt/homebrew/lib/libswresample*.dylib \
-              /opt/homebrew/lib/libswscale*.dylib \
-              /opt/homebrew/lib/libSDL2*.dylib \
-              src-tauri/
-
-           echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
-           echo "RUSTFLAGS=-L /opt/homebrew/lib" >> $GITHUB_ENV
-
-           cd src-tauri
-           echo '{"bundle": {"resources": ["./*.dylib"]}}' > tauri.macos.conf.json
+          brew install cmake ffmpeg
+          cp /opt/homebrew/lib/libavcodec*.dylib \
+            /opt/homebrew/lib/libavformat*.dylib \
+            /opt/homebrew/lib/libavutil*.dylib \
+            /opt/homebrew/lib/libavfilter*.dylib \
+            /opt/homebrew/lib/libavdevice*.dylib \
+            /opt/homebrew/lib/libswresample*.dylib \
+            /opt/homebrew/lib/libswscale*.dylib \
+            src-tauri/
+           echo '{"bundle": {"resources": ["./*.dylib"]}}' > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -98,10 +91,8 @@ jobs:
             libavfilter-dev \
             libavdevice-dev \
             libswresample-dev \
-            libswscale-dev \
-            libsdl2-dev
-          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libavdevice.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* /usr/lib/x86_64-linux-gnu/libSDL2*.so* src-tauri/
-          echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+            libswscale-dev
+          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libavdevice.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
           echo '{"bundle": {"resources": ["./*.so*"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
@@ -117,12 +108,6 @@ jobs:
           mkdir ffmpeg
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
-          $sdl2_url = "https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10-win32-x64.zip"
-          Invoke-WebRequest $sdl2_url -OutFile sdl2.zip
-          7z x sdl2.zip
-          $sdl2_dir = "${pwd}\SDL2-2.32.10-win32-x64"
-          Add-Content $env:GITHUB_ENV "SDL2_PATH=$sdl2_dir`n"
-          copy-item "$sdl2_dir\SDL2.dll" src-tauri/
           copy-item "ffmpeg\bin\*.dll" src-tauri/
           Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["./*.dll"]}}'
 
