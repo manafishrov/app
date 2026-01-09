@@ -34,6 +34,7 @@
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           rustToolchain
+          gcc
           cmake
           pkg-config
           bun
