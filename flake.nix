@@ -38,6 +38,7 @@
           pkg-config
           bun
           ffmpeg
+          SDL2
         ];
       };
     });

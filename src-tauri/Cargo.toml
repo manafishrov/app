@@ -34,4 +34,4 @@ futures-util = "0.3.31"
 uuid = "1.19.0"
 async-trait = "0.1.89"
 ffmpeg-next = "8.0.0"
-sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
+sdl2 = "0.38.0"
