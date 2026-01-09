@@ -59,20 +59,6 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install macOS dependencies
-        if: matrix.platform == 'macos-latest'
-        run: |
-          brew install ffmpeg
-          cp /opt/homebrew/lib/libavcodec*.dylib \
-            /opt/homebrew/lib/libavformat*.dylib \
-            /opt/homebrew/lib/libavutil*.dylib \
-            /opt/homebrew/lib/libavfilter*.dylib \
-            /opt/homebrew/lib/libavdevice*.dylib \
-            /opt/homebrew/lib/libswresample*.dylib \
-            /opt/homebrew/lib/libswscale*.dylib \
-            src-tauri/
-           echo '{"bundle": {"resources": ["./*.dylib"]}}' > src-tauri/tauri.macos.conf.json
-
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -83,24 +69,14 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
-            nasm \
-            cmake \
-            libavutil-dev \
-            libavcodec-dev \
-            libavformat-dev \
-            libavfilter-dev \
-            libavdevice-dev \
-            libswresample-dev \
-            libswscale-dev
-          cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libavdevice.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
-          echo '{"bundle": {"resources": ["./*.so*"]}}' > src-tauri/tauri.linux.conf.json
+            nasm
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         shell: powershell
         run: |
           $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
-          -latest -property installationPath
+            -latest -property installationPath
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=$VCINSTALLDIR\VC\Tools\LLVM\x64\bin`n"
           $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
           Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
@@ -109,7 +85,6 @@ jobs:
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
           copy-item "ffmpeg\bin\*.dll" src-tauri/
-          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["./*.dll"]}}'
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -119,7 +94,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          CMAKE_POLICY_VERSION_MINIMUM: 3.5
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
