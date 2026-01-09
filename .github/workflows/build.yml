@@ -99,7 +99,6 @@ jobs:
               install_name_tool -change "$dep" "@rpath/$(basename $dep)" "$dylib"
             done
           done
-          done
 
           mkdir -p pkgconfig
           cp /opt/homebrew/lib/pkgconfig/libav*.pc pkgconfig/
