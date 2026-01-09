@@ -63,9 +63,9 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install ffmpeg
-          mkdir -p src-tauri/libs
-          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
-          echo '{"bundle": {"macOS": {"frameworks": ["*.dylib"]}}}' > src-tauri/tauri.macos.conf.json
+          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/libs/
+          DYLIBS=$(ls src-tauri/libs/*.dylib | sed 's|src-tauri/libs/|./libs/|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
+          echo "{\"bundle\": {\"macOS\": {\"frameworks\": [$DYLIBS]}}" > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
