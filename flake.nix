@@ -34,7 +34,7 @@
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           rustToolchain
-          clang
+          cmake
           pkg-config
           bun
           ffmpeg
