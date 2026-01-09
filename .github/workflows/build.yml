@@ -63,9 +63,10 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install cmake ffmpeg
-          cp /opt/homebrew/lib/libavutil*.dylib \
-             /opt/homebrew/lib/libavcodec*.dylib \
+
+          cp /opt/homebrew/lib/libavcodec*.dylib \
              /opt/homebrew/lib/libavformat*.dylib \
+             /opt/homebrew/lib/libavutil*.dylib \
              /opt/homebrew/lib/libavfilter*.dylib \
              /opt/homebrew/lib/libavdevice*.dylib \
              /opt/homebrew/lib/libswresample*.dylib \
@@ -73,11 +74,31 @@ jobs:
              src-tauri/
 
           cd src-tauri
+
+          while true; do
+            NEW_FILES=0
+            for dylib in *.dylib; do
+              deps=$(otool -L "$dylib" | grep "/opt/homebrew" | awk '{print $1}')
+              for dep in $deps; do
+                dep_name=$(basename "$dep")
+                if [ ! -f "$dep_name" ]; then
+                  echo "Copying missing dependency: $dep"
+                  cp "$dep" .
+                  NEW_FILES=1
+                fi
+              done
+            done
+            if [ "$NEW_FILES" -eq 0 ]; then
+              break
+            fi
+          done
+
           for dylib in *.dylib; do
             install_name_tool -id "@rpath/$(basename $dylib)" "$dylib"
             otool -L "$dylib" | grep "/opt/homebrew" | awk '{print $1}' | while read dep; do
               install_name_tool -change "$dep" "@rpath/$(basename $dep)" "$dylib"
             done
+          done
           done
 
           mkdir -p pkgconfig
