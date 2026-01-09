@@ -63,8 +63,26 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install cmake ffmpeg
-          cp /opt/homebrew/lib/libavcodec*.dylib /opt/homebrew/lib/libavformat*.dylib /opt/homebrew/lib/libavutil*.dylib /opt/homebrew/lib/libavfilter*.dylib /opt/homebrew/lib/libswresample*.dylib /opt/homebrew/lib/libswscale*.dylib src-tauri/
+          cp /opt/homebrew/lib/libavcodec*.dylib \
+             /opt/homebrew/lib/libavformat*.dylib \
+             /opt/homebrew/lib/libavutil*.dylib \
+             /opt/homebrew/lib/libavfilter*.dylib \
+             /opt/homebrew/lib/libswresample*.dylib \
+             /opt/homebrew/lib/libswscale*.dylib \
+             src-tauri/
+
+          cd src-tauri
+          for dylib in *.dylib; do
+            install_name_tool -id "@rpath/$(basename $dylib)" "$dylib"
+            otool -L "$dylib" | grep "/opt/homebrew/lib" | awk '{print $1}' | while read dep; do
+              install_name_tool -change "$dep" "@rpath/$(basename $dep)" "$dylib"
+            done
+          done
+          echo "LIBRARY_PATH=$(pwd):$LIBRARY_PATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo '{"bundle": {"resources": ["./*.dylib"]}}' > tauri.macos.conf.json
+          echo "RUSTFLAGS=-C link-arg=-Wl,-rpath,@loader_path/../Resources" >> $GITHUB_ENV
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -87,6 +105,7 @@ jobs:
             libswscale-dev
           cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libavfilter.so* /usr/lib/x86_64-linux-gnu/libavdevice.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
           echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo '{"bundle": {"resources": ["./*.so*"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
@@ -102,6 +121,7 @@ jobs:
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
           copy-item "ffmpeg\bin\*.dll" src-tauri/
+          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["./*.dll"]}}'
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
