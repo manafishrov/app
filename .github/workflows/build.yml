@@ -63,8 +63,8 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install cmake ffmpeg
-          cp /usr/local/lib/libavcodec*.dylib /usr/local/lib/libavformat*.dylib /usr/local/lib/libavutil*.dylib /usr/local/lib/libswresample*.dylib /usr/local/lib/libswscale*.dylib src-tauri/
-          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          cp /opt/homebrew/lib/libavcodec*.dylib /opt/homebrew/lib/libavformat*.dylib /opt/homebrew/lib/libavutil*.dylib /opt/homebrew/lib/libswresample*.dylib /opt/homebrew/lib/libswscale*.dylib src-tauri/
+          echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -78,7 +78,11 @@ jobs:
             pkg-config \
             nasm \
             cmake \
-            ffmpeg
+            libavutil-dev \
+            libavcodec-dev \
+            libavformat-dev \
+            libswresample-dev \
+            libswscale-dev
           cp /usr/lib/x86_64-linux-gnu/libavcodec.so* /usr/lib/x86_64-linux-gnu/libavformat.so* /usr/lib/x86_64-linux-gnu/libavutil.so* /usr/lib/x86_64-linux-gnu/libswresample.so* /usr/lib/x86_64-linux-gnu/libswscale.so* src-tauri/
           echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
