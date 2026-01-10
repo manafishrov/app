@@ -64,8 +64,8 @@ jobs:
         run: |
           brew install ffmpeg
           cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
-          DYLIBS=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
-          printf '%s' "{\"bundle\":{\"macOS\":{\"frameworks\":[$DYLIBS]}}" > src-tauri/tauri.macos.conf.json
+          DYLIBS_JSON=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
+          bun -e "console.log(JSON.stringify({bundle: {macOS: {frameworks: [$DYLIBS_JSON]}}}))" > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -91,7 +91,7 @@ jobs:
           cp -P /usr/lib/x86_64-linux-gnu/libavformat*.so* src-tauri/
           cp -P /usr/lib/x86_64-linux-gnu/libavutil*.so* src-tauri/
           cp -P /usr/lib/x86_64-linux-gnu/libsw*.so* src-tauri/
-          echo '{"bundle": {"resources": ["*.so"]}}' > src-tauri/tauri.linux.conf.json
+          echo '{"bundle": {"resources": ["*.so*", "*.so"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
