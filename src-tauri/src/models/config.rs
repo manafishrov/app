@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -108,37 +110,49 @@ pub enum KeyboardKey {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum GamepadInput {
+pub enum GamepadInputType {
   Button(u8),
   Axis(u8),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct KeyboardBindings {
-  pub surge_forward: KeyboardKey,
-  pub surge_backward: KeyboardKey,
-  pub sway_right: KeyboardKey,
-  pub sway_left: KeyboardKey,
-  pub heave_up: KeyboardKey,
-  pub heave_down: KeyboardKey,
-  pub pitch_up: KeyboardKey,
-  pub pitch_down: KeyboardKey,
-  pub yaw_right: KeyboardKey,
-  pub yaw_left: KeyboardKey,
-  pub roll_left: KeyboardKey,
-  pub roll_right: KeyboardKey,
-  pub action1_positive: KeyboardKey,
-  pub action1_negative: KeyboardKey,
-  pub action2_positive: KeyboardKey,
-  pub action2_negative: KeyboardKey,
-  pub auto_stabilization: KeyboardKey,
-  pub depth_hold: KeyboardKey,
-  pub record: KeyboardKey,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct KeyboardInput {
+  pub key: KeyboardKey,
+  pub min_value: f32,
+  pub max_value: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GamepadInput {
+  pub input: GamepadInputType,
+  pub min_value: f32,
+  pub max_value: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+pub struct KeyboardBindings {
+  pub surge_forward: KeyboardInput,
+  pub surge_backward: KeyboardInput,
+  pub sway_right: KeyboardInput,
+  pub sway_left: KeyboardInput,
+  pub heave_up: KeyboardInput,
+  pub heave_down: KeyboardInput,
+  pub pitch_up: KeyboardInput,
+  pub pitch_down: KeyboardInput,
+  pub yaw_right: KeyboardInput,
+  pub yaw_left: KeyboardInput,
+  pub roll_left: KeyboardInput,
+  pub roll_right: KeyboardInput,
+  pub action1_positive: KeyboardInput,
+  pub action1_negative: KeyboardInput,
+  pub action2_positive: KeyboardInput,
+  pub action2_negative: KeyboardInput,
+  pub auto_stabilization: KeyboardInput,
+  pub depth_hold: KeyboardInput,
+  pub record: KeyboardInput,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GamepadBindings {
   pub surge_forward: GamepadInput,
   pub surge_backward: GamepadInput,
@@ -183,7 +197,7 @@ pub struct Config {
   pub web_socket_port: u16,
   pub info_logging: bool,
   pub keyboard: KeyboardBindings,
-  pub gamepad: GamepadBindings,
+  pub gamepad: HashMap<String, GamepadBindings>,
 }
 
 impl Default for Config {
@@ -217,47 +231,103 @@ impl Default for Config {
       web_socket_port: 9000,
       info_logging: false,
       keyboard: KeyboardBindings {
-        surge_forward: KeyboardKey::KeyW,
-        surge_backward: KeyboardKey::KeyS,
-        sway_right: KeyboardKey::KeyD,
-        sway_left: KeyboardKey::KeyA,
-        heave_up: KeyboardKey::Space,
-        heave_down: KeyboardKey::ShiftLeft,
-        pitch_up: KeyboardKey::KeyI,
-        pitch_down: KeyboardKey::KeyK,
-        yaw_left: KeyboardKey::KeyJ,
-        yaw_right: KeyboardKey::KeyL,
-        roll_left: KeyboardKey::KeyQ,
-        roll_right: KeyboardKey::KeyE,
-        action1_positive: KeyboardKey::Digit1,
-        action1_negative: KeyboardKey::Digit2,
-        action2_positive: KeyboardKey::Digit3,
-        action2_negative: KeyboardKey::Digit4,
-        auto_stabilization: KeyboardKey::KeyU,
-        depth_hold: KeyboardKey::KeyO,
-        record: KeyboardKey::KeyR,
+        surge_forward: KeyboardInput {
+          key: KeyboardKey::KeyW,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        surge_backward: KeyboardInput {
+          key: KeyboardKey::KeyS,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        sway_right: KeyboardInput {
+          key: KeyboardKey::KeyD,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        sway_left: KeyboardInput {
+          key: KeyboardKey::KeyA,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        heave_up: KeyboardInput {
+          key: KeyboardKey::Space,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        heave_down: KeyboardInput {
+          key: KeyboardKey::ShiftLeft,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        pitch_up: KeyboardInput {
+          key: KeyboardKey::KeyI,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        pitch_down: KeyboardInput {
+          key: KeyboardKey::KeyK,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        yaw_left: KeyboardInput {
+          key: KeyboardKey::KeyJ,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        yaw_right: KeyboardInput {
+          key: KeyboardKey::KeyL,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        roll_left: KeyboardInput {
+          key: KeyboardKey::KeyQ,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        roll_right: KeyboardInput {
+          key: KeyboardKey::KeyE,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        action1_positive: KeyboardInput {
+          key: KeyboardKey::Digit1,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        action1_negative: KeyboardInput {
+          key: KeyboardKey::Digit2,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        action2_positive: KeyboardInput {
+          key: KeyboardKey::Digit3,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        action2_negative: KeyboardInput {
+          key: KeyboardKey::Digit4,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        auto_stabilization: KeyboardInput {
+          key: KeyboardKey::KeyU,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        depth_hold: KeyboardInput {
+          key: KeyboardKey::KeyO,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
+        record: KeyboardInput {
+          key: KeyboardKey::KeyR,
+          min_value: 0.0,
+          max_value: 1.0,
+        },
       },
-      gamepad: GamepadBindings {
-        surge_forward: GamepadInput::Axis(0),
-        surge_backward: GamepadInput::Axis(0),
-        sway_right: GamepadInput::Axis(0),
-        sway_left: GamepadInput::Axis(0),
-        heave_up: GamepadInput::Button(7),
-        heave_down: GamepadInput::Button(6),
-        pitch_up: GamepadInput::Axis(2),
-        pitch_down: GamepadInput::Axis(2),
-        yaw_left: GamepadInput::Axis(2),
-        yaw_right: GamepadInput::Axis(2),
-        roll_left: GamepadInput::Button(4),
-        roll_right: GamepadInput::Button(5),
-        action1_positive: GamepadInput::Button(0),
-        action1_negative: GamepadInput::Button(1),
-        action2_positive: GamepadInput::Button(2),
-        action2_negative: GamepadInput::Button(3),
-        auto_stabilization: GamepadInput::Button(12),
-        depth_hold: GamepadInput::Button(13),
-        record: GamepadInput::Button(9),
-      },
+      gamepad: HashMap::new(),
     }
   }
 }
