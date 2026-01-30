@@ -13,6 +13,10 @@
     "windows": [
       {
         "title": "Manafish",
+        "decorations": false,
+        "shadow": false,
+        "transparent": true,
+        "center": true,
         "width": 1200,
         "height": 675
       }
