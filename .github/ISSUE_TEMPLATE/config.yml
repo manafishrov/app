@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Discussion
+    url: https://github.com/manafishrov/app/discussions
+    about: Ask a question, get help, or discuss ideas
+  - name: Firmware Issues
+    url: https://github.com/manafishrov/firmware/issues
+    about: Report issues with the ROV firmware/hardware
