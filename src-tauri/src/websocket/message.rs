@@ -27,8 +27,7 @@ pub enum WebsocketMessage {
   Telemetry(RovTelemetry),
   FirmwareVersion(FirmwareVersion),
   CustomAction(CustomAction),
-  TogglePitchStabilization,
-  ToggleRollStabilization,
+  ToggleAutoStabilization,
   ToggleDepthHold,
   FlashMicrocontrollerFirmware(MicrocontrollerFirmwareVariant),
 }

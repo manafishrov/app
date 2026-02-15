@@ -40,7 +40,7 @@ mod updater;
 
 use commands::actions::{
   append_recording_chunk, save_recording, send_custom_action, send_direction_vector,
-  toggle_depth_hold, toggle_pitch_stabilization, toggle_roll_stabilization,
+  toggle_auto_stabilization, toggle_depth_hold,
 };
 use commands::config::{get_config, set_config};
 use commands::gamepad::{gamepad_vibrate, start_gamepad_stream};
@@ -108,8 +108,7 @@ pub fn run() {
       cancel_regulator_auto_tuning,
       send_direction_vector,
       send_custom_action,
-      toggle_pitch_stabilization,
-      toggle_roll_stabilization,
+      toggle_auto_stabilization,
       append_recording_chunk,
       toggle_depth_hold,
       flash_microcontroller_firmware,

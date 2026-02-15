@@ -8,8 +8,8 @@ use crate::models::actions::{CustomAction, DirectionVector};
 use crate::toast::{toast_error, toast_loading, toast_success};
 use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
 use crate::websocket::send::actions::{
-  handle_send_custom_action, handle_send_direction_vector, handle_toggle_depth_hold,
-  handle_toggle_pitch_stabilization, handle_toggle_roll_stabilization,
+  handle_send_custom_action, handle_send_direction_vector, handle_toggle_auto_stabilization,
+  handle_toggle_depth_hold,
 };
 use crate::{log_error, log_info};
 
@@ -30,17 +30,10 @@ pub async fn send_custom_action(
 }
 
 #[command]
-pub async fn toggle_pitch_stabilization(
+pub async fn toggle_auto_stabilization(
   state: State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
-  handle_toggle_pitch_stabilization(&state).await
-}
-
-#[command]
-pub async fn toggle_roll_stabilization(
-  state: State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  handle_toggle_roll_stabilization(&state).await
+  handle_toggle_auto_stabilization(&state).await
 }
 
 #[command]

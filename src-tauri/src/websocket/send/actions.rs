@@ -29,23 +29,12 @@ pub async fn handle_send_custom_action(
   Ok(())
 }
 
-pub async fn handle_toggle_pitch_stabilization(
+pub async fn handle_toggle_auto_stabilization(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
-  let message = WebsocketMessage::TogglePitchStabilization;
+  let message = WebsocketMessage::ToggleAutoStabilization;
   if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send TogglePitchStabilization: {}", e);
-    return Err(e.to_string());
-  }
-  Ok(())
-}
-
-pub async fn handle_toggle_roll_stabilization(
-  state: &State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  let message = WebsocketMessage::ToggleRollStabilization;
-  if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to send ToggleRollStabilization: {}", e);
+    log_error!("Failed to send ToggleAutoStabilization: {}", e);
     return Err(e.to_string());
   }
   Ok(())

@@ -25,19 +25,21 @@ pub type ThrusterAllocation = [[f32; 8]; 8];
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Pid {
+pub struct AxisConfig {
   pub kp: f32,
   pub ki: f32,
   pub kd: f32,
+  pub rate: f32,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Regulator {
-  pub turn_speed: u16,
-  pub pitch: Pid,
-  pub roll: Pid,
-  pub depth: Pid,
+  pub pitch: AxisConfig,
+  pub roll: AxisConfig,
+  pub yaw: AxisConfig,
+  pub depth: AxisConfig,
+  pub fpv_mode: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -46,9 +48,6 @@ pub struct DirectionCoefficients {
   pub surge: f32,
   pub sway: f32,
   pub heave: f32,
-  pub pitch: f32,
-  pub yaw: f32,
-  pub roll: f32,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -80,7 +79,8 @@ pub type FirmwareVersion = String;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RegulatorSuggestions {
-  pub pitch: Pid,
-  pub roll: Pid,
-  pub depth: Pid,
+  pub pitch: AxisConfig,
+  pub roll: AxisConfig,
+  pub yaw: AxisConfig,
+  pub depth: AxisConfig,
 }

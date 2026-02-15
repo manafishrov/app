@@ -5,9 +5,12 @@ use serde::{Deserialize, Serialize};
 pub struct RovTelemetry {
   pub pitch: f32,
   pub roll: f32,
+  pub yaw: f32,
+  pub depth: f32,
   pub desired_pitch: f32,
   pub desired_roll: f32,
-  pub depth: f32,
+  pub desired_yaw: f32,
+  pub desired_depth: f32,
   pub water_temperature: f32,
   pub electronics_temperature: f32,
   pub thruster_rpms: [f32; 8],
