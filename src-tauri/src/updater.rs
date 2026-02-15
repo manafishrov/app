@@ -1,8 +1,9 @@
+use tauri::AppHandle;
+use tauri_plugin_updater::{Result, UpdaterExt};
+
 use crate::config::get_config_from_file;
 use crate::log_info;
 use crate::toast::{toast_info, toast_loading};
-use tauri::AppHandle;
-use tauri_plugin_updater::{Result, UpdaterExt};
 
 pub async fn update_app(app: AppHandle) -> Result<()> {
   let config = get_config_from_file();

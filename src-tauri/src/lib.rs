@@ -52,12 +52,12 @@ use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;
 use tauri::async_runtime::spawn;
-use tauri::{generate_handler, App, Builder, Manager};
+use tauri::{App, Builder, Manager, generate_handler};
 use toast::toast_init;
 use tokio::sync::mpsc::channel;
 use updater::update_app;
 use websocket::client::{
-  start_websocket_client, DirectionVectorSendChannelState, MessageSendChannelState,
+  DirectionVectorSendChannelState, MessageSendChannelState, start_websocket_client,
 };
 use websocket::message::WebsocketMessage;
 

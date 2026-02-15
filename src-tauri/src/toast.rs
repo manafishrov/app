@@ -1,7 +1,8 @@
-use crate::log_error;
-use crate::models::toast::{ToastCancel, Toast, ToastType};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
+
+use crate::log_error;
+use crate::models::toast::{Toast, ToastCancel, ToastType};
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 

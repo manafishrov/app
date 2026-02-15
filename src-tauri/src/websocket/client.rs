@@ -1,14 +1,17 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use futures_util::{SinkExt, StreamExt};
+use tauri::{AppHandle, Emitter};
+use tokio::sync::mpsc::{self, Receiver};
+use tokio::time::{interval, sleep, timeout};
+use tokio_tungstenite::connect_async;
+use tokio_tungstenite::tungstenite::Message;
+
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
 use crate::config::get_config_from_file;
 use crate::models::config::Config;
 use crate::{log_info, log_warn};
-use futures_util::{SinkExt, StreamExt};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tauri::{AppHandle, Emitter};
-use tokio::sync::mpsc::{self, Receiver};
-use tokio::time::{interval, sleep, timeout};
-use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,7 +45,7 @@ pub async fn start_websocket_client(
       Ok(Ok((stream, _))) => {
         log_info!("Successfully connected to {}", url);
         stream
-      }
+      },
       Ok(Err(e)) => {
         log_info!("WebSocket connect error: {}. Retrying...", e);
         app
@@ -58,7 +61,7 @@ pub async fn start_websocket_client(
           config = new_config;
         }
         continue;
-      }
+      },
       Err(_) => {
         log_info!("WebSocket connect timeout. Retrying...");
         app
@@ -74,7 +77,7 @@ pub async fn start_websocket_client(
           config = new_config;
         }
         continue;
-      }
+      },
     };
 
     let (mut write, mut read) = ws_stream.split();

@@ -1,10 +1,11 @@
-use crate::models::config::Config;
-use crate::toast::toast_success;
-use crate::toast::toast_warn;
-use crate::{log_error, log_warn};
 use std::fs;
 use std::path::PathBuf;
+
 use tokio::sync::mpsc::Sender;
+
+use crate::models::config::Config;
+use crate::toast::{toast_success, toast_warn};
+use crate::{log_error, log_warn};
 
 pub struct ConfigSendChannelState {
   pub tx: Sender<Config>,
@@ -20,7 +21,7 @@ pub fn get_config_from_file() -> Config {
     None => {
       log_warn!("Failed to get config directory. Using default config.");
       return Config::default();
-    }
+    },
   };
 
   match fs::read_to_string(&config_path) {
@@ -30,10 +31,10 @@ pub fn get_config_from_file() -> Config {
         match fs::remove_file(&config_path) {
           Ok(_) => {
             log_warn!("Deleted corrupted config file.");
-          }
+          },
           Err(delete_err) => {
             log_warn!("Failed to delete corrupted config: {}", delete_err);
-          }
+          },
         }
         log_warn!("Failed to parse config: {}. Using default config.", e);
         toast_warn(
@@ -48,13 +49,13 @@ pub fn get_config_from_file() -> Config {
             if let Err(e) = fs::write(&config_path, &content) {
               log_warn!("Failed to save default config to file: {}", e);
             }
-          }
+          },
           Err(e) => {
             log_warn!("Failed to serialize default config to JSON: {}", e);
-          }
+          },
         }
         default_config
-      }
+      },
     },
     Err(e) => {
       log_warn!("Failed to read config: {}. Using default config.", e);
@@ -65,7 +66,7 @@ pub fn get_config_from_file() -> Config {
         None,
       );
       Config::default()
-    }
+    },
   }
 }
 
@@ -78,7 +79,7 @@ pub async fn set_config_to_file(
     None => {
       log_error!("Failed to get config directory. Could not save config file.");
       return Err("Failed to get config directory.".to_string());
-    }
+    },
   };
 
   if let Some(parent) = config_path.parent() {

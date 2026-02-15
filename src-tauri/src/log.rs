@@ -1,6 +1,7 @@
-use crate::models::log::{LogEntry, LogLevel, LogOrigin};
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Emitter};
+
+use crate::models::log::{LogEntry, LogLevel, LogOrigin};
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 

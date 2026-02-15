@@ -1,12 +1,12 @@
-use crate::models::rov_config::{RovConfig, ThrusterTest, MicrocontrollerFirmwareVariant};
-use crate::websocket::{
-  client::MessageSendChannelState,
-  send::config::{
-    handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_request_rov_config,
-    handle_set_rov_config, handle_start_regulator_auto_tuning, handle_start_thruster_test, handle_flash_microcontroller_firmware,
-  },
+use tauri::{State, command};
+
+use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, ThrusterTest};
+use crate::websocket::client::MessageSendChannelState;
+use crate::websocket::send::config::{
+  handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test,
+  handle_flash_microcontroller_firmware, handle_request_rov_config, handle_set_rov_config,
+  handle_start_regulator_auto_tuning, handle_start_thruster_test,
 };
-use tauri::{command, State};
 
 #[command]
 pub async fn request_rov_config(state: State<'_, MessageSendChannelState>) -> Result<(), String> {

@@ -1,14 +1,13 @@
-use crate::models::{
-  actions::{CustomAction, DirectionVector},
-  log::LogEntry,
-  rov_config::{
-    FirmwareVersion, MicrocontrollerFirmwareVariant, RegulatorSuggestions, RovConfig, ThrusterTest,
-  },
-  rov_status::RovStatus,
-  rov_telemetry::RovTelemetry,
-  toast::Toast,
-};
 use serde::{Deserialize, Serialize};
+
+use crate::models::actions::{CustomAction, DirectionVector};
+use crate::models::log::LogEntry;
+use crate::models::rov_config::{
+  FirmwareVersion, MicrocontrollerFirmwareVariant, RegulatorSuggestions, RovConfig, ThrusterTest,
+};
+use crate::models::rov_status::RovStatus;
+use crate::models::rov_telemetry::RovTelemetry;
+use crate::models::toast::Toast;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]

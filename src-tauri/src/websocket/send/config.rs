@@ -1,7 +1,9 @@
-use crate::log_error;
-use crate::models::rov_config::{RovConfig, ThrusterTest, MicrocontrollerFirmwareVariant};
-use crate::websocket::{client::MessageSendChannelState, message::WebsocketMessage};
 use tauri::State;
+
+use crate::log_error;
+use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, ThrusterTest};
+use crate::websocket::client::MessageSendChannelState;
+use crate::websocket::message::WebsocketMessage;
 
 pub async fn handle_request_rov_config(
   state: &State<'_, MessageSendChannelState>,

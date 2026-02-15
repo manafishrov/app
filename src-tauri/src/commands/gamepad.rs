@@ -1,5 +1,6 @@
+use tauri::{AppHandle, Runtime, command};
+
 use crate::gamepad::{handle_gamepad_vibration, handle_start_gamepad_stream};
-use tauri::{command, AppHandle, Runtime};
 
 #[command]
 pub async fn start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {

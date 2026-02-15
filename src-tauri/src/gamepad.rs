@@ -48,9 +48,7 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
     let joystick_subsystem = sdl.joystick().unwrap();
     let mut event_pump = sdl.event_pump().unwrap();
 
-    controller_subsystem
-      .load_mappings("assets/gamecontrollerdb.txt")
-      .ok();
+    controller_subsystem.load_mappings("assets/gamecontrollerdb.txt").ok();
 
     let mut controllers: HashMap<u32, GameController> = HashMap::new();
     let mut joysticks: HashMap<u32, Joystick> = HashMap::new();
@@ -61,16 +59,12 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
         if let Ok(c) = controller_subsystem.open(i) {
           let id = c.instance_id();
           controllers.insert(id, c);
-          app
-            .emit("gamepad_event", gamecontroller_to_json(&controllers[&id]))
-            .unwrap();
+          app.emit("gamepad_event", gamecontroller_to_json(&controllers[&id])).unwrap();
         }
       } else if let Ok(j) = joystick_subsystem.open(i) {
         let id = j.instance_id();
         joysticks.insert(id, j);
-        app
-          .emit("gamepad_event", joystick_to_json(&joysticks[&id]))
-          .unwrap();
+        app.emit("gamepad_event", joystick_to_json(&joysticks[&id])).unwrap();
       }
     }
 
@@ -89,11 +83,9 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
             if let Ok(c) = controller_subsystem.open(which) {
               let id = c.instance_id();
               controllers.insert(id, c);
-              app
-                .emit("gamepad_event", gamecontroller_to_json(&controllers[&id]))
-                .unwrap();
+              app.emit("gamepad_event", gamecontroller_to_json(&controllers[&id])).unwrap();
             }
-          }
+          },
 
           Event::ControllerDeviceRemoved { which, .. } => {
             if let Some(c) = controllers.remove(&which) {
@@ -101,19 +93,17 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
               payload["connected"] = json!(false);
               app.emit("gamepad_event", payload).unwrap();
             }
-          }
+          },
 
           Event::JoyDeviceAdded { which, .. } => {
             if !controller_subsystem.is_game_controller(which) {
               if let Ok(j) = joystick_subsystem.open(which) {
                 let id = j.instance_id();
                 joysticks.insert(id, j);
-                app
-                  .emit("gamepad_event", joystick_to_json(&joysticks[&id]))
-                  .unwrap();
+                app.emit("gamepad_event", joystick_to_json(&joysticks[&id])).unwrap();
               }
             }
-          }
+          },
 
           Event::JoyDeviceRemoved { which, .. } => {
             if let Some(j) = joysticks.remove(&which) {
@@ -121,17 +111,15 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
               payload["connected"] = json!(false);
               app.emit("gamepad_event", payload).unwrap();
             }
-          }
+          },
 
           Event::ControllerAxisMotion { which, .. }
           | Event::ControllerButtonDown { which, .. }
           | Event::ControllerButtonUp { which, .. } => {
             if let Some(c) = controllers.get(&which) {
-              app
-                .emit("gamepad_event", gamecontroller_to_json(c))
-                .unwrap();
+              app.emit("gamepad_event", gamecontroller_to_json(c)).unwrap();
             }
-          }
+          },
 
           Event::JoyAxisMotion { which, .. }
           | Event::JoyButtonDown { which, .. }
@@ -139,9 +127,9 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
             if let Some(j) = joysticks.get(&which) {
               app.emit("gamepad_event", joystick_to_json(j)).unwrap();
             }
-          }
+          },
 
-          _ => {}
+          _ => {},
         }
       }
 

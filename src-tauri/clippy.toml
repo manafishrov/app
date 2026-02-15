@@ -1,0 +1,17 @@
+cognitive-complexity-threshold = 50
+type-complexity-threshold = 500
+too-many-arguments-threshold = 10
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+check-private-items = true
+doc-valid-idents = [
+  "Tauri",
+  "ROV",
+  "Manafish",
+  "FFmpeg",
+  "WebSocket",
+  "Async",
+  "SDL2",
+]
+enum-variant-name-threshold = 3

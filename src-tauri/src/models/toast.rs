@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::models::rov_config::ThrusterTest;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

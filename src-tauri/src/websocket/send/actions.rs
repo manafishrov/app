@@ -1,10 +1,9 @@
+use tauri::State;
+
 use crate::log_error;
 use crate::models::actions::{CustomAction, DirectionVector};
-use crate::websocket::{
-  client::{DirectionVectorSendChannelState, MessageSendChannelState},
-  message::WebsocketMessage,
-};
-use tauri::State;
+use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
+use crate::websocket::message::WebsocketMessage;
 
 pub async fn handle_send_direction_vector(
   state: &State<'_, DirectionVectorSendChannelState>,

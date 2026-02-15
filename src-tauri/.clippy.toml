@@ -1,8 +1,0 @@
-cognitive-complexity-threshold = 20
-type-complexity-threshold = 250
-too-many-arguments-threshold = 8
-msrv = "1.72.0"
-allow-unwrap-in-tests = true
-allow-expect-in-tests = true
-allow-panic-in-tests = true
-check-private-items = true
