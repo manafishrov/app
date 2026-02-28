@@ -2,26 +2,13 @@ import { useStore } from '@tanstack/react-store';
 import { CheckCircle, HeartPulseIcon, XCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/Popover';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 function SystemHealthPopover() {
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const health = useStore(rovStatusStore, (state) => state.health);
 
   if (!isConnected) {
@@ -40,9 +27,7 @@ function SystemHealthPopover() {
             </PopoverTrigger>
           </TooltipTrigger>
           <PopoverContent align='end' className='w-48'>
-            <h4 className='text-lg font-medium tracking-tight'>
-              System Health
-            </h4>
+            <h4 className='text-lg font-medium tracking-tight'>System Health</h4>
             <div className='space-y-1'>
               <div className='flex items-center justify-between gap-2'>
                 <span className='text-sm'>IMU</span>

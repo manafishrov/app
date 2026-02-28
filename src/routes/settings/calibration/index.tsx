@@ -4,7 +4,6 @@ import { useStore } from '@tanstack/react-store';
 import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
 import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
 import { Spinner } from '@/components/ui/Spinner';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
 
@@ -13,18 +12,13 @@ export const Route = createFileRoute('/settings/calibration/')({
 });
 
 function Calibration() {
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const rovConfig = useStore(rovConfigStore);
   return (
     <>
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>Calibration</h1>
-        <p className='text-muted-foreground'>
-          Calibrate the thrusters of the ROV.
-        </p>
+        <p className='text-muted-foreground'>Calibrate the thrusters of the ROV.</p>
       </div>
       {!isConnected || !rovConfig ? (
         <div className='flex h-96 w-full items-center justify-center'>

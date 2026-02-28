@@ -3,21 +3,16 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useRef } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function useSendStateUpdates() {
   const config = useStore(configStore);
-  const { isRecording, webrtcConnected } = useStore(
-    recordingStore,
-    (state) => ({
-      isRecording: state.isRecording,
-      webrtcConnected: state.webrtcConnected,
-    }),
-  );
+  const { isRecording, webrtcConnected } = useStore(recordingStore, (state) => ({
+    isRecording: state.isRecording,
+    webrtcConnected: state.webrtcConnected,
+  }));
   const pressedKeys = useRef(new Set<string>());
   const lastStateUpdateRef = useRef({
     pitchStabilization: false,
@@ -48,24 +43,11 @@ function useSendStateUpdates() {
 
   useEffect(() => {
     let animationFrame: number;
-    const states = [
-      'pitchStabilization',
-      'rollStabilization',
-      'depthHold',
-      'record',
-    ] as const;
+    const states = ['pitchStabilization', 'rollStabilization', 'depthHold', 'record'] as const;
 
-    async function handleStateUpdates(
-      isPressed: boolean,
-      stateUpdate: (typeof states)[number],
-    ) {
+    async function handleStateUpdates(isPressed: boolean, stateUpdate: (typeof states)[number]) {
       const last = lastStateUpdateRef.current;
-      if (
-        stateUpdate === 'record' &&
-        isPressed &&
-        !last.record &&
-        webrtcConnected
-      ) {
+      if (stateUpdate === 'record' && isPressed && !last.record && webrtcConnected) {
         setRecordingState({
           isRecording: !isRecording,
           startTime: isRecording ? null : Date.now(),
@@ -83,11 +65,7 @@ function useSendStateUpdates() {
       } else if (stateUpdate === 'depthHold' && !isPressed) {
         last.depthHold = false;
       }
-      if (
-        stateUpdate === 'pitchStabilization' &&
-        isPressed &&
-        !last.pitchStabilization
-      ) {
+      if (stateUpdate === 'pitchStabilization' && isPressed && !last.pitchStabilization) {
         await invoke('toggle_pitch_stabilization').catch((error) => {
           logError('Failed to toggle pitch stabilization:', error);
           toast.error('Failed to toggle pitch stabilization');
@@ -96,11 +74,7 @@ function useSendStateUpdates() {
       } else if (stateUpdate === 'pitchStabilization' && !isPressed) {
         last.pitchStabilization = false;
       }
-      if (
-        stateUpdate === 'rollStabilization' &&
-        isPressed &&
-        !last.rollStabilization
-      ) {
+      if (stateUpdate === 'rollStabilization' && isPressed && !last.rollStabilization) {
         await invoke('toggle_roll_stabilization').catch((error) => {
           logError('Failed to toggle roll stabilization:', error);
           toast.error('Failed to toggle roll stabilization');

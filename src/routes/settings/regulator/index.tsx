@@ -4,7 +4,6 @@ import { useStore } from '@tanstack/react-store';
 import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
 import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@/components/ui/Spinner';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
 
@@ -13,18 +12,13 @@ export const Route = createFileRoute('/settings/regulator/')({
 });
 
 function Regulator() {
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const rovConfig = useStore(rovConfigStore);
   return (
     <>
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>Regulator</h1>
-        <p className='text-muted-foreground'>
-          Adjust the regulator settings for the ROV.
-        </p>
+        <p className='text-muted-foreground'>Adjust the regulator settings for the ROV.</p>
       </div>
       {!isConnected || !rovConfig ? (
         <div className='flex h-96 w-full items-center justify-center'>

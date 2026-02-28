@@ -1,10 +1,4 @@
-import {
-  type DBSchema,
-  type IDBPDatabase,
-  type OpenDBCallbacks,
-  deleteDB,
-  openDB,
-} from 'idb';
+import { type DBSchema, type IDBPDatabase, type OpenDBCallbacks, deleteDB, openDB } from 'idb';
 
 import { configStore } from '@/stores/config';
 
@@ -61,14 +55,8 @@ async function withErrorHandling<T>(
     const db = await dbPromise;
     return await operation(db);
   } catch (error) {
-    if (
-      retry &&
-      error instanceof DOMException &&
-      error.name === 'NotFoundError'
-    ) {
-      console.warn(
-        'Object store not found. Deleting database and retrying operation.',
-      );
+    if (retry && error instanceof DOMException && error.name === 'NotFoundError') {
+      console.warn('Object store not found. Deleting database and retrying operation.');
       const db = await dbPromise;
       db.close();
       await deleteDB(DB_NAME);

@@ -8,16 +8,7 @@ type RovTelemetry = {
   depth: number;
   waterTemperature: number;
   electronicsTemperature: number;
-  thrusterRpms: [
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-    number,
-  ];
+  thrusterRpms: [number, number, number, number, number, number, number, number];
   workIndicatorPercentage: number;
 };
 

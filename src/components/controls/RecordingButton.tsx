@@ -2,23 +2,14 @@ import { useStore } from '@tanstack/react-store';
 import { VideoIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { recordingStore, setRecordingState } from '@/stores/recording';
 
 function RecordingButton() {
-  const { isRecording, webrtcConnected } = useStore(
-    recordingStore,
-    (state) => ({
-      isRecording: state.isRecording,
-      webrtcConnected: state.webrtcConnected,
-    }),
-  );
+  const { isRecording, webrtcConnected } = useStore(recordingStore, (state) => ({
+    isRecording: state.isRecording,
+    webrtcConnected: state.webrtcConnected,
+  }));
 
   function handleRecordingClick() {
     setRecordingState({

@@ -2,16 +2,12 @@ import { useStore } from '@tanstack/react-store';
 import { memo } from 'react';
 
 import { ThrusterRpm } from '@/components/composites/ThrusterRpm';
-
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const ThrusterItem = memo(function ThrusterItem({ index }: { index: number }) {
-  const rpm = useStore(
-    rovTelemetryStore,
-    (state) => state.thrusterRpms[index]!,
-  );
+  const rpm = useStore(rovTelemetryStore, (state) => state.thrusterRpms[index]!);
 
   return (
     <div className='flex items-center gap-1 text-xs'>
@@ -22,18 +18,9 @@ const ThrusterItem = memo(function ThrusterItem({ index }: { index: number }) {
 });
 
 const ThrusterRpmOverlay = memo(function ThrusterRpmOverlay() {
-  const thrusterRpmsLength = useStore(
-    rovTelemetryStore,
-    (state) => state.thrusterRpms.length,
-  );
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
-  const thrusterRpmOverlay = useStore(
-    configStore,
-    (state) => state?.thrusterRpmOverlay,
-  );
+  const thrusterRpmsLength = useStore(rovTelemetryStore, (state) => state.thrusterRpms.length);
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
+  const thrusterRpmOverlay = useStore(configStore, (state) => state?.thrusterRpmOverlay);
 
   if (!isConnected || !thrusterRpmOverlay) return;
 

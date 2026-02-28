@@ -23,9 +23,7 @@ function Spinner({
   size,
   ...props
 }: LucideProps & VariantProps<typeof spinnerVariants>) {
-  return (
-    <Loader2Icon className={spinnerVariants({ size, className })} {...props} />
-  );
+  return <Loader2Icon className={spinnerVariants({ size, className })} {...props} />;
 }
 
 export { Spinner };

@@ -12,14 +12,8 @@ import { Label } from '@/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Switch } from '@/components/ui/Switch';
 import { toast } from '@/components/ui/Toaster';
-
 import { logError, logWarn } from '@/lib/log';
-
-import {
-  type AttitudeIndicator,
-  configStore,
-  setConfig,
-} from '@/stores/config';
+import { type AttitudeIndicator, configStore, setConfig } from '@/stores/config';
 
 async function fetchVersion() {
   try {
@@ -147,9 +141,7 @@ function General() {
     <>
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>General</h1>
-        <p className='text-muted-foreground'>
-          Generic settings for the Manafish application.
-        </p>
+        <p className='text-muted-foreground'>Generic settings for the Manafish application.</p>
       </div>
       <div className='space-y-6'>
         {appVersion && (
@@ -172,9 +164,7 @@ function General() {
             <Switch
               id='autoUpdate'
               checked={config.autoUpdate ?? false}
-              onCheckedChange={() =>
-                setConfig({ autoUpdate: !config.autoUpdate })
-              }
+              onCheckedChange={() => setConfig({ autoUpdate: !config.autoUpdate })}
             />
             <Label htmlFor='autoUpdate'>Enable automatic app updates</Label>
           </div>
@@ -185,15 +175,8 @@ function General() {
             Set the directory where recordings are stored.
           </p>
           <div className='mt-2 flex items-center gap-3'>
-            <Input
-              readOnly
-              value={config.videoDirectory}
-              className='w-full max-w-xs'
-            />
-            <Button
-              onClick={selectVideoDirectory}
-              aria-label='Select Video Directory'
-            >
+            <Input readOnly value={config.videoDirectory} className='w-full max-w-xs' />
+            <Button onClick={selectVideoDirectory} aria-label='Select Video Directory'>
               Select Directory
             </Button>
           </div>

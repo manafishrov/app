@@ -3,14 +3,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { ControlSource, configStore } from '@/stores/config';
-import {
-  type DirectionVector,
-  directionVectorStore,
-} from '@/stores/directionVector';
+import { type DirectionVector, directionVectorStore } from '@/stores/directionVector';
 
 const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -33,20 +28,15 @@ function useSendDirectionVector() {
       (keys.has(config.keyboard.surgeForward) ? 1 : 0) +
       (keys.has(config.keyboard.surgeBackward) ? -1 : 0);
     input[1] =
-      (keys.has(config.keyboard.swayRight) ? 1 : 0) +
-      (keys.has(config.keyboard.swayLeft) ? -1 : 0);
+      (keys.has(config.keyboard.swayRight) ? 1 : 0) + (keys.has(config.keyboard.swayLeft) ? -1 : 0);
     input[2] =
-      (keys.has(config.keyboard.heaveUp) ? 1 : 0) +
-      (keys.has(config.keyboard.heaveDown) ? -1 : 0);
+      (keys.has(config.keyboard.heaveUp) ? 1 : 0) + (keys.has(config.keyboard.heaveDown) ? -1 : 0);
     input[3] =
-      (keys.has(config.keyboard.pitchUp) ? 1 : 0) +
-      (keys.has(config.keyboard.pitchDown) ? -1 : 0);
+      (keys.has(config.keyboard.pitchUp) ? 1 : 0) + (keys.has(config.keyboard.pitchDown) ? -1 : 0);
     input[4] =
-      (keys.has(config.keyboard.yawRight) ? 1 : 0) +
-      (keys.has(config.keyboard.yawLeft) ? -1 : 0);
+      (keys.has(config.keyboard.yawRight) ? 1 : 0) + (keys.has(config.keyboard.yawLeft) ? -1 : 0);
     input[5] =
-      (keys.has(config.keyboard.rollRight) ? 1 : 0) +
-      (keys.has(config.keyboard.rollLeft) ? -1 : 0);
+      (keys.has(config.keyboard.rollRight) ? 1 : 0) + (keys.has(config.keyboard.rollLeft) ? -1 : 0);
     input[6] =
       (keys.has(config.keyboard.action1Positive) ? 1 : 0) +
       (keys.has(config.keyboard.action1Negative) ? -1 : 0);
@@ -75,20 +65,12 @@ function useSendDirectionVector() {
           input[1] = gamepad.axes[2] ?? 0;
           break;
         case 'dPad':
-          input[0] =
-            (gamepad.buttons[12]?.value ?? 0) +
-            -(gamepad.buttons[13]?.value ?? 0);
-          input[1] =
-            (gamepad.buttons[14]?.value ?? 0) +
-            -(gamepad.buttons[15]?.value ?? 0);
+          input[0] = (gamepad.buttons[12]?.value ?? 0) + -(gamepad.buttons[13]?.value ?? 0);
+          input[1] = (gamepad.buttons[14]?.value ?? 0) + -(gamepad.buttons[15]?.value ?? 0);
           break;
         case 'faceButtons':
-          input[0] =
-            (gamepad.buttons[0]?.value ?? 0) +
-            -(gamepad.buttons[2]?.value ?? 0);
-          input[1] =
-            (gamepad.buttons[1]?.value ?? 0) +
-            -(gamepad.buttons[3]?.value ?? 0);
+          input[0] = (gamepad.buttons[0]?.value ?? 0) + -(gamepad.buttons[2]?.value ?? 0);
+          input[1] = (gamepad.buttons[1]?.value ?? 0) + -(gamepad.buttons[3]?.value ?? 0);
           break;
       }
     };
@@ -104,20 +86,12 @@ function useSendDirectionVector() {
           input[4] = gamepad.axes[2] ?? 0;
           break;
         case ControlSource.dPad:
-          input[3] =
-            (gamepad.buttons[12]?.value ?? 0) +
-            -(gamepad.buttons[13]?.value ?? 0);
-          input[4] =
-            (gamepad.buttons[14]?.value ?? 0) +
-            -(gamepad.buttons[15]?.value ?? 0);
+          input[3] = (gamepad.buttons[12]?.value ?? 0) + -(gamepad.buttons[13]?.value ?? 0);
+          input[4] = (gamepad.buttons[14]?.value ?? 0) + -(gamepad.buttons[15]?.value ?? 0);
           break;
         case ControlSource.faceButtons:
-          input[3] =
-            (gamepad.buttons[0]?.value ?? 0) +
-            -(gamepad.buttons[2]?.value ?? 0);
-          input[4] =
-            (gamepad.buttons[1]?.value ?? 0) +
-            -(gamepad.buttons[3]?.value ?? 0);
+          input[3] = (gamepad.buttons[0]?.value ?? 0) + -(gamepad.buttons[2]?.value ?? 0);
+          input[4] = (gamepad.buttons[1]?.value ?? 0) + -(gamepad.buttons[3]?.value ?? 0);
           break;
       }
     };
@@ -153,25 +127,21 @@ function useSendDirectionVector() {
   }, [config]);
 
   function mergeInput(keyboard: DirectionVector, gamepad: DirectionVector) {
-    return keyboard.map((k, i) =>
-      clamp(k + (gamepad[i] ?? 0)),
-    ) as DirectionVector;
+    return keyboard.map((k, i) => clamp(k + (gamepad[i] ?? 0))) as DirectionVector;
   }
 
   const lastDirectionVectorErrorRef = useRef(0);
 
   async function sendDirectionVector(command: DirectionVector) {
     directionVectorStore.setState(() => command);
-    await invoke('send_direction_vector', { payload: command }).catch(
-      (error) => {
-        const now = Date.now();
-        if (now - lastDirectionVectorErrorRef.current > 10000) {
-          lastDirectionVectorErrorRef.current = now;
-          logError('Failed to send direction vector:', error);
-          toast.error('Failed to send direction vector');
-        }
-      },
-    );
+    await invoke('send_direction_vector', { payload: command }).catch((error) => {
+      const now = Date.now();
+      if (now - lastDirectionVectorErrorRef.current > 10000) {
+        lastDirectionVectorErrorRef.current = now;
+        logError('Failed to send direction vector:', error);
+        toast.error('Failed to send direction vector');
+      }
+    });
   }
 
   useEffect(() => {

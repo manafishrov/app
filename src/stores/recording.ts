@@ -18,9 +18,7 @@ function setRecordingState(newState: Partial<RecordingState>) {
 
 function getDuration() {
   const state = recordingStore.state;
-  return state.isRecording && state.startTime
-    ? Date.now() - state.startTime
-    : 0;
+  return state.isRecording && state.startTime ? Date.now() - state.startTime : 0;
 }
 
 export { recordingStore, setRecordingState, getDuration, type RecordingState };

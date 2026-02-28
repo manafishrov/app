@@ -3,9 +3,7 @@ import { Outlet, createFileRoute } from '@tanstack/react-router';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 import { SidebarProvider } from '@/components/ui/Sidebar';
-
 import { useRovConfigListener } from '@/hooks/useRovConfigListener';
-
 import { requestRovConfig } from '@/stores/rovConfig';
 
 export const Route = createFileRoute('/settings')({

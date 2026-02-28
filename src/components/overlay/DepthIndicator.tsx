@@ -7,10 +7,7 @@ import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const DepthIndicator = memo(function DepthIndicator() {
   const depth = useStore(rovTelemetryStore, (state) => state.depth);
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
   if (!isConnected) return;
 

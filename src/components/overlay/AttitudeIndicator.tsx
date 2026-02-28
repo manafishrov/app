@@ -3,35 +3,29 @@ import { memo, useMemo } from 'react';
 
 import { Dimensional3DAttitudeIndicator } from '@/components/overlay/Dimensional3DAttitudeIndicator';
 import { ScientificAttitudeIndicator } from '@/components/overlay/ScientificAttitudeIndicator';
-
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { directionVectorStore } from '@/stores/directionVector';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const AttitudeIndicator = memo(function AttitudeIndicator() {
-  const { pitch, roll, desiredPitch, desiredRoll, workIndicatorPercentage } =
-    useStore(rovTelemetryStore, (state) => ({
+  const { pitch, roll, desiredPitch, desiredRoll, workIndicatorPercentage } = useStore(
+    rovTelemetryStore,
+    (state) => ({
       pitch: state.pitch,
       roll: state.roll,
       desiredPitch: state.desiredPitch,
       desiredRoll: state.desiredRoll,
       workIndicatorPercentage: state.workIndicatorPercentage,
-    }));
-  const { attitudeIndicator, workIndicator } = useStore(
-    configStore,
-    (state) => ({
-      attitudeIndicator: state?.attitudeIndicator,
-      workIndicator: state?.workIndicator,
     }),
   );
+  const { attitudeIndicator, workIndicator } = useStore(configStore, (state) => ({
+    attitudeIndicator: state?.attitudeIndicator,
+    workIndicator: state?.workIndicator,
+  }));
   const directionVector = useStore(directionVectorStore);
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const size = isDesktop ? 220 : 160;
@@ -95,9 +89,7 @@ const AttitudeIndicator = memo(function AttitudeIndicator() {
         />
       );
     default:
-      return (
-        <div className='h-4 w-4 rounded-full' style={cornerIndicatorStyle} />
-      );
+      return <div className='h-4 w-4 rounded-full' style={cornerIndicatorStyle} />;
   }
 });
 

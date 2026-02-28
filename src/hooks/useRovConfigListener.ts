@@ -2,9 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { type RovConfig, rovConfigStore } from '@/stores/rovConfig';
 
 function useRovConfigListener() {
@@ -13,12 +11,9 @@ function useRovConfigListener() {
 
     void (async () => {
       try {
-        unlisten = await listen<RovConfig>(
-          'rov_config_received',
-          ({ payload }) => {
-            rovConfigStore.setState(() => payload);
-          },
-        );
+        unlisten = await listen<RovConfig>('rov_config_received', ({ payload }) => {
+          rovConfigStore.setState(() => payload);
+        });
       } catch (error) {
         logError('Failed to listen for ROV config:', error);
         toast.error('Failed to listen for ROV config');

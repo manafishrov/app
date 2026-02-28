@@ -2,9 +2,7 @@ import { Store } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
 type Row = [number, number, number, number, number, number, number, number];

@@ -179,12 +179,7 @@ const ScientificAttitudeIndicator = memo(function ScientificAttitudeIndicator({
           />
         </g>
 
-        <text
-          x={size * 0.1}
-          y={size - size * 0.1}
-          fill='oklch(0.985 0 0)'
-          fontSize={size * 0.06}
-        >
+        <text x={size * 0.1} y={size - size * 0.1} fill='oklch(0.985 0 0)' fontSize={size * 0.06}>
           Pitch: {pitch.toFixed(1)}°
         </text>
         <text

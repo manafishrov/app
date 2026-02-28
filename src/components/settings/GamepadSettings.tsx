@@ -3,7 +3,6 @@ import { Gamepad2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
-
 import { type GamepadBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
@@ -39,10 +38,7 @@ function GamepadSettings() {
 
     return () => {
       window.removeEventListener('gamepadconnected', handleGamepadConnected);
-      window.removeEventListener(
-        'gamepaddisconnected',
-        handleGamepadDisconnected,
-      );
+      window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
     };
   }, []);
 
@@ -52,9 +48,7 @@ function GamepadSettings() {
     return (
       <div className='border-muted bg-muted/20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center'>
         <Gamepad2Icon className='text-muted-foreground h-12 w-12' />
-        <h3 className='text-muted-foreground mt-4 text-lg font-semibold'>
-          No Gamepad Connected
-        </h3>
+        <h3 className='text-muted-foreground mt-4 text-lg font-semibold'>No Gamepad Connected</h3>
         <p className='text-muted-foreground mt-2 text-sm'>
           Please connect a gamepad to configure the bindings.
         </p>
@@ -62,10 +56,7 @@ function GamepadSettings() {
     );
   }
 
-  async function handleBindingChange(
-    key: keyof GamepadBindings,
-    value: string,
-  ) {
+  async function handleBindingChange(key: keyof GamepadBindings, value: string) {
     if (!gamepad) return;
 
     const newGamepad = {
@@ -80,16 +71,12 @@ function GamepadSettings() {
     <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
       <div className='space-y-6'>
         <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Surge & Sway
-          </h3>
+          <h3 className='text-2xl font-semibold tracking-tight'>Surge & Sway</h3>
           <GamepadBindInput
             label='Surge/Sway'
             bind={gamepad.surgeSway}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.surgeSway}
-            onBindChange={(newBind) =>
-              handleBindingChange('surgeSway', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('surgeSway', newBind)}
             isJoystick
           />
         </div>
@@ -105,38 +92,28 @@ function GamepadSettings() {
             label='Heave down'
             bind={gamepad.heaveDown}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveDown}
-            onBindChange={(newBind) =>
-              handleBindingChange('heaveDown', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
           />
         </div>
         <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Stabilization
-          </h3>
+          <h3 className='text-2xl font-semibold tracking-tight'>Stabilization</h3>
           <GamepadBindInput
             label='Pitch stabilization'
             bind={gamepad.pitchStabilization}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchStabilization}
-            onBindChange={(newBind) =>
-              handleBindingChange('pitchStabilization', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('pitchStabilization', newBind)}
           />
           <GamepadBindInput
             label='Roll stabilization'
             bind={gamepad.rollStabilization}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollStabilization}
-            onBindChange={(newBind) =>
-              handleBindingChange('rollStabilization', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('rollStabilization', newBind)}
           />
           <GamepadBindInput
             label='Depth hold'
             bind={gamepad.depthHold}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.depthHold}
-            onBindChange={(newBind) =>
-              handleBindingChange('depthHold', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('depthHold', newBind)}
           />
         </div>
       </div>
@@ -163,9 +140,7 @@ function GamepadSettings() {
             label='Roll right'
             bind={gamepad.rollRight}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
-            onBindChange={(newBind) =>
-              handleBindingChange('rollRight', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('rollRight', newBind)}
           />
         </div>
         <div className='space-y-2'>
@@ -174,33 +149,25 @@ function GamepadSettings() {
             label='Action 1 positive'
             bind={gamepad.action1Positive}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1Positive}
-            onBindChange={(newBind) =>
-              handleBindingChange('action1Positive', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action1Positive', newBind)}
           />
           <GamepadBindInput
             label='Action 1 negative'
             bind={gamepad.action1Negative}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
-            onBindChange={(newBind) =>
-              handleBindingChange('action1Negative', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action1Negative', newBind)}
           />
           <GamepadBindInput
             label='Action 2 positive'
             bind={gamepad.action2Positive}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Positive}
-            onBindChange={(newBind) =>
-              handleBindingChange('action2Positive', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action2Positive', newBind)}
           />
           <GamepadBindInput
             label='Action 2 negative'
             bind={gamepad.action2Negative}
             defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
-            onBindChange={(newBind) =>
-              handleBindingChange('action2Negative', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action2Negative', newBind)}
           />
           <GamepadBindInput
             label='Record'

@@ -1,7 +1,6 @@
 import { useStore } from '@tanstack/react-store';
 
 import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
-
 import { type KeyboardBindings, configStore, setConfig } from '@/stores/config';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
@@ -30,10 +29,7 @@ const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
 function KeyboardSettings() {
   const keyboard = useStore(configStore, (state) => state?.keyboard);
 
-  async function handleBindingChange(
-    key: keyof KeyboardBindings,
-    value: string,
-  ) {
+  async function handleBindingChange(key: keyof KeyboardBindings, value: string) {
     if (!keyboard) return;
 
     const newKeyboard = {
@@ -50,16 +46,12 @@ function KeyboardSettings() {
     <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
       <div className='space-y-6'>
         <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Surge & Sway
-          </h3>
+          <h3 className='text-2xl font-semibold tracking-tight'>Surge & Sway</h3>
           <KeyboardBindInput
             label='Surge forward'
             bind={keyboard.surgeForward}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeForward}
-            onBindChange={(newBind) =>
-              handleBindingChange('surgeForward', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('surgeForward', newBind)}
           />
           <KeyboardBindInput
             label='Sway left'
@@ -71,17 +63,13 @@ function KeyboardSettings() {
             label='Surge backward'
             bind={keyboard.surgeBackward}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeBackward}
-            onBindChange={(newBind) =>
-              handleBindingChange('surgeBackward', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('surgeBackward', newBind)}
           />
           <KeyboardBindInput
             label='Sway right'
             bind={keyboard.swayRight}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.swayRight}
-            onBindChange={(newBind) =>
-              handleBindingChange('swayRight', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('swayRight', newBind)}
           />
         </div>
 
@@ -97,38 +85,28 @@ function KeyboardSettings() {
             label='Heave down'
             bind={keyboard.heaveDown}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.heaveDown}
-            onBindChange={(newBind) =>
-              handleBindingChange('heaveDown', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
           />
         </div>
         <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>
-            Stabilization
-          </h3>
+          <h3 className='text-2xl font-semibold tracking-tight'>Stabilization</h3>
           <KeyboardBindInput
             label='Pitch stabilization'
             bind={keyboard.pitchStabilization}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchStabilization}
-            onBindChange={(newBind) =>
-              handleBindingChange('pitchStabilization', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('pitchStabilization', newBind)}
           />
           <KeyboardBindInput
             label='Roll stabilization'
             bind={keyboard.rollStabilization}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollStabilization}
-            onBindChange={(newBind) =>
-              handleBindingChange('rollStabilization', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('rollStabilization', newBind)}
           />
           <KeyboardBindInput
             label='Depth hold'
             bind={keyboard.depthHold}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.depthHold}
-            onBindChange={(newBind) =>
-              handleBindingChange('depthHold', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('depthHold', newBind)}
           />
         </div>
       </div>
@@ -151,9 +129,7 @@ function KeyboardSettings() {
             label='Pitch down'
             bind={keyboard.pitchDown}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchDown}
-            onBindChange={(newBind) =>
-              handleBindingChange('pitchDown', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('pitchDown', newBind)}
           />
           <KeyboardBindInput
             label='Yaw right'
@@ -174,9 +150,7 @@ function KeyboardSettings() {
             label='Roll right'
             bind={keyboard.rollRight}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollRight}
-            onBindChange={(newBind) =>
-              handleBindingChange('rollRight', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('rollRight', newBind)}
           />
         </div>
         <div className='space-y-2'>
@@ -185,33 +159,25 @@ function KeyboardSettings() {
             label='Action 1 positive'
             bind={keyboard.action1Positive}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action1Positive}
-            onBindChange={(newBind) =>
-              handleBindingChange('action1Positive', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action1Positive', newBind)}
           />
           <KeyboardBindInput
             label='Action 1 negative'
             bind={keyboard.action1Negative}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
-            onBindChange={(newBind) =>
-              handleBindingChange('action1Negative', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action1Negative', newBind)}
           />
           <KeyboardBindInput
             label='Action 2 positive'
             bind={keyboard.action2Positive}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Positive}
-            onBindChange={(newBind) =>
-              handleBindingChange('action2Positive', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action2Positive', newBind)}
           />
           <KeyboardBindInput
             label='Action 2 negative'
             bind={keyboard.action2Negative}
             defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
-            onBindChange={(newBind) =>
-              handleBindingChange('action2Negative', newBind)
-            }
+            onBindChange={(newBind) => handleBindingChange('action2Negative', newBind)}
           />
           <KeyboardBindInput
             label='Record'

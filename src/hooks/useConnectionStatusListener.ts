@@ -2,11 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { logWarn } from '@/lib/log';
-
-import {
-  type ConnectionStatus,
-  connectionStatusStore,
-} from '@/stores/connectionStatus';
+import { type ConnectionStatus, connectionStatusStore } from '@/stores/connectionStatus';
 
 function useConnectionStatusListener() {
   useEffect(() => {

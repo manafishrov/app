@@ -5,16 +5,11 @@ import { readDir } from '@tauri-apps/plugin-fs';
 import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError, logInfo } from '@/lib/log';
-
 import { configStore } from '@/stores/config';
 
 function useRecordingRecovery() {
-  const videoDirectory = useStore(
-    configStore,
-    (state) => state?.videoDirectory,
-  );
+  const videoDirectory = useStore(configStore, (state) => state?.videoDirectory);
 
   useEffect(() => {
     if (!videoDirectory) return;

@@ -2,7 +2,6 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { type LogEntry, createLogRecord, logError } from '@/lib/log';
 
 function useLogListener() {

@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
-
 import { configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
@@ -13,9 +12,7 @@ const formSchema = z.object({
     .int()
     .min(1, 'Port must be between 1 and 65535')
     .max(65535, 'Port must be between 1 and 65535'),
-  webrtcSignalingApiPath: z
-    .string()
-    .startsWith('/', 'Path must start with a /'),
+  webrtcSignalingApiPath: z.string().startsWith('/', 'Path must start with a /'),
   webSocketPort: z
     .number()
     .int()

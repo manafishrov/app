@@ -10,18 +10,18 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings/route'
-import { Route as IndexImport } from './routes/index'
-import { Route as SettingsIndexImport } from './routes/settings/index'
-import { Route as SettingsRegulatorIndexImport } from './routes/settings/regulator/index'
-import { Route as SettingsPowerIndexImport } from './routes/settings/power/index'
-import { Route as SettingsKeyboardIndexImport } from './routes/settings/keyboard/index'
-import { Route as SettingsGeneralIndexImport } from './routes/settings/general/index'
-import { Route as SettingsGamepadIndexImport } from './routes/settings/gamepad/index'
-import { Route as SettingsDebugIndexImport } from './routes/settings/debug/index'
-import { Route as SettingsConnectionIndexImport } from './routes/settings/connection/index'
-import { Route as SettingsCalibrationIndexImport } from './routes/settings/calibration/index'
+import { Route as rootRoute } from './routes/__root';
+import { Route as IndexImport } from './routes/index';
+import { Route as SettingsCalibrationIndexImport } from './routes/settings/calibration/index';
+import { Route as SettingsConnectionIndexImport } from './routes/settings/connection/index';
+import { Route as SettingsDebugIndexImport } from './routes/settings/debug/index';
+import { Route as SettingsGamepadIndexImport } from './routes/settings/gamepad/index';
+import { Route as SettingsGeneralIndexImport } from './routes/settings/general/index';
+import { Route as SettingsIndexImport } from './routes/settings/index';
+import { Route as SettingsKeyboardIndexImport } from './routes/settings/keyboard/index';
+import { Route as SettingsPowerIndexImport } from './routes/settings/power/index';
+import { Route as SettingsRegulatorIndexImport } from './routes/settings/regulator/index';
+import { Route as SettingsRouteImport } from './routes/settings/route';
 
 // Create/Update Routes
 
@@ -29,164 +29,164 @@ const SettingsRouteRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const SettingsIndexRoute = SettingsIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsRegulatorIndexRoute = SettingsRegulatorIndexImport.update({
   id: '/regulator/',
   path: '/regulator/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsPowerIndexRoute = SettingsPowerIndexImport.update({
   id: '/power/',
   path: '/power/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsKeyboardIndexRoute = SettingsKeyboardIndexImport.update({
   id: '/keyboard/',
   path: '/keyboard/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsGeneralIndexRoute = SettingsGeneralIndexImport.update({
   id: '/general/',
   path: '/general/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsGamepadIndexRoute = SettingsGamepadIndexImport.update({
   id: '/gamepad/',
   path: '/gamepad/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsDebugIndexRoute = SettingsDebugIndexImport.update({
   id: '/debug/',
   path: '/debug/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsConnectionIndexRoute = SettingsConnectionIndexImport.update({
   id: '/connection/',
   path: '/connection/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 const SettingsCalibrationIndexRoute = SettingsCalibrationIndexImport.update({
   id: '/calibration/',
   path: '/calibration/',
   getParentRoute: () => SettingsRouteRoute,
-} as any)
+} as any);
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/settings';
+      path: '/settings';
+      fullPath: '/settings';
+      preLoaderRoute: typeof SettingsRouteImport;
+      parentRoute: typeof rootRoute;
+    };
     '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/';
+      path: '/';
+      fullPath: '/settings/';
+      preLoaderRoute: typeof SettingsIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/calibration/': {
-      id: '/settings/calibration/'
-      path: '/calibration'
-      fullPath: '/settings/calibration'
-      preLoaderRoute: typeof SettingsCalibrationIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/calibration/';
+      path: '/calibration';
+      fullPath: '/settings/calibration';
+      preLoaderRoute: typeof SettingsCalibrationIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/connection/': {
-      id: '/settings/connection/'
-      path: '/connection'
-      fullPath: '/settings/connection'
-      preLoaderRoute: typeof SettingsConnectionIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/connection/';
+      path: '/connection';
+      fullPath: '/settings/connection';
+      preLoaderRoute: typeof SettingsConnectionIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/debug/': {
-      id: '/settings/debug/'
-      path: '/debug'
-      fullPath: '/settings/debug'
-      preLoaderRoute: typeof SettingsDebugIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/debug/';
+      path: '/debug';
+      fullPath: '/settings/debug';
+      preLoaderRoute: typeof SettingsDebugIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/gamepad/': {
-      id: '/settings/gamepad/'
-      path: '/gamepad'
-      fullPath: '/settings/gamepad'
-      preLoaderRoute: typeof SettingsGamepadIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/gamepad/';
+      path: '/gamepad';
+      fullPath: '/settings/gamepad';
+      preLoaderRoute: typeof SettingsGamepadIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/general/': {
-      id: '/settings/general/'
-      path: '/general'
-      fullPath: '/settings/general'
-      preLoaderRoute: typeof SettingsGeneralIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/general/';
+      path: '/general';
+      fullPath: '/settings/general';
+      preLoaderRoute: typeof SettingsGeneralIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/keyboard/': {
-      id: '/settings/keyboard/'
-      path: '/keyboard'
-      fullPath: '/settings/keyboard'
-      preLoaderRoute: typeof SettingsKeyboardIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/keyboard/';
+      path: '/keyboard';
+      fullPath: '/settings/keyboard';
+      preLoaderRoute: typeof SettingsKeyboardIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/power/': {
-      id: '/settings/power/'
-      path: '/power'
-      fullPath: '/settings/power'
-      preLoaderRoute: typeof SettingsPowerIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/power/';
+      path: '/power';
+      fullPath: '/settings/power';
+      preLoaderRoute: typeof SettingsPowerIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
     '/settings/regulator/': {
-      id: '/settings/regulator/'
-      path: '/regulator'
-      fullPath: '/settings/regulator'
-      preLoaderRoute: typeof SettingsRegulatorIndexImport
-      parentRoute: typeof SettingsRouteImport
-    }
+      id: '/settings/regulator/';
+      path: '/regulator';
+      fullPath: '/settings/regulator';
+      preLoaderRoute: typeof SettingsRegulatorIndexImport;
+      parentRoute: typeof SettingsRouteImport;
+    };
   }
 }
 
 // Create and export the route tree
 
 interface SettingsRouteRouteChildren {
-  SettingsIndexRoute: typeof SettingsIndexRoute
-  SettingsCalibrationIndexRoute: typeof SettingsCalibrationIndexRoute
-  SettingsConnectionIndexRoute: typeof SettingsConnectionIndexRoute
-  SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
-  SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
-  SettingsGeneralIndexRoute: typeof SettingsGeneralIndexRoute
-  SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
-  SettingsPowerIndexRoute: typeof SettingsPowerIndexRoute
-  SettingsRegulatorIndexRoute: typeof SettingsRegulatorIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute;
+  SettingsCalibrationIndexRoute: typeof SettingsCalibrationIndexRoute;
+  SettingsConnectionIndexRoute: typeof SettingsConnectionIndexRoute;
+  SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute;
+  SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute;
+  SettingsGeneralIndexRoute: typeof SettingsGeneralIndexRoute;
+  SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute;
+  SettingsPowerIndexRoute: typeof SettingsPowerIndexRoute;
+  SettingsRegulatorIndexRoute: typeof SettingsRegulatorIndexRoute;
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
@@ -199,56 +199,56 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
   SettingsPowerIndexRoute: SettingsPowerIndexRoute,
   SettingsRegulatorIndexRoute: SettingsRegulatorIndexRoute,
-}
+};
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
   SettingsRouteRouteChildren,
-)
+);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRouteWithChildren
-  '/settings/': typeof SettingsIndexRoute
-  '/settings/calibration': typeof SettingsCalibrationIndexRoute
-  '/settings/connection': typeof SettingsConnectionIndexRoute
-  '/settings/debug': typeof SettingsDebugIndexRoute
-  '/settings/gamepad': typeof SettingsGamepadIndexRoute
-  '/settings/general': typeof SettingsGeneralIndexRoute
-  '/settings/keyboard': typeof SettingsKeyboardIndexRoute
-  '/settings/power': typeof SettingsPowerIndexRoute
-  '/settings/regulator': typeof SettingsRegulatorIndexRoute
+  '/': typeof IndexRoute;
+  '/settings': typeof SettingsRouteRouteWithChildren;
+  '/settings/': typeof SettingsIndexRoute;
+  '/settings/calibration': typeof SettingsCalibrationIndexRoute;
+  '/settings/connection': typeof SettingsConnectionIndexRoute;
+  '/settings/debug': typeof SettingsDebugIndexRoute;
+  '/settings/gamepad': typeof SettingsGamepadIndexRoute;
+  '/settings/general': typeof SettingsGeneralIndexRoute;
+  '/settings/keyboard': typeof SettingsKeyboardIndexRoute;
+  '/settings/power': typeof SettingsPowerIndexRoute;
+  '/settings/regulator': typeof SettingsRegulatorIndexRoute;
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/settings': typeof SettingsIndexRoute
-  '/settings/calibration': typeof SettingsCalibrationIndexRoute
-  '/settings/connection': typeof SettingsConnectionIndexRoute
-  '/settings/debug': typeof SettingsDebugIndexRoute
-  '/settings/gamepad': typeof SettingsGamepadIndexRoute
-  '/settings/general': typeof SettingsGeneralIndexRoute
-  '/settings/keyboard': typeof SettingsKeyboardIndexRoute
-  '/settings/power': typeof SettingsPowerIndexRoute
-  '/settings/regulator': typeof SettingsRegulatorIndexRoute
+  '/': typeof IndexRoute;
+  '/settings': typeof SettingsIndexRoute;
+  '/settings/calibration': typeof SettingsCalibrationIndexRoute;
+  '/settings/connection': typeof SettingsConnectionIndexRoute;
+  '/settings/debug': typeof SettingsDebugIndexRoute;
+  '/settings/gamepad': typeof SettingsGamepadIndexRoute;
+  '/settings/general': typeof SettingsGeneralIndexRoute;
+  '/settings/keyboard': typeof SettingsKeyboardIndexRoute;
+  '/settings/power': typeof SettingsPowerIndexRoute;
+  '/settings/regulator': typeof SettingsRegulatorIndexRoute;
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRouteWithChildren
-  '/settings/': typeof SettingsIndexRoute
-  '/settings/calibration/': typeof SettingsCalibrationIndexRoute
-  '/settings/connection/': typeof SettingsConnectionIndexRoute
-  '/settings/debug/': typeof SettingsDebugIndexRoute
-  '/settings/gamepad/': typeof SettingsGamepadIndexRoute
-  '/settings/general/': typeof SettingsGeneralIndexRoute
-  '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
-  '/settings/power/': typeof SettingsPowerIndexRoute
-  '/settings/regulator/': typeof SettingsRegulatorIndexRoute
+  __root__: typeof rootRoute;
+  '/': typeof IndexRoute;
+  '/settings': typeof SettingsRouteRouteWithChildren;
+  '/settings/': typeof SettingsIndexRoute;
+  '/settings/calibration/': typeof SettingsCalibrationIndexRoute;
+  '/settings/connection/': typeof SettingsConnectionIndexRoute;
+  '/settings/debug/': typeof SettingsDebugIndexRoute;
+  '/settings/gamepad/': typeof SettingsGamepadIndexRoute;
+  '/settings/general/': typeof SettingsGeneralIndexRoute;
+  '/settings/keyboard/': typeof SettingsKeyboardIndexRoute;
+  '/settings/power/': typeof SettingsPowerIndexRoute;
+  '/settings/regulator/': typeof SettingsRegulatorIndexRoute;
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
     | '/settings'
@@ -260,8 +260,8 @@ export interface FileRouteTypes {
     | '/settings/general'
     | '/settings/keyboard'
     | '/settings/power'
-    | '/settings/regulator'
-  fileRoutesByTo: FileRoutesByTo
+    | '/settings/regulator';
+  fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
     | '/settings'
@@ -272,7 +272,7 @@ export interface FileRouteTypes {
     | '/settings/general'
     | '/settings/keyboard'
     | '/settings/power'
-    | '/settings/regulator'
+    | '/settings/regulator';
   id:
     | '__root__'
     | '/'
@@ -285,23 +285,23 @@ export interface FileRouteTypes {
     | '/settings/general/'
     | '/settings/keyboard/'
     | '/settings/power/'
-    | '/settings/regulator/'
-  fileRoutesById: FileRoutesById
+    | '/settings/regulator/';
+  fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren;
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
-}
+};
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {

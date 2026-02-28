@@ -2,7 +2,6 @@ import { RecordingButton } from '@/components/controls/RecordingButton';
 import { SettingsButton } from '@/components/controls/SettingsButton';
 import { StabilizationButtons } from '@/components/controls/StabilizationButtons';
 import { SystemHealthPopover } from '@/components/controls/SystemHealthPopover';
-
 import { cx } from '@/lib/utils';
 
 function Controls({ showControls }: { showControls: boolean }) {

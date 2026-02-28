@@ -16,9 +16,7 @@ import {
 } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';
 import {
@@ -33,10 +31,7 @@ export const Route = createFileRoute('/settings/general/')({
 });
 
 function General() {
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const rovConfig = useStore(rovConfigStore, (state) =>
     state
       ? {
@@ -61,9 +56,7 @@ function General() {
     <>
       <div className='mb-6 flex flex-col gap-2'>
         <h1 className='text-4xl font-extrabold tracking-tight'>General</h1>
-        <p className='text-muted-foreground'>
-          Generic settings for the Manafish ROV.
-        </p>
+        <p className='text-muted-foreground'>Generic settings for the Manafish ROV.</p>
       </div>
       {!isConnected || !rovConfig ? (
         <div className='flex h-96 w-full items-center justify-center'>
@@ -85,24 +78,21 @@ function General() {
           <div>
             <h4 className='text-lg font-medium'>Microcontroller firmware</h4>
             <p className='text-muted-foreground text-sm'>
-              Select and flash the firmware with the specified output protocol
-              for the microcontroller that generates the control signals for the
-              thrusters. <strong>DSHOT</strong> is a modern digital protocol
-              that supports bi-directional communication, allowing reading of
-              thruster RPM, voltage, current and temperature. However, it can be
-              more sensitive to noise and may introduce higher latency if the
-              ESCs are not powerful enough. <strong>PWM</strong> is the older
-              analog protocol and does not support feedback, but it is generally
-              more robust. It is recommended to use DSHOT first, and switch to
-              PWM only if you encounter issues.
+              Select and flash the firmware with the specified output protocol for the
+              microcontroller that generates the control signals for the thrusters.{' '}
+              <strong>DSHOT</strong> is a modern digital protocol that supports bi-directional
+              communication, allowing reading of thruster RPM, voltage, current and temperature.
+              However, it can be more sensitive to noise and may introduce higher latency if the
+              ESCs are not powerful enough. <strong>PWM</strong> is the older analog protocol and
+              does not support feedback, but it is generally more robust. It is recommended to use
+              DSHOT first, and switch to PWM only if you encounter issues.
             </p>
             <div className='mt-2 flex items-center gap-3'>
               <Select
                 value={rovConfig.microcontrollerFirmwareVariant}
                 onValueChange={(value: string) =>
                   setRovConfig({
-                    microcontrollerFirmwareVariant:
-                      value as MicrocontrollerFirmwareVariant,
+                    microcontrollerFirmwareVariant: value as MicrocontrollerFirmwareVariant,
                   })
                 }
                 disabled={!rovConfig}
@@ -113,12 +103,8 @@ function General() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Firmware</SelectLabel>
-                    <SelectItem value={MicrocontrollerFirmwareVariant.pwm}>
-                      PWM
-                    </SelectItem>
-                    <SelectItem value={MicrocontrollerFirmwareVariant.dshot}>
-                      DSHOT
-                    </SelectItem>
+                    <SelectItem value={MicrocontrollerFirmwareVariant.pwm}>PWM</SelectItem>
+                    <SelectItem value={MicrocontrollerFirmwareVariant.dshot}>DSHOT</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -146,12 +132,8 @@ function General() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Fluid Type</SelectLabel>
-                    <SelectItem value={FluidType.freshWater}>
-                      Freshwater
-                    </SelectItem>
-                    <SelectItem value={FluidType.saltWater}>
-                      Saltwater
-                    </SelectItem>
+                    <SelectItem value={FluidType.freshWater}>Freshwater</SelectItem>
+                    <SelectItem value={FluidType.saltWater}>Saltwater</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -160,11 +142,10 @@ function General() {
           <div>
             <h4 className='text-lg font-medium'>Smoothing factor</h4>
             <p className='text-muted-foreground text-sm'>
-              How much smoothing applied to the movement of the ROV. Smoothing
-              can be nice for getting smooth movement and camera shots, but it
-              can also make the ROV feel less responsive. 0 leads to no
-              smoothing. As the value approaches 1, the smoothing increases
-              exponentially.
+              How much smoothing applied to the movement of the ROV. Smoothing can be nice for
+              getting smooth movement and camera shots, but it can also make the ROV feel less
+              responsive. 0 leads to no smoothing. As the value approaches 1, the smoothing
+              increases exponentially.
             </p>
             <div className='mt-2 flex items-center gap-3'>
               <Input
@@ -173,9 +154,7 @@ function General() {
                 max='1'
                 step='0.01'
                 value={rovConfig.smoothingFactor}
-                onChange={(e) =>
-                  setRovConfig({ smoothingFactor: parseFloat(e.target.value) })
-                }
+                onChange={(e) => setRovConfig({ smoothingFactor: parseFloat(e.target.value) })}
                 disabled={!rovConfig}
                 className='w-40'
               />

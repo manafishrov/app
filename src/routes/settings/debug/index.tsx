@@ -7,13 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Switch } from '@/components/ui/Switch';
 import { toast } from '@/components/ui/Toaster';
-
-import {
-  type LogRecord,
-  clearAllLogRecords,
-  getAllLogRecords,
-} from '@/lib/log';
-
+import { type LogRecord, clearAllLogRecords, getAllLogRecords } from '@/lib/log';
 import { configStore, setConfig } from '@/stores/config';
 
 export const Route = createFileRoute('/settings/debug/')({
@@ -119,9 +113,7 @@ function Debug() {
       <div className='mb-6 flex items-center justify-between'>
         <div className='flex flex-col gap-2'>
           <h1 className='text-4xl font-extrabold tracking-tight'>Debug</h1>
-          <p className='text-muted-foreground'>
-            Debug console for the ROV and the application.
-          </p>
+          <p className='text-muted-foreground'>Debug console for the ROV and the application.</p>
         </div>
         <Button variant='outline' onClick={handleClear}>
           Clear Log

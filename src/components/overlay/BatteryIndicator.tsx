@@ -1,13 +1,7 @@
 import { useStore } from '@tanstack/react-store';
-import {
-  BatteryFullIcon,
-  BatteryIcon,
-  BatteryLowIcon,
-  BatteryMediumIcon,
-} from 'lucide-react';
+import { BatteryFullIcon, BatteryIcon, BatteryLowIcon, BatteryMediumIcon } from 'lucide-react';
 
 import { cx } from '@/lib/utils';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
@@ -19,14 +13,8 @@ function getBatteryIcon(percentage: number) {
 }
 
 function BatteryIndicator() {
-  const batteryPercentage = useStore(
-    rovStatusStore,
-    (state) => state.batteryPercentage,
-  );
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const batteryPercentage = useStore(rovStatusStore, (state) => state.batteryPercentage);
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
   const Icon = getBatteryIcon(batteryPercentage);
 
@@ -39,9 +27,7 @@ function BatteryIndicator() {
         batteryPercentage < 10 && 'text-destructive',
       )}
     >
-      <Icon
-        className={cx('h-4 w-4', batteryPercentage < 10 && 'text-destructive')}
-      />
+      <Icon className={cx('h-4 w-4', batteryPercentage < 10 && 'text-destructive')} />
       <span className='text-xs'>{batteryPercentage.toFixed(0)}%</span>
     </div>
   );

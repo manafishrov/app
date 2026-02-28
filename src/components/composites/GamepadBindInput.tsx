@@ -2,14 +2,8 @@ import { Gamepad2Icon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
-
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip';
 import { cx } from '@/lib/utils';
-
 import { ControlSource } from '@/stores/config';
 
 type GamepadBindInputProps = {
@@ -66,9 +60,7 @@ function GamepadBindInput({
     if (!navigator.getGamepads) return;
 
     const gamepads = navigator.getGamepads();
-    const hasConnectedGamepad = Array.from(gamepads).some(
-      (gamepad) => gamepad !== null,
-    );
+    const hasConnectedGamepad = Array.from(gamepads).some((gamepad) => gamepad !== null);
     // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
     setGamepadConnected(hasConnectedGamepad);
   };
@@ -85,10 +77,7 @@ function GamepadBindInput({
 
     return () => {
       window.removeEventListener('gamepadconnected', updateGamepadConnection);
-      window.removeEventListener(
-        'gamepaddisconnected',
-        updateGamepadConnection,
-      );
+      window.removeEventListener('gamepaddisconnected', updateGamepadConnection);
     };
   }, []);
 
@@ -207,13 +196,7 @@ function GamepadBindInput({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [
-    isRecordingActive,
-    gamepadConnected,
-    initialGamepadState,
-    onBindChange,
-    isJoystick,
-  ]);
+  }, [isRecordingActive, gamepadConnected, initialGamepadState, onBindChange, isJoystick]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -256,9 +239,7 @@ function GamepadBindInput({
         >
           <Gamepad2Icon className='h-4 w-4' />
           <span className='truncate'>
-            {isRecording
-              ? 'Press a key...'
-              : (mappings[currentBind] ?? currentBind)}
+            {isRecording ? 'Press a key...' : (mappings[currentBind] ?? currentBind)}
           </span>
         </Button>
         <Tooltip>

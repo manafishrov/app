@@ -3,7 +3,6 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
 
 function camelToSnake(str: string): string {
@@ -53,26 +52,15 @@ function useToastListener() {
                             onClick: async (event: React.MouseEvent) => {
                               event.preventDefault();
                               if (payload.cancel?.type) {
-                                await invoke(
-                                  camelToSnake(payload.cancel.type),
-                                  { payload: payload.cancel.payload },
-                                ).catch((error) => {
-                                  logError(
-                                    'Failed to invoke cancel command:',
-                                    error,
-                                  );
-                                  toast.error(
-                                    'Failed to invoke cancel command',
-                                  );
+                                await invoke(camelToSnake(payload.cancel.type), {
+                                  payload: payload.cancel.payload,
+                                }).catch((error) => {
+                                  logError('Failed to invoke cancel command:', error);
+                                  toast.error('Failed to invoke cancel command');
                                 });
                               }
-                              if (
-                                payload.id &&
-                                activeLoadingToasts.has(payload.id)
-                              ) {
-                                clearTimeout(
-                                  activeLoadingToasts.get(payload.id),
-                                );
+                              if (payload.id && activeLoadingToasts.has(payload.id)) {
+                                clearTimeout(activeLoadingToasts.get(payload.id));
                                 activeLoadingToasts.delete(payload.id);
                               }
                             },
@@ -84,8 +72,7 @@ function useToastListener() {
 
           const { id, toastType = 'message', message } = payload;
           const toastMethod =
-            typeMethodMap[toastType as keyof typeof typeMethodMap] ||
-            toast.message;
+            typeMethodMap[toastType as keyof typeof typeMethodMap] || toast.message;
 
           if (id && activeLoadingToasts.has(id)) {
             clearTimeout(activeLoadingToasts.get(id));

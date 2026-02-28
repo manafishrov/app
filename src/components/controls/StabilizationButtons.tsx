@@ -3,21 +3,12 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toaster';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 function StabilizationButtons() {
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const { pitchStabilization, rollStabilization, depthHold } = useStore(
     rovStatusStore,
     (state) => ({
@@ -37,9 +28,7 @@ function StabilizationButtons() {
   }
 
   async function handleDepthHoldClick() {
-    await invoke('toggle_depth_hold').catch(() =>
-      toast.error('Failed to toggle depth hold'),
-    );
+    await invoke('toggle_depth_hold').catch(() => toast.error('Failed to toggle depth hold'));
   }
 
   if (!isConnected) return;
@@ -50,9 +39,7 @@ function StabilizationButtons() {
         <Tooltip delayDuration={700}>
           <TooltipTrigger asChild>
             <Button
-              variant={
-                pitchStabilization && rollStabilization ? 'default' : 'outline'
-              }
+              variant={pitchStabilization && rollStabilization ? 'default' : 'outline'}
               onClick={handleStabilizationClick}
               aria-label='Toggle pitch and roll stabilization'
             >

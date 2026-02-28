@@ -3,9 +3,7 @@ name = "manafish-app"
 version = "1.0.0"
 description = "An app for controlling the Manafish ROV"
 requires-python = ">=3.12,<3.13"
-dependencies = [
-    "ultralytics>=8.3.228",
-]
+dependencies = ["ultralytics>=8.3.228"]
 
 [tool.ruff]
 target-version = "py312"
@@ -16,29 +14,29 @@ show-fixes = true
 unsafe-fixes = true
 format.docstring-code-format = true
 lint.select = [
-  "F",
-  "E",
-  "W",
-  "C90",
-  "I",
-  "N",
-  "UP",
-  "B",
-  "A",
-  "T10",
-  "T20",
-  "EM",
-  "S",
-  "DTZ",
-  "SIM",
-  "C4",
-  "PTH",
-  "PGH",
-  "ARG",
-  "RUF",
-  "PL",
-  "D",
-  "ANN",
+    "F",
+    "E",
+    "W",
+    "C90",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "A",
+    "T10",
+    "T20",
+    "EM",
+    "S",
+    "DTZ",
+    "SIM",
+    "C4",
+    "PTH",
+    "PGH",
+    "ARG",
+    "RUF",
+    "PL",
+    "D",
+    "ANN",
 ]
 lint.ignore = ["E501", "D203", "D213"]
 lint.pydocstyle.convention = "google"

@@ -2,17 +2,13 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect, useState } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
-
 import { type Regulator } from '@/stores/rovConfig';
 
 type RegulatorSuggestions = Omit<Regulator, 'turnSpeed'>;
 
 function useRegulatorSuggestionsListener() {
-  const [suggestions, setSuggestions] = useState<RegulatorSuggestions | null>(
-    null,
-  );
+  const [suggestions, setSuggestions] = useState<RegulatorSuggestions | null>(null);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -20,7 +16,7 @@ function useRegulatorSuggestionsListener() {
       try {
         unlisten = await listen<RegulatorSuggestions>(
           'regulator_suggestions_received',
-          ({payload}) => {
+          ({ payload }) => {
             setSuggestions(payload);
           },
         );

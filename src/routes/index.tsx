@@ -1,13 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { VideoStream } from '@/components/VideoStream';
 import { Controls } from '@/components/controls/Controls';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
-
+import { VideoStream } from '@/components/VideoStream';
 import { useSendDirectionVector } from '@/hooks/useSendDirectionVector';
 import { useSendStateUpdates } from '@/hooks/useSendStateUpdates';
-
 import { cx } from '@/lib/utils';
 
 export const Route = createFileRoute('/')({
@@ -29,10 +27,8 @@ function Home() {
     function handleResize() {
       if (!mainEl) return;
       const style = window.getComputedStyle(mainEl);
-      const paddingX =
-        parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-      const paddingY =
-        parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
 
       const availableWidth = mainEl.clientWidth - paddingX;
       const availableHeight = mainEl.clientHeight - paddingY;
@@ -70,12 +66,7 @@ function Home() {
       className='flex h-full w-full items-center justify-center p-1'
       onMouseMove={handleMouseMove}
     >
-      <div
-        className={cx(
-          'bg-card dark text-foreground relative aspect-4/3 rounded-lg',
-          sizeClass,
-        )}
-      >
+      <div className={cx('bg-card dark text-foreground relative aspect-4/3 rounded-lg', sizeClass)}>
         <VideoStream />
         <RovOverlay />
         <Controls showControls={showControls} />

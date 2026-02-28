@@ -17,11 +17,9 @@ import {
 } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
 import { Textarea } from '@/components/ui/Textarea';
-
 import { type VariantProps, cx } from '@/lib/utils';
 
-const { fieldContext, useFieldContext, formContext, useFormContext } =
-  createFormHookContexts();
+const { fieldContext, useFieldContext, formContext, useFormContext } = createFormHookContexts();
 
 type BaseFieldProps = {
   className?: string;
@@ -45,10 +43,7 @@ function BaseField({
 
   const labelElement = (
     <Label
-      className={cx(
-        'mb-2 block',
-        field.state.meta.errors.length > 0 && 'text-destructive',
-      )}
+      className={cx('mb-2 block', field.state.meta.errors.length > 0 && 'text-destructive')}
       htmlFor={`${id}-form-item`}
     >
       {label}
@@ -179,9 +174,7 @@ function NumberField({
 
   const formValue = field.state.value;
   const canonicalValue =
-    formValue === null || formValue === undefined || isNaN(formValue)
-      ? ''
-      : String(formValue);
+    formValue === null || formValue === undefined || isNaN(formValue) ? '' : String(formValue);
 
   const displayValue = draftValue ?? canonicalValue;
 
@@ -453,20 +446,11 @@ type SubmitButtonProps = Omit<React.ComponentProps<typeof Button>, 'type'> &
     loading?: boolean;
   };
 
-function SubmitButton({
-  children,
-  className,
-  loading,
-  ...props
-}: SubmitButtonProps) {
+function SubmitButton({ children, className, loading, ...props }: SubmitButtonProps) {
   const form = useFormContext();
   return (
     <form.Subscribe
-      selector={(state) => [
-        state.isSubmitting,
-        state.isPristine,
-        state.isValidating,
-      ]}
+      selector={(state) => [state.isSubmitting, state.isPristine, state.isValidating]}
     >
       {([isSubmitting, isPristine, isValidating]) => (
         <Button

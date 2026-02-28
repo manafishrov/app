@@ -26,15 +26,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/Sidebar';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
 function SettingsSidebar() {
   const matches = useMatches();
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
@@ -68,9 +64,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Keyboard'
                   tooltip='Keyboard'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/keyboard/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/keyboard/')}
                 >
                   <Link to='/settings/keyboard'>
                     <KeyboardIcon />
@@ -81,9 +75,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Gamepad'
                   tooltip='Gamepad'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/gamepad/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/gamepad/')}
                 >
                   <Link to='/settings/gamepad'>
                     <Gamepad2Icon />
@@ -94,9 +86,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Connection'
                   tooltip='Connection'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/connection/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/connection/')}
                 >
                   <Link to='/settings/connection'>
                     <EthernetPortIcon />
@@ -116,9 +106,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='General ROV'
                   tooltip='General ROV'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/general/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/general/')}
                   disabled={!isConnected}
                 >
                   <Link to='/settings/general'>
@@ -130,9 +118,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Calibration'
                   tooltip='Calibration'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/calibration/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/calibration/')}
                   disabled={!isConnected}
                 >
                   <Link to='/settings/calibration'>
@@ -144,9 +130,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Regulator'
                   tooltip='Regulator'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/regulator/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/regulator/')}
                   disabled={!isConnected}
                 >
                   <Link to='/settings/regulator'>
@@ -158,9 +142,7 @@ function SettingsSidebar() {
                   asChild
                   aria-label='Power'
                   tooltip='Power'
-                  isActive={matches.some(
-                    (match) => match.id === '/settings/power/',
-                  )}
+                  isActive={matches.some((match) => match.id === '/settings/power/')}
                   disabled={!isConnected}
                 >
                   <Link to='/settings/power'>

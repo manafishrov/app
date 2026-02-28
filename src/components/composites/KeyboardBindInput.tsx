@@ -2,12 +2,7 @@ import { KeyboardIcon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
-
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip';
 import { cx } from '@/lib/utils';
 
 const mappings: Record<string, string> = {
@@ -123,12 +118,7 @@ type KeyboardBindInputProps = {
   onBindChange: (newBind: string) => void;
 };
 
-function KeyboardBindInput({
-  label,
-  bind,
-  defaultBind,
-  onBindChange,
-}: KeyboardBindInputProps) {
+function KeyboardBindInput({ label, bind, defaultBind, onBindChange }: KeyboardBindInputProps) {
   const [currentBind, setCurrentBind] = useState(bind);
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingActive, setIsRecordingActive] = useState(false);
@@ -214,9 +204,7 @@ function KeyboardBindInput({
         >
           <KeyboardIcon className='h-4 w-4' />
           <span className='truncate'>
-            {isRecording
-              ? 'Press a key...'
-              : (mappings[currentBind] ?? currentBind)}
+            {isRecording ? 'Press a key...' : (mappings[currentBind] ?? currentBind)}
           </span>
         </Button>
         <Tooltip>

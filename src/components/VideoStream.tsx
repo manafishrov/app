@@ -6,9 +6,7 @@ import { mkdir } from '@tauri-apps/plugin-fs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError, logInfo } from '@/lib/log';
-
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingState } from '@/stores/recording';
 
@@ -77,15 +75,8 @@ function VideoStream() {
     const recorder = new MediaRecorder(stream);
     mediaRecorderRef.current = recorder;
 
-    const timestamp = new Date()
-      .toISOString()
-      .replace('T', '_')
-      .replace(/[:.]/g, '-')
-      .slice(0, 19);
-    const tempPath = await join(
-      config.videoDirectory,
-      `Recording_${timestamp}_temp.webm`,
-    );
+    const timestamp = new Date().toISOString().replace('T', '_').replace(/[:.]/g, '-').slice(0, 19);
+    const tempPath = await join(config.videoDirectory, `Recording_${timestamp}_temp.webm`);
     tempFilePathRef.current = tempPath;
 
     recorder.ondataavailable = async (event) => {
@@ -162,9 +153,7 @@ function VideoStream() {
           pc.iceConnectionState === 'disconnected' ||
           pc.iceConnectionState === 'closed'
         ) {
-          logInfo(
-            `WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`,
-          );
+          logInfo(`WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`);
           setRecordingState({ webrtcConnected: false });
           setHasError(true);
           setIsLoading(false);
@@ -231,11 +220,7 @@ function VideoStream() {
 
     //eslint-disable-next-line react-compiler/react-compiler
     //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    config?.ipAddress,
-    config?.webrtcSignalingApiPort,
-    config?.webrtcSignalingApiPath,
-  ]);
+  }, [config?.ipAddress, config?.webrtcSignalingApiPort, config?.webrtcSignalingApiPath]);
 
   useEffect(() => {
     const prev = prevIsRecordingRef.current;
@@ -264,13 +249,7 @@ function VideoStream() {
 
   return (
     <>
-      <video
-        ref={videoRef}
-        className='h-full w-full'
-        autoPlay
-        playsInline
-        muted
-      />
+      <video ref={videoRef} className='h-full w-full' autoPlay playsInline muted />
       {(isLoading || hasError) && (
         <div className='absolute inset-0 flex items-center justify-center'>
           <div className='text-center'>

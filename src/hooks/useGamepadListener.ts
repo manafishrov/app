@@ -3,7 +3,6 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { toast } from '@/components/ui/Toaster';
-
 import { logError } from '@/lib/log';
 
 type GamepadData = {
@@ -24,8 +23,7 @@ function getGamepads() {
 }
 
 function createGamepadFromEvent(event: GamepadData): Gamepad {
-  const { id, index, axes, connected, mapping, timestamp, vibrationActuator } =
-    event;
+  const { id, index, axes, connected, mapping, timestamp, vibrationActuator } = event;
   const buttons = event.buttons.map(
     (btn) =>
       ({
@@ -96,10 +94,7 @@ function useGamepadListener() {
         toast.error('Failed to start gamepad stream');
       });
       try {
-        unlisten = await listen<GamepadData>(
-          'gamepad_event',
-          handleGamepadEvent,
-        );
+        unlisten = await listen<GamepadData>('gamepad_event', handleGamepadEvent);
       } catch (error) {
         logError('Failed to listen for gamepad events:', error);
         toast.error('Failed to listen for gamepad events');

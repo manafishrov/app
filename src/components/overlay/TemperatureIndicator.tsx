@@ -6,17 +6,11 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const TemperatureIndicator = memo(function TemperatureIndicator() {
-  const { waterTemperature, electronicsTemperature } = useStore(
-    rovTelemetryStore,
-    (state) => ({
-      waterTemperature: state.waterTemperature,
-      electronicsTemperature: state.electronicsTemperature,
-    }),
-  );
-  const isConnected = useStore(
-    connectionStatusStore,
-    (state) => state.isConnected,
-  );
+  const { waterTemperature, electronicsTemperature } = useStore(rovTelemetryStore, (state) => ({
+    waterTemperature: state.waterTemperature,
+    electronicsTemperature: state.electronicsTemperature,
+  }));
+  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
   if (!isConnected) return;
 

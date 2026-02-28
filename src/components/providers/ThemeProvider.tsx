@@ -17,8 +17,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const isDark =
       theme === 'dark' ||
-      (theme === 'system' &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('theme', theme);

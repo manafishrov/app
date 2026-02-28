@@ -2,7 +2,6 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
 import { logWarn } from '@/lib/log';
-
 import { type RovTelemetry, rovTelemetryStore } from '@/stores/rovTelemetry';
 
 function useRovTelemetryListener() {
@@ -10,7 +9,7 @@ function useRovTelemetryListener() {
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await listen<RovTelemetry>('rov_telemetry', ({payload}) => {
+        unlisten = await listen<RovTelemetry>('rov_telemetry', ({ payload }) => {
           rovTelemetryStore.setState(() => payload);
         });
       } catch (error) {
