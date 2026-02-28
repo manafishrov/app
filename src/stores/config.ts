@@ -1,39 +1,170 @@
-import { Store } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
+import { createStore, reconcile } from 'solid-js/store';
 
 import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 
-type KeyboardBindings = {
-  surgeForward: string;
-  surgeBackward: string;
-  swayLeft: string;
-  swayRight: string;
-  heaveUp: string;
-  heaveDown: string;
-  pitchUp: string;
-  pitchDown: string;
-  yawLeft: string;
-  yawRight: string;
-  rollLeft: string;
-  rollRight: string;
-  action1Positive: string;
-  action1Negative: string;
-  action2Positive: string;
-  action2Negative: string;
-  pitchStabilization: string;
-  rollStabilization: string;
-  depthHold: string;
-  record: string;
+type KeyboardKey =
+  | 'KeyA'
+  | 'KeyB'
+  | 'KeyC'
+  | 'KeyD'
+  | 'KeyE'
+  | 'KeyF'
+  | 'KeyG'
+  | 'KeyH'
+  | 'KeyI'
+  | 'KeyJ'
+  | 'KeyK'
+  | 'KeyL'
+  | 'KeyM'
+  | 'KeyN'
+  | 'KeyO'
+  | 'KeyP'
+  | 'KeyQ'
+  | 'KeyR'
+  | 'KeyS'
+  | 'KeyT'
+  | 'KeyU'
+  | 'KeyV'
+  | 'KeyW'
+  | 'KeyX'
+  | 'KeyY'
+  | 'KeyZ'
+  | 'Digit1'
+  | 'Digit2'
+  | 'Digit3'
+  | 'Digit4'
+  | 'Digit5'
+  | 'Digit6'
+  | 'Digit7'
+  | 'Digit8'
+  | 'Digit9'
+  | 'Digit0'
+  | 'F1'
+  | 'F2'
+  | 'F3'
+  | 'F4'
+  | 'F5'
+  | 'F6'
+  | 'F7'
+  | 'F8'
+  | 'F9'
+  | 'F10'
+  | 'F11'
+  | 'F12'
+  | 'Enter'
+  | 'Escape'
+  | 'Backspace'
+  | 'Tab'
+  | 'Space'
+  | 'Minus'
+  | 'Equal'
+  | 'BracketLeft'
+  | 'BracketRight'
+  | 'Backslash'
+  | 'Semicolon'
+  | 'Quote'
+  | 'Backquote'
+  | 'Comma'
+  | 'Period'
+  | 'Slash'
+  | 'CapsLock'
+  | 'ArrowRight'
+  | 'ArrowLeft'
+  | 'ArrowDown'
+  | 'ArrowUp'
+  | 'ControlLeft'
+  | 'ShiftLeft'
+  | 'AltLeft'
+  | 'MetaLeft'
+  | 'ControlRight'
+  | 'ShiftRight'
+  | 'AltRight'
+  | 'MetaRight'
+  | 'PrintScreen'
+  | 'ScrollLock'
+  | 'Pause'
+  | 'Insert'
+  | 'Home'
+  | 'PageUp'
+  | 'Delete'
+  | 'End'
+  | 'PageDown'
+  | 'NumLock'
+  | 'NumpadDivide'
+  | 'NumpadMultiply'
+  | 'NumpadSubtract'
+  | 'NumpadAdd'
+  | 'NumpadEnter'
+  | 'Numpad1'
+  | 'Numpad2'
+  | 'Numpad3'
+  | 'Numpad4'
+  | 'Numpad5'
+  | 'Numpad6'
+  | 'Numpad7'
+  | 'Numpad8'
+  | 'Numpad9'
+  | 'Numpad0'
+  | 'NumpadDecimal';
+
+type GamepadInputType = { Button: [number] } | { Axis: [number] };
+
+type KeyboardInput = {
+  key: KeyboardKey;
+  minValue: number;
+  maxValue: number;
 };
 
-type ControlSource = 'leftStick' | 'rightStick' | 'dPad' | 'faceButtons';
+type GamepadInput = {
+  input: GamepadInputType;
+  minValue: number;
+  maxValue: number;
+};
 
-const ControlSource = {
-  leftStick: 'leftStick',
-  rightStick: 'rightStick',
-  dPad: 'dPad',
-  faceButtons: 'faceButtons',
+type KeyboardBindings = {
+  surgeForward: KeyboardInput;
+  surgeBackward: KeyboardInput;
+  swayRight: KeyboardInput;
+  swayLeft: KeyboardInput;
+  heaveUp: KeyboardInput;
+  heaveDown: KeyboardInput;
+  pitchUp: KeyboardInput;
+  pitchDown: KeyboardInput;
+  yawRight: KeyboardInput;
+  yawLeft: KeyboardInput;
+  rollLeft: KeyboardInput;
+  rollRight: KeyboardInput;
+  action1Positive: KeyboardInput;
+  action1Negative: KeyboardInput;
+  action2Positive: KeyboardInput;
+  action2Negative: KeyboardInput;
+  autoStabilization: KeyboardInput;
+  depthHold: KeyboardInput;
+  record: KeyboardInput;
+};
+
+type GamepadBindings = {
+  surgeForward: GamepadInput;
+  surgeBackward: GamepadInput;
+  swayRight: GamepadInput;
+  swayLeft: GamepadInput;
+  heaveUp: GamepadInput;
+  heaveDown: GamepadInput;
+  pitchUp: GamepadInput;
+  pitchDown: GamepadInput;
+  yawRight: GamepadInput;
+  yawLeft: GamepadInput;
+  rollLeft: GamepadInput;
+  rollRight: GamepadInput;
+  action1Positive: GamepadInput;
+  action1Negative: GamepadInput;
+  action2Positive: GamepadInput;
+  action2Negative: GamepadInput;
+  autoStabilization: GamepadInput;
+  depthHold: GamepadInput;
+  record: GamepadInput;
 };
 
 type AttitudeIndicator = 'scientific' | 'dimensional3D' | 'disabled';
@@ -42,24 +173,7 @@ const AttitudeIndicator = {
   scientific: 'scientific',
   dimensional3D: 'dimensional3D',
   disabled: 'disabled',
-};
-
-type GamepadBindings = {
-  surgeSway: ControlSource;
-  heaveUp: string;
-  heaveDown: string;
-  pitchYaw: ControlSource;
-  rollLeft: string;
-  rollRight: string;
-  action1Positive: string;
-  action1Negative: string;
-  action2Positive: string;
-  action2Negative: string;
-  pitchStabilization: string;
-  rollStabilization: string;
-  depthHold: string;
-  record: string;
-};
+} as const;
 
 type Config = {
   autoUpdate: boolean;
@@ -73,14 +187,61 @@ type Config = {
   webSocketPort: number;
   infoLogging: boolean;
   keyboard: KeyboardBindings;
-  gamepad: GamepadBindings;
+  gamepad: Record<string, GamepadBindings>;
 };
 
-const configStore = new Store<Config | null>(null);
+const defaultKeyboardInput = (key: KeyboardKey): KeyboardInput => ({
+  key,
+  minValue: 0,
+  maxValue: 1,
+});
+
+const defaultKeyboardBindings: KeyboardBindings = {
+  surgeForward: defaultKeyboardInput('KeyW'),
+  surgeBackward: defaultKeyboardInput('KeyS'),
+  swayRight: defaultKeyboardInput('KeyD'),
+  swayLeft: defaultKeyboardInput('KeyA'),
+  heaveUp: defaultKeyboardInput('Space'),
+  heaveDown: defaultKeyboardInput('ShiftLeft'),
+  pitchUp: defaultKeyboardInput('KeyI'),
+  pitchDown: defaultKeyboardInput('KeyK'),
+  yawRight: defaultKeyboardInput('KeyL'),
+  yawLeft: defaultKeyboardInput('KeyJ'),
+  rollLeft: defaultKeyboardInput('KeyQ'),
+  rollRight: defaultKeyboardInput('KeyE'),
+  action1Positive: defaultKeyboardInput('Digit1'),
+  action1Negative: defaultKeyboardInput('Digit2'),
+  action2Positive: defaultKeyboardInput('Digit3'),
+  action2Negative: defaultKeyboardInput('Digit4'),
+  autoStabilization: defaultKeyboardInput('KeyU'),
+  depthHold: defaultKeyboardInput('KeyO'),
+  record: defaultKeyboardInput('KeyR'),
+};
+
+const defaultConfig: Config = {
+  autoUpdate: false,
+  attitudeIndicator: 'scientific',
+  workIndicator: false,
+  thrusterRpmOverlay: false,
+  videoDirectory: '~/Movies/Manafish',
+  ipAddress: '10.10.10.10',
+  webrtcSignalingApiPort: 1984,
+  webrtcSignalingApiPath: '/api/webrtc?src=cam',
+  webSocketPort: 9000,
+  infoLogging: false,
+  keyboard: defaultKeyboardBindings,
+  gamepad: {},
+};
+
+const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);
+
+function setConfigStore(value: Config) {
+  setConfigStoreInternal(reconcile(value));
+}
 
 async function getConfig() {
   await invoke<Config>('get_config')
-    .then((payload) => configStore.setState(() => payload))
+    .then((payload) => setConfigStore(payload))
     .catch((error) => {
       logError('Failed to get config:', error);
       toast.error('Failed to get config');
@@ -88,22 +249,13 @@ async function getConfig() {
 }
 
 async function setConfig(newConfigOptions: Partial<Config>) {
-  const currentConfig = configStore.state;
-  if (!currentConfig) {
-    logError('Current config is null');
-    toast.error('Current config is null');
-    return;
-  }
+  const currentConfig = { ...configStore };
+  const newConfig = { ...currentConfig, ...newConfigOptions };
 
-  const newConfig = {
-    ...currentConfig,
-    ...newConfigOptions,
-  };
-
-  configStore.setState(() => newConfig);
+  setConfigStore(newConfig);
 
   await invoke('set_config', { payload: newConfig }).catch((error) => {
-    configStore.setState(() => currentConfig);
+    setConfigStore(currentConfig);
     logError('Failed to set config:', error);
     toast.error('Failed to set config. Changes reverted.');
   });
@@ -111,11 +263,17 @@ async function setConfig(newConfigOptions: Partial<Config>) {
 
 export {
   configStore,
+  setConfigStore,
   getConfig,
   setConfig,
-  ControlSource,
   AttitudeIndicator,
+  defaultConfig,
+  type KeyboardKey,
+  type GamepadInputType,
+  type KeyboardInput,
+  type GamepadInput,
   type KeyboardBindings,
   type GamepadBindings,
+  type AttitudeIndicator as AttitudeIndicatorType,
   type Config,
 };

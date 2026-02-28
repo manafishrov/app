@@ -1,53 +1,59 @@
-import { Store } from '@tanstack/react-store';
 import { invoke } from '@tauri-apps/api/core';
+import { createStore, reconcile } from 'solid-js/store';
 
 import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';
-
-type Row = [number, number, number, number, number, number, number, number];
 
 type MicrocontrollerFirmwareVariant = 'pwm' | 'dshot';
 
 const MicrocontrollerFirmwareVariant = {
   pwm: 'pwm',
   dshot: 'dshot',
-};
+} as const;
 
-type FluidType = 'saltwater' | 'freshWater';
+type FluidType = 'saltwater' | 'freshwater';
 
 const FluidType = {
-  saltWater: 'saltwater',
-  freshWater: 'freshwater',
-};
+  saltwater: 'saltwater',
+  freshwater: 'freshwater',
+} as const;
 
 type ThrusterPinSetup = {
-  identifiers: Row;
-  spinDirections: Row;
+  identifiers: [number, number, number, number, number, number, number, number];
+  spinDirections: [number, number, number, number, number, number, number, number];
 };
 
-type ThrusterAllocation = [Row, Row, Row, Row, Row, Row, Row, Row];
+type ThrusterAllocation = [
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+  [number, number, number, number, number, number, number, number],
+];
 
-type pid = {
+type AxisConfig = {
   kp: number;
   ki: number;
   kd: number;
+  rate: number;
 };
 
 type Regulator = {
-  turnSpeed: number;
-  pitch: pid;
-  roll: pid;
-  depth: pid;
+  pitch: AxisConfig;
+  roll: AxisConfig;
+  yaw: AxisConfig;
+  depth: AxisConfig;
+  fpvMode: boolean;
 };
 
 type DirectionCoefficients = {
   surge: number;
   sway: number;
   heave: number;
-  pitch: number;
-  yaw: number;
-  roll: number;
 };
 
 type Power = {
@@ -68,10 +74,60 @@ type RovConfig = {
   power: Power;
 };
 
-const rovConfigStore = new Store<RovConfig | null>(null);
+type RegulatorSuggestions = {
+  pitch: AxisConfig;
+  roll: AxisConfig;
+  yaw: AxisConfig;
+  depth: AxisConfig;
+};
+
+const defaultAxisConfig: AxisConfig = { kp: 0, ki: 0, kd: 0, rate: 0 };
+const defaultRow: [number, number, number, number, number, number, number, number] = [
+  0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+const defaultRovConfig: RovConfig = {
+  microcontrollerFirmwareVariant: 'pwm',
+  fluidType: 'freshwater',
+  smoothingFactor: 0,
+  thrusterPinSetup: {
+    identifiers: [0, 0, 0, 0, 0, 0, 0, 0],
+    spinDirections: [0, 0, 0, 0, 0, 0, 0, 0],
+  },
+  thrusterAllocation: [
+    defaultRow,
+    defaultRow,
+    defaultRow,
+    defaultRow,
+    defaultRow,
+    defaultRow,
+    defaultRow,
+    defaultRow,
+  ],
+  regulator: {
+    pitch: defaultAxisConfig,
+    roll: defaultAxisConfig,
+    yaw: defaultAxisConfig,
+    depth: defaultAxisConfig,
+    fpvMode: false,
+  },
+  directionCoefficients: { surge: 0, sway: 0, heave: 0 },
+  power: {
+    userMaxPower: 0,
+    regulatorMaxPower: 0,
+    batteryMinVoltage: 0,
+    batteryMaxVoltage: 0,
+  },
+};
+
+const [rovConfigStore, setRovConfigStoreInternal] = createStore<RovConfig>(defaultRovConfig);
+
+function setRovConfigStore(value: RovConfig) {
+  setRovConfigStoreInternal(reconcile(value));
+}
 
 async function requestRovConfig() {
-  if (!connectionStatusStore.state.isConnected) return;
+  if (!connectionStatusStore.isConnected) return;
 
   await invoke('request_rov_config').catch((error) => {
     logError('Failed to request ROV config:', error);
@@ -80,22 +136,13 @@ async function requestRovConfig() {
 }
 
 async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
-  const currentRovConfig = rovConfigStore.state;
-  if (!currentRovConfig) {
-    logError('Current ROV config is null');
-    toast.error('Current ROV config is null');
-    return;
-  }
+  const currentRovConfig = { ...rovConfigStore };
+  const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
 
-  const newRovConfig = {
-    ...currentRovConfig,
-    ...newConfigOptions,
-  };
-
-  rovConfigStore.setState(() => newRovConfig);
+  setRovConfigStore(newRovConfig);
 
   await invoke('set_rov_config', { payload: newRovConfig }).catch((error) => {
-    rovConfigStore.setState(() => currentRovConfig);
+    setRovConfigStore(currentRovConfig);
     logError('Failed to set ROV config:', error);
     toast.error('Failed to set ROV config. Changes reverted.');
   });
@@ -103,15 +150,18 @@ async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
 
 export {
   rovConfigStore,
+  setRovConfigStore,
   requestRovConfig,
   setRovConfig,
   FluidType,
   MicrocontrollerFirmwareVariant,
+  defaultRovConfig,
+  type AxisConfig,
   type Regulator,
   type DirectionCoefficients,
   type RovConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,
-  type Row,
   type Power,
+  type RegulatorSuggestions,
 };

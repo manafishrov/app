@@ -1,5 +1,5 @@
-import { Store } from '@tanstack/react-store';
+import { createSignal } from 'solid-js';
 
-const firmwareVersionStore = new Store<string | null>(null);
+const [firmwareVersionStore, setFirmwareVersionStore] = createSignal<string | null>(null);
 
-export { firmwareVersionStore };
+export { firmwareVersionStore, setFirmwareVersionStore };

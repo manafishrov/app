@@ -1,4 +1,4 @@
-import { Store } from '@tanstack/react-store';
+import { createStore } from 'solid-js/store';
 
 type RecordingState = {
   isRecording: boolean;
@@ -6,19 +6,22 @@ type RecordingState = {
   webrtcConnected: boolean;
 };
 
-const recordingStore = new Store<RecordingState>({
+const defaultRecordingState: RecordingState = {
   isRecording: false,
   startTime: null,
   webrtcConnected: false,
-});
+};
+
+const [recordingStore, setRecordingStore] = createStore<RecordingState>(defaultRecordingState);
 
 function setRecordingState(newState: Partial<RecordingState>) {
-  recordingStore.setState((prev) => ({ ...prev, ...newState }));
+  setRecordingStore(newState);
 }
 
 function getDuration() {
-  const state = recordingStore.state;
-  return state.isRecording && state.startTime ? Date.now() - state.startTime : 0;
+  return recordingStore.isRecording && recordingStore.startTime
+    ? Date.now() - recordingStore.startTime
+    : 0;
 }
 
-export { recordingStore, setRecordingState, getDuration, type RecordingState };
+export { recordingStore, setRecordingStore, setRecordingState, getDuration, type RecordingState };

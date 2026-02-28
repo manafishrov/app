@@ -1,9 +1,9 @@
-import { Store } from '@tanstack/react-store';
+import { createStore, reconcile } from 'solid-js/store';
 
 type SystemHealth = {
-  imuOk: boolean;
-  pressureSensorOk: boolean;
-  microcontrollerOk: boolean;
+  imuHealthy: boolean;
+  pressureSensorHealthy: boolean;
+  microcontrollerHealthy: boolean;
 };
 
 type RovStatus = {
@@ -14,16 +14,20 @@ type RovStatus = {
   health: SystemHealth;
 };
 
-const rovStatusStore = new Store<RovStatus>({
+const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   pitchStabilization: false,
   rollStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
   health: {
-    imuOk: false,
-    pressureSensorOk: false,
-    microcontrollerOk: false,
+    imuHealthy: false,
+    pressureSensorHealthy: false,
+    microcontrollerHealthy: false,
   },
 });
 
-export { rovStatusStore, type RovStatus };
+function setRovStatusStore(value: RovStatus) {
+  setRovStatusStoreInternal(reconcile(value));
+}
+
+export { rovStatusStore, setRovStatusStore, type RovStatus, type SystemHealth };

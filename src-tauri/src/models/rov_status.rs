@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SystemHealth {
-  pub imu_ok: bool,
-  pub pressure_sensor_ok: bool,
-  pub microcontroller_ok: bool,
+  pub imu_healthy: bool,
+  pub pressure_sensor_healthy: bool,
+  pub microcontroller_healthy: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

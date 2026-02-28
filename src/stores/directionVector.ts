@@ -1,7 +1,13 @@
-import { Store } from '@tanstack/react-store';
+import { createStore, reconcile } from 'solid-js/store';
 
 type DirectionVector = [number, number, number, number, number, number, number, number];
 
-const directionVectorStore = new Store<DirectionVector>([0, 0, 0, 0, 0, 0, 0, 0]);
+const [directionVectorStore, setDirectionVectorStoreInternal] = createStore<DirectionVector>([
+  0, 0, 0, 0, 0, 0, 0, 0,
+]);
 
-export { directionVectorStore, type DirectionVector };
+function setDirectionVectorStore(value: DirectionVector) {
+  setDirectionVectorStoreInternal(reconcile(value));
+}
+
+export { directionVectorStore, setDirectionVectorStore, type DirectionVector };

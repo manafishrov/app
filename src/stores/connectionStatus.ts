@@ -1,13 +1,17 @@
-import { Store } from '@tanstack/react-store';
+import { createStore, reconcile } from 'solid-js/store';
 
 type ConnectionStatus = {
   isConnected: boolean;
   delay: number;
 };
 
-const connectionStatusStore = new Store<ConnectionStatus>({
+const [connectionStatusStore, setConnectionStatusStoreInternal] = createStore<ConnectionStatus>({
   isConnected: false,
   delay: 0,
 });
 
-export { connectionStatusStore, type ConnectionStatus };
+function setConnectionStatusStore(value: ConnectionStatus) {
+  setConnectionStatusStoreInternal(reconcile(value));
+}
+
+export { connectionStatusStore, setConnectionStatusStore, type ConnectionStatus };
