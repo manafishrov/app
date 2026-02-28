@@ -1,8 +1,11 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
-import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
-import react from '@vitejs/plugin-react-swc';
-import { resolve } from 'node:path';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import path from 'node:path';
+import AutoImport from 'unplugin-auto-import/vite';
+import Icons from 'unplugin-icons/vite';
 import { defineConfig } from 'vite';
+import solid from 'vite-plugin-solid';
 
 declare const process: {
   env: {
@@ -12,34 +15,48 @@ declare const process: {
 
 const host = process.env.TAURI_DEV_HOST;
 
-const config = defineConfig({
+export default defineConfig({
   plugins: [
-    TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
-    react(),
     tailwindcss(),
+    paraglideVitePlugin({
+      project: './i18n',
+      outdir: './src/paraglide',
+      strategy: ['url', 'cookie', 'baseLocale'],
+      emitTsDeclarations: true,
+    }),
+    tanstackRouter({
+      target: 'solid',
+      autoCodeSplitting: true,
+    }),
+    Icons({
+      compiler: 'solid',
+    }),
+    AutoImport({
+      imports: ['solid-js'],
+      dts: './src/auto-imports.d.ts',
+    }),
+    solid(),
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, 'src'),
     },
+    dedupe: ['solid-js', '@tanstack/solid-router', '@tanstack/solid-form', 'tailwindcss'],
   },
-
   clearScreen: false,
   server: {
     port: 1420,
     strictPort: true,
     host: host ?? false,
-    hmr: host
-      ? {
-          protocol: 'ws',
-          host,
-          port: 1421,
-        }
-      : undefined,
+    ...(host && {
+      hmr: {
+        protocol: 'ws',
+        host,
+        port: 1421,
+      },
+    }),
     watch: {
       ignored: ['**/src-tauri/**'],
     },
   },
 });
-
-export default config;
