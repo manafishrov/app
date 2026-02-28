@@ -1,27 +1,21 @@
 <!doctype html>
-<html lang="en" class="h-full w-full">
+<html lang="en" class="size-full">
   <head>
     <script>
-      (function () {
+      (function() {
         try {
-          const theme = localStorage.getItem('theme') ?? 'system';
-          const isDark =
-            theme === 'dark' ||
-            (theme === 'system' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches);
-
+          var theme = localStorage.getItem('theme') || 'system';
+          var isDark = theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) document.documentElement.classList.add('dark');
         } catch (e) {}
       })();
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manafish</title>
   </head>
-  <body
-    class="bg-background text-foreground h-full w-full font-sans antialiased select-none"
-  >
-    <div id="root" class="h-full w-full overflow-hidden"></div>
+  <body class="size-full bg-background text-foreground font-default">
+    <div id="root" class="flex size-full flex-col"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
