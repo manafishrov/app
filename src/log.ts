@@ -68,7 +68,7 @@ async function withErrorHandling<T>(
 }
 
 async function createLogRecord(logEntry: LogEntry): Promise<void> {
-  if (logEntry.level === 'info' && !configStore.state?.infoLogging) {
+  if (logEntry.level === 'info' && !configStore.infoLogging) {
     return;
   }
 
