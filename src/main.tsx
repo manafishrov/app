@@ -4,7 +4,7 @@ import { render } from 'solid-js/web';
 import { deLocalizeUrl, localizeUrl } from '@/paraglide/runtime';
 import { routeTree } from '@/routeTree.gen';
 
-import '@/styles/app.css';
+import '@/styles.css';
 
 const router = createRouter({
   routeTree,
