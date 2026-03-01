@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type Event, type UnlistenFn } from '@tauri-apps/api/event';
 
 import { toast } from '@/components/ui/Toaster';
-import { logError, logWarn } from '@/log';
+import { logError, logWarn } from '@/lib/log';
 
 export type CleanupFn = () => void;
 

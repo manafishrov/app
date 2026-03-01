@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import type { CleanupFn } from '@/tauri/core';
 
 import { toast } from '@/components/ui/Toaster';
-import { logError } from '@/log';
+import { logError } from '@/lib/log';
 
 const EVENT = 'show_toast';
 

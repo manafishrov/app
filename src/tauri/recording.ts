@@ -1,10 +1,42 @@
 import { join } from '@tauri-apps/api/path';
-import { readDir } from '@tauri-apps/plugin-fs';
+import { mkdir, readDir } from '@tauri-apps/plugin-fs';
 
 import { toast } from '@/components/ui/Toaster';
-import { logError, logInfo } from '@/log';
+import { logError, logInfo } from '@/lib/log';
 import { configStore } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
+
+export const ensureVideoDirectory = async (): Promise<void> => {
+  try {
+    await mkdir(configStore.videoDirectory, { recursive: true });
+  } catch (error) {
+    logError('Failed to create video directory:', error);
+    toast.error('Failed to start recording');
+    throw error;
+  }
+};
+
+export const createRecordingPath = async (): Promise<string> => {
+  const timestamp = new Date().toISOString().replace('T', '_').replace(/[:.]/g, '-').slice(0, 19);
+  return join(configStore.videoDirectory, `Recording_${timestamp}_temp.webm`);
+};
+
+export const appendRecordingChunk = async (tempPath: string, chunk: Uint8Array): Promise<void> => {
+  try {
+    await invokeCommand('append_recording_chunk', { tempPath, chunk: Array.from(chunk) });
+  } catch (error) {
+    logError('Failed to append recording chunk:', error);
+  }
+};
+
+export const saveRecording = async (tempPath: string): Promise<void> => {
+  try {
+    await invokeCommand('save_recording', { tempPath });
+  } catch (error) {
+    logError('Failed to save recording:', error);
+    toast.error('Failed to save recording');
+  }
+};
 
 export const recoverTempRecordings = async (): Promise<void> => {
   const videoDirectory = configStore.videoDirectory;
@@ -24,7 +56,6 @@ export const recoverTempRecordings = async (): Promise<void> => {
 
       for (const fileName of tempFiles) {
         const tempPath = await join(videoDirectory, fileName);
-
         await invokeCommand('save_recording', { tempPath }).catch((err) => {
           logError('Failed to recover temp file:', fileName, err);
         });
@@ -33,8 +64,4 @@ export const recoverTempRecordings = async (): Promise<void> => {
   } catch (error) {
     logError('Error during temp file recovery:', error);
   }
-};
-
-export const saveRecording = async (tempPath: string): Promise<void> => {
-  await invokeCommand('save_recording', { tempPath });
 };

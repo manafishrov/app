@@ -1,4 +1,4 @@
-import { createLogRecord, type LogEntry } from '@/log';
+import { createLogRecord, type LogEntry } from '@/lib/log';
 import { createListener } from '@/tauri/core';
 
 const EVENT = 'log_message';

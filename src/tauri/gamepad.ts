@@ -1,7 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 
 import { toast } from '@/components/ui/Toaster';
-import { logError } from '@/log';
+import { logError } from '@/lib/log';
 import { invokeCommand, type CleanupFn } from '@/tauri/core';
 
 const EVENT = 'gamepad_event';
