@@ -6,7 +6,7 @@ import { logError, logInfo } from '@/log';
 import { configStore } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
 
-export async function recoverTempRecordings(): Promise<void> {
+export const recoverTempRecordings = async (): Promise<void> => {
   const videoDirectory = configStore.videoDirectory;
   if (!videoDirectory) return;
 
@@ -33,8 +33,8 @@ export async function recoverTempRecordings(): Promise<void> {
   } catch (error) {
     logError('Error during temp file recovery:', error);
   }
-}
+};
 
-export async function saveRecording(tempPath: string): Promise<void> {
+export const saveRecording = async (tempPath: string): Promise<void> => {
   await invokeCommand('save_recording', { tempPath });
-}
+};

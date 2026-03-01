@@ -26,8 +26,8 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   },
 });
 
-function setRovStatusStore(value: RovStatus) {
+const setRovStatusStore = (value: RovStatus) => {
   setRovStatusStoreInternal(reconcile(value));
-}
+};
 
 export { rovStatusStore, setRovStatusStore, type RovStatus, type SystemHealth };

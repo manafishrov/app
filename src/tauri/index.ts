@@ -31,7 +31,7 @@ const listeners = [
 /**
  * Sets up all Tauri event listeners and returns a single cleanup function.
  */
-export async function setupAllListeners(): Promise<CleanupFn> {
+export const setupAllListeners = async (): Promise<CleanupFn> => {
   const disposables = new DisposableStack();
 
   const unlisteners = await Promise.all(listeners.map((setup) => setup()));
@@ -39,4 +39,4 @@ export async function setupAllListeners(): Promise<CleanupFn> {
   unlisteners.forEach((cleanup) => disposables.add(cleanup));
 
   return disposables.dispose;
-}
+};

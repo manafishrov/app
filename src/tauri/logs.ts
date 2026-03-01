@@ -3,6 +3,6 @@ import { createListener } from '@/tauri/core';
 
 const EVENT = 'log_message';
 
-export function setupLogsListener() {
+export const setupLogsListener = () => {
   return createListener<LogEntry>(EVENT, createLogRecord);
-}
+};

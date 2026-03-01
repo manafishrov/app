@@ -37,11 +37,11 @@ export type ListenerOptions = {
  * Creates a typed Tauri event listener with consistent error handling.
  * Returns a promise that resolves to a cleanup function.
  */
-export function createListener<T>(
+export const createListener = <T>(
   event: string,
   handler: (payload: T) => void,
   options?: ListenerOptions,
-): Promise<UnlistenFn> {
+): Promise<UnlistenFn> => {
   return listen<T>(event, (event: Event<T>) => {
     try {
       handler(event.payload);
@@ -64,16 +64,16 @@ export function createListener<T>(
     }
     return () => {};
   });
-}
+};
 
 /**
  * Type-safe wrapper around Tauri's invoke command with consistent error handling.
  */
-export async function invokeCommand<T>(
+export const invokeCommand = async <T>(
   command: string,
   args?: Record<string, unknown>,
   options?: ListenerOptions,
-): Promise<T> {
+): Promise<T> => {
   return invoke<T>(command, args).catch((error) => {
     const errorMsg = `Failed to invoke '${command}'`;
     if (options?.warnOnly) {
@@ -84,4 +84,4 @@ export async function invokeCommand<T>(
     }
     throw error;
   });
-}
+};

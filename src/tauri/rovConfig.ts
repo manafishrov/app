@@ -4,16 +4,16 @@ import { createListener, invokeCommand } from '@/tauri/core';
 
 const EVENT = 'rov_config_received';
 
-export function setupRovConfigListener() {
+export const setupRovConfigListener = () => {
   return createListener<RovConfig>(EVENT, setRovConfigStore);
-}
+};
 
-export async function requestRovConfig() {
+export const requestRovConfig = async () => {
   if (!connectionStatusStore.isConnected) return;
   await invokeCommand('request_rov_config');
-}
+};
 
-export async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
+export const setRovConfig = async (newConfigOptions: Partial<RovConfig>) => {
   const currentRovConfig = { ...rovConfigStore };
   const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
 
@@ -23,4 +23,4 @@ export async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
     setRovConfigStore(currentRovConfig);
     throw error;
   });
-}
+};

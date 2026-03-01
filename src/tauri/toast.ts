@@ -23,11 +23,11 @@ type ToastPayload = {
 
 const activeLoadingToasts = new Map<string, ReturnType<typeof setTimeout>>();
 
-function camelToSnake(str: string): string {
+const camelToSnake = (str: string): string => {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-}
+};
 
-export async function setupToastListener(): Promise<CleanupFn> {
+export const setupToastListener = async (): Promise<CleanupFn> => {
   const unlisten = await listen<ToastPayload>(EVENT, ({ payload }) => {
     const typeMethodMap = {
       success: toast.success,
@@ -94,4 +94,4 @@ export async function setupToastListener(): Promise<CleanupFn> {
     }
     activeLoadingToasts.clear();
   };
-}
+};

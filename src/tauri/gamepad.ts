@@ -1,3 +1,7 @@
+import { listen } from '@tauri-apps/api/event';
+
+import { toast } from '@/components/ui/Toaster';
+import { logError } from '@/log';
 import { invokeCommand, type CleanupFn } from '@/tauri/core';
 
 const EVENT = 'gamepad_event';
@@ -15,11 +19,11 @@ type GamepadData = {
 
 const gamepads: (Gamepad | null)[] = [null, null, null, null];
 
-function getGamepads() {
+const getGamepads = () => {
   return [...gamepads];
-}
+};
 
-function createGamepadFromEvent(event: GamepadData): Gamepad {
+const createGamepadFromEvent = (event: GamepadData): Gamepad => {
   const { id, index, axes, connected, mapping, timestamp, vibrationActuator } = event;
   const buttons = event.buttons.map(
     (btn) =>
@@ -58,9 +62,9 @@ function createGamepadFromEvent(event: GamepadData): Gamepad {
     hapticActuators: [] as readonly GamepadHapticActuator[],
     vibrationActuator: vibrationActuatorObj as GamepadHapticActuator | null,
   } as Gamepad;
-}
+};
 
-function handleGamepadEvent({ payload }: { payload: GamepadData }) {
+const handleGamepadEvent = ({ payload }: { payload: GamepadData }) => {
   const gamepad = createGamepadFromEvent(payload);
   const prevConnected = gamepads[gamepad.index]?.connected ?? false;
 
@@ -75,9 +79,9 @@ function handleGamepadEvent({ payload }: { payload: GamepadData }) {
   } else {
     gamepads[gamepad.index] = gamepad;
   }
-}
+};
 
-export async function setupGamepadListener(): Promise<CleanupFn> {
+export const setupGamepadListener = async (): Promise<CleanupFn> => {
   navigator.getGamepads = getGamepads;
 
   await invokeCommand('start_gamepad_stream');
@@ -89,18 +93,18 @@ export async function setupGamepadListener(): Promise<CleanupFn> {
   });
 
   return unlisten;
-}
+};
 
-export async function vibrateGamepad(
+export const vibrateGamepad = async (
   index: number,
   weakMagnitude: number,
   strongMagnitude: number,
   duration: number,
-) {
+) => {
   await invokeCommand('gamepad_vibrate', {
     index,
     low_freq: weakMagnitude,
     high_freq: strongMagnitude,
     duration_ms: duration,
   });
-}
+};

@@ -10,8 +10,8 @@ const [connectionStatusStore, setConnectionStatusStoreInternal] = createStore<Co
   delay: 0,
 });
 
-function setConnectionStatusStore(value: ConnectionStatus) {
+const setConnectionStatusStore = (value: ConnectionStatus) => {
   setConnectionStatusStoreInternal(reconcile(value));
-}
+};
 
 export { connectionStatusStore, setConnectionStatusStore, type ConnectionStatus };

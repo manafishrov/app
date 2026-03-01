@@ -122,20 +122,20 @@ const defaultRovConfig: RovConfig = {
 
 const [rovConfigStore, setRovConfigStoreInternal] = createStore<RovConfig>(defaultRovConfig);
 
-function setRovConfigStore(value: RovConfig) {
+const setRovConfigStore = (value: RovConfig) => {
   setRovConfigStoreInternal(reconcile(value));
-}
+};
 
-async function requestRovConfig() {
+const requestRovConfig = async () => {
   if (!connectionStatusStore.isConnected) return;
 
   await invoke('request_rov_config').catch((error) => {
     logError('Failed to request ROV config:', error);
     toast.error('Failed to request ROV config');
   });
-}
+};
 
-async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
+const setRovConfig = async (newConfigOptions: Partial<RovConfig>) => {
   const currentRovConfig = { ...rovConfigStore };
   const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
 
@@ -146,7 +146,7 @@ async function setRovConfig(newConfigOptions: Partial<RovConfig>) {
     logError('Failed to set ROV config:', error);
     toast.error('Failed to set ROV config. Changes reverted.');
   });
-}
+};
 
 export {
   rovConfigStore,

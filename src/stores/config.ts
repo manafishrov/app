@@ -235,20 +235,20 @@ const defaultConfig: Config = {
 
 const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);
 
-function setConfigStore(value: Config) {
+const setConfigStore = (value: Config) => {
   setConfigStoreInternal(reconcile(value));
-}
+};
 
-async function getConfig() {
+const getConfig = async () => {
   await invoke<Config>('get_config')
     .then((payload) => setConfigStore(payload))
     .catch((error) => {
       logError('Failed to get config:', error);
       toast.error('Failed to get config');
     });
-}
+};
 
-async function setConfig(newConfigOptions: Partial<Config>) {
+const setConfig = async (newConfigOptions: Partial<Config>) => {
   const currentConfig = { ...configStore };
   const newConfig = { ...currentConfig, ...newConfigOptions };
 
@@ -259,7 +259,7 @@ async function setConfig(newConfigOptions: Partial<Config>) {
     logError('Failed to set config:', error);
     toast.error('Failed to set config. Changes reverted.');
   });
-}
+};
 
 export {
   configStore,
