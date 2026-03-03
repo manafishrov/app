@@ -3,7 +3,7 @@ import { VideoIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
-import { recordingStore, setRecordingState } from '@/stores/recording';
+import { recordingStore, setRecordingStore } from '@/stores/recording';
 
 function RecordingButton() {
   const { isRecording, webrtcConnected } = useStore(recordingStore, (state) => ({
@@ -12,7 +12,7 @@ function RecordingButton() {
   }));
 
   function handleRecordingClick() {
-    setRecordingState({
+    setRecordingStore({
       isRecording: !isRecording,
       startTime: isRecording ? null : Date.now(),
     });

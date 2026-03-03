@@ -3,7 +3,7 @@ import type { Config, GamepadInput, KeyboardInput } from '@/stores/config';
 
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
-import { setRecordingState } from '@/stores/recording';
+import { setRecordingStore } from '@/stores/recording';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
 type ToggleState = {
@@ -74,7 +74,7 @@ export const createStateToggleLoop = (
     );
 
     if (recordPressed && !lastState.record && webrtcConnected) {
-      setRecordingState({
+      setRecordingStore({
         isRecording: !isRecording,
         startTime: isRecording ? null : Date.now(),
       });

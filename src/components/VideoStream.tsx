@@ -4,7 +4,7 @@ import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 import { logInfo } from '@/lib/log';
 import { createWebRTCConnection, createRecording } from '@/lib/stream';
 import { configStore } from '@/stores/config';
-import { recordingStore, setRecordingState } from '@/stores/recording';
+import { recordingStore, setRecordingStore } from '@/stores/recording';
 const VideoStream = () => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);
@@ -16,7 +16,12 @@ const VideoStream = () => {
   const recording = createRecording(() => video);
   createEffect(
     on(
-      () => [configStore.ipAddress, configStore.webrtcSignalingApiPort, configStore.webrtcSignalingApiPath] as const,
+      () =>
+        [
+          configStore.ipAddress,
+          configStore.webrtcSignalingApiPort,
+          configStore.webrtcSignalingApiPath,
+        ] as const,
       ([ipAddress, port, path]) => {
         if (ipAddress && port && path) connection.setup();
       },
@@ -42,7 +47,7 @@ const VideoStream = () => {
       () => {
         if (recordingStore.isRecording) {
           recording.stop();
-          setRecordingState({ isRecording: false, startTime: null });
+          setRecordingStore({ isRecording: false, startTime: null });
         }
       },
       { defer: true },
@@ -53,7 +58,7 @@ const VideoStream = () => {
     connection.dispose();
     if (recordingStore.isRecording) {
       recording.stop().catch(() => {});
-      setRecordingState({ isRecording: false, startTime: null });
+      setRecordingStore({ isRecording: false, startTime: null });
     }
   });
 
@@ -76,4 +81,3 @@ const VideoStream = () => {
 };
 
 export { VideoStream };
-

@@ -1,6 +1,6 @@
 import { logError, logInfo } from '@/lib/log';
 import { configStore } from '@/stores/config';
-import { setRecordingState } from '@/stores/recording';
+import { setRecordingStore } from '@/stores/recording';
 import {
   appendRecordingChunk,
   createRecordingPath,
@@ -35,7 +35,7 @@ export const createWebRTCConnection = (
     const { ipAddress, webrtcSignalingApiPort, webrtcSignalingApiPath } = configStore;
     if (!ipAddress || !webrtcSignalingApiPort || !webrtcSignalingApiPath) return;
 
-    setRecordingState({ webrtcConnected: false });
+    setRecordingStore({ webrtcConnected: false });
     peerConnection?.close();
     peerConnection = new RTCPeerConnection();
 
@@ -45,7 +45,7 @@ export const createWebRTCConnection = (
       if (disposed) return;
       logInfo('WebRTC track received, kind:', event.track.kind);
       setIsLoading(true);
-      setRecordingState({ webrtcConnected: true });
+      setRecordingStore({ webrtcConnected: true });
       const stream = event.streams[0];
       const video = getVideo();
       if (stream && video) {
@@ -61,7 +61,7 @@ export const createWebRTCConnection = (
       if (disposed) return;
       if (['failed', 'disconnected', 'closed'].includes(pc.iceConnectionState)) {
         logInfo(`WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`);
-        setRecordingState({ webrtcConnected: false });
+        setRecordingStore({ webrtcConnected: false });
         setHasError(true);
         setIsLoading(false);
         scheduleRetry(setup);
