@@ -50,7 +50,8 @@
       {
         "allowArrowFunctions": true
       }
-    ]
+    ],
+    "unicorn/prefer-arrow-functions": "error"
   },
   "overrides": [
     {
@@ -71,9 +72,21 @@
       }
     },
     {
-      "files": ["src/routes/**/*.tsx", "src/main.tsx"],
+      "files": ["src/routes/**/*.tsx"],
       "rules": {
-        "unicorn/filename-case": "off"
+        "unicorn/filename-case": [
+          "error",
+          {
+            "case": "kebabCase",
+            "ignore": ["^__root$", "^index$"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.gen.ts", "**/autoImports.d.ts"],
+      "rules": {
+        "unicorn/no-abusive-eslint-disable": "off"
       }
     }
   ]
