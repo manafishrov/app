@@ -1,22 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/solid-router';
+import { type Component } from 'solid-js';
 
-import { ConnectionSettingsForm } from '@/components/settings/ConnectionSettingsForm';
+// import { ConnectionSettingsForm } from '@/components/settings/ConnectionSettingsForm';
 
-export const Route = createFileRoute('/settings/connection/')({
-  component: Connection,
-});
-
-function Connection() {
+const Connection: Component = () => {
   return (
     <>
-      <div className='mb-6 flex flex-col gap-2'>
-        <h1 className='text-4xl font-extrabold tracking-tight'>Connection</h1>
-        <p className='text-muted-foreground'>
+      <div class='mb-6 flex flex-col gap-2'>
+        <h1 class='text-4xl font-extrabold tracking-tight'>Connection</h1>
+        <p class='text-muted-foreground'>
           Configure your Manafish connection settings. Only change this if you know what you are
           doing.
         </p>
       </div>
-      <ConnectionSettingsForm />
+      {/* <ConnectionSettingsForm /> */}
     </>
   );
-}
+};
+
+export const Route = createFileRoute('/settings/connection/')({
+  component: Connection,
+});

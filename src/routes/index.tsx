@@ -1,19 +1,17 @@
 import { onCleanup, onMount } from 'solid-js';
 import { createSignal } from 'solid-js';
 
-import { Controls } from '@/components/controls/Controls';
+// import { Controls } from '@/components/controls/Controls';
 import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { VideoStream } from '@/components/VideoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
-import { cx } from '@/lib/utils';
 import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';
+import { cn } from '@manafishrov/ui';
 
 export default function Home() {
   let mainRef: HTMLElement | undefined;
   const [sizeClass, setSizeClass] = createSignal<'w-full' | 'h-full'>('w-full');
-  const [showControls, setShowControls] = createSignal(false);
-  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
   onMount(() => {
     const { pressedKeys, cleanup: keyboardCleanup } = createKeyboardTracker();
@@ -60,26 +58,12 @@ export default function Home() {
     onCleanup(() => window.removeEventListener('resize', handleResize));
   });
 
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-    }
-    hideTimeout = setTimeout(() => {
-      setShowControls(false);
-    }, 2000);
-  };
-
   return (
-    <main
-      ref={mainRef}
-      class='flex h-full w-full items-center justify-center p-1'
-      onMouseMove={handleMouseMove}
-    >
-      <div class={cx('bg-card dark text-foreground relative aspect-4/3 rounded-lg', sizeClass())}>
+    <main ref={mainRef} class='flex h-full w-full items-center justify-center p-1'>
+      <div class={cn('bg-card dark text-foreground relative aspect-4/3 rounded-lg', sizeClass())}>
         <VideoStream />
         <RovOverlay />
-        <Controls showControls={showControls()} />
+        {/* <Controls showControls={showControls()} /> */}
       </div>
     </main>
   );

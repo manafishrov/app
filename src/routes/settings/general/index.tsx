@@ -1,167 +1,83 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useStore } from '@tanstack/react-store';
+import { createFileRoute } from '@tanstack/solid-router';
 import { invoke } from '@tauri-apps/api/core';
+import { type Component, Show } from 'solid-js';
 
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/Select';
-import { Spinner } from '@/components/ui/Spinner';
-import { toast } from '@/components/ui/Toaster';
+import { Badge } from '@manafishrov/ui/badge';
+import { Button } from '@manafishrov/ui/button';
+import { Spinner } from '@manafishrov/ui/spinner';
+import { toast } from '@manafishrov/ui/toaster';
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';
-import {
-  FluidType,
-  MicrocontrollerFirmwareVariant,
-  rovConfigStore,
-  setRovConfig,
-} from '@/stores/rovConfig';
+import { rovConfigStore } from '@/stores/rovConfig';
 
-export const Route = createFileRoute('/settings/general/')({
-  component: General,
-});
-
-function General() {
-  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
-  const rovConfig = useStore(rovConfigStore, (state) =>
-    state
-      ? {
-          microcontrollerFirmwareVariant: state.microcontrollerFirmwareVariant,
-          fluidType: state.fluidType,
-          smoothingFactor: state.smoothingFactor,
-        }
-      : null,
-  );
-  const firmwareVersion = useStore(firmwareVersionStore);
-
-  async function flashMicrocontrollerFirmware() {
+const General: Component = () => {
+  const flashMicrocontrollerFirmware = async () => {
     await invoke('flash_microcontroller_firmware', {
-      payload: rovConfig?.microcontrollerFirmwareVariant,
+      payload: rovConfigStore.microcontrollerFirmwareVariant,
     }).catch((error) => {
       logError('Failed to flash microcontroller firmware:', error);
-      toast.error('Failed to flash microcontroller firmware');
+      toast.create({ title: 'Failed to flash microcontroller firmware', type: 'error' });
     });
-  }
+  };
+
+  const firmware = () => firmwareVersionStore;
 
   return (
     <>
-      <div className='mb-6 flex flex-col gap-2'>
-        <h1 className='text-4xl font-extrabold tracking-tight'>General</h1>
-        <p className='text-muted-foreground'>Generic settings for the Manafish ROV.</p>
+      <div class='mb-6 flex flex-col gap-2'>
+        <h1 class='text-4xl font-extrabold tracking-tight'>General</h1>
+        <p class='text-muted-foreground'>Generic settings for the Manafish ROV.</p>
       </div>
-      {!isConnected || !rovConfig ? (
-        <div className='flex h-96 w-full items-center justify-center'>
-          <Spinner size='lg' />
-        </div>
-      ) : (
-        <div className='space-y-6'>
-          {firmwareVersion && (
+      <Show
+        when={connectionStatusStore.isConnected && rovConfigStore}
+        fallback={
+          <div class='flex h-96 w-full items-center justify-center'>
+            <Spinner class='size-8' />
+          </div>
+        }
+      >
+        <div class='space-y-6'>
+          {firmware() && (
             <div>
-              <h4 className='text-lg font-medium'>Firmware version</h4>
-              <p className='text-muted-foreground text-sm'>
+              <h4 class='text-lg font-medium'>Firmware version</h4>
+              <p class='text-muted-foreground text-sm'>
                 Current version of the Manafish ROV firmware.
               </p>
-              <Badge className='bg-primary/10 text-primary mt-2 rounded-full px-3 py-1 text-sm font-medium'>
-                v{firmwareVersion}
+              <Badge class='bg-primary/10 text-primary mt-2 rounded-full px-3 py-1 text-sm font-medium'>
+                v{firmware()}
               </Badge>
             </div>
           )}
           <div>
-            <h4 className='text-lg font-medium'>Microcontroller firmware</h4>
-            <p className='text-muted-foreground text-sm'>
-              Select and flash the firmware with the specified output protocol for the
-              microcontroller that generates the control signals for the thrusters.{' '}
-              <strong>DSHOT</strong> is a modern digital protocol that supports bi-directional
-              communication, allowing reading of thruster RPM, voltage, current and temperature.
-              However, it can be more sensitive to noise and may introduce higher latency if the
-              ESCs are not powerful enough. <strong>PWM</strong> is the older analog protocol and
-              does not support feedback, but it is generally more robust. It is recommended to use
-              DSHOT first, and switch to PWM only if you encounter issues.
+            <h4 class='text-lg font-medium'>Microcontroller firmware</h4>
+            <p class='text-muted-foreground text-sm'>
+              Select and flash the firmware for the microcontroller.
             </p>
-            <div className='mt-2 flex items-center gap-3'>
-              <Select
-                value={rovConfig.microcontrollerFirmwareVariant}
-                onValueChange={(value: string) =>
-                  setRovConfig({
-                    microcontrollerFirmwareVariant: value as MicrocontrollerFirmwareVariant,
-                  })
-                }
-                disabled={!rovConfig}
-              >
-                <SelectTrigger className='w-40'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Firmware</SelectLabel>
-                    <SelectItem value={MicrocontrollerFirmwareVariant.pwm}>PWM</SelectItem>
-                    <SelectItem value={MicrocontrollerFirmwareVariant.dshot}>DSHOT</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div class='mt-2 flex items-center gap-3'>
               <Button onClick={flashMicrocontrollerFirmware}>Flash</Button>
             </div>
           </div>
           <div>
-            <h4 className='text-lg font-medium'>Fluid type</h4>
-            <p className='text-muted-foreground text-sm'>
+            <h4 class='text-lg font-medium'>Fluid type</h4>
+            <p class='text-muted-foreground text-sm'>
               Set correct fluid type to get accurate water pressure readings.
             </p>
-            <div className='mt-2 flex items-center gap-3'>
-              <Select
-                value={rovConfig.fluidType}
-                onValueChange={(value: string) =>
-                  setRovConfig({
-                    fluidType: value as FluidType,
-                  })
-                }
-                disabled={!rovConfig}
-              >
-                <SelectTrigger className='w-40'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Fluid Type</SelectLabel>
-                    <SelectItem value={FluidType.freshWater}>Freshwater</SelectItem>
-                    <SelectItem value={FluidType.saltWater}>Saltwater</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+            <div class='mt-2' />
           </div>
           <div>
-            <h4 className='text-lg font-medium'>Smoothing factor</h4>
-            <p className='text-muted-foreground text-sm'>
-              How much smoothing applied to the movement of the ROV. Smoothing can be nice for
-              getting smooth movement and camera shots, but it can also make the ROV feel less
-              responsive. 0 leads to no smoothing. As the value approaches 1, the smoothing
-              increases exponentially.
+            <h4 class='text-lg font-medium'>Smoothing factor</h4>
+            <p class='text-muted-foreground text-sm'>
+              How much smoothing applied to the movement of the ROV.
             </p>
-            <div className='mt-2 flex items-center gap-3'>
-              <Input
-                type='number'
-                min='0'
-                max='1'
-                step='0.01'
-                value={rovConfig.smoothingFactor}
-                onChange={(e) => setRovConfig({ smoothingFactor: parseFloat(e.target.value) })}
-                disabled={!rovConfig}
-                className='w-40'
-              />
-            </div>
+            <div class='mt-2' />
           </div>
         </div>
-      )}
+      </Show>
     </>
   );
-}
+};
+
+export const Route = createFileRoute('/settings/general/')({
+  component: General,
+});
