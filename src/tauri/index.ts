@@ -9,11 +9,11 @@ import { setupRovStatusListener } from '@/tauri/rovStatus';
 import { setupRovTelemetryListener } from '@/tauri/rovTelemetry';
 import { setupToastListener } from '@/tauri/toast';
 
-// Re-export commands for external use
 export { recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
 export { sendDirectionVector } from '@/tauri/directionVector';
+export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { vibrateGamepad } from '@/tauri/gamepad';
 
 const listeners = [
@@ -28,9 +28,6 @@ const listeners = [
   setupToastListener,
 ];
 
-/**
- * Sets up all Tauri event listeners and returns a single cleanup function.
- */
 export const setupAllListeners = async (): Promise<CleanupFn> => {
   const disposables = new DisposableStack();
 
