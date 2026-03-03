@@ -1,7 +1,7 @@
+import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
 
-import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
@@ -131,7 +131,7 @@ const requestRovConfig = async () => {
 
   await invoke('request_rov_config').catch((error) => {
     logError('Failed to request ROV config:', error);
-    toast.error('Failed to request ROV config');
+    toast.create({ title: 'Failed to request ROV config', type: 'error' });
   });
 };
 
@@ -144,7 +144,7 @@ const setRovConfig = async (newConfigOptions: Partial<RovConfig>) => {
   await invoke('set_rov_config', { payload: newRovConfig }).catch((error) => {
     setRovConfigStore(currentRovConfig);
     logError('Failed to set ROV config:', error);
-    toast.error('Failed to set ROV config. Changes reverted.');
+    toast.create({ title: 'Failed to set ROV config. Changes reverted.', type: 'error' });
   });
 };
 

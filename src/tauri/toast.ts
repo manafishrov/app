@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 
 import type { CleanupFn } from '@/tauri/core';
 
-import { toast } from '@/components/ui/Toaster';
+import { toast } from '@manafishrov/ui/toaster';
 import { logError } from '@/lib/log';
 
 const EVENT = 'show_toast';
@@ -15,83 +15,95 @@ type Cancel = {
 
 type ToastPayload = {
   id?: string;
-  toastType?: 'success' | 'info' | 'warn' | 'error' | 'loading';
-  message: string;
-  description?: string;
-  cancel?: Cancel;
+    toastType?: 'success' | 'info' | 'warn' | 'error' | 'loading';
+    message: string;
+    description?: string;
+    cancel?: Cancel;
 };
 
 const activeLoadingToasts = new Map<string, ReturnType<typeof setTimeout>>();
 
 const camelToSnake = (str: string): string => {
-  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+};
+
+const toastTypeMap: Record<string, 'success' | 'info' | 'warning' | 'error' | 'loading'> = {
+    success: 'success',
+    info: 'info',
+    warn: 'warning',
+    error: 'error',
+    loading: 'loading',
 };
 
 export const setupToastListener = async (): Promise<CleanupFn> => {
-  const unlisten = await listen<ToastPayload>(EVENT, ({ payload }) => {
-    const typeMethodMap = {
-      success: toast.success,
-      info: toast.info,
-      warn: toast.warning,
-      error: toast.error,
-      loading: toast.loading,
-    } as const;
+    const unlisten = await listen<ToastPayload>(EVENT, ({ payload }) => {
+        const type = toastTypeMap[payload.toastType ?? 'info'] ?? 'info';
+        const message = payload.message;
+        const type = payload.toastType ?? 'info';
 
-    const { id, toastType = 'message', message } = payload;
-    const toastMethod = typeMethodMap[toastType as keyof typeof typeMethodMap] || toast.message;
-
-    if (id && activeLoadingToasts.has(id)) {
-      clearTimeout(activeLoadingToasts.get(id));
-      activeLoadingToasts.delete(id);
-    }
-
-    if (toastType === 'loading' && id) {
-      const timeout = setTimeout(() => {
-        toast.error('Operation timed out', {
-          id,
-        });
-        activeLoadingToasts.delete(id);
-      }, 15000);
-      activeLoadingToasts.set(id, timeout);
-    }
-
-    const options: Parameters<typeof toastMethod>[1] = {};
-    if (payload.id !== undefined) options.id = payload.id;
-    if (payload.description !== undefined) options.description = payload.description;
-
-    if (payload.cancel !== undefined && payload.cancel !== null) {
-      options.cancel = {
-        label: 'Cancel',
-        onClick: (event) => {
-          event.preventDefault();
-          if (payload.cancel?.type) {
-            invoke(camelToSnake(payload.cancel.type), {
-              payload: payload.cancel.payload,
-            }).catch((error) => {
-              logError('Failed to invoke cancel command:', error);
-              toast.error('Failed to invoke cancel command');
-            });
-          }
-          if (payload.id && activeLoadingToasts.has(payload.id)) {
-            clearTimeout(activeLoadingToasts.get(payload.id));
+        if (payload.id && activeLoadingToasts.has(payload.id)) {
+            clearTimeout(activeLoadingToasts.get(payload.id)!);
             activeLoadingToasts.delete(payload.id);
-          }
-        },
-      };
-    }
+        }
 
-    toastMethod(message, options);
-  }).catch((error) => {
-    logError('Failed to listen to toast messages:', error);
-    toast.error('Failed to listen to toast messages');
-    return () => {};
-  });
+        if (payload.toastType === 'loading' && payload.id) {
+            const timeout = setTimeout(() => {
+                toast.create({
+                    title: 'Operation timed out',
+                    type: 'error',
+                });
+                activeLoadingToasts.delete(payload.id);
+            }, 15000);
+            activeLoadingToasts.set(payload.id, timeout);
+        }
 
-  return () => {
-    unlisten();
-    for (const timeout of activeLoadingToasts.values()) {
-      clearTimeout(timeout);
-    }
-    activeLoadingToasts.clear();
-  };
+        const toastOptions: {
+            title: message,
+            type,
+        };
+
+        if (payload.description !== undefined) {
+            toastOptions.description = payload.description;
+        }
+
+        if (payload.cancel !== undefined && payload.cancel !== null) {
+            toastOptions.action = {
+                label: 'Cancel',
+                onClick: () => {
+                    if (payload.cancel?.type) {
+                        invoke(camelToSnake(payload.cancel.type), {
+                            payload: payload.cancel.payload,
+                        }).catch((error) => {
+                            logError('Failed to invoke cancel command:', error);
+                            toast.create({
+                                title: 'Failed to invoke cancel command',
+                                type: 'error',
+                            });
+                        }
+                    }
+                    if (payload.id && activeLoadingToasts.has(payload.id)) {
+                        clearTimeout(activeLoadingToasts.get(payload.id)!);
+                        activeLoadingToasts.delete(payload.id);
+                    }
+                },
+            };
+        }
+
+        toast.create(toastOptions);
+    }).catch((error) => {
+        logError('Failed to listen to toast messages:', error);
+        toast.create({
+            title: 'Failed to listen to toast messages',
+            type: 'error',
+        });
+        return () => {};
+    });
+
+    return () => {
+        unlisten();
+        for (const timeout of activeLoadingToasts.values()) {
+            clearTimeout(timeout);
+        }
+        activeLoadingToasts.clear();
+    };
 };

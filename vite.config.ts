@@ -19,7 +19,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     paraglideVitePlugin({
-      project: './i18n',
+      project: './i18n.inlang',
       outdir: './src/paraglide',
       strategy: ['url', 'cookie', 'baseLocale'],
       emitTsDeclarations: true,

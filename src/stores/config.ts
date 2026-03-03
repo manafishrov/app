@@ -1,7 +1,7 @@
+import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
 
-import { toast } from '@/components/ui/Toaster';
 import { logError } from '@/lib/log';
 
 type KeyboardKey =
@@ -244,7 +244,7 @@ const getConfig = async () => {
     .then((payload) => setConfigStore(payload))
     .catch((error) => {
       logError('Failed to get config:', error);
-      toast.error('Failed to get config');
+      toast.create({ title: 'Failed to get config', type: 'error' });
     });
 };
 
@@ -257,7 +257,7 @@ const setConfig = async (newConfigOptions: Partial<Config>) => {
   await invoke('set_config', { payload: newConfig }).catch((error) => {
     setConfigStore(currentConfig);
     logError('Failed to set config:', error);
-    toast.error('Failed to set config. Changes reverted.');
+    toast.create({ title: 'Failed to set config. Changes reverted.', type: 'error' });
   });
 };
 

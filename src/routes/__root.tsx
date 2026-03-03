@@ -1,46 +1,58 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
+import { Toaster } from '@manafishrov/ui/toaster';
+import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
+import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools';
+import { type Component } from 'solid-js';
 
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import { Toaster } from '@/components/ui/Toaster';
-import { useConnectionStatusListener } from '@/hooks/useConnectionStatusListener';
-import { useFirmwareVersionListener } from '@/hooks/useFirmwareVersionListener';
-import { useGamepadListener } from '@/hooks/useGamepadListener';
-import { useLogListener } from '@/hooks/useLogListener';
-import { useRecordingRecovery } from '@/hooks/useRecordingRecovery';
-import { useRovStatusUpdateListener } from '@/hooks/useRovStatusUpdateListener';
-import { useRovTelemetryListener } from '@/hooks/useRovTelemetryListener';
-import { useToastListener } from '@/hooks/useToastListener';
+import * as m from '@/paraglide/messages';
+import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { getConfig } from '@/stores/config';
+import { recoverTempRecordings, setupAllListeners } from '@/tauri';
 
-export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
-}>()({
-  component: Root,
-  loader: getConfig,
-});
+const RootComponent: Component = () => {
+  onMount(async () => {
+    const cleanup = await setupAllListeners();
+    await recoverTempRecordings();
 
-function Root() {
-  useGamepadListener();
-  useLogListener();
-  useToastListener();
-  useConnectionStatusListener();
-  useRovTelemetryListener();
-  useRovStatusUpdateListener();
-  useFirmwareVersionListener();
-  useRecordingRecovery();
+    return cleanup;
+  });
 
   return (
     <>
-      <ThemeProvider>
-        <Outlet />
-        <Toaster />
-      </ThemeProvider>
-      <ReactQueryDevtools buttonPosition='bottom-right' />
+      <HeadContent />
       <TanStackRouterDevtools position='bottom-right' />
+      <ThemeProvider>
+        <LocaleProvider locale={getLocale()}>
+          <Outlet />
+          <Toaster />
+        </LocaleProvider>
+      </ThemeProvider>
     </>
   );
-}
+};
+
+const handleBeforeLoad = async () => {
+  document.documentElement.setAttribute('lang', getLocale());
+  const decision = await shouldRedirect({ url: globalThis.location.href });
+  if (decision.redirectUrl) {
+    return redirect({ href: decision.redirectUrl.href });
+  }
+  return decision;
+};
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      {
+        title: m.docs_page_title(),
+      },
+      {
+        name: 'description',
+        content: m.docs_description(),
+      },
+    ],
+  }),
+  component: RootComponent,
+  beforeLoad: handleBeforeLoad,
+  loader: getConfig,
+});

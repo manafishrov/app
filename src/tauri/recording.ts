@@ -1,7 +1,7 @@
+import { toast } from '@manafishrov/ui/toaster';
 import { join } from '@tauri-apps/api/path';
 import { mkdir, readDir } from '@tauri-apps/plugin-fs';
 
-import { toast } from '@/components/ui/Toaster';
 import { logError, logInfo } from '@/lib/log';
 import { configStore } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
@@ -11,7 +11,7 @@ export const ensureVideoDirectory = async (): Promise<void> => {
     await mkdir(configStore.videoDirectory, { recursive: true });
   } catch (error) {
     logError('Failed to create video directory:', error);
-    toast.error('Failed to start recording');
+    toast.create({ title: 'Failed to start recording', type: 'error' });
     throw error;
   }
 };
@@ -34,7 +34,7 @@ export const saveRecording = async (tempPath: string): Promise<void> => {
     await invokeCommand('save_recording', { tempPath });
   } catch (error) {
     logError('Failed to save recording:', error);
-    toast.error('Failed to save recording');
+    toast.create({ title: 'Failed to save recording', type: 'error' });
   }
 };
 
@@ -49,9 +49,10 @@ export const recoverTempRecordings = async (): Promise<void> => {
       .map((entry) => entry.name);
 
     if (tempFiles.length > 0) {
-      toast.info(
-        `Recovering ${tempFiles.length} unfinished recording${tempFiles.length === 1 ? '' : 's'}...`,
-      );
+      toast.create({
+        title: `Recovering ${tempFiles.length} unfinished recording${tempFiles.length === 1 ? '' : 's'}...`,
+        type: 'info',
+      });
       logInfo('Recovering temp files:', tempFiles);
 
       for (const fileName of tempFiles) {
