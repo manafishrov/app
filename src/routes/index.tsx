@@ -1,15 +1,15 @@
-import { onCleanup, onMount } from 'solid-js';
-import { createSignal } from 'solid-js';
+import { cn } from '@manafishrov/ui';
+import { createFileRoute } from '@tanstack/solid-router';
+import { createSignal, onCleanup, onMount } from 'solid-js';
 
 // import { Controls } from '@/components/controls/Controls';
-import { RovOverlay } from '@/components/overlay/RovOverlay';
+// import { RovOverlay } from '@/components/overlay/RovOverlay';
 import { VideoStream } from '@/components/VideoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';
-import { cn } from '@manafishrov/ui';
 
-export default function Home() {
+function Home() {
   let mainRef: HTMLElement | undefined;
   const [sizeClass, setSizeClass] = createSignal<'w-full' | 'h-full'>('w-full');
 
@@ -62,9 +62,12 @@ export default function Home() {
     <main ref={mainRef} class='flex h-full w-full items-center justify-center p-1'>
       <div class={cn('bg-card dark text-foreground relative aspect-4/3 rounded-lg', sizeClass())}>
         <VideoStream />
-        <RovOverlay />
-        {/* <Controls showControls={showControls()} /> */}
+        {/* <RovOverlay /> */}
       </div>
     </main>
   );
 }
+
+export const Route = createFileRoute('/')({
+  component: Home,
+});

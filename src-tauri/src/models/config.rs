@@ -116,6 +116,7 @@ pub enum GamepadInputType {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct KeyboardInput {
   pub key: KeyboardKey,
   pub min_value: f32,
@@ -123,6 +124,7 @@ pub struct KeyboardInput {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct GamepadInput {
   pub input: GamepadInputType,
   pub min_value: f32,
@@ -130,6 +132,7 @@ pub struct GamepadInput {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct KeyboardBindings {
   pub surge_forward: KeyboardInput,
   pub surge_backward: KeyboardInput,
@@ -153,6 +156,7 @@ pub struct KeyboardBindings {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
   pub surge_forward: GamepadInput,
   pub surge_backward: GamepadInput,

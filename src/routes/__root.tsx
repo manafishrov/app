@@ -44,11 +44,11 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        title: m.docs_page_title(),
+        title: m.app_title(),
       },
       {
         name: 'description',
-        content: m.docs_description(),
+        content: m.app_description(),
       },
     ],
   }),

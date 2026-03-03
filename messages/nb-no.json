@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
 
+  "app_title": "Manafish ROV",
+  "app_description": "En app for å styre Manafish ROV",
+
   "common_save": "Lagre",
   "common_back": "Tilbake",
   "common_cancel": "Avbryt",

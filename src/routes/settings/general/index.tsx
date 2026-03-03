@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/solid-router';
-import { invoke } from '@tauri-apps/api/core';
-import { type Component, Show } from 'solid-js';
-
 import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { toast } from '@manafishrov/ui/toaster';
+import { createFileRoute } from '@tanstack/solid-router';
+import { invoke } from '@tauri-apps/api/core';
+import { type Component, Show } from 'solid-js';
+
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';

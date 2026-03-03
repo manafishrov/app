@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
 
+  "app_title": "Manafish ROV",
+  "app_description": "An app for controlling the Manafish ROV",
+
   "common_save": "Save",
   "common_back": "Back",
   "common_cancel": "Cancel",
