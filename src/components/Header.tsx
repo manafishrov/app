@@ -1,3 +1,4 @@
+import { cn } from '@manafishrov/ui';
 import { Kbd, KbdGroup } from '@manafishrov/ui/kbd';
 import { Link } from '@manafishrov/ui/link';
 import {
@@ -80,11 +81,16 @@ function Header() {
   return (
     <header
       data-tauri-drag-region
-      class={`h-8 w-full border-b border-border bg-background select-none rounded-t-2xl fixed z-100 transition-opacity ${
-        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'opacity-100'
+      class={`h-8 w-full border-b border-border bg-background select-none fixed z-100 transition-opacity ${
+        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'opacity-100 rounded-t-2xl'
       }`}
     >
-      <div class='size-full flex items-center justify-between bg-muted/30 px-3 rounded-t-2xl'>
+      <div
+        class={cn(
+          'size-full flex items-center justify-between bg-muted/30 px-3',
+          !isFullscreen() && 'rounded-t-2xl',
+        )}
+      >
         <div data-tauri-drag-region={false} class='group flex items-center gap-2'>
           <button
             tabIndex={-1}

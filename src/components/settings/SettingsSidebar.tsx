@@ -1,5 +1,3 @@
-import type { Component, ComponentProps } from 'solid-js';
-
 import { Link } from '@manafishrov/ui/link';
 import {
   Sidebar,
@@ -15,6 +13,7 @@ import {
   useSidebar,
 } from '@manafishrov/ui/sidebar';
 import { useLocation } from '@tanstack/solid-router';
+import { splitProps, type Component, type ComponentProps } from 'solid-js';
 import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';
@@ -103,6 +102,10 @@ type SidebarLinkItemProps = {
   disabledClass?: string;
 };
 
+type SettingsSidebarProps = {
+  isFullscreen?: boolean;
+};
+
 const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
   const tooltipProps: { tooltip: string } | Record<string, never> = props.showTooltip
     ? { tooltip: props.item.label() }
@@ -133,7 +136,8 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
   );
 };
 
-const SettingsSidebar: Component = () => {
+const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
+  const [local] = splitProps(props, ['isFullscreen']);
   const location = useLocation();
   const { isMobile, state } = useSidebar();
 
@@ -144,8 +148,13 @@ const SettingsSidebar: Component = () => {
   const rovDisabledClass = (): string => (isConnected() ? '' : 'pointer-events-none opacity-50');
 
   return (
-    <Sidebar collapsible='icon' style={{ '--sidebar-width': '10rem' }} disableMobileSidebar>
-      <SidebarHeader>
+    <Sidebar
+      collapsible='icon'
+      style={{ '--sidebar-width': '10rem' }}
+      disableMobileSidebar
+      {...(!local.isFullscreen ? { innerClass: 'rounded-bl-2xl' } : {})}
+    >
+      <SidebarHeader {...(local.isFullscreen ? { class: 'mt-6' } : {})}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
