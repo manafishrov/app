@@ -13,11 +13,10 @@
     "fmt:check": "oxfmt --check src/**/*.ts src/**/*.tsx",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --type-aware --type-check --fix",
-    "tauri": "tauri",
-    "update:ui": "bun update @manafishrov/ui"
+    "tauri": "tauri"
   },
   "dependencies": {
-    "@manafishrov/ui": "1.0.1",
+    "@manafishrov/ui": "1.2.3",
     "@tailwindcss/vite": "4.2.1",
     "@tanstack/router-plugin": "1.163.3",
     "@tanstack/solid-form": "1.28.3",
@@ -33,7 +32,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@iconify-json/ic": "1.2.4",
+    "@iconify-json/material-symbols": "1.2.60",
     "@inlang/paraglide-js": "2.13.0",
     "@tanstack/solid-router-devtools": "1.162.1",
     "@tauri-apps/cli": "2.10.0",

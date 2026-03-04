@@ -1,26 +1,54 @@
+import { Kbd, KbdGroup } from '@manafishrov/ui/kbd';
 import { Link } from '@manafishrov/ui/link';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+  TooltipArrow,
+} from '@manafishrov/ui/tooltip';
+import { useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { createSignal, onMount, onCleanup, Show } from 'solid-js';
+import { createSignal, onMount, onCleanup, Show, createMemo } from 'solid-js';
 import SettingsIcon from '~icons/ic/settings';
 
 function Header() {
+  const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(true);
 
+  const updateFullscreenState = async () => {
+    const fullscreen = await getCurrentWindow().isFullscreen();
+    setIsFullscreen(fullscreen);
+  };
+
   onMount(async () => {
     const win = getCurrentWindow();
-    const fullscreen = await win.isFullscreen();
-    setIsFullscreen(fullscreen);
-
-    const focused = await win.isFocused();
-    setIsFocused(focused);
+    await updateFullscreenState();
+    setIsFocused(await win.isFocused());
 
     const unlistenFocus = await win.onFocusChanged(({ payload }) => {
       setIsFocused(payload);
+      setTimeout(() => void updateFullscreenState(), 100);
     });
+
+    const unlistenResize = await win.onResized(() => {
+      setTimeout(() => void updateFullscreenState(), 100);
+    });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === ',') {
+        event.preventDefault();
+        navigate({ to: '/settings' });
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
 
     onCleanup(() => {
       unlistenFocus();
+      unlistenResize();
+      globalThis.removeEventListener('keydown', handleKeyDown);
     });
   });
 
@@ -34,19 +62,32 @@ function Header() {
 
   const handleFullscreen = async () => {
     const win = getCurrentWindow();
-    const newFullscreen = !isFullscreen();
+    const newFullscreen = !(await win.isFullscreen());
     await win.setFullscreen(newFullscreen);
     setIsFullscreen(newFullscreen);
   };
 
+  const isMac = createMemo(() => {
+    // @ts-expect-error: Unknown modern API
+    const uadPlatform = navigator.userAgentData?.platform;
+    if (typeof uadPlatform === 'string') {
+      return uadPlatform.toLowerCase().includes('mac');
+    }
+
+    return /mac/i.test(navigator.userAgent);
+  });
+
   return (
     <header
       data-tauri-drag-region
-      class='h-8 w-full border-b border-border bg-background px-3 select-none rounded-t-2xl fixed z-20'
+      class={`h-8 w-full border-b border-border bg-background select-none rounded-t-2xl fixed z-100 transition-opacity ${
+        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'opacity-100'
+      }`}
     >
-      <div class='size-full flex items-center justify-between bg-muted/30'>
+      <div class='size-full flex items-center justify-between bg-muted/30 px-3 rounded-t-2xl'>
         <div data-tauri-drag-region={false} class='group flex items-center gap-2'>
           <button
+            tabIndex={-1}
             onClick={handleClose}
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#ff5f57]' : 'bg-border group-hover:bg-[#ff5f57]'
@@ -59,6 +100,7 @@ function Header() {
             </div>
           </button>
           <button
+            tabIndex={-1}
             onClick={handleMinimize}
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#febc2e]' : 'bg-border group-hover:bg-[#febc2e]'
@@ -70,6 +112,7 @@ function Header() {
             </div>
           </button>
           <button
+            tabIndex={-1}
             onClick={handleFullscreen}
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#28c840]' : 'bg-border group-hover:bg-[#28c840]'
@@ -114,9 +157,28 @@ function Header() {
         </span>
 
         <div data-tauri-drag-region={false}>
-          <Link size='icon-xs' variant='outline'>
-            <SettingsIcon />
-          </Link>
+          <Tooltip positioning={{ placement: 'bottom' }}>
+            <TooltipTrigger
+              tabIndex={-1}
+              asChild={(props) => (
+                <Link {...props()} to='/settings' size='icon-xs' variant='outline'>
+                  <SettingsIcon />
+                </Link>
+              )}
+            />
+            <TooltipPositioner>
+              <TooltipContent>
+                <div class='flex items-center gap-2'>
+                  <span>Settings</span>
+                  <KbdGroup>
+                    <Kbd>{isMac() ? '⌘' : 'Ctrl'}</Kbd>
+                    <Kbd>,</Kbd>
+                  </KbdGroup>
+                </div>
+                <TooltipArrow />
+              </TooltipContent>
+            </TooltipPositioner>
+          </Tooltip>
         </div>
       </div>
     </header>

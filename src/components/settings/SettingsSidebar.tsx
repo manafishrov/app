@@ -1,19 +1,6 @@
-import { useMatches } from '@tanstack/react-router';
-import { useStore } from '@tanstack/react-store';
-import {
-  ArrowLeftIcon,
-  BugIcon,
-  CircleGaugeIcon,
-  CogIcon,
-  CompassIcon,
-  DroneIcon,
-  EthernetPortIcon,
-  Gamepad2Icon,
-  KeyboardIcon,
-  WrenchIcon,
-} from 'lucide-react';
+import type { Component, ComponentProps } from 'solid-js';
 
-import { Link } from '@/components/ui/Link';
+import { Link } from '@manafishrov/ui/link';
 import {
   Sidebar,
   SidebarContent,
@@ -25,153 +12,204 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/Sidebar';
+  useSidebar,
+} from '@manafishrov/ui/sidebar';
+import { useLocation } from '@tanstack/solid-router';
+import ArrowBackIcon from '~icons/material-symbols/arrow-back';
+import BugReportIcon from '~icons/material-symbols/bug-report';
+import BuildIcon from '~icons/material-symbols/build';
+import Drone2Icon from '~icons/material-symbols/drone-2';
+import ExploreIcon from '~icons/material-symbols/explore';
+import KeyboardIcon from '~icons/material-symbols/keyboard';
+import SettingsIcon from '~icons/material-symbols/settings';
+import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
+import SpeedIcon from '~icons/material-symbols/speed';
+import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
+
+import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
-function SettingsSidebar() {
-  const matches = useMatches();
-  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
+type SidebarItem = {
+  label: () => string;
+  ariaLabel: () => string;
+  to: NonNullable<ComponentProps<typeof Link>['to']>;
+  Icon: Component<ComponentProps<'svg'>>;
+};
+
+const APPLICATION_ITEMS: SidebarItem[] = [
+  {
+    label: () => m.settings_application_general(),
+    ariaLabel: () => m.aria_labels_general_button(),
+    to: '/settings',
+    Icon: SettingsIcon,
+  },
+  {
+    label: () => m.settings_application_keyboard(),
+    ariaLabel: () => m.aria_labels_keyboard_button(),
+    to: '/settings/keyboard',
+    Icon: KeyboardIcon,
+  },
+  {
+    label: () => m.settings_application_gamepad(),
+    ariaLabel: () => m.aria_labels_gamepad_button(),
+    to: '/settings/gamepad',
+    Icon: SportsEsportsIcon,
+  },
+  {
+    label: () => m.settings_application_connection(),
+    ariaLabel: () => m.aria_labels_connection_button(),
+    to: '/settings/connection',
+    Icon: SettingsEthernetIcon,
+  },
+];
+
+const ROV_ITEMS: SidebarItem[] = [
+  {
+    label: () => m.settings_rov_general_rov(),
+    ariaLabel: () => m.aria_labels_general_rov_button(),
+    to: '/settings/general',
+    Icon: Drone2Icon,
+  },
+  {
+    label: () => m.settings_rov_calibration(),
+    ariaLabel: () => m.aria_labels_calibration_button(),
+    to: '/settings/calibration',
+    Icon: BuildIcon,
+  },
+  {
+    label: () => m.settings_rov_regulator(),
+    ariaLabel: () => m.aria_labels_regulator_button(),
+    to: '/settings/regulator',
+    Icon: ExploreIcon,
+  },
+  {
+    label: () => m.settings_rov_power(),
+    ariaLabel: () => m.aria_labels_power_button(),
+    to: '/settings/power',
+    Icon: SpeedIcon,
+  },
+];
+
+const normalizePath = (path: string): string =>
+  path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
+
+const joinClasses = (...classes: Array<string | undefined>): string =>
+  classes.filter((className) => Boolean(className)).join(' ');
+
+type SidebarLinkItemProps = {
+  item: SidebarItem;
+  isActive: (path: string) => boolean;
+  showTooltip: boolean;
+  disabledClass?: string;
+};
+
+const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
+  const tooltipProps: { tooltip: string } | Record<string, never> = props.showTooltip
+    ? { tooltip: props.item.label() }
+    : {};
+
   return (
-    <Sidebar collapsible='icon'>
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        {...tooltipProps}
+        aria-label={props.item.ariaLabel()}
+        isActive={props.isActive(props.item.to)}
+        asChild={(triggerProps) => {
+          const buttonProps = triggerProps();
+          const Icon = props.item.Icon;
+          return (
+            <Link
+              {...buttonProps}
+              to={props.item.to}
+              class={joinClasses(buttonProps.class, props.disabledClass)}
+            >
+              <Icon aria-hidden='true' />
+              <span>{props.item.label()}</span>
+            </Link>
+          );
+        }}
+      />
+    </SidebarMenuItem>
+  );
+};
+
+const SettingsSidebar: Component = () => {
+  const location = useLocation();
+  const { isMobile, state } = useSidebar();
+
+  const isConnected = (): boolean => connectionStatusStore.isConnected;
+  const isActive = (path: string): boolean =>
+    normalizePath(location().pathname) === normalizePath(path);
+  const showTooltip = (): boolean => state() === 'collapsed' && !isMobile();
+  const rovDisabledClass = (): string => (isConnected() ? '' : 'pointer-events-none opacity-50');
+
+  return (
+    <Sidebar collapsible='icon' style={{ '--sidebar-width': '10rem' }} disableMobileSidebar>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuButton asChild aria-label='Back' tooltip='Back'>
-            <Link to='/'>
-              <ArrowLeftIcon />
-              <span>Back</span>
-            </Link>
-          </SidebarMenuButton>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              {...(showTooltip() ? { tooltip: m.common_back() } : {})}
+              aria-label={m.aria_labels_back_button()}
+              asChild={(props) => (
+                <Link {...props()} to='/'>
+                  <ArrowBackIcon aria-hidden='true' />
+                  <span>{m.common_back()}</span>
+                </Link>
+              )}
+            />
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>{m.settings_application_title()}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='General'
-                  tooltip='General'
-                  isActive={matches.some((match) => match.id === '/settings/')}
-                >
-                  <Link to='/settings'>
-                    <CogIcon />
-                    <span>General</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Keyboard'
-                  tooltip='Keyboard'
-                  isActive={matches.some((match) => match.id === '/settings/keyboard/')}
-                >
-                  <Link to='/settings/keyboard'>
-                    <KeyboardIcon />
-                    <span>Keyboard</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Gamepad'
-                  tooltip='Gamepad'
-                  isActive={matches.some((match) => match.id === '/settings/gamepad/')}
-                >
-                  <Link to='/settings/gamepad'>
-                    <Gamepad2Icon />
-                    <span>Gamepad</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Connection'
-                  tooltip='Connection'
-                  isActive={matches.some((match) => match.id === '/settings/connection/')}
-                >
-                  <Link to='/settings/connection'>
-                    <EthernetPortIcon />
-                    <span>Connection</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {APPLICATION_ITEMS.map((item) => (
+                <SidebarLinkItem item={item} isActive={isActive} showTooltip={showTooltip()} />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         <SidebarGroup>
-          <SidebarGroupLabel>ROV</SidebarGroupLabel>
+          <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='General ROV'
-                  tooltip='General ROV'
-                  isActive={matches.some((match) => match.id === '/settings/general/')}
-                  disabled={!isConnected}
-                >
-                  <Link to='/settings/general'>
-                    <DroneIcon />
-                    <span>General</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Calibration'
-                  tooltip='Calibration'
-                  isActive={matches.some((match) => match.id === '/settings/calibration/')}
-                  disabled={!isConnected}
-                >
-                  <Link to='/settings/calibration'>
-                    <WrenchIcon />
-                    <span>Calibration</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Regulator'
-                  tooltip='Regulator'
-                  isActive={matches.some((match) => match.id === '/settings/regulator/')}
-                  disabled={!isConnected}
-                >
-                  <Link to='/settings/regulator'>
-                    <CompassIcon />
-                    <span>Regulator</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuButton
-                  asChild
-                  aria-label='Power'
-                  tooltip='Power'
-                  isActive={matches.some((match) => match.id === '/settings/power/')}
-                  disabled={!isConnected}
-                >
-                  <Link to='/settings/power'>
-                    <CircleGaugeIcon />
-                    <span>Power</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {ROV_ITEMS.map((item) => (
+                <SidebarLinkItem
+                  item={item}
+                  isActive={isActive}
+                  showTooltip={showTooltip()}
+                  disabledClass={rovDisabledClass()}
+                />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton
-            asChild
-            aria-label='Debug'
-            tooltip='Debug'
-            isActive={matches.some((match) => match.id === '/settings/debug/')}
-          >
-            <Link to='/settings/debug'>
-              <BugIcon />
-              <span>Debug</span>
-            </Link>
-          </SidebarMenuButton>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              {...(showTooltip() ? { tooltip: m.settings_debug_title() } : {})}
+              aria-label={m.aria_labels_debug_button()}
+              isActive={isActive('/settings/debug')}
+              asChild={(props) => (
+                <Link {...props()} to='/settings/debug'>
+                  <BugReportIcon aria-hidden='true' />
+                  <span>{m.settings_debug_title()}</span>
+                </Link>
+              )}
+            />
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
-}
+};
 
 export { SettingsSidebar };

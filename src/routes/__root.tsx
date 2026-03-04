@@ -8,6 +8,7 @@ import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { getConfig } from '@/stores/config';
 import { recoverTempRecordings, setupAllListeners } from '@/tauri';
+import { Header } from '@/components/Header';
 
 const RootComponent: Component = () => {
   onMount(async () => {
@@ -23,6 +24,7 @@ const RootComponent: Component = () => {
       <TanStackRouterDevtools position='bottom-right' />
       <ThemeProvider>
         <LocaleProvider locale={getLocale()}>
+        <Header />
           <Outlet />
           <Toaster />
         </LocaleProvider>
