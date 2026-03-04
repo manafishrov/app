@@ -1,6 +1,7 @@
 import { Button } from '@manafishrov/ui/button';
 import { Switch } from '@manafishrov/ui/switch';
 import { toast } from '@manafishrov/ui/toaster';
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
 
@@ -21,8 +22,8 @@ const Debug: Component = () => {
     <>
       <div class='mb-6 flex items-center justify-between'>
         <div class='flex flex-col gap-2'>
-          <h1 class='text-4xl font-extrabold tracking-tight'>Debug</h1>
-          <p class='text-muted-foreground'>Debug console for the ROV and the application.</p>
+          <H1>Debug</H1>
+          <P>Debug console for the ROV and the application.</P>
         </div>
         <Button variant='outline' onClick={handleClear}>
           Clear Log

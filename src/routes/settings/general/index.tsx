@@ -2,23 +2,24 @@ import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { toast } from '@manafishrov/ui/toaster';
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { invoke } from '@tauri-apps/api/core';
-import { type Component, Show } from 'solid-js';
+import { type Component } from 'solid-js';
 
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { firmwareVersionStore } from '@/stores/firmwareVersion';
 import { rovConfigStore } from '@/stores/rovConfig';
+import { flashMicrocontrollerFirmware } from '@/tauri';
 
 const General: Component = () => {
-  const flashMicrocontrollerFirmware = async () => {
-    await invoke('flash_microcontroller_firmware', {
-      payload: rovConfigStore.microcontrollerFirmwareVariant,
-    }).catch((error) => {
-      logError('Failed to flash microcontroller firmware:', error);
-      toast.create({ title: 'Failed to flash microcontroller firmware', type: 'error' });
-    });
+  const handleFlashMicrocontrollerFirmware = async () => {
+    await flashMicrocontrollerFirmware(rovConfigStore.microcontrollerFirmwareVariant).catch(
+      (error) => {
+        logError('Failed to flash microcontroller firmware:', error);
+        toast.create({ title: 'Failed to flash microcontroller firmware', type: 'error' });
+      },
+    );
   };
 
   const firmware = () => firmwareVersionStore;
@@ -26,8 +27,8 @@ const General: Component = () => {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <h1 class='text-4xl font-extrabold tracking-tight'>General</h1>
-        <p class='text-muted-foreground'>Generic settings for the Manafish ROV.</p>
+        <H1>General</H1>
+        <P>Generic settings for the Manafish ROV.</P>
       </div>
       <Show
         when={connectionStatusStore.isConnected && rovConfigStore}
@@ -55,7 +56,7 @@ const General: Component = () => {
               Select and flash the firmware for the microcontroller.
             </p>
             <div class='mt-2 flex items-center gap-3'>
-              <Button onClick={flashMicrocontrollerFirmware}>Flash</Button>
+              <Button onClick={handleFlashMicrocontrollerFirmware}>Flash</Button>
             </div>
           </div>
           <div>

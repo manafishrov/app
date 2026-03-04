@@ -1,16 +1,14 @@
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
-
 // import { GamepadSettings } from '@/components/settings/GamepadSettings';
 
 const Gamepad: Component = () => {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <h1 class='text-4xl font-extrabold tracking-tight'>Gamepad</h1>
-        <p class='text-muted-foreground'>
-          Configure your gamepad bindings for controlling the ROV.
-        </p>
+        <H1>Gamepad</H1>
+        <P>Configure your gamepad bindings for controlling the ROV.</P>
       </div>
       {/* <GamepadSettings /> */}
     </>

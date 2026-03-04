@@ -1,5 +1,6 @@
 // import { PowerSettingsForm } from '@/components/settings/rov/PowerSettingsForm';
 import { Spinner } from '@manafishrov/ui/spinner';
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
 
@@ -13,8 +14,8 @@ const Power: Component = () => {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <h1 class='text-4xl font-extrabold tracking-tight'>Power</h1>
-        <p class='text-muted-foreground'>Configure your Manafish power and battery settings.</p>
+        <H1>Power</H1>
+        <P>Configure your Manafish power and battery settings.</P>
       </div>
       <Show
         when={isConnected() && rovConfig()}

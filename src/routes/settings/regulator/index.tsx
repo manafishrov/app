@@ -1,8 +1,9 @@
 // import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
 // import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@manafishrov/ui/spinner';
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component, Show } from 'solid-js';
+import { type Component } from 'solid-js';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
@@ -14,8 +15,8 @@ const Regulator: Component = () => {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <h1 class='text-4xl font-extrabold tracking-tight'>Regulator</h1>
-        <p class='text-muted-foreground'>Adjust the regulator settings for the ROV.</p>
+        <H1>Regulator</H1>
+        <P>Adjust the regulator settings for the ROV.</P>
       </div>
       <Show
         when={isConnected() && rovConfig()}
