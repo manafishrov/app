@@ -1,6 +1,6 @@
-import { cn } from '@manafishrov/ui';
+import { AspectRatio } from '@manafishrov/ui/aspect-ratio';
 import { createFileRoute } from '@tanstack/solid-router';
-import { createSignal, onCleanup, onMount } from 'solid-js';
+import { onCleanup, onMount } from 'solid-js';
 
 import { Header } from '@/components/Header';
 import { VideoStream } from '@/components/VideoStream';
@@ -9,9 +9,6 @@ import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';
 
 function Home() {
-  let mainRef: HTMLElement | undefined;
-  const [sizeClass, setSizeClass] = createSignal<'w-full' | 'h-full'>('w-full');
-
   onMount(() => {
     const { pressedKeys, cleanup: keyboardCleanup } = createKeyboardTracker();
 
@@ -35,35 +32,16 @@ function Home() {
     });
   });
 
-  const handleResize = () => {
-    const mainEl = mainRef;
-    if (!mainEl) return;
-
-    const style = window.getComputedStyle(mainEl);
-    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-
-    const availableWidth = mainEl.clientWidth - paddingX;
-    const availableHeight = mainEl.clientHeight - paddingY;
-
-    const potentialDivHeight = (availableWidth * 3) / 4;
-
-    setSizeClass(potentialDivHeight > availableHeight ? 'h-full' : 'w-full');
-  };
-
-  onMount(() => {
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    onCleanup(() => window.removeEventListener('resize', handleResize));
-  });
-
   return (
     <>
       <Header />
-      <main ref={mainRef} class='flex flex-1 items-center justify-center p-1'>
-        <div class={cn('bg-card dark relative aspect-4/3 rounded-lg', sizeClass())}>
+      <main class='flex flex-1 items-center justify-center overflow-hidden p-1 @container-[size]'>
+        <AspectRatio
+          ratio={4 / 3}
+          class='bg-card dark relative rounded-lg w-[min(100cqw,calc(100cqh*4/3))] h-[min(100cqh,calc(100cqw*3/4))]'
+        >
           <VideoStream />
-        </div>
+        </AspectRatio>
       </main>
     </>
   );
