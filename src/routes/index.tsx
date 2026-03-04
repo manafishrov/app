@@ -2,8 +2,7 @@ import { cn } from '@manafishrov/ui';
 import { createFileRoute } from '@tanstack/solid-router';
 import { createSignal, onCleanup, onMount } from 'solid-js';
 
-// import { Controls } from '@/components/controls/Controls';
-// import { RovOverlay } from '@/components/overlay/RovOverlay';
+import { Header } from '@/components/Header';
 import { VideoStream } from '@/components/VideoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
@@ -59,12 +58,14 @@ function Home() {
   });
 
   return (
-    <main ref={mainRef} class='flex h-full w-full items-center justify-center p-1'>
-      <div class={cn('bg-card dark text-foreground relative aspect-4/3 rounded-lg', sizeClass())}>
-        <VideoStream />
-        {/* <RovOverlay /> */}
-      </div>
-    </main>
+    <>
+      <Header />
+      <main ref={mainRef} class='flex flex-1 items-center justify-center p-1'>
+        <div class={cn('bg-card dark relative aspect-4/3 rounded-lg', sizeClass())}>
+          <VideoStream />
+        </div>
+      </main>
+    </>
   );
 }
 
