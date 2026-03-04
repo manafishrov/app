@@ -124,6 +124,7 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
             <Link
               {...buttonProps}
               to={props.item.to}
+              activeOptions={{ exact: true }}
               class={joinClasses(buttonProps.class, props.disabledClass)}
             >
               <Icon aria-hidden='true' />
@@ -208,7 +209,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
               aria-label={m.aria_labels_debug_button()}
               isActive={isActive('/settings/debug')}
               asChild={(props) => (
-                <Link {...props()} to='/settings/debug'>
+                <Link {...props()} to='/settings/debug' activeOptions={{ exact: true }}>
                   <BugReportIcon aria-hidden='true' />
                   <span>{m.settings_debug_title()}</span>
                 </Link>
