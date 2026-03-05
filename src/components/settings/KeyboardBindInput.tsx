@@ -101,6 +101,10 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
     return normalizeBindValue(mappedValue, props.value.minValue, props.value.maxValue);
   });
 
+  const currentValue = createMemo(() => {
+    return toKeyboardValue(pressedKeys().has(props.value.key));
+  });
+
   const formatBindMarkerValue = (value: number): string => {
     return value.toFixed(2);
   };
@@ -196,6 +200,7 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
         <span>Min: {formatBindMarkerValue(props.value.minValue)}</span>
+        <span>Current: {formatBindMarkerValue(currentValue())}</span>
         <span>Max: {formatBindMarkerValue(props.value.maxValue)}</span>
       </div>
     </div>

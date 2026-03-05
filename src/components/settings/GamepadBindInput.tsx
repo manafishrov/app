@@ -75,6 +75,7 @@ const detectChangedInput = (
 function GamepadBindInput(props: GamepadBindInputProps) {
   const [isRecording, setIsRecording] = createSignal(false);
   const [progressValue, setProgressValue] = createSignal(0);
+  const [currentValue, setCurrentValue] = createSignal(0);
   let animationFrame: number | undefined;
   let captureTimeout: number | undefined;
   let settleTimeout: number | undefined;
@@ -113,8 +114,10 @@ function GamepadBindInput(props: GamepadBindInputProps) {
       const gamepad = getActiveGamepad(props.selectedGamepadId);
       if (!gamepad) {
         setProgressValue(0);
+        setCurrentValue(0);
       } else {
         const rawValue = getGamepadRawInputValue(props.value.input, gamepad);
+        setCurrentValue(rawValue);
         setProgressValue(normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue));
 
         if (isRecording() && initialSnapshot && !changedInput) {
@@ -211,6 +214,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
           size='icon'
           aria-label='Reset to default binding'
           onClick={resetToDefault}
+          disabled={!props.selectedGamepadId}
         >
           <RestartAltIcon class='size-4' />
         </Button>
@@ -222,6 +226,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
         <span>Min: {formatBindMarkerValue(props.value.minValue)}</span>
+        <span>Current: {formatBindMarkerValue(currentValue())}</span>
         <span>Max: {formatBindMarkerValue(props.value.maxValue)}</span>
       </div>
     </div>

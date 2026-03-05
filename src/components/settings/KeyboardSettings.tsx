@@ -17,16 +17,22 @@ type BindingField = {
 type BindingSection = {
   title: string;
   fields: BindingField[];
+  className?: string;
 };
 
-const LEFT_COLUMN: BindingSection[] = [
+const BINDING_SECTIONS: BindingSection[] = [
   {
-    title: 'Surge & Sway',
+    title: 'Surge',
     fields: [
       { key: 'surgeForward', label: 'Surge forward' },
-      { key: 'swayLeft', label: 'Sway left' },
       { key: 'surgeBackward', label: 'Surge backward' },
+    ],
+  },
+  {
+    title: 'Sway',
+    fields: [
       { key: 'swayRight', label: 'Sway right' },
+      { key: 'swayLeft', label: 'Sway left' },
     ],
   },
   {
@@ -37,40 +43,46 @@ const LEFT_COLUMN: BindingSection[] = [
     ],
   },
   {
-    title: 'Stabilization',
-    fields: [
-      { key: 'autoStabilization', label: 'Auto stabilization' },
-      { key: 'depthHold', label: 'Depth hold' },
-    ],
-  },
-];
-
-const RIGHT_COLUMN: BindingSection[] = [
-  {
-    title: 'Pitch & Yaw',
+    title: 'Pitch',
     fields: [
       { key: 'pitchUp', label: 'Pitch up' },
-      { key: 'yawLeft', label: 'Yaw left' },
       { key: 'pitchDown', label: 'Pitch down' },
+    ],
+  },
+  {
+    title: 'Yaw',
+    fields: [
       { key: 'yawRight', label: 'Yaw right' },
+      { key: 'yawLeft', label: 'Yaw left' },
     ],
   },
   {
     title: 'Roll',
     fields: [
-      { key: 'rollLeft', label: 'Roll left' },
       { key: 'rollRight', label: 'Roll right' },
+      { key: 'rollLeft', label: 'Roll left' },
     ],
   },
   {
     title: 'Actions',
+    className: 'sm:row-span-2',
     fields: [
       { key: 'action1Positive', label: 'Action 1 positive' },
       { key: 'action1Negative', label: 'Action 1 negative' },
       { key: 'action2Positive', label: 'Action 2 positive' },
       { key: 'action2Negative', label: 'Action 2 negative' },
-      { key: 'record', label: 'Record' },
     ],
+  },
+  {
+    title: 'Stabilisation',
+    fields: [
+      { key: 'autoStabilization', label: 'Auto stabilization' },
+      { key: 'depthHold', label: 'Depth hold' },
+    ],
+  },
+  {
+    title: 'Other',
+    fields: [{ key: 'record', label: 'Record' }],
   },
 ];
 
@@ -83,12 +95,12 @@ const updateKeyboardBinding = async (bindingKey: keyof KeyboardBindings, value: 
   await setConfig({ keyboard: updatedBindings });
 };
 
-const SettingsColumn: Component<{ sections: BindingSection[] }> = (props) => {
+const KeyboardSettings: Component = () => {
   return (
-    <div class='space-y-6'>
-      <For each={props.sections}>
+    <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
+      <For each={BINDING_SECTIONS}>
         {(section) => (
-          <div class='space-y-2'>
+          <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
             <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
             <For each={section.fields}>
               {(field) => (
@@ -103,15 +115,6 @@ const SettingsColumn: Component<{ sections: BindingSection[] }> = (props) => {
           </div>
         )}
       </For>
-    </div>
-  );
-};
-
-const KeyboardSettings: Component = () => {
-  return (
-    <div class='grid grid-cols-1 gap-x-8 sm:grid-cols-2'>
-      <SettingsColumn sections={LEFT_COLUMN} />
-      <SettingsColumn sections={RIGHT_COLUMN} />
     </div>
   );
 };
