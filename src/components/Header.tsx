@@ -10,7 +10,6 @@ import {
 } from '@manafishrov/ui/tooltip';
 import { useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { createSignal, onMount, onCleanup, Show, createMemo } from 'solid-js';
 import SettingsIcon from '~icons/ic/settings';
 
 function Header() {

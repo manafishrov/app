@@ -13,7 +13,7 @@ import {
   useSidebar,
 } from '@manafishrov/ui/sidebar';
 import { useLocation } from '@tanstack/solid-router';
-import { splitProps, type Component, type ComponentProps } from 'solid-js';
+import { type Component, type ComponentProps } from 'solid-js';
 import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';

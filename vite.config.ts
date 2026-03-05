@@ -33,7 +33,7 @@ export default defineConfig({
     }),
     AutoImport({
       imports: ['solid-js'],
-      dts: './src/auto-imports.d.ts',
+      dts: './src/autoImports.d.ts',
     }),
     solid(),
   ],

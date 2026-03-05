@@ -1,5 +1,4 @@
 import { useLocation } from '@tanstack/solid-router';
-import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 
 import { logInfo } from '@/lib/log';
 import { createWebRTCConnection, createRecording } from '@/lib/stream';

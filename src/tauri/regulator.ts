@@ -1,5 +1,3 @@
-import { createSignal } from 'solid-js';
-
 import type { RegulatorSuggestions } from '@/stores/rovConfig';
 
 import { createListener } from '@/tauri/core';
