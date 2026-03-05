@@ -10,7 +10,7 @@ import {
 import { SidebarInset, SidebarLayout, SidebarProvider } from '@manafishrov/ui/sidebar';
 import { Outlet, createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { type Component } from 'solid-js';
+import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { requestRovConfig } from '@/stores/rovConfig';
