@@ -1,7 +1,8 @@
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
-// import { GamepadSettings } from '@/components/settings/GamepadSettings';
+
+import { GamepadSettings } from '@/components/settings/GamepadSettings';
 
 const Gamepad: Component = () => {
   return (
@@ -10,7 +11,7 @@ const Gamepad: Component = () => {
         <H1>Gamepad</H1>
         <P>Configure your gamepad bindings for controlling the ROV.</P>
       </div>
-      {/* <GamepadSettings /> */}
+      <GamepadSettings />
     </>
   );
 };

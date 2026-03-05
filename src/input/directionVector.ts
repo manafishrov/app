@@ -34,7 +34,7 @@ export const computeDirectionVector = (
   pressedKeys: Set<string>,
 ): DirectionVector => {
   const kb = config.keyboard;
-  const gamepad = getActiveGamepad();
+  const gamepad = getActiveGamepad(config.selectedGamepadId);
   const gp = getGamepadBindings(gamepad, config);
 
   const input: DirectionVector = [...EMPTY_INPUT];

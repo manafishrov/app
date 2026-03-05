@@ -201,6 +201,7 @@ pub struct Config {
   pub web_socket_port: u16,
   pub info_logging: bool,
   pub keyboard: KeyboardBindings,
+  pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
 }
 
@@ -331,6 +332,7 @@ impl Default for Config {
           max_value: 1.0,
         },
       },
+      selected_gamepad_id: None,
       gamepad: HashMap::new(),
     }
   }

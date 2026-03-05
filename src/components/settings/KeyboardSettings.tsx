@@ -1,195 +1,119 @@
-import { useStore } from '@tanstack/react-store';
+import { For, type Component } from 'solid-js';
 
-import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
-import { type KeyboardBindings, configStore } from '@/stores/config';
-import { setConfig } from '@/tauri';
+import { KeyboardBindInput } from '@/components/settings/KeyboardBindInput';
+import {
+  type KeyboardBindings,
+  type KeyboardInput,
+  configStore,
+  defaultKeyboardBindings,
+  setConfig,
+} from '@/stores/config';
 
-const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
-  surgeForward: 'KeyW',
-  surgeBackward: 'KeyS',
-  swayLeft: 'KeyA',
-  swayRight: 'KeyD',
-  heaveUp: 'Space',
-  heaveDown: 'ShiftLeft',
-  pitchUp: 'KeyI',
-  pitchDown: 'KeyK',
-  yawLeft: 'KeyJ',
-  yawRight: 'KeyL',
-  rollLeft: 'KeyQ',
-  rollRight: 'KeyE',
-  action1Positive: 'Digit1',
-  action1Negative: 'Digit2',
-  action2Positive: 'Digit3',
-  action2Negative: 'Digit4',
-  pitchStabilization: 'KeyU',
-  rollStabilization: 'KeyU',
-  depthHold: 'KeyO',
-  record: 'KeyR',
+type BindingField = {
+  key: keyof KeyboardBindings;
+  label: string;
 };
 
-function KeyboardSettings() {
-  const keyboard = useStore(configStore, (state) => state?.keyboard);
+type BindingSection = {
+  title: string;
+  fields: BindingField[];
+};
 
-  async function handleBindingChange(key: keyof KeyboardBindings, value: string) {
-    if (!keyboard) return;
+const LEFT_COLUMN: BindingSection[] = [
+  {
+    title: 'Surge & Sway',
+    fields: [
+      { key: 'surgeForward', label: 'Surge forward' },
+      { key: 'swayLeft', label: 'Sway left' },
+      { key: 'surgeBackward', label: 'Surge backward' },
+      { key: 'swayRight', label: 'Sway right' },
+    ],
+  },
+  {
+    title: 'Heave',
+    fields: [
+      { key: 'heaveUp', label: 'Heave up' },
+      { key: 'heaveDown', label: 'Heave down' },
+    ],
+  },
+  {
+    title: 'Stabilization',
+    fields: [
+      { key: 'autoStabilization', label: 'Auto stabilization' },
+      { key: 'depthHold', label: 'Depth hold' },
+    ],
+  },
+];
 
-    const newKeyboard = {
-      ...keyboard,
-      [key]: value,
-    };
+const RIGHT_COLUMN: BindingSection[] = [
+  {
+    title: 'Pitch & Yaw',
+    fields: [
+      { key: 'pitchUp', label: 'Pitch up' },
+      { key: 'yawLeft', label: 'Yaw left' },
+      { key: 'pitchDown', label: 'Pitch down' },
+      { key: 'yawRight', label: 'Yaw right' },
+    ],
+  },
+  {
+    title: 'Roll',
+    fields: [
+      { key: 'rollLeft', label: 'Roll left' },
+      { key: 'rollRight', label: 'Roll right' },
+    ],
+  },
+  {
+    title: 'Actions',
+    fields: [
+      { key: 'action1Positive', label: 'Action 1 positive' },
+      { key: 'action1Negative', label: 'Action 1 negative' },
+      { key: 'action2Positive', label: 'Action 2 positive' },
+      { key: 'action2Negative', label: 'Action 2 negative' },
+      { key: 'record', label: 'Record' },
+    ],
+  },
+];
 
-    await setConfig({ keyboard: newKeyboard });
-  }
+const updateKeyboardBinding = async (bindingKey: keyof KeyboardBindings, value: KeyboardInput) => {
+  const updatedBindings: KeyboardBindings = {
+    ...configStore.keyboard,
+    [bindingKey]: value,
+  };
 
-  if (!keyboard) return;
+  await setConfig({ keyboard: updatedBindings });
+};
 
+const SettingsColumn: Component<{ sections: BindingSection[] }> = (props) => {
   return (
-    <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
-      <div className='space-y-6'>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Surge & Sway</h3>
-          <KeyboardBindInput
-            label='Surge forward'
-            bind={keyboard.surgeForward}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeForward}
-            onBindChange={(newBind) => handleBindingChange('surgeForward', newBind)}
-          />
-          <KeyboardBindInput
-            label='Sway left'
-            bind={keyboard.swayLeft}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.swayLeft}
-            onBindChange={(newBind) => handleBindingChange('swayLeft', newBind)}
-          />
-          <KeyboardBindInput
-            label='Surge backward'
-            bind={keyboard.surgeBackward}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.surgeBackward}
-            onBindChange={(newBind) => handleBindingChange('surgeBackward', newBind)}
-          />
-          <KeyboardBindInput
-            label='Sway right'
-            bind={keyboard.swayRight}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.swayRight}
-            onBindChange={(newBind) => handleBindingChange('swayRight', newBind)}
-          />
-        </div>
-
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Heave</h3>
-          <KeyboardBindInput
-            label='Heave up'
-            bind={keyboard.heaveUp}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.heaveUp}
-            onBindChange={(newBind) => handleBindingChange('heaveUp', newBind)}
-          />
-          <KeyboardBindInput
-            label='Heave down'
-            bind={keyboard.heaveDown}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.heaveDown}
-            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Stabilization</h3>
-          <KeyboardBindInput
-            label='Pitch stabilization'
-            bind={keyboard.pitchStabilization}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchStabilization}
-            onBindChange={(newBind) => handleBindingChange('pitchStabilization', newBind)}
-          />
-          <KeyboardBindInput
-            label='Roll stabilization'
-            bind={keyboard.rollStabilization}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollStabilization}
-            onBindChange={(newBind) => handleBindingChange('rollStabilization', newBind)}
-          />
-          <KeyboardBindInput
-            label='Depth hold'
-            bind={keyboard.depthHold}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.depthHold}
-            onBindChange={(newBind) => handleBindingChange('depthHold', newBind)}
-          />
-        </div>
-      </div>
-      <div className='space-y-6'>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Pitch & Yaw</h3>
-          <KeyboardBindInput
-            label='Pitch up'
-            bind={keyboard.pitchUp}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchUp}
-            onBindChange={(newBind) => handleBindingChange('pitchUp', newBind)}
-          />
-          <KeyboardBindInput
-            label='Yaw left'
-            bind={keyboard.yawLeft}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.yawLeft}
-            onBindChange={(newBind) => handleBindingChange('yawLeft', newBind)}
-          />
-          <KeyboardBindInput
-            label='Pitch down'
-            bind={keyboard.pitchDown}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.pitchDown}
-            onBindChange={(newBind) => handleBindingChange('pitchDown', newBind)}
-          />
-          <KeyboardBindInput
-            label='Yaw right'
-            bind={keyboard.yawRight}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.yawRight}
-            onBindChange={(newBind) => handleBindingChange('yawRight', newBind)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
-          <KeyboardBindInput
-            label='Roll left'
-            bind={keyboard.rollLeft}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollLeft}
-            onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
-          />
-          <KeyboardBindInput
-            label='Roll right'
-            bind={keyboard.rollRight}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.rollRight}
-            onBindChange={(newBind) => handleBindingChange('rollRight', newBind)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
-          <KeyboardBindInput
-            label='Action 1 positive'
-            bind={keyboard.action1Positive}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action1Positive}
-            onBindChange={(newBind) => handleBindingChange('action1Positive', newBind)}
-          />
-          <KeyboardBindInput
-            label='Action 1 negative'
-            bind={keyboard.action1Negative}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
-            onBindChange={(newBind) => handleBindingChange('action1Negative', newBind)}
-          />
-          <KeyboardBindInput
-            label='Action 2 positive'
-            bind={keyboard.action2Positive}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Positive}
-            onBindChange={(newBind) => handleBindingChange('action2Positive', newBind)}
-          />
-          <KeyboardBindInput
-            label='Action 2 negative'
-            bind={keyboard.action2Negative}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.action2Negative}
-            onBindChange={(newBind) => handleBindingChange('action2Negative', newBind)}
-          />
-          <KeyboardBindInput
-            label='Record'
-            bind={keyboard.record}
-            defaultBind={DEFAULT_KEYBOARD_BINDINGS.record}
-            onBindChange={(newBind) => handleBindingChange('record', newBind)}
-          />
-        </div>
-      </div>
+    <div class='space-y-6'>
+      <For each={props.sections}>
+        {(section) => (
+          <div class='space-y-2'>
+            <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
+            <For each={section.fields}>
+              {(field) => (
+                <KeyboardBindInput
+                  label={field.label}
+                  value={configStore.keyboard[field.key]}
+                  defaultValue={defaultKeyboardBindings[field.key]}
+                  onChange={(next) => updateKeyboardBinding(field.key, next)}
+                />
+              )}
+            </For>
+          </div>
+        )}
+      </For>
     </div>
   );
-}
+};
+
+const KeyboardSettings: Component = () => {
+  return (
+    <div class='grid grid-cols-1 gap-x-8 sm:grid-cols-2'>
+      <SettingsColumn sections={LEFT_COLUMN} />
+      <SettingsColumn sections={RIGHT_COLUMN} />
+    </div>
+  );
+};
 
 export { KeyboardSettings };

@@ -1,185 +1,326 @@
-import { useStore } from '@tanstack/react-store';
-import { Gamepad2Icon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { createListCollection } from '@ark-ui/solid/collection';
+import { Select } from '@manafishrov/ui/select';
+import {
+  SelectContent,
+  SelectControl,
+  SelectIndicator,
+  SelectItem,
+  SelectLabel,
+  SelectPositioner,
+  SelectTrigger,
+  SelectValue,
+} from '@manafishrov/ui/select';
+import {
+  For,
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  type Component,
+} from 'solid-js';
+import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
-import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
-import { type GamepadBindings, configStore } from '@/stores/config';
-import { setConfig } from '@/tauri';
+import { GamepadBindInput } from '@/components/settings/GamepadBindInput';
+import { getConnectedGamepads } from '@/input';
+import {
+  type GamepadBindings,
+  type GamepadInput,
+  configStore,
+  createDefaultGamepadBindings,
+  setConfig,
+} from '@/stores/config';
 
-const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
-  surgeSway: 'leftStick',
-  heaveUp: '7',
-  heaveDown: '6',
-  pitchYaw: 'rightStick',
-  rollLeft: '4',
-  rollRight: '5',
-  action1Positive: '0',
-  action1Negative: '1',
-  action2Positive: '2',
-  action2Negative: '3',
-  pitchStabilization: '12',
-  rollStabilization: '12',
-  depthHold: '13',
-  record: '9',
+type SelectItemOption = {
+  value: string;
+  label: string;
 };
 
-function GamepadSettings() {
-  const gamepad = useStore(configStore, (state) => state?.gamepad);
-  const [isControllerConnected, setIsControllerConnected] = useState(() => {
-    const gamepads = navigator.getGamepads();
-    return Array.from(gamepads).some((gamepad) => gamepad !== null);
-  });
+type BindingField = {
+  key: keyof GamepadBindings;
+  label: string;
+};
 
-  useEffect(() => {
-    const handleGamepadConnected = () => setIsControllerConnected(true);
-    const handleGamepadDisconnected = () => setIsControllerConnected(false);
+type BindingSection = {
+  title: string;
+  fields: BindingField[];
+};
 
-    window.addEventListener('gamepadconnected', handleGamepadConnected);
-    window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+const LEFT_COLUMN: BindingSection[] = [
+  {
+    title: 'Surge & Sway',
+    fields: [
+      { key: 'surgeForward', label: 'Surge forward' },
+      { key: 'swayLeft', label: 'Sway left' },
+      { key: 'surgeBackward', label: 'Surge backward' },
+      { key: 'swayRight', label: 'Sway right' },
+    ],
+  },
+  {
+    title: 'Heave',
+    fields: [
+      { key: 'heaveUp', label: 'Heave up' },
+      { key: 'heaveDown', label: 'Heave down' },
+    ],
+  },
+  {
+    title: 'Stabilization',
+    fields: [
+      { key: 'autoStabilization', label: 'Auto stabilization' },
+      { key: 'depthHold', label: 'Depth hold' },
+    ],
+  },
+];
 
-    return () => {
-      window.removeEventListener('gamepadconnected', handleGamepadConnected);
-      window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
-    };
-  }, []);
+const RIGHT_COLUMN: BindingSection[] = [
+  {
+    title: 'Pitch & Yaw',
+    fields: [
+      { key: 'pitchUp', label: 'Pitch up' },
+      { key: 'yawLeft', label: 'Yaw left' },
+      { key: 'pitchDown', label: 'Pitch down' },
+      { key: 'yawRight', label: 'Yaw right' },
+    ],
+  },
+  {
+    title: 'Roll',
+    fields: [
+      { key: 'rollLeft', label: 'Roll left' },
+      { key: 'rollRight', label: 'Roll right' },
+    ],
+  },
+  {
+    title: 'Actions',
+    fields: [
+      { key: 'action1Positive', label: 'Action 1 positive' },
+      { key: 'action1Negative', label: 'Action 1 negative' },
+      { key: 'action2Positive', label: 'Action 2 positive' },
+      { key: 'action2Negative', label: 'Action 2 negative' },
+      { key: 'record', label: 'Record' },
+    ],
+  },
+];
 
-  if (!gamepad) return;
-
-  if (!isControllerConnected) {
-    return (
-      <div className='border-muted bg-muted/20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center'>
-        <Gamepad2Icon className='text-muted-foreground h-12 w-12' />
-        <h3 className='text-muted-foreground mt-4 text-lg font-semibold'>No Gamepad Connected</h3>
-        <p className='text-muted-foreground mt-2 text-sm'>
-          Please connect a gamepad to configure the bindings.
-        </p>
-      </div>
-    );
-  }
-
-  async function handleBindingChange(key: keyof GamepadBindings, value: string) {
-    if (!gamepad) return;
-
-    const newGamepad = {
-      ...gamepad,
-      [key]: value,
-    };
-
-    await setConfig({ gamepad: newGamepad });
-  }
+const SettingsColumn: Component<{
+  sections: BindingSection[];
+  selectedGamepadId: string | null;
+  bindings: GamepadBindings;
+  onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput) => void;
+}> = (props) => {
+  const defaultBindings = createDefaultGamepadBindings();
 
   return (
-    <div className='xs:grid-cols-2 grid grid-cols-1 gap-x-8'>
-      <div className='space-y-6'>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Surge & Sway</h3>
-          <GamepadBindInput
-            label='Surge/Sway'
-            bind={gamepad.surgeSway}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.surgeSway}
-            onBindChange={(newBind) => handleBindingChange('surgeSway', newBind)}
-            isJoystick
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Heave</h3>
-          <GamepadBindInput
-            label='Heave up'
-            bind={gamepad.heaveUp}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveUp}
-            onBindChange={(newBind) => handleBindingChange('heaveUp', newBind)}
-          />
-          <GamepadBindInput
-            label='Heave down'
-            bind={gamepad.heaveDown}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.heaveDown}
-            onBindChange={(newBind) => handleBindingChange('heaveDown', newBind)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Stabilization</h3>
-          <GamepadBindInput
-            label='Pitch stabilization'
-            bind={gamepad.pitchStabilization}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchStabilization}
-            onBindChange={(newBind) => handleBindingChange('pitchStabilization', newBind)}
-          />
-          <GamepadBindInput
-            label='Roll stabilization'
-            bind={gamepad.rollStabilization}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollStabilization}
-            onBindChange={(newBind) => handleBindingChange('rollStabilization', newBind)}
-          />
-          <GamepadBindInput
-            label='Depth hold'
-            bind={gamepad.depthHold}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.depthHold}
-            onBindChange={(newBind) => handleBindingChange('depthHold', newBind)}
-          />
-        </div>
-      </div>
-      <div className='space-y-6'>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Pitch & Yaw</h3>
-          <GamepadBindInput
-            label='Pitch/Yaw'
-            bind={gamepad.pitchYaw}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.pitchYaw}
-            onBindChange={(newBind) => handleBindingChange('pitchYaw', newBind)}
-            isJoystick
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Roll</h3>
-          <GamepadBindInput
-            label='Roll left'
-            bind={gamepad.rollLeft}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollLeft}
-            onBindChange={(newBind) => handleBindingChange('rollLeft', newBind)}
-          />
-          <GamepadBindInput
-            label='Roll right'
-            bind={gamepad.rollRight}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.rollRight}
-            onBindChange={(newBind) => handleBindingChange('rollRight', newBind)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <h3 className='text-2xl font-semibold tracking-tight'>Actions</h3>
-          <GamepadBindInput
-            label='Action 1 positive'
-            bind={gamepad.action1Positive}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action1Positive}
-            onBindChange={(newBind) => handleBindingChange('action1Positive', newBind)}
-          />
-          <GamepadBindInput
-            label='Action 1 negative'
-            bind={gamepad.action1Negative}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
-            onBindChange={(newBind) => handleBindingChange('action1Negative', newBind)}
-          />
-          <GamepadBindInput
-            label='Action 2 positive'
-            bind={gamepad.action2Positive}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Positive}
-            onBindChange={(newBind) => handleBindingChange('action2Positive', newBind)}
-          />
-          <GamepadBindInput
-            label='Action 2 negative'
-            bind={gamepad.action2Negative}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.action2Negative}
-            onBindChange={(newBind) => handleBindingChange('action2Negative', newBind)}
-          />
-          <GamepadBindInput
-            label='Record'
-            bind={gamepad.record}
-            defaultBind={DEFAULT_GAMEPAD_BINDINGS.record}
-            onBindChange={(newBind) => handleBindingChange('record', newBind)}
-          />
-        </div>
-      </div>
+    <div class='space-y-6'>
+      <For each={props.sections}>
+        {(section) => (
+          <div class='space-y-2'>
+            <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
+            <For each={section.fields}>
+              {(field) => (
+                <GamepadBindInput
+                  label={field.label}
+                  value={props.bindings[field.key]}
+                  defaultValue={defaultBindings[field.key]}
+                  selectedGamepadId={props.selectedGamepadId}
+                  onChange={(next) => props.onBindChange(field.key, next)}
+                />
+              )}
+            </For>
+          </div>
+        )}
+      </For>
     </div>
   );
-}
+};
+
+const uniqueByGamepadId = (gamepads: Gamepad[]): SelectItemOption[] => {
+  const seenIds = new Set<string>();
+  const options: SelectItemOption[] = [];
+
+  for (const gamepad of gamepads) {
+    if (seenIds.has(gamepad.id)) continue;
+    seenIds.add(gamepad.id);
+    options.push({
+      value: gamepad.id,
+      label: gamepad.id,
+    });
+  }
+
+  return options;
+};
+
+const GamepadSettings: Component = () => {
+  const [connectedGamepads, setConnectedGamepads] = createSignal<Gamepad[]>([]);
+  let animationFrame: number | undefined;
+
+  onMount(() => {
+    const loop = (): void => {
+      setConnectedGamepads(getConnectedGamepads());
+      animationFrame = window.requestAnimationFrame(loop);
+    };
+
+    animationFrame = window.requestAnimationFrame(loop);
+  });
+
+  onCleanup(() => {
+    if (animationFrame !== undefined) {
+      window.cancelAnimationFrame(animationFrame);
+    }
+  });
+
+  const selectedGamepadId = (): string | null => configStore.selectedGamepadId;
+
+  const gamepadOptions = createMemo(() => {
+    return uniqueByGamepadId(connectedGamepads());
+  });
+
+  const gamepadCollection = createMemo(() => {
+    return createListCollection<SelectItemOption>({
+      items: gamepadOptions(),
+    });
+  });
+
+  const selectedBindings = createMemo<GamepadBindings | null>(() => {
+    const selectedId = selectedGamepadId();
+    if (!selectedId) return null;
+    return configStore.gamepad[selectedId] ?? createDefaultGamepadBindings();
+  });
+
+  const selectedGamepadValue = createMemo<string[]>(() => {
+    const selectedId = selectedGamepadId();
+    return selectedId ? [selectedId] : [];
+  });
+
+  const setSelectedGamepad = async (gamepadId: string) => {
+    const nextGamepadBindings = configStore.gamepad[gamepadId]
+      ? configStore.gamepad
+      : {
+          ...configStore.gamepad,
+          [gamepadId]: createDefaultGamepadBindings(),
+        };
+
+    await setConfig({
+      selectedGamepadId: gamepadId,
+      gamepad: nextGamepadBindings,
+    });
+  };
+
+  const updateGamepadBinding = async (bindingKey: keyof GamepadBindings, value: GamepadInput) => {
+    const selectedId = selectedGamepadId();
+    if (!selectedId) return;
+
+    const currentBindings = configStore.gamepad[selectedId] ?? createDefaultGamepadBindings();
+    const updatedBindings: GamepadBindings = {
+      ...currentBindings,
+      [bindingKey]: value,
+    };
+
+    await setConfig({
+      gamepad: {
+        ...configStore.gamepad,
+        [selectedId]: updatedBindings,
+      },
+    });
+  };
+
+  const selectedGamepadConnected = createMemo(() => {
+    const selectedId = selectedGamepadId();
+    if (!selectedId) return false;
+    return connectedGamepads().some((gamepad) => gamepad.id === selectedId);
+  });
+
+  createEffect(() => {
+    const options = gamepadOptions();
+    if (options.length === 0) return;
+
+    const selectedId = selectedGamepadId();
+    const selectedAvailable = Boolean(
+      selectedId && options.some((option) => option.value === selectedId),
+    );
+
+    if (!selectedAvailable) {
+      const fallbackId = options[0]?.value;
+      if (fallbackId) {
+        void setSelectedGamepad(fallbackId);
+      }
+    }
+  });
+
+  return (
+    <div class='space-y-6'>
+      <div class='space-y-2'>
+        <Select<SelectItemOption>
+          collection={gamepadCollection()}
+          value={selectedGamepadValue()}
+          onValueChange={(details) => {
+            const gamepadId = details.value[0];
+            if (!gamepadId) return;
+            void setSelectedGamepad(gamepadId);
+          }}
+        >
+          <SelectLabel>Controller</SelectLabel>
+          <SelectControl>
+            <SelectTrigger>
+              <SelectValue placeholder='Select a gamepad' />
+              <SelectIndicator />
+            </SelectTrigger>
+          </SelectControl>
+          <SelectPositioner>
+            <SelectContent>
+              <For each={gamepadOptions()}>
+                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
+              </For>
+            </SelectContent>
+          </SelectPositioner>
+        </Select>
+      </div>
+
+      <Show
+        when={connectedGamepads().length > 0}
+        fallback={
+          <div class='flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center'>
+            <SportsEsportsIcon class='size-12 text-muted-foreground' />
+            <h3 class='mt-4 text-lg font-semibold text-muted-foreground'>No gamepad connected</h3>
+            <p class='mt-2 text-sm text-muted-foreground'>
+              Connect a gamepad to configure bindings.
+            </p>
+          </div>
+        }
+      >
+        <Show
+          when={selectedBindings()}
+          fallback={<p class='text-sm text-muted-foreground'>Select a gamepad to edit bindings.</p>}
+        >
+          {(bindings) => (
+            <Show
+              when={selectedGamepadConnected()}
+              fallback={
+                <p class='text-sm text-muted-foreground'>
+                  The selected gamepad is not connected. Reconnect it to capture input.
+                </p>
+              }
+            >
+              <div class='grid grid-cols-1 gap-x-8 sm:grid-cols-2'>
+                <SettingsColumn
+                  sections={LEFT_COLUMN}
+                  selectedGamepadId={selectedGamepadId()}
+                  bindings={bindings()}
+                  onBindChange={updateGamepadBinding}
+                />
+                <SettingsColumn
+                  sections={RIGHT_COLUMN}
+                  selectedGamepadId={selectedGamepadId()}
+                  bindings={bindings()}
+                  onBindChange={updateGamepadBinding}
+                />
+              </div>
+            </Show>
+          )}
+        </Show>
+      </Show>
+    </div>
+  );
+};
 
 export { GamepadSettings };

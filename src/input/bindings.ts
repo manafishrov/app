@@ -1,0 +1,106 @@
+import type { GamepadInputType, KeyboardKey } from '@/stores/config';
+
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
+
+export const BIND_CAPTURE_TIMEOUT_MS = 8000;
+export const BIND_CAPTURE_SETTLE_MS = 500;
+export const GAMEPAD_CAPTURE_THRESHOLD = 0.1;
+
+export const roundToBindIncrement = (value: number): number => {
+  const rounded = Math.round(value / 0.05) * 0.05;
+  return Number(rounded.toFixed(4));
+};
+
+export const normalizeBindValue = (
+  rawValue: number,
+  minValue: number,
+  maxValue: number,
+): number => {
+  const range = maxValue - minValue;
+  if (range === 0) return 0;
+  return clamp((rawValue - minValue) / range, 0, 1);
+};
+
+export const getGamepadRawInputValue = (input: GamepadInputType, gamepad: Gamepad): number => {
+  if ('Button' in input) {
+    const index = input.Button;
+    return gamepad.buttons[index]?.value ?? 0;
+  }
+
+  const index = input.Axis;
+  return gamepad.axes[index] ?? 0;
+};
+
+export const formatKeyboardKeyLabel = (key: string): string => {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .replace(/([A-Za-z])(\d)/g, '$1 $2')
+    .replace(/(\d)([A-Za-z])/g, '$1 $2')
+    .trim();
+};
+
+export const isKeyboardKey = (key: string): key is KeyboardKey => {
+  if (/^Key[A-Z]$/.test(key)) return true;
+  if (/^Digit[0-9]$/.test(key)) return true;
+  if (/^F([1-9]|1[0-2])$/.test(key)) return true;
+  if (/^Numpad[0-9]$/.test(key)) return true;
+
+  return [
+    'Enter',
+    'Escape',
+    'Backspace',
+    'Tab',
+    'Space',
+    'Minus',
+    'Equal',
+    'BracketLeft',
+    'BracketRight',
+    'Backslash',
+    'Semicolon',
+    'Quote',
+    'Backquote',
+    'Comma',
+    'Period',
+    'Slash',
+    'CapsLock',
+    'ArrowRight',
+    'ArrowLeft',
+    'ArrowDown',
+    'ArrowUp',
+    'ControlLeft',
+    'ShiftLeft',
+    'AltLeft',
+    'MetaLeft',
+    'ControlRight',
+    'ShiftRight',
+    'AltRight',
+    'MetaRight',
+    'PrintScreen',
+    'ScrollLock',
+    'Pause',
+    'Insert',
+    'Home',
+    'PageUp',
+    'Delete',
+    'End',
+    'PageDown',
+    'NumLock',
+    'NumpadDivide',
+    'NumpadMultiply',
+    'NumpadSubtract',
+    'NumpadAdd',
+    'NumpadEnter',
+    'NumpadDecimal',
+  ].includes(key);
+};
+
+export const formatGamepadInputLabel = (input: GamepadInputType): string => {
+  if ('Button' in input) {
+    return `Button ${input.Button}`;
+  }
+
+  return `Axis ${input.Axis}`;
+};

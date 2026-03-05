@@ -1,4 +1,8 @@
+import { toast } from '@manafishrov/ui/toaster';
+import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
+
+import { logError } from '@/lib/log';
 
 type KeyboardKey =
   | 'KeyA'
@@ -105,7 +109,7 @@ type KeyboardKey =
   | 'Numpad0'
   | 'NumpadDecimal';
 
-type GamepadInputType = { Button: [number] } | { Axis: [number] };
+type GamepadInputType = { Button: number } | { Axis: number };
 
 type KeyboardInput = {
   key: KeyboardKey;
@@ -183,6 +187,7 @@ type Config = {
   webSocketPort: number;
   infoLogging: boolean;
   keyboard: KeyboardBindings;
+  selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
 };
 
@@ -214,6 +219,44 @@ const defaultKeyboardBindings: KeyboardBindings = {
   record: defaultKeyboardInput('KeyR'),
 };
 
+const defaultGamepadInputButton = (index: number): GamepadInput => ({
+  input: { Button: index },
+  minValue: 0,
+  maxValue: 1,
+});
+
+const defaultGamepadInputAxis = (
+  index: number,
+  minValue: number,
+  maxValue: number,
+): GamepadInput => ({
+  input: { Axis: index },
+  minValue,
+  maxValue,
+});
+
+const createDefaultGamepadBindings = (): GamepadBindings => ({
+  surgeForward: defaultGamepadInputAxis(1, 0, -1),
+  surgeBackward: defaultGamepadInputAxis(1, 0, 1),
+  swayRight: defaultGamepadInputAxis(0, 0, 1),
+  swayLeft: defaultGamepadInputAxis(0, 0, -1),
+  heaveUp: defaultGamepadInputButton(7),
+  heaveDown: defaultGamepadInputButton(6),
+  pitchUp: defaultGamepadInputAxis(3, 0, -1),
+  pitchDown: defaultGamepadInputAxis(3, 0, 1),
+  yawRight: defaultGamepadInputAxis(2, 0, 1),
+  yawLeft: defaultGamepadInputAxis(2, 0, -1),
+  rollLeft: defaultGamepadInputButton(4),
+  rollRight: defaultGamepadInputButton(5),
+  action1Positive: defaultGamepadInputButton(0),
+  action1Negative: defaultGamepadInputButton(1),
+  action2Positive: defaultGamepadInputButton(2),
+  action2Negative: defaultGamepadInputButton(3),
+  autoStabilization: defaultGamepadInputButton(12),
+  depthHold: defaultGamepadInputButton(13),
+  record: defaultGamepadInputButton(9),
+});
+
 const defaultConfig: Config = {
   autoUpdate: false,
   attitudeIndicator: 'scientific',
@@ -226,6 +269,7 @@ const defaultConfig: Config = {
   webSocketPort: 9000,
   infoLogging: false,
   keyboard: defaultKeyboardBindings,
+  selectedGamepadId: null,
   gamepad: {},
 };
 
@@ -235,11 +279,37 @@ const setConfigStore = (value: Config) => {
   setConfigStoreInternal(reconcile(value));
 };
 
+const getConfig = async () => {
+  await invoke<Config>('get_config')
+    .then((payload) => setConfigStore(payload))
+    .catch((error) => {
+      logError('Failed to get config:', error);
+      toast.create({ title: 'Failed to get config', type: 'error' });
+    });
+};
+
+const setConfig = async (newConfigOptions: Partial<Config>) => {
+  const currentConfig = { ...configStore };
+  const newConfig = { ...currentConfig, ...newConfigOptions };
+
+  setConfigStore(newConfig);
+
+  await invoke('set_config', { payload: newConfig }).catch((error) => {
+    setConfigStore(currentConfig);
+    logError('Failed to set config:', error);
+    toast.create({ title: 'Failed to set config. Changes reverted.', type: 'error' });
+  });
+};
+
 export {
   configStore,
   setConfigStore,
+  getConfig,
+  setConfig,
   AttitudeIndicator,
   defaultConfig,
+  defaultKeyboardBindings,
+  createDefaultGamepadBindings,
   type KeyboardKey,
   type GamepadInputType,
   type KeyboardInput,

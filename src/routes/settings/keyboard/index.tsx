@@ -2,7 +2,7 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
 
-// import { KeyboardSettings } from '@/components/settings/KeyboardSettings';
+import { KeyboardSettings } from '@/components/settings/KeyboardSettings';
 
 const Keyboard: Component = () => {
   return (
@@ -11,7 +11,7 @@ const Keyboard: Component = () => {
         <H1>Keyboard</H1>
         <P>Configure your keyboard bindings for controlling the ROV.</P>
       </div>
-      {/* <KeyboardSettings /> */}
+      <KeyboardSettings />
     </>
   );
 };

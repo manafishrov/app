@@ -25,8 +25,8 @@ const isInputPressed = (
 export const createStateToggleLoop = (
   config: Config,
   pressedKeys: Set<string>,
-  isRecording: boolean,
-  webrtcConnected: boolean,
+  getIsRecording: () => boolean,
+  getWebrtcConnected: () => boolean,
 ): CleanupFn => {
   let frame: number | undefined;
   const lastState: ToggleState = {
@@ -50,7 +50,7 @@ export const createStateToggleLoop = (
 
   const loop = () => {
     const kb = config.keyboard;
-    const gamepad = getActiveGamepad();
+    const gamepad = getActiveGamepad(config.selectedGamepadId);
     const gp = getGamepadBindings(gamepad, config);
 
     const autoStabPressed = isInputPressed(
@@ -72,6 +72,9 @@ export const createStateToggleLoop = (
       pressedKeys,
       gamepad,
     );
+
+    const isRecording = getIsRecording();
+    const webrtcConnected = getWebrtcConnected();
 
     if (recordPressed && !lastState.record && webrtcConnected) {
       setRecordingStore({

@@ -20,8 +20,8 @@ function Home() {
     const stateCleanup = createStateToggleLoop(
       configStore,
       pressedKeys,
-      recordingStore.isRecording,
-      recordingStore.webrtcConnected,
+      () => recordingStore.isRecording,
+      () => recordingStore.webrtcConnected,
     );
 
     onCleanup(() => {
