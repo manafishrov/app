@@ -1,7 +1,8 @@
 import { useStore } from '@tanstack/react-store';
 
 import { KeyboardBindInput } from '@/components/composites/KeyboardBindInput';
-import { type KeyboardBindings, configStore, setConfig } from '@/stores/config';
+import { type KeyboardBindings, configStore } from '@/stores/config';
+import { setConfig } from '@/tauri';
 
 const DEFAULT_KEYBOARD_BINDINGS: KeyboardBindings = {
   surgeForward: 'KeyW',

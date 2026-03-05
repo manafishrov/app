@@ -1,9 +1,4 @@
-import { toast } from '@manafishrov/ui/toaster';
-import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
-
-import { logError } from '@/lib/log';
-import { connectionStatusStore } from '@/stores/connectionStatus';
 
 type MicrocontrollerFirmwareVariant = 'pwm' | 'dshot';
 
@@ -34,6 +29,8 @@ type ThrusterAllocation = [
   [number, number, number, number, number, number, number, number],
   [number, number, number, number, number, number, number, number],
 ];
+
+type Row = [number, number, number, number, number, number, number, number];
 
 type AxisConfig = {
   kp: number;
@@ -126,33 +123,9 @@ const setRovConfigStore = (value: RovConfig) => {
   setRovConfigStoreInternal(reconcile(value));
 };
 
-const requestRovConfig = async () => {
-  if (!connectionStatusStore.isConnected) return;
-
-  await invoke('request_rov_config').catch((error) => {
-    logError('Failed to request ROV config:', error);
-    toast.create({ title: 'Failed to request ROV config', type: 'error' });
-  });
-};
-
-const setRovConfig = async (newConfigOptions: Partial<RovConfig>) => {
-  const currentRovConfig = { ...rovConfigStore };
-  const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
-
-  setRovConfigStore(newRovConfig);
-
-  await invoke('set_rov_config', { payload: newRovConfig }).catch((error) => {
-    setRovConfigStore(currentRovConfig);
-    logError('Failed to set ROV config:', error);
-    toast.create({ title: 'Failed to set ROV config. Changes reverted.', type: 'error' });
-  });
-};
-
 export {
   rovConfigStore,
   setRovConfigStore,
-  requestRovConfig,
-  setRovConfig,
   FluidType,
   MicrocontrollerFirmwareVariant,
   defaultRovConfig,
@@ -164,4 +137,5 @@ export {
   type ThrusterAllocation,
   type Power,
   type RegulatorSuggestions,
+  type Row,
 };

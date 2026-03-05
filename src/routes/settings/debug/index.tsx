@@ -6,7 +6,8 @@ import { createFileRoute } from '@tanstack/solid-router';
 import { type Component } from 'solid-js';
 
 import { clearAllLogRecords } from '@/lib/log';
-import { configStore, setConfig } from '@/stores/config';
+import { configStore } from '@/stores/config';
+import { setConfig } from '@/tauri';
 
 // import { LazyLog, ScrollFollow } from '@melloware/react-logviewer';
 

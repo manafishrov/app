@@ -4,32 +4,20 @@ import { z } from 'zod';
 
 import { RegulatorFieldButtons } from '@/components/settings/rov/RegulatorFieldButtons';
 import { useAppForm } from '@/components/ui/Form';
-
-import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
+import { rovConfigStore } from '@/stores/rovConfig';
+import { setRovConfig } from '@/tauri';
 
 const formSchema = z.object({
-  surge: z
-    .number()
-    .min(0, 'Must be at least 0')
-    .max(100, 'Must be at most 100'),
+  surge: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
   sway: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
-  heave: z
-    .number()
-    .min(0, 'Must be at least 0')
-    .max(100, 'Must be at most 100'),
-  pitch: z
-    .number()
-    .min(0, 'Must be at least 0')
-    .max(100, 'Must be at most 100'),
+  heave: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
+  pitch: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
   yaw: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
   roll: z.number().min(0, 'Must be at least 0').max(100, 'Must be at most 100'),
 });
 
 function DirectionCoefficientsForm() {
-  const directionCoefficients = useStore(
-    rovConfigStore,
-    (state) => state?.directionCoefficients,
-  );
+  const directionCoefficients = useStore(rovConfigStore, (state) => state?.directionCoefficients);
 
   const form = useAppForm({
     validators: {
@@ -62,14 +50,11 @@ function DirectionCoefficientsForm() {
   return (
     <>
       <div>
-        <h3 className='text-2xl font-semibold tracking-tight'>
-          Direction Coefficients
-        </h3>
+        <h3 className='text-2xl font-semibold tracking-tight'>Direction Coefficients</h3>
         <p className='text-muted-foreground text-sm'>
-          Set the relative power for moving or turning in each direction. The{' '}
-          <b>ratios</b> between these values determine how much force each
-          thruster will use to move in the expected direction without drifting.
-          The units don’t matter as long as all axes use the same units.
+          Set the relative power for moving or turning in each direction. The <b>ratios</b> between
+          these values determine how much force each thruster will use to move in the expected
+          direction without drifting. The units don’t matter as long as all axes use the same units.
         </p>
       </div>
       <form
@@ -164,9 +149,7 @@ function DirectionCoefficientsForm() {
               />
             )}
           </form.AppField>
-          <form.SubmitButton className='w-60'>
-            Update Direction Coefficients
-          </form.SubmitButton>
+          <form.SubmitButton className='w-60'>Update Direction Coefficients</form.SubmitButton>
         </form.AppForm>
       </form>
     </>

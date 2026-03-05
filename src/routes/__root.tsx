@@ -4,11 +4,10 @@ import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools';
 import { type Component } from 'solid-js';
 
+import { Header } from '@/components/Header';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
-import { getConfig } from '@/stores/config';
-import { recoverTempRecordings, setupAllListeners } from '@/tauri';
-import { Header } from '@/components/Header';
+import { getConfig, recoverTempRecordings, setupAllListeners } from '@/tauri';
 
 const RootComponent: Component = () => {
   onMount(async () => {
@@ -24,7 +23,7 @@ const RootComponent: Component = () => {
       <TanStackRouterDevtools position='bottom-right' />
       <ThemeProvider>
         <LocaleProvider locale={getLocale()}>
-        <Header />
+          <Header />
           <Outlet />
           <Toaster />
         </LocaleProvider>

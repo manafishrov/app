@@ -3,7 +3,8 @@ import { Gamepad2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { GamepadBindInput } from '@/components/composites/GamepadBindInput';
-import { type GamepadBindings, configStore, setConfig } from '@/stores/config';
+import { type GamepadBindings, configStore } from '@/stores/config';
+import { setConfig } from '@/tauri';
 
 const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   surgeSway: 'leftStick',

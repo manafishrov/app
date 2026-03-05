@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 
 import { useAppForm } from '@/components/ui/Form';
-import { configStore, setConfig } from '@/stores/config';
+import { configStore } from '@/stores/config';
+import { setConfig } from '@/tauri';
 
 const formSchema = z.object({
   ipAddress: z.string().ip('Invalid IP address'),

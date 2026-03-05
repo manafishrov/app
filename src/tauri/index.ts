@@ -10,6 +10,7 @@ import { setupRovTelemetryListener } from '@/tauri/rovTelemetry';
 import { setupToastListener } from '@/tauri/toast';
 
 export { flashMicrocontrollerFirmware } from '@/tauri/firmware';
+export { getConfig, setConfig } from '@/tauri/config';
 export { recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';

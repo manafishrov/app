@@ -13,7 +13,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
-import { requestRovConfig } from '@/stores/rovConfig';
+import { requestRovConfig } from '@/tauri';
 
 const SettingsLayoutRoute: Component = () => {
   const [isFullscreen, setIsFullscreen] = createSignal(false);

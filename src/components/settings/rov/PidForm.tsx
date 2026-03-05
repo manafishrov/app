@@ -8,12 +8,10 @@ import { RegulatorFieldButtons } from '@/components/settings/rov/RegulatorFieldB
 import { Button } from '@/components/ui/Button';
 import { useAppForm } from '@/components/ui/Form';
 import { toast } from '@/components/ui/Toaster';
-
 import { useRegulatorSuggestionsListener } from '@/hooks/useRegulatorSuggestionsListener';
-
 import { logError } from '@/lib/log';
-
-import { rovConfigStore, setRovConfig } from '@/stores/rovConfig';
+import { rovConfigStore } from '@/stores/rovConfig';
+import { setRovConfig } from '@/tauri';
 
 async function startRegulatorAutoTuning() {
   await invoke('start_regulator_auto_tuning').catch((error) => {
@@ -29,10 +27,7 @@ const pidSchema = z.object({
 });
 
 const formSchema = z.object({
-  turnSpeed: z
-    .number()
-    .min(0, 'Must be at least 0')
-    .max(360, 'Must be at most 360'),
+  turnSpeed: z.number().min(0, 'Must be at least 0').max(360, 'Must be at most 360'),
   pitch: pidSchema,
   roll: pidSchema,
   depth: pidSchema,
@@ -98,10 +93,9 @@ function PidForm() {
           PID (Proportional-Integral-Derivative) Controller
         </h3>
         <p className='text-muted-foreground text-sm'>
-          Use this page to fine-tune how your ROV stabilizes itself. Adjust the
-          Kp, Ki, and Kd values for pitch, roll, and depth to control how
-          strongly and smoothly the ROV corrects its position. Enter your own
-          values or run auto-tuning when the ROV is in still water to
+          Use this page to fine-tune how your ROV stabilizes itself. Adjust the Kp, Ki, and Kd
+          values for pitch, roll, and depth to control how strongly and smoothly the ROV corrects
+          its position. Enter your own values or run auto-tuning when the ROV is in still water to
           automatically determine sane defaults.
         </p>
       </div>
@@ -130,9 +124,7 @@ function PidForm() {
           </form.AppField>
           <div>
             <h4 className='text-lg font-medium'>Pitch</h4>
-            <p className='text-muted-foreground mb-2 text-xs'>
-              Controls nose up/down.
-            </p>
+            <p className='text-muted-foreground mb-2 text-xs'>Controls nose up/down.</p>
             <div className='space-y-4'>
               <form.AppField name='pitch.kp'>
                 {(field) => (
@@ -183,9 +175,7 @@ function PidForm() {
           </div>
           <div>
             <h4 className='text-lg font-medium'>Roll</h4>
-            <p className='text-muted-foreground mb-2 text-xs'>
-              Controls side-to-side tilt.
-            </p>
+            <p className='text-muted-foreground mb-2 text-xs'>Controls side-to-side tilt.</p>
             <div className='space-y-4'>
               <form.AppField name='roll.kp'>
                 {(field) => (
@@ -236,9 +226,7 @@ function PidForm() {
           </div>
           <div>
             <h4 className='text-lg font-medium'>Depth</h4>
-            <p className='text-muted-foreground mb-2 text-xs'>
-              Controls vertical position hold.
-            </p>
+            <p className='text-muted-foreground mb-2 text-xs'>Controls vertical position hold.</p>
             <div className='space-y-4'>
               <form.AppField name='depth.kp'>
                 {(field) => (
@@ -288,9 +276,7 @@ function PidForm() {
             </div>
           </div>
           <div className='flex items-center gap-4'>
-            <form.SubmitButton className='w-44'>
-              Update Regulator PID
-            </form.SubmitButton>
+            <form.SubmitButton className='w-44'>Update Regulator PID</form.SubmitButton>
             {/* Auto Tuning button with 2s disable logic */}
             <Button
               className='w-44'
