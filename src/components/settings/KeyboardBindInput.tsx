@@ -105,14 +105,14 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   const progressValue = createMemo(() => {
     if (!props.value) return 0;
 
-    const key = props.value.key;
-    const mappedValue = pressedKeys().has(key) ? props.value.maxValue : props.value.minValue;
-    return normalizeBindValue(mappedValue, props.value.minValue, props.value.maxValue);
+    const rawValue = toKeyboardValue(pressedKeys().has(props.value.key));
+    return normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue);
   });
 
   const currentValue = createMemo(() => {
     if (!props.value) return 0;
-    return toKeyboardValue(pressedKeys().has(props.value.key));
+
+    return pressedKeys().has(props.value.key) ? props.value.maxValue : props.value.minValue;
   });
 
   const formatBindMarkerValue = (value: number): string => {

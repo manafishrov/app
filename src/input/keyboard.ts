@@ -1,6 +1,8 @@
 import type { CleanupFn } from '@/input/types';
 import type { KeyboardInput } from '@/stores/config';
 
+import { normalizeBindValue } from '@/input/bindings';
+
 export const createKeyboardTracker = (): {
   pressedKeys: Set<string>;
   cleanup: CleanupFn;
@@ -38,6 +40,6 @@ export const createKeyboardTracker = (): {
 export const getKeyboardValue = (input: KeyboardInput | null, pressedKeys: Set<string>): number => {
   if (!input) return 0;
 
-  const isPressed = pressedKeys.has(input.key);
-  return isPressed ? input.maxValue : input.minValue;
+  const rawValue = pressedKeys.has(input.key) ? 1 : 0;
+  return normalizeBindValue(rawValue, input.minValue, input.maxValue);
 };
