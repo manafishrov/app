@@ -23,7 +23,7 @@ import {
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
 import { GamepadBindInput } from '@/components/settings/GamepadBindInput';
-import { getConnectedGamepads } from '@/input';
+import { getConnectedGamepads, toGamepadBindingKey } from '@/input';
 import {
   type GamepadBindings,
   type GamepadInput,
@@ -144,20 +144,24 @@ const SettingsGrid: Component<{
   );
 };
 
-const uniqueByGamepadId = (gamepads: Gamepad[]): SelectItemOption[] => {
-  const seenIds = new Set<string>();
-  const options: SelectItemOption[] = [];
+const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
+  const totalsById = new Map<string, number>();
+  const seenById = new Map<string, number>();
 
   for (const gamepad of gamepads) {
-    if (seenIds.has(gamepad.id)) continue;
-    seenIds.add(gamepad.id);
-    options.push({
-      value: gamepad.id,
-      label: gamepad.id,
-    });
+    totalsById.set(gamepad.id, (totalsById.get(gamepad.id) ?? 0) + 1);
   }
 
-  return options;
+  return gamepads.map((gamepad) => {
+    const count = (seenById.get(gamepad.id) ?? 0) + 1;
+    seenById.set(gamepad.id, count);
+    const total = totalsById.get(gamepad.id) ?? 1;
+
+    return {
+      value: toGamepadBindingKey(gamepad),
+      label: total > 1 ? `${gamepad.id} (#${count})` : gamepad.id,
+    };
+  });
 };
 
 const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => {
@@ -261,7 +265,7 @@ const GamepadSettings: Component = () => {
   const selectedGamepadId = (): string | null => configStore.selectedGamepadId;
 
   const gamepadOptions = createMemo(() => {
-    return uniqueByGamepadId(connectedGamepads());
+    return toGamepadOptions(connectedGamepads());
   });
 
   const gamepadCollection = createMemo(() => {
@@ -288,11 +292,19 @@ const GamepadSettings: Component = () => {
   });
 
   const setSelectedGamepad = async (gamepadId: string) => {
+    const selectedGamepad = connectedGamepads().find(
+      (gamepad) => toGamepadBindingKey(gamepad) === gamepadId,
+    );
+
+    const fallbackLegacyBindings = selectedGamepad
+      ? configStore.gamepad[selectedGamepad.id]
+      : undefined;
+
     const nextGamepadBindings = configStore.gamepad[gamepadId]
       ? configStore.gamepad
       : {
           ...configStore.gamepad,
-          [gamepadId]: createNullGamepadBindings(),
+          [gamepadId]: fallbackLegacyBindings ?? createNullGamepadBindings(),
         };
 
     await setConfig({
@@ -325,7 +337,7 @@ const GamepadSettings: Component = () => {
   const selectedGamepadConnected = createMemo(() => {
     const selectedId = selectedGamepadId();
     if (!selectedId) return false;
-    return connectedGamepads().some((gamepad) => gamepad.id === selectedId);
+    return connectedGamepads().some((gamepad) => toGamepadBindingKey(gamepad) === selectedId);
   });
 
   createEffect(() => {
