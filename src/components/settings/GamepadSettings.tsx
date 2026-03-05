@@ -230,20 +230,31 @@ const GamepadSettings: Component = () => {
   const [initialGamepadBindings] = createSignal<Record<string, GamepadBindings>>(
     cloneGamepadMap(configStore.gamepad),
   );
-  let animationFrame: number | undefined;
+  let pollInterval: number | undefined;
 
   onMount(() => {
-    const loop = (): void => {
+    const updateConnectedGamepads = (): void => {
       setConnectedGamepads(getConnectedGamepads());
-      animationFrame = window.requestAnimationFrame(loop);
     };
 
-    animationFrame = window.requestAnimationFrame(loop);
+    const onGamepadChange = (): void => {
+      updateConnectedGamepads();
+    };
+
+    updateConnectedGamepads();
+    window.addEventListener('gamepadconnected', onGamepadChange);
+    window.addEventListener('gamepaddisconnected', onGamepadChange);
+    pollInterval = window.setInterval(updateConnectedGamepads, 500);
+
+    onCleanup(() => {
+      window.removeEventListener('gamepadconnected', onGamepadChange);
+      window.removeEventListener('gamepaddisconnected', onGamepadChange);
+    });
   });
 
   onCleanup(() => {
-    if (animationFrame !== undefined) {
-      window.cancelAnimationFrame(animationFrame);
+    if (pollInterval !== undefined) {
+      window.clearInterval(pollInterval);
     }
   });
 
@@ -336,33 +347,6 @@ const GamepadSettings: Component = () => {
 
   return (
     <div class='space-y-6'>
-      <div class='space-y-2'>
-        <Select<SelectItemOption>
-          collection={gamepadCollection()}
-          value={selectedGamepadValue()}
-          onValueChange={(details) => {
-            const gamepadId = details.value[0];
-            if (!gamepadId) return;
-            void setSelectedGamepad(gamepadId);
-          }}
-        >
-          <SelectLabel>Controller</SelectLabel>
-          <SelectControl>
-            <SelectTrigger>
-              <SelectValue placeholder='Select a gamepad' />
-              <SelectIndicator />
-            </SelectTrigger>
-          </SelectControl>
-          <SelectPositioner>
-            <SelectContent>
-              <For each={gamepadOptions()}>
-                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
-              </For>
-            </SelectContent>
-          </SelectPositioner>
-        </Select>
-      </div>
-
       <Show
         when={connectedGamepads().length > 0}
         fallback={
@@ -375,6 +359,33 @@ const GamepadSettings: Component = () => {
           </div>
         }
       >
+        <div class='space-y-2'>
+          <Select<SelectItemOption>
+            collection={gamepadCollection()}
+            value={selectedGamepadValue()}
+            onValueChange={(details) => {
+              const gamepadId = details.value[0];
+              if (!gamepadId) return;
+              void setSelectedGamepad(gamepadId);
+            }}
+          >
+            <SelectLabel>Gamepad</SelectLabel>
+            <SelectControl>
+              <SelectTrigger>
+                <SelectValue placeholder='Select a gamepad' />
+                <SelectIndicator />
+              </SelectTrigger>
+            </SelectControl>
+            <SelectPositioner>
+              <SelectContent>
+                <For each={gamepadOptions()}>
+                  {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
+                </For>
+              </SelectContent>
+            </SelectPositioner>
+          </Select>
+        </div>
+
         <Show
           when={selectedBindings()}
           fallback={<p class='text-sm text-muted-foreground'>Select a gamepad to edit bindings.</p>}
