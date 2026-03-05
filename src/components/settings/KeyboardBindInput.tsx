@@ -1,5 +1,12 @@
 import { Button } from '@manafishrov/ui/button';
 import { Progress, ProgressIndicator, ProgressTrack } from '@manafishrov/ui/progress';
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+} from '@manafishrov/ui/tooltip';
 import { createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import RestartAltIcon from '~icons/material-symbols/restart-alt';
@@ -140,6 +147,8 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
     };
 
     captureFirstKeyDownListener = (event: KeyboardEvent): void => {
+      event.preventDefault();
+
       if (event.code === 'Escape') {
         props.onChange(null);
         stopRecording();
@@ -153,6 +162,8 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
     };
 
     captureFirstKeyUpListener = (event: KeyboardEvent): void => {
+      event.preventDefault();
+
       if (!firstChangedKey && initialSnapshot.has(event.code)) {
         firstChangedKey = event.code;
         scheduleSecondSnapshot();
@@ -202,14 +213,27 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
                 : 'Unbound'}
           </span>
         </Button>
-        <Button
-          variant='ghost'
-          size='icon'
-          aria-label='Reset to default binding'
-          onClick={resetToDefault}
-        >
-          <RestartAltIcon class='size-4' />
-        </Button>
+        <Tooltip positioning={{ placement: 'top' }}>
+          <TooltipTrigger
+            asChild={(tooltipProps) => (
+              <Button
+                {...tooltipProps()}
+                variant='ghost'
+                size='icon'
+                aria-label='Reset binding'
+                onClick={resetToDefault}
+              >
+                <RestartAltIcon class='size-4' />
+              </Button>
+            )}
+          />
+          <TooltipPositioner>
+            <TooltipContent>
+              Restore initial binding
+              <TooltipArrow />
+            </TooltipContent>
+          </TooltipPositioner>
+        </Tooltip>
       </div>
       <Progress value={progressValue()} min={0} max={1}>
         <ProgressTrack>

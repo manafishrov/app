@@ -1,3 +1,4 @@
+import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 function General() {
@@ -84,8 +85,8 @@ function General() {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <h1 class='text-4xl font-extrabold tracking-tight'>General</h1>
-        <p class='text-muted-foreground'>Generic settings for the Manafish application.</p>
+        <H1>General</H1>
+        <P>Generic settings for the Manafish application.</P>
       </div>
       {/* <div className='space-y-6'> */}
       {/*   {appVersion && ( */}

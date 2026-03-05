@@ -1,5 +1,12 @@
 import { Button } from '@manafishrov/ui/button';
 import { Progress, ProgressIndicator, ProgressTrack } from '@manafishrov/ui/progress';
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+} from '@manafishrov/ui/tooltip';
 import { createSignal, onCleanup, onMount } from 'solid-js';
 import RestartAltIcon from '~icons/material-symbols/restart-alt';
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
@@ -233,15 +240,28 @@ function GamepadBindInput(props: GamepadBindInputProps) {
               : formatGamepadInputLabel(props.value?.input ?? null)}
           </span>
         </Button>
-        <Button
-          variant='ghost'
-          size='icon'
-          aria-label='Reset to default binding'
-          onClick={resetToDefault}
-          disabled={!props.selectedGamepadId}
-        >
-          <RestartAltIcon class='size-4' />
-        </Button>
+        <Tooltip positioning={{ placement: 'top' }}>
+          <TooltipTrigger
+            asChild={(tooltipProps) => (
+              <Button
+                {...tooltipProps()}
+                variant='ghost'
+                size='icon'
+                aria-label='Reset binding'
+                onClick={resetToDefault}
+                disabled={!props.selectedGamepadId}
+              >
+                <RestartAltIcon class='size-4' />
+              </Button>
+            )}
+          />
+          <TooltipPositioner>
+            <TooltipContent>
+              Restore initial binding
+              <TooltipArrow />
+            </TooltipContent>
+          </TooltipPositioner>
+        </Tooltip>
       </div>
       <Progress value={progressValue()} min={0} max={1}>
         <ProgressTrack>
