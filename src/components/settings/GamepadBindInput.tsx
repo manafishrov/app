@@ -19,10 +19,10 @@ import {
 
 type GamepadBindInputProps = {
   label: string;
-  value: GamepadInput;
-  defaultValue: GamepadInput;
+  value: GamepadInput | null;
+  resetValue: GamepadInput | null;
   selectedGamepadId: string | null;
-  onChange: (next: GamepadInput) => void;
+  onChange: (next: GamepadInput | null) => void;
 };
 
 type GamepadSnapshot = {
@@ -81,6 +81,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
   let settleTimeout: number | undefined;
   let initialSnapshot: GamepadSnapshot | null = null;
   let changedInput: GamepadInput['input'] | null = null;
+  let escapeListener: ((event: KeyboardEvent) => void) | null = null;
 
   const getSnapshotRawInputValue = (
     snapshot: GamepadSnapshot,
@@ -104,6 +105,11 @@ function GamepadBindInput(props: GamepadBindInputProps) {
       settleTimeout = undefined;
     }
 
+    if (escapeListener) {
+      window.removeEventListener('keydown', escapeListener);
+      escapeListener = null;
+    }
+
     initialSnapshot = null;
     changedInput = null;
     setIsRecording(false);
@@ -116,9 +122,13 @@ function GamepadBindInput(props: GamepadBindInputProps) {
         setProgressValue(0);
         setCurrentValue(0);
       } else {
-        const rawValue = getGamepadRawInputValue(props.value.input, gamepad);
+        const rawValue = getGamepadRawInputValue(props.value?.input ?? null, gamepad);
         setCurrentValue(rawValue);
-        setProgressValue(normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue));
+        setProgressValue(
+          props.value
+            ? normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue)
+            : 0,
+        );
 
         if (isRecording() && initialSnapshot && !changedInput) {
           const latestSnapshot = snapshotGamepad(gamepad);
@@ -175,6 +185,13 @@ function GamepadBindInput(props: GamepadBindInputProps) {
     const gamepad = getActiveGamepad(props.selectedGamepadId);
     if (!gamepad) return;
 
+    escapeListener = (event: KeyboardEvent): void => {
+      if (event.code !== 'Escape') return;
+      props.onChange(null);
+      stopRecording();
+    };
+    window.addEventListener('keydown', escapeListener);
+
     initialSnapshot = snapshotGamepad(gamepad);
     changedInput = null;
     setIsRecording(true);
@@ -187,11 +204,16 @@ function GamepadBindInput(props: GamepadBindInputProps) {
   const resetToDefault = (): void => {
     stopRecording();
 
-    props.onChange({
-      input: props.defaultValue.input,
-      minValue: roundToBindIncrement(props.defaultValue.minValue),
-      maxValue: roundToBindIncrement(props.defaultValue.maxValue),
-    });
+    if (props.resetValue) {
+      props.onChange({
+        input: props.resetValue.input,
+        minValue: roundToBindIncrement(props.resetValue.minValue),
+        maxValue: roundToBindIncrement(props.resetValue.maxValue),
+      });
+      return;
+    }
+
+    props.onChange(null);
   };
 
   return (
@@ -206,7 +228,9 @@ function GamepadBindInput(props: GamepadBindInputProps) {
         >
           <SportsEsportsIcon class='size-4' />
           <span class='truncate'>
-            {isRecording() ? 'Move a control...' : formatGamepadInputLabel(props.value.input)}
+            {isRecording()
+              ? 'Move a control...'
+              : formatGamepadInputLabel(props.value?.input ?? null)}
           </span>
         </Button>
         <Button
@@ -225,9 +249,9 @@ function GamepadBindInput(props: GamepadBindInputProps) {
         </ProgressTrack>
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
-        <span>Min: {formatBindMarkerValue(props.value.minValue)}</span>
+        <span>Min: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}</span>
         <span>Current: {formatBindMarkerValue(currentValue())}</span>
-        <span>Max: {formatBindMarkerValue(props.value.maxValue)}</span>
+        <span>Max: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}</span>
       </div>
     </div>
   );

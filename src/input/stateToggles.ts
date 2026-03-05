@@ -13,7 +13,7 @@ type ToggleState = {
 };
 
 const isInputPressed = (
-  input: { keyboard: KeyboardInput; gamepad: GamepadInput | null },
+  input: { keyboard: KeyboardInput | null; gamepad: GamepadInput | null },
   pressedKeys: Set<string>,
   gamepad: Gamepad | null,
 ): boolean => {

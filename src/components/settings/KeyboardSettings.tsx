@@ -1,13 +1,7 @@
-import { For, type Component } from 'solid-js';
+import { For, createSignal, type Component } from 'solid-js';
 
 import { KeyboardBindInput } from '@/components/settings/KeyboardBindInput';
-import {
-  type KeyboardBindings,
-  type KeyboardInput,
-  configStore,
-  defaultKeyboardBindings,
-  setConfig,
-} from '@/stores/config';
+import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
 
 type BindingField = {
   key: keyof KeyboardBindings;
@@ -86,7 +80,34 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
 ];
 
-const updateKeyboardBinding = async (bindingKey: keyof KeyboardBindings, value: KeyboardInput) => {
+const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => {
+  return {
+    surgeForward: bindings.surgeForward ? { ...bindings.surgeForward } : null,
+    surgeBackward: bindings.surgeBackward ? { ...bindings.surgeBackward } : null,
+    swayRight: bindings.swayRight ? { ...bindings.swayRight } : null,
+    swayLeft: bindings.swayLeft ? { ...bindings.swayLeft } : null,
+    heaveUp: bindings.heaveUp ? { ...bindings.heaveUp } : null,
+    heaveDown: bindings.heaveDown ? { ...bindings.heaveDown } : null,
+    pitchUp: bindings.pitchUp ? { ...bindings.pitchUp } : null,
+    pitchDown: bindings.pitchDown ? { ...bindings.pitchDown } : null,
+    yawRight: bindings.yawRight ? { ...bindings.yawRight } : null,
+    yawLeft: bindings.yawLeft ? { ...bindings.yawLeft } : null,
+    rollLeft: bindings.rollLeft ? { ...bindings.rollLeft } : null,
+    rollRight: bindings.rollRight ? { ...bindings.rollRight } : null,
+    action1Positive: bindings.action1Positive ? { ...bindings.action1Positive } : null,
+    action1Negative: bindings.action1Negative ? { ...bindings.action1Negative } : null,
+    action2Positive: bindings.action2Positive ? { ...bindings.action2Positive } : null,
+    action2Negative: bindings.action2Negative ? { ...bindings.action2Negative } : null,
+    autoStabilization: bindings.autoStabilization ? { ...bindings.autoStabilization } : null,
+    depthHold: bindings.depthHold ? { ...bindings.depthHold } : null,
+    record: bindings.record ? { ...bindings.record } : null,
+  };
+};
+
+const updateKeyboardBinding = async (
+  bindingKey: keyof KeyboardBindings,
+  value: KeyboardInput | null,
+) => {
   const updatedBindings: KeyboardBindings = {
     ...configStore.keyboard,
     [bindingKey]: value,
@@ -96,6 +117,10 @@ const updateKeyboardBinding = async (bindingKey: keyof KeyboardBindings, value: 
 };
 
 const KeyboardSettings: Component = () => {
+  const [initialBindings] = createSignal<KeyboardBindings>(
+    cloneKeyboardBindings(configStore.keyboard),
+  );
+
   return (
     <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
       <For each={BINDING_SECTIONS}>
@@ -107,7 +132,7 @@ const KeyboardSettings: Component = () => {
                 <KeyboardBindInput
                   label={field.label}
                   value={configStore.keyboard[field.key]}
-                  defaultValue={defaultKeyboardBindings[field.key]}
+                  resetValue={initialBindings()[field.key]}
                   onChange={(next) => updateKeyboardBinding(field.key, next)}
                 />
               )}

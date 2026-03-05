@@ -123,48 +123,51 @@ type GamepadInput = {
   maxValue: number;
 };
 
+type NullableKeyboardInput = KeyboardInput | null;
+type NullableGamepadInput = GamepadInput | null;
+
 type KeyboardBindings = {
-  surgeForward: KeyboardInput;
-  surgeBackward: KeyboardInput;
-  swayRight: KeyboardInput;
-  swayLeft: KeyboardInput;
-  heaveUp: KeyboardInput;
-  heaveDown: KeyboardInput;
-  pitchUp: KeyboardInput;
-  pitchDown: KeyboardInput;
-  yawRight: KeyboardInput;
-  yawLeft: KeyboardInput;
-  rollLeft: KeyboardInput;
-  rollRight: KeyboardInput;
-  action1Positive: KeyboardInput;
-  action1Negative: KeyboardInput;
-  action2Positive: KeyboardInput;
-  action2Negative: KeyboardInput;
-  autoStabilization: KeyboardInput;
-  depthHold: KeyboardInput;
-  record: KeyboardInput;
+  surgeForward: NullableKeyboardInput;
+  surgeBackward: NullableKeyboardInput;
+  swayRight: NullableKeyboardInput;
+  swayLeft: NullableKeyboardInput;
+  heaveUp: NullableKeyboardInput;
+  heaveDown: NullableKeyboardInput;
+  pitchUp: NullableKeyboardInput;
+  pitchDown: NullableKeyboardInput;
+  yawRight: NullableKeyboardInput;
+  yawLeft: NullableKeyboardInput;
+  rollLeft: NullableKeyboardInput;
+  rollRight: NullableKeyboardInput;
+  action1Positive: NullableKeyboardInput;
+  action1Negative: NullableKeyboardInput;
+  action2Positive: NullableKeyboardInput;
+  action2Negative: NullableKeyboardInput;
+  autoStabilization: NullableKeyboardInput;
+  depthHold: NullableKeyboardInput;
+  record: NullableKeyboardInput;
 };
 
 type GamepadBindings = {
-  surgeForward: GamepadInput;
-  surgeBackward: GamepadInput;
-  swayRight: GamepadInput;
-  swayLeft: GamepadInput;
-  heaveUp: GamepadInput;
-  heaveDown: GamepadInput;
-  pitchUp: GamepadInput;
-  pitchDown: GamepadInput;
-  yawRight: GamepadInput;
-  yawLeft: GamepadInput;
-  rollLeft: GamepadInput;
-  rollRight: GamepadInput;
-  action1Positive: GamepadInput;
-  action1Negative: GamepadInput;
-  action2Positive: GamepadInput;
-  action2Negative: GamepadInput;
-  autoStabilization: GamepadInput;
-  depthHold: GamepadInput;
-  record: GamepadInput;
+  surgeForward: NullableGamepadInput;
+  surgeBackward: NullableGamepadInput;
+  swayRight: NullableGamepadInput;
+  swayLeft: NullableGamepadInput;
+  heaveUp: NullableGamepadInput;
+  heaveDown: NullableGamepadInput;
+  pitchUp: NullableGamepadInput;
+  pitchDown: NullableGamepadInput;
+  yawRight: NullableGamepadInput;
+  yawLeft: NullableGamepadInput;
+  rollLeft: NullableGamepadInput;
+  rollRight: NullableGamepadInput;
+  action1Positive: NullableGamepadInput;
+  action1Negative: NullableGamepadInput;
+  action2Positive: NullableGamepadInput;
+  action2Negative: NullableGamepadInput;
+  autoStabilization: NullableGamepadInput;
+  depthHold: NullableGamepadInput;
+  record: NullableGamepadInput;
 };
 
 type AttitudeIndicator = 'scientific' | 'dimensional3D' | 'disabled';
@@ -191,70 +194,48 @@ type Config = {
   gamepad: Record<string, GamepadBindings>;
 };
 
-const defaultKeyboardInput = (key: KeyboardKey): KeyboardInput => ({
-  key,
-  minValue: 0,
-  maxValue: 1,
+const createNullKeyboardBindings = (): KeyboardBindings => ({
+  surgeForward: null,
+  surgeBackward: null,
+  swayRight: null,
+  swayLeft: null,
+  heaveUp: null,
+  heaveDown: null,
+  pitchUp: null,
+  pitchDown: null,
+  yawRight: null,
+  yawLeft: null,
+  rollLeft: null,
+  rollRight: null,
+  action1Positive: null,
+  action1Negative: null,
+  action2Positive: null,
+  action2Negative: null,
+  autoStabilization: null,
+  depthHold: null,
+  record: null,
 });
 
-const defaultKeyboardBindings: KeyboardBindings = {
-  surgeForward: defaultKeyboardInput('KeyW'),
-  surgeBackward: defaultKeyboardInput('KeyS'),
-  swayRight: defaultKeyboardInput('KeyD'),
-  swayLeft: defaultKeyboardInput('KeyA'),
-  heaveUp: defaultKeyboardInput('Space'),
-  heaveDown: defaultKeyboardInput('ShiftLeft'),
-  pitchUp: defaultKeyboardInput('KeyI'),
-  pitchDown: defaultKeyboardInput('KeyK'),
-  yawRight: defaultKeyboardInput('KeyL'),
-  yawLeft: defaultKeyboardInput('KeyJ'),
-  rollLeft: defaultKeyboardInput('KeyQ'),
-  rollRight: defaultKeyboardInput('KeyE'),
-  action1Positive: defaultKeyboardInput('Digit1'),
-  action1Negative: defaultKeyboardInput('Digit2'),
-  action2Positive: defaultKeyboardInput('Digit3'),
-  action2Negative: defaultKeyboardInput('Digit4'),
-  autoStabilization: defaultKeyboardInput('KeyU'),
-  depthHold: defaultKeyboardInput('KeyO'),
-  record: defaultKeyboardInput('KeyR'),
-};
-
-const defaultGamepadInputButton = (index: number): GamepadInput => ({
-  input: { Button: index },
-  minValue: 0,
-  maxValue: 1,
-});
-
-const defaultGamepadInputAxis = (
-  index: number,
-  minValue: number,
-  maxValue: number,
-): GamepadInput => ({
-  input: { Axis: index },
-  minValue,
-  maxValue,
-});
-
-const createDefaultGamepadBindings = (): GamepadBindings => ({
-  surgeForward: defaultGamepadInputAxis(1, 0, -1),
-  surgeBackward: defaultGamepadInputAxis(1, 0, 1),
-  swayRight: defaultGamepadInputAxis(0, 0, 1),
-  swayLeft: defaultGamepadInputAxis(0, 0, -1),
-  heaveUp: defaultGamepadInputButton(7),
-  heaveDown: defaultGamepadInputButton(6),
-  pitchUp: defaultGamepadInputAxis(3, 0, -1),
-  pitchDown: defaultGamepadInputAxis(3, 0, 1),
-  yawRight: defaultGamepadInputAxis(2, 0, 1),
-  yawLeft: defaultGamepadInputAxis(2, 0, -1),
-  rollLeft: defaultGamepadInputButton(4),
-  rollRight: defaultGamepadInputButton(5),
-  action1Positive: defaultGamepadInputButton(0),
-  action1Negative: defaultGamepadInputButton(1),
-  action2Positive: defaultGamepadInputButton(2),
-  action2Negative: defaultGamepadInputButton(3),
-  autoStabilization: defaultGamepadInputButton(12),
-  depthHold: defaultGamepadInputButton(13),
-  record: defaultGamepadInputButton(9),
+const createNullGamepadBindings = (): GamepadBindings => ({
+  surgeForward: null,
+  surgeBackward: null,
+  swayRight: null,
+  swayLeft: null,
+  heaveUp: null,
+  heaveDown: null,
+  pitchUp: null,
+  pitchDown: null,
+  yawRight: null,
+  yawLeft: null,
+  rollLeft: null,
+  rollRight: null,
+  action1Positive: null,
+  action1Negative: null,
+  action2Positive: null,
+  action2Negative: null,
+  autoStabilization: null,
+  depthHold: null,
+  record: null,
 });
 
 const defaultConfig: Config = {
@@ -268,7 +249,7 @@ const defaultConfig: Config = {
   webrtcSignalingApiPath: '/api/webrtc?src=cam',
   webSocketPort: 9000,
   infoLogging: false,
-  keyboard: defaultKeyboardBindings,
+  keyboard: createNullKeyboardBindings(),
   selectedGamepadId: null,
   gamepad: {},
 };
@@ -308,8 +289,8 @@ export {
   setConfig,
   AttitudeIndicator,
   defaultConfig,
-  defaultKeyboardBindings,
-  createDefaultGamepadBindings,
+  createNullKeyboardBindings,
+  createNullGamepadBindings,
   type KeyboardKey,
   type GamepadInputType,
   type KeyboardInput,

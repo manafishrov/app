@@ -6,8 +6,8 @@ export const mapGamepadValue = (rawValue: number, minValue: number, maxValue: nu
   return normalizeBindValue(rawValue, minValue, maxValue);
 };
 
-export const readGamepadInput = (input: GamepadInput, gamepad: Gamepad | null): number => {
-  if (!gamepad) return 0;
+export const readGamepadInput = (input: GamepadInput | null, gamepad: Gamepad | null): number => {
+  if (!input || !gamepad) return 0;
 
   if ('Button' in input.input) {
     const idx = input.input.Button;

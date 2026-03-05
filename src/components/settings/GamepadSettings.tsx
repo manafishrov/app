@@ -27,8 +27,8 @@ import { getConnectedGamepads } from '@/input';
 import {
   type GamepadBindings,
   type GamepadInput,
+  createNullGamepadBindings,
   configStore,
-  createDefaultGamepadBindings,
   setConfig,
 } from '@/stores/config';
 
@@ -117,10 +117,9 @@ const BINDING_SECTIONS: BindingSection[] = [
 const SettingsGrid: Component<{
   selectedGamepadId: string | null;
   bindings: GamepadBindings;
-  onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput) => void;
+  resetBindings: GamepadBindings;
+  onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput | null) => void;
 }> = (props) => {
-  const defaultBindings = createDefaultGamepadBindings();
-
   return (
     <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
       <For each={BINDING_SECTIONS}>
@@ -132,7 +131,7 @@ const SettingsGrid: Component<{
                 <GamepadBindInput
                   label={field.label}
                   value={props.bindings[field.key]}
-                  defaultValue={defaultBindings[field.key]}
+                  resetValue={props.resetBindings[field.key]}
                   selectedGamepadId={props.selectedGamepadId}
                   onChange={(next) => props.onBindChange(field.key, next)}
                 />
@@ -161,8 +160,76 @@ const uniqueByGamepadId = (gamepads: Gamepad[]): SelectItemOption[] => {
   return options;
 };
 
+const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => {
+  return {
+    surgeForward: bindings.surgeForward
+      ? { ...bindings.surgeForward, input: { ...bindings.surgeForward.input } }
+      : null,
+    surgeBackward: bindings.surgeBackward
+      ? { ...bindings.surgeBackward, input: { ...bindings.surgeBackward.input } }
+      : null,
+    swayRight: bindings.swayRight
+      ? { ...bindings.swayRight, input: { ...bindings.swayRight.input } }
+      : null,
+    swayLeft: bindings.swayLeft
+      ? { ...bindings.swayLeft, input: { ...bindings.swayLeft.input } }
+      : null,
+    heaveUp: bindings.heaveUp
+      ? { ...bindings.heaveUp, input: { ...bindings.heaveUp.input } }
+      : null,
+    heaveDown: bindings.heaveDown
+      ? { ...bindings.heaveDown, input: { ...bindings.heaveDown.input } }
+      : null,
+    pitchUp: bindings.pitchUp
+      ? { ...bindings.pitchUp, input: { ...bindings.pitchUp.input } }
+      : null,
+    pitchDown: bindings.pitchDown
+      ? { ...bindings.pitchDown, input: { ...bindings.pitchDown.input } }
+      : null,
+    yawRight: bindings.yawRight
+      ? { ...bindings.yawRight, input: { ...bindings.yawRight.input } }
+      : null,
+    yawLeft: bindings.yawLeft
+      ? { ...bindings.yawLeft, input: { ...bindings.yawLeft.input } }
+      : null,
+    rollLeft: bindings.rollLeft
+      ? { ...bindings.rollLeft, input: { ...bindings.rollLeft.input } }
+      : null,
+    rollRight: bindings.rollRight
+      ? { ...bindings.rollRight, input: { ...bindings.rollRight.input } }
+      : null,
+    action1Positive: bindings.action1Positive
+      ? { ...bindings.action1Positive, input: { ...bindings.action1Positive.input } }
+      : null,
+    action1Negative: bindings.action1Negative
+      ? { ...bindings.action1Negative, input: { ...bindings.action1Negative.input } }
+      : null,
+    action2Positive: bindings.action2Positive
+      ? { ...bindings.action2Positive, input: { ...bindings.action2Positive.input } }
+      : null,
+    action2Negative: bindings.action2Negative
+      ? { ...bindings.action2Negative, input: { ...bindings.action2Negative.input } }
+      : null,
+    autoStabilization: bindings.autoStabilization
+      ? { ...bindings.autoStabilization, input: { ...bindings.autoStabilization.input } }
+      : null,
+    depthHold: bindings.depthHold
+      ? { ...bindings.depthHold, input: { ...bindings.depthHold.input } }
+      : null,
+    record: bindings.record ? { ...bindings.record, input: { ...bindings.record.input } } : null,
+  };
+};
+
+const cloneGamepadMap = (map: Record<string, GamepadBindings>): Record<string, GamepadBindings> => {
+  const entries = Object.entries(map).map(([id, bindings]) => [id, cloneGamepadBindings(bindings)]);
+  return Object.fromEntries(entries);
+};
+
 const GamepadSettings: Component = () => {
   const [connectedGamepads, setConnectedGamepads] = createSignal<Gamepad[]>([]);
+  const [initialGamepadBindings] = createSignal<Record<string, GamepadBindings>>(
+    cloneGamepadMap(configStore.gamepad),
+  );
   let animationFrame: number | undefined;
 
   onMount(() => {
@@ -195,7 +262,13 @@ const GamepadSettings: Component = () => {
   const selectedBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
     if (!selectedId) return null;
-    return configStore.gamepad[selectedId] ?? createDefaultGamepadBindings();
+    return configStore.gamepad[selectedId] ?? createNullGamepadBindings();
+  });
+
+  const selectedResetBindings = createMemo<GamepadBindings | null>(() => {
+    const selectedId = selectedGamepadId();
+    if (!selectedId) return null;
+    return initialGamepadBindings()[selectedId] ?? createNullGamepadBindings();
   });
 
   const selectedGamepadValue = createMemo<string[]>(() => {
@@ -208,7 +281,7 @@ const GamepadSettings: Component = () => {
       ? configStore.gamepad
       : {
           ...configStore.gamepad,
-          [gamepadId]: createDefaultGamepadBindings(),
+          [gamepadId]: createNullGamepadBindings(),
         };
 
     await setConfig({
@@ -217,11 +290,14 @@ const GamepadSettings: Component = () => {
     });
   };
 
-  const updateGamepadBinding = async (bindingKey: keyof GamepadBindings, value: GamepadInput) => {
+  const updateGamepadBinding = async (
+    bindingKey: keyof GamepadBindings,
+    value: GamepadInput | null,
+  ) => {
     const selectedId = selectedGamepadId();
     if (!selectedId) return;
 
-    const currentBindings = configStore.gamepad[selectedId] ?? createDefaultGamepadBindings();
+    const currentBindings = configStore.gamepad[selectedId] ?? createNullGamepadBindings();
     const updatedBindings: GamepadBindings = {
       ...currentBindings,
       [bindingKey]: value,
@@ -304,19 +380,24 @@ const GamepadSettings: Component = () => {
           fallback={<p class='text-sm text-muted-foreground'>Select a gamepad to edit bindings.</p>}
         >
           {(bindings) => (
-            <Show
-              when={selectedGamepadConnected()}
-              fallback={
-                <p class='text-sm text-muted-foreground'>
-                  The selected gamepad is not connected. Reconnect it to capture input.
-                </p>
-              }
-            >
-              <SettingsGrid
-                selectedGamepadId={selectedGamepadId()}
-                bindings={bindings()}
-                onBindChange={updateGamepadBinding}
-              />
+            <Show when={selectedResetBindings()} fallback={null}>
+              {(resetBindings) => (
+                <Show
+                  when={selectedGamepadConnected()}
+                  fallback={
+                    <p class='text-sm text-muted-foreground'>
+                      The selected gamepad is not connected. Reconnect it to capture input.
+                    </p>
+                  }
+                >
+                  <SettingsGrid
+                    selectedGamepadId={selectedGamepadId()}
+                    bindings={bindings()}
+                    resetBindings={resetBindings()}
+                    onBindChange={updateGamepadBinding}
+                  />
+                </Show>
+              )}
             </Show>
           )}
         </Show>

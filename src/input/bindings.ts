@@ -23,7 +23,12 @@ export const normalizeBindValue = (
   return clamp((rawValue - minValue) / range, 0, 1);
 };
 
-export const getGamepadRawInputValue = (input: GamepadInputType, gamepad: Gamepad): number => {
+export const getGamepadRawInputValue = (
+  input: GamepadInputType | null,
+  gamepad: Gamepad,
+): number => {
+  if (!input) return 0;
+
   if ('Button' in input) {
     const index = input.Button;
     return gamepad.buttons[index]?.value ?? 0;
@@ -97,7 +102,11 @@ export const isKeyboardKey = (key: string): key is KeyboardKey => {
   ].includes(key);
 };
 
-export const formatGamepadInputLabel = (input: GamepadInputType): string => {
+export const formatGamepadInputLabel = (input: GamepadInputType | null): string => {
+  if (!input) {
+    return 'Unbound';
+  }
+
   if ('Button' in input) {
     return `Button ${input.Button}`;
   }

@@ -10,8 +10,8 @@ const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
 const clamp = (value: number): number => Math.max(-1, Math.min(1, value));
 
 type AxisInput = {
-  positiveKB: KeyboardInput;
-  negativeKB: KeyboardInput;
+  positiveKB: KeyboardInput | null;
+  negativeKB: KeyboardInput | null;
   positiveGP: GamepadInput | null;
   negativeGP: GamepadInput | null;
 };

@@ -16,9 +16,9 @@ import {
 
 type KeyboardBindInputProps = {
   label: string;
-  value: KeyboardInput;
-  defaultValue: KeyboardInput;
-  onChange: (next: KeyboardInput) => void;
+  value: KeyboardInput | null;
+  resetValue: KeyboardInput | null;
+  onChange: (next: KeyboardInput | null) => void;
 };
 
 const toKeyboardValue = (isPressed: boolean): number => {
@@ -96,12 +96,15 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   });
 
   const progressValue = createMemo(() => {
+    if (!props.value) return 0;
+
     const key = props.value.key;
     const mappedValue = pressedKeys().has(key) ? props.value.maxValue : props.value.minValue;
     return normalizeBindValue(mappedValue, props.value.minValue, props.value.maxValue);
   });
 
   const currentValue = createMemo(() => {
+    if (!props.value) return 0;
     return toKeyboardValue(pressedKeys().has(props.value.key));
   });
 
@@ -137,6 +140,12 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
     };
 
     captureFirstKeyDownListener = (event: KeyboardEvent): void => {
+      if (event.code === 'Escape') {
+        props.onChange(null);
+        stopRecording();
+        return;
+      }
+
       if (!firstChangedKey && !initialSnapshot.has(event.code)) {
         firstChangedKey = event.code;
         scheduleSecondSnapshot();
@@ -163,11 +172,16 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   const resetToDefault = (): void => {
     stopRecording();
 
-    props.onChange({
-      key: props.defaultValue.key,
-      minValue: props.defaultValue.minValue,
-      maxValue: props.defaultValue.maxValue,
-    });
+    if (props.resetValue) {
+      props.onChange({
+        key: props.resetValue.key,
+        minValue: props.resetValue.minValue,
+        maxValue: props.resetValue.maxValue,
+      });
+      return;
+    }
+
+    props.onChange(null);
   };
 
   return (
@@ -181,7 +195,11 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
         >
           <KeyboardIcon class='size-4' />
           <span class='truncate'>
-            {isRecording() ? 'Press a key...' : formatKeyboardKeyLabel(props.value.key)}
+            {isRecording()
+              ? 'Press a key...'
+              : props.value
+                ? formatKeyboardKeyLabel(props.value.key)
+                : 'Unbound'}
           </span>
         </Button>
         <Button
@@ -199,9 +217,9 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
         </ProgressTrack>
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
-        <span>Min: {formatBindMarkerValue(props.value.minValue)}</span>
+        <span>Min: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}</span>
         <span>Current: {formatBindMarkerValue(currentValue())}</span>
-        <span>Max: {formatBindMarkerValue(props.value.maxValue)}</span>
+        <span>Max: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}</span>
       </div>
     </div>
   );

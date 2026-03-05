@@ -35,7 +35,9 @@ export const createKeyboardTracker = (): {
   return { pressedKeys, cleanup };
 };
 
-export const getKeyboardValue = (input: KeyboardInput, pressedKeys: Set<string>): number => {
+export const getKeyboardValue = (input: KeyboardInput | null, pressedKeys: Set<string>): number => {
+  if (!input) return 0;
+
   const isPressed = pressedKeys.has(input.key);
   return isPressed ? input.maxValue : input.minValue;
 };

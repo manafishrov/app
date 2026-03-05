@@ -134,49 +134,49 @@ pub struct GamepadInput {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyboardBindings {
-  pub surge_forward: KeyboardInput,
-  pub surge_backward: KeyboardInput,
-  pub sway_right: KeyboardInput,
-  pub sway_left: KeyboardInput,
-  pub heave_up: KeyboardInput,
-  pub heave_down: KeyboardInput,
-  pub pitch_up: KeyboardInput,
-  pub pitch_down: KeyboardInput,
-  pub yaw_right: KeyboardInput,
-  pub yaw_left: KeyboardInput,
-  pub roll_left: KeyboardInput,
-  pub roll_right: KeyboardInput,
-  pub action1_positive: KeyboardInput,
-  pub action1_negative: KeyboardInput,
-  pub action2_positive: KeyboardInput,
-  pub action2_negative: KeyboardInput,
-  pub auto_stabilization: KeyboardInput,
-  pub depth_hold: KeyboardInput,
-  pub record: KeyboardInput,
+  pub surge_forward: Option<KeyboardInput>,
+  pub surge_backward: Option<KeyboardInput>,
+  pub sway_right: Option<KeyboardInput>,
+  pub sway_left: Option<KeyboardInput>,
+  pub heave_up: Option<KeyboardInput>,
+  pub heave_down: Option<KeyboardInput>,
+  pub pitch_up: Option<KeyboardInput>,
+  pub pitch_down: Option<KeyboardInput>,
+  pub yaw_right: Option<KeyboardInput>,
+  pub yaw_left: Option<KeyboardInput>,
+  pub roll_left: Option<KeyboardInput>,
+  pub roll_right: Option<KeyboardInput>,
+  pub action1_positive: Option<KeyboardInput>,
+  pub action1_negative: Option<KeyboardInput>,
+  pub action2_positive: Option<KeyboardInput>,
+  pub action2_negative: Option<KeyboardInput>,
+  pub auto_stabilization: Option<KeyboardInput>,
+  pub depth_hold: Option<KeyboardInput>,
+  pub record: Option<KeyboardInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GamepadBindings {
-  pub surge_forward: GamepadInput,
-  pub surge_backward: GamepadInput,
-  pub sway_right: GamepadInput,
-  pub sway_left: GamepadInput,
-  pub heave_up: GamepadInput,
-  pub heave_down: GamepadInput,
-  pub pitch_up: GamepadInput,
-  pub pitch_down: GamepadInput,
-  pub yaw_right: GamepadInput,
-  pub yaw_left: GamepadInput,
-  pub roll_left: GamepadInput,
-  pub roll_right: GamepadInput,
-  pub action1_positive: GamepadInput,
-  pub action1_negative: GamepadInput,
-  pub action2_positive: GamepadInput,
-  pub action2_negative: GamepadInput,
-  pub auto_stabilization: GamepadInput,
-  pub depth_hold: GamepadInput,
-  pub record: GamepadInput,
+  pub surge_forward: Option<GamepadInput>,
+  pub surge_backward: Option<GamepadInput>,
+  pub sway_right: Option<GamepadInput>,
+  pub sway_left: Option<GamepadInput>,
+  pub heave_up: Option<GamepadInput>,
+  pub heave_down: Option<GamepadInput>,
+  pub pitch_up: Option<GamepadInput>,
+  pub pitch_down: Option<GamepadInput>,
+  pub yaw_right: Option<GamepadInput>,
+  pub yaw_left: Option<GamepadInput>,
+  pub roll_left: Option<GamepadInput>,
+  pub roll_right: Option<GamepadInput>,
+  pub action1_positive: Option<GamepadInput>,
+  pub action1_negative: Option<GamepadInput>,
+  pub action2_positive: Option<GamepadInput>,
+  pub action2_negative: Option<GamepadInput>,
+  pub auto_stabilization: Option<GamepadInput>,
+  pub depth_hold: Option<GamepadInput>,
+  pub record: Option<GamepadInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -236,101 +236,101 @@ impl Default for Config {
       web_socket_port: 9000,
       info_logging: false,
       keyboard: KeyboardBindings {
-        surge_forward: KeyboardInput {
+        surge_forward: Some(KeyboardInput {
           key: KeyboardKey::KeyW,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        surge_backward: KeyboardInput {
+        }),
+        surge_backward: Some(KeyboardInput {
           key: KeyboardKey::KeyS,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        sway_right: KeyboardInput {
+        }),
+        sway_right: Some(KeyboardInput {
           key: KeyboardKey::KeyD,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        sway_left: KeyboardInput {
+        }),
+        sway_left: Some(KeyboardInput {
           key: KeyboardKey::KeyA,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        heave_up: KeyboardInput {
+        }),
+        heave_up: Some(KeyboardInput {
           key: KeyboardKey::Space,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        heave_down: KeyboardInput {
+        }),
+        heave_down: Some(KeyboardInput {
           key: KeyboardKey::ShiftLeft,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        pitch_up: KeyboardInput {
+        }),
+        pitch_up: Some(KeyboardInput {
           key: KeyboardKey::KeyI,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        pitch_down: KeyboardInput {
+        }),
+        pitch_down: Some(KeyboardInput {
           key: KeyboardKey::KeyK,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        yaw_left: KeyboardInput {
+        }),
+        yaw_left: Some(KeyboardInput {
           key: KeyboardKey::KeyJ,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        yaw_right: KeyboardInput {
+        }),
+        yaw_right: Some(KeyboardInput {
           key: KeyboardKey::KeyL,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        roll_left: KeyboardInput {
+        }),
+        roll_left: Some(KeyboardInput {
           key: KeyboardKey::KeyQ,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        roll_right: KeyboardInput {
+        }),
+        roll_right: Some(KeyboardInput {
           key: KeyboardKey::KeyE,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        action1_positive: KeyboardInput {
+        }),
+        action1_positive: Some(KeyboardInput {
           key: KeyboardKey::Digit1,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        action1_negative: KeyboardInput {
+        }),
+        action1_negative: Some(KeyboardInput {
           key: KeyboardKey::Digit2,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        action2_positive: KeyboardInput {
+        }),
+        action2_positive: Some(KeyboardInput {
           key: KeyboardKey::Digit3,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        action2_negative: KeyboardInput {
+        }),
+        action2_negative: Some(KeyboardInput {
           key: KeyboardKey::Digit4,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        auto_stabilization: KeyboardInput {
+        }),
+        auto_stabilization: Some(KeyboardInput {
           key: KeyboardKey::KeyU,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        depth_hold: KeyboardInput {
+        }),
+        depth_hold: Some(KeyboardInput {
           key: KeyboardKey::KeyO,
           min_value: 0.0,
           max_value: 1.0,
-        },
-        record: KeyboardInput {
+        }),
+        record: Some(KeyboardInput {
           key: KeyboardKey::KeyR,
           min_value: 0.0,
           max_value: 1.0,
-        },
+        }),
       },
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
