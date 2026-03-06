@@ -80,7 +80,7 @@ export const getActiveGamepad = (selectedGamepadId: string | null): Gamepad | nu
   if (connectedGamepads.length === 0) return null;
 
   if (!selectedGamepadId) {
-    return connectedGamepads[0] ?? null;
+    return null;
   }
 
   const parsed = parseGamepadBindingKey(selectedGamepadId);
@@ -88,15 +88,9 @@ export const getActiveGamepad = (selectedGamepadId: string | null): Gamepad | nu
     return (
       connectedGamepads.find(
         (gamepad) => gamepad.id === parsed.id && gamepad.index === parsed.index,
-      ) ??
-      connectedGamepads[0] ??
-      null
+      ) ?? null
     );
   }
 
-  return (
-    connectedGamepads.find((gamepad) => gamepad.id === selectedGamepadId) ??
-    connectedGamepads[0] ??
-    null
-  );
+  return connectedGamepads.find((gamepad) => gamepad.id === selectedGamepadId) ?? null;
 };

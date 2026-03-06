@@ -3,6 +3,7 @@ import { Select } from '@manafishrov/ui/select';
 import {
   SelectContent,
   SelectControl,
+  SelectClearTrigger,
   SelectIndicator,
   SelectItem,
   SelectLabel,
@@ -291,7 +292,12 @@ const GamepadSettings: Component = () => {
     return selectedId ? [selectedId] : [];
   });
 
-  const setSelectedGamepad = async (gamepadId: string) => {
+  const setSelectedGamepad = async (gamepadId: string | null) => {
+    if (!gamepadId) {
+      await setConfig({ selectedGamepadId: null });
+      return;
+    }
+
     const selectedGamepad = connectedGamepads().find(
       (gamepad) => toGamepadBindingKey(gamepad) === gamepadId,
     );
@@ -341,19 +347,13 @@ const GamepadSettings: Component = () => {
   });
 
   createEffect(() => {
-    const options = gamepadOptions();
-    if (options.length === 0) return;
-
     const selectedId = selectedGamepadId();
-    const selectedAvailable = Boolean(
-      selectedId && options.some((option) => option.value === selectedId),
-    );
+    if (!selectedId) return;
+
+    const selectedAvailable = gamepadOptions().some((option) => option.value === selectedId);
 
     if (!selectedAvailable) {
-      const fallbackId = options[0]?.value;
-      if (fallbackId) {
-        void setSelectedGamepad(fallbackId);
-      }
+      void setSelectedGamepad(null);
     }
   });
 
@@ -374,10 +374,10 @@ const GamepadSettings: Component = () => {
         <div class='space-y-2'>
           <Select<SelectItemOption>
             collection={gamepadCollection()}
+            deselectable
             value={selectedGamepadValue()}
             onValueChange={(details) => {
-              const gamepadId = details.value[0];
-              if (!gamepadId) return;
+              const gamepadId = details.value[0] ?? null;
               void setSelectedGamepad(gamepadId);
             }}
           >
@@ -385,6 +385,9 @@ const GamepadSettings: Component = () => {
             <SelectControl>
               <SelectTrigger>
                 <SelectValue placeholder='Select a gamepad' />
+                <Show when={selectedGamepadId()}>
+                  <SelectClearTrigger />
+                </Show>
                 <SelectIndicator />
               </SelectTrigger>
             </SelectControl>
