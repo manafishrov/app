@@ -27,6 +27,13 @@ type LogViewerProps = {
   class?: string;
 };
 
+type VirtualLogRowProps = {
+  index: number;
+  start: number;
+  log: LogRecord;
+  measureRow: (el: HTMLDivElement) => void;
+};
+
 const formatTimestamp = (date: Date): string => {
   const d = new Date(date);
   const hours = String(d.getHours()).padStart(2, '0');
@@ -34,6 +41,78 @@ const formatTimestamp = (date: Date): string => {
   const seconds = String(d.getSeconds()).padStart(2, '0');
   const ms = String(d.getMilliseconds()).padStart(3, '0');
   return `${hours}:${minutes}:${seconds}.${ms}`;
+};
+
+const VirtualLogRow: Component<VirtualLogRowProps> = (props) => {
+  let rowRef: HTMLDivElement | undefined;
+
+  const remeasure = () => {
+    const el = rowRef;
+    if (!el) {
+      return;
+    }
+    props.measureRow(el);
+  };
+
+  onMount(() => {
+    const el = rowRef;
+    if (!el) {
+      return;
+    }
+
+    remeasure();
+
+    const observer = new ResizeObserver(() => {
+      remeasure();
+    });
+    observer.observe(el);
+
+    onCleanup(() => {
+      observer.disconnect();
+    });
+  });
+
+  createEffect(() => {
+    props.start;
+    props.log.message;
+    queueMicrotask(remeasure);
+  });
+
+  return (
+    <div
+      data-index={props.index}
+      ref={(el) => {
+        rowRef = el;
+        props.measureRow(el);
+      }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        transform: `translateY(${props.start}px)`,
+        width: '100%',
+      }}
+      class='select-text px-4 py-1.5 hover:bg-muted/30 whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-mono text-[13px] leading-relaxed text-foreground/90'
+    >
+      <span class='text-[11px] text-muted-foreground/70'>
+        [{formatTimestamp(props.log.timestamp)}]
+      </span>{' '}
+      <span
+        class={cn(
+          'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wider align-baseline',
+          props.log.level === 'error' && 'bg-red-500/15 text-red-400',
+          props.log.level === 'warn' && 'bg-yellow-500/15 text-yellow-500',
+          props.log.level === 'info' && 'bg-blue-500/15 text-blue-400',
+        )}
+      >
+        {props.log.level.toUpperCase()}
+      </span>{' '}
+      <span class='inline-block rounded bg-muted/50 px-1.5 py-0.5 text-[10px] tracking-wider text-muted-foreground align-baseline'>
+        {props.log.origin.toUpperCase()}
+      </span>{' '}
+      <span>{props.log.message}</span>
+    </div>
+  );
 };
 
 const LogViewer: Component<LogViewerProps> = (props) => {
@@ -288,36 +367,12 @@ const LogViewer: Component<LogViewerProps> = (props) => {
                   }
 
                   return (
-                    <div
-                      data-index={virtualItem.index}
-                      ref={measureRow}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        transform: `translateY(${virtualItem.start}px)`,
-                        width: '100%',
-                      }}
-                      class='select-text px-4 py-1.5 hover:bg-muted/30 whitespace-pre-wrap break-all font-mono text-[13px] leading-relaxed text-foreground/90'
-                    >
-                      <span class='text-[11px] text-muted-foreground/70'>
-                        [{formatTimestamp(log.timestamp)}]
-                      </span>{' '}
-                      <span
-                        class={cn(
-                          'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wider align-baseline',
-                          log.level === 'error' && 'bg-red-500/15 text-red-400',
-                          log.level === 'warn' && 'bg-yellow-500/15 text-yellow-500',
-                          log.level === 'info' && 'bg-blue-500/15 text-blue-400',
-                        )}
-                      >
-                        {log.level.toUpperCase()}
-                      </span>{' '}
-                      <span class='inline-block rounded bg-muted/50 px-1.5 py-0.5 text-[10px] tracking-wider text-muted-foreground align-baseline'>
-                        {log.origin.toUpperCase()}
-                      </span>{' '}
-                      <span>{log.message}</span>
-                    </div>
+                    <VirtualLogRow
+                      index={virtualItem.index}
+                      start={virtualItem.start}
+                      log={log}
+                      measureRow={measureRow}
+                    />
                   );
                 }}
               </For>

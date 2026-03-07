@@ -6,10 +6,6 @@ import { logError, logWarn } from '@/lib/log';
 
 export type CleanupFn = () => void;
 
-/**
- * Simple disposable stack for collecting cleanup functions.
- * Call dispose() once to clean up everything in LIFO order.
- */
 export class DisposableStack {
   private cleanups: CleanupFn[] = [];
 
@@ -25,18 +21,10 @@ export class DisposableStack {
   }
 }
 
-/**
- * Options for creating a Tauri event listener.
- */
 export type ListenerOptions = {
-  /** Only log warning on error, don't show toast */
   warnOnly?: boolean;
 };
 
-/**
- * Creates a typed Tauri event listener with consistent error handling.
- * Returns a promise that resolves to a cleanup function.
- */
 export const createListener = <T>(
   event: string,
   handler: (payload: T) => void,
@@ -64,9 +52,6 @@ export const createListener = <T>(
     return () => {};
   });
 
-/**
- * Type-safe wrapper around Tauri's invoke command with consistent error handling.
- */
 export const invokeCommand = async <T>(
   command: string,
   args?: Record<string, unknown>,
