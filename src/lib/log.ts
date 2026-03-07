@@ -1,7 +1,5 @@
 import { type DBSchema, type IDBPDatabase, type OpenDBCallbacks, deleteDB, openDB } from 'idb';
 
-import { configStore } from '@/stores/config';
-
 type LogLevel = 'info' | 'warn' | 'error';
 type LogOrigin = 'frontend' | 'backend' | 'firmware';
 
@@ -146,4 +144,6 @@ export {
   createLogRecord,
   type LogRecord,
   type LogEntry,
+  type LogLevel,
+  type LogOrigin,
 };

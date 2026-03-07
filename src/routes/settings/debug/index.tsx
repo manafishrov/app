@@ -13,7 +13,7 @@ const Debug: Component = () => (
         <P>Debug console for the firmware and the application.</P>
       </div>
     </div>
-    <LogViewer class='h-[calc(100svh-14rem)]' />
+    <LogViewer class='h-[calc(100svh-12rem)]' />
   </>
 );
 
