@@ -37,12 +37,12 @@ const SettingsLayoutRoute: Component = () => {
 
   return (
     <SidebarProvider defaultOpen>
-      <SidebarLayout class={cn('h-full min-h-0', !isFullscreen() && 'mt-8')}>
+      <SidebarLayout class={cn('size-full', !isFullscreen() && 'pt-8')}>
         <SettingsSidebar isFullscreen={isFullscreen()} />
-        <SidebarInset class={cn('min-h-0', isFullscreen() && 'mt-6')}>
-          <ScrollArea class='relative min-h-0 flex-1'>
-            <ScrollAreaViewport class='h-full'>
-              <ScrollAreaContent class='min-h-full'>
+        <SidebarInset class={cn(isFullscreen() && 'mt-6')}>
+          <ScrollArea class='relative size-full'>
+            <ScrollAreaViewport>
+              <ScrollAreaContent>
                 <div class='w-full max-w-3xl mx-auto p-4 md:p-8 relative'>
                   <Outlet />
                 </div>

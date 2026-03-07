@@ -1,3 +1,5 @@
+import type { Component, ComponentProps } from 'solid-js';
+
 import { Link } from '@manafishrov/ui/link';
 import {
   Sidebar,
@@ -10,10 +12,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@manafishrov/ui/sidebar';
 import { useLocation } from '@tanstack/solid-router';
-import type { Component, ComponentProps } from 'solid-js';
 import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';
@@ -92,14 +92,10 @@ const ROV_ITEMS: SidebarItem[] = [
 const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
 
-const joinClasses = (...classes: (string | undefined)[]): string =>
-  classes.filter((className) => Boolean(className)).join(' ');
-
 type SidebarLinkItemProps = {
   item: SidebarItem;
   isActive: (path: string) => boolean;
-  showTooltip: boolean;
-  disabledClass?: string;
+  disabled?: boolean;
 };
 
 type SettingsSidebarProps = {
@@ -107,26 +103,18 @@ type SettingsSidebarProps = {
 };
 
 const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
-  const tooltipProps: { tooltip: string } | Record<string, never> = props.showTooltip
-    ? { tooltip: props.item.label() }
-    : {};
-
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        {...tooltipProps}
+        tooltip={props.item.label()}
         aria-label={props.item.ariaLabel()}
         isActive={props.isActive(props.item.to)}
+        disabled={props.disabled}
         asChild={(triggerProps) => {
           const buttonProps = triggerProps();
-          const {Icon} = props.item;
+          const { Icon } = props.item;
           return (
-            <Link
-              {...buttonProps}
-              to={props.item.to}
-              activeOptions={{ exact: true }}
-              class={joinClasses(buttonProps.class, props.disabledClass)}
-            >
+            <Link {...buttonProps} to={props.item.to} activeOptions={{ exact: true }}>
               <Icon aria-hidden='true' />
               <span>{props.item.label()}</span>
             </Link>
@@ -140,13 +128,10 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
 const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   const [local] = splitProps(props, ['isFullscreen']);
   const location = useLocation();
-  const { isMobile, state } = useSidebar();
 
   const isConnected = (): boolean => connectionStatusStore.isConnected;
   const isActive = (path: string): boolean =>
     normalizePath(location().pathname) === normalizePath(path);
-  const showTooltip = (): boolean => state() === 'collapsed' && !isMobile();
-  const rovDisabledClass = (): string => (isConnected() ? '' : 'pointer-events-none opacity-50');
 
   return (
     <Sidebar
@@ -159,7 +144,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              {...(showTooltip() ? { tooltip: m.common_back() } : {})}
+              tooltip={m.common_back()}
               aria-label={m.aria_labels_back_button()}
               asChild={(props) => (
                 <Link {...props()} to='/'>
@@ -178,7 +163,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
           <SidebarGroupContent>
             <SidebarMenu>
               {APPLICATION_ITEMS.map((item) => (
-                <SidebarLinkItem item={item} isActive={isActive} showTooltip={showTooltip()} />
+                <SidebarLinkItem item={item} isActive={isActive} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -189,12 +174,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
           <SidebarGroupContent>
             <SidebarMenu>
               {ROV_ITEMS.map((item) => (
-                <SidebarLinkItem
-                  item={item}
-                  isActive={isActive}
-                  showTooltip={showTooltip()}
-                  disabledClass={rovDisabledClass()}
-                />
+                <SidebarLinkItem item={item} isActive={isActive} disabled={!isConnected()} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -205,7 +185,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              {...(showTooltip() ? { tooltip: m.settings_debug_title() } : {})}
+              tooltip={m.settings_debug_title()}
               aria-label={m.aria_labels_debug_button()}
               isActive={isActive('/settings/debug')}
               asChild={(props) => (
