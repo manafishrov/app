@@ -14,7 +14,7 @@ function StabilizationIndicator() {
   );
   const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   return (
     <div className='flex flex-col gap-1 text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>

@@ -43,7 +43,7 @@ const SettingsLayoutRoute: Component = () => {
           <ScrollArea class='relative min-h-0 flex-1'>
             <ScrollAreaViewport class='h-full'>
               <ScrollAreaContent class='min-h-full'>
-                <div class='max-w-3xl mx-auto p-8'>
+                <div class='w-full max-w-3xl mx-auto p-4 md:p-8 relative'>
                   <Outlet />
                 </div>
               </ScrollAreaContent>

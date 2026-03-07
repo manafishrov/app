@@ -22,7 +22,9 @@ const VideoStream = () => {
           configStore.webrtcSignalingApiPath,
         ] as const,
       ([ipAddress, port, path]) => {
-        if (ipAddress && port && path) connection.setup();
+        if (ipAddress && port && path) {
+          connection.setup();
+        }
       },
     ),
   );
@@ -31,11 +33,14 @@ const VideoStream = () => {
     on(
       () => recordingStore.isRecording,
       (current, prev) => {
-        const currentBool = !!current;
-        const prevBool = !!prev;
+        const currentBool = Boolean(current);
+        const prevBool = Boolean(prev);
         logInfo('Recording state changed to:', currentBool, 'prev:', prevBool);
-        if (currentBool && !prevBool) recording.start();
-        else if (!currentBool && prevBool) recording.stop();
+        if (currentBool && !prevBool) {
+          recording.start();
+        } else if (!currentBool && prevBool) {
+          recording.stop();
+        }
       },
     ),
   );

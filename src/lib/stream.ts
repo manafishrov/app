@@ -25,15 +25,15 @@ export const createWebRTCConnection = (
   let disposed = false;
 
   const scheduleRetry = (setup: () => void) => {
-    if (retryTimeout) clearTimeout(retryTimeout);
+    if (retryTimeout) {clearTimeout(retryTimeout);}
     retryTimeout = setTimeout(setup, RETRY_DELAY);
   };
 
   const setup = async () => {
-    if (disposed) return;
+    if (disposed) {return;}
 
     const { ipAddress, webrtcSignalingApiPort, webrtcSignalingApiPath } = configStore;
-    if (!ipAddress || !webrtcSignalingApiPort || !webrtcSignalingApiPath) return;
+    if (!ipAddress || !webrtcSignalingApiPort || !webrtcSignalingApiPath) {return;}
 
     setRecordingStore({ webrtcConnected: false });
     peerConnection?.close();
@@ -42,7 +42,7 @@ export const createWebRTCConnection = (
     const pc = peerConnection;
 
     pc.ontrack = (event) => {
-      if (disposed) return;
+      if (disposed) {return;}
       logInfo('WebRTC track received, kind:', event.track.kind);
       setIsLoading(true);
       setRecordingStore({ webrtcConnected: true });
@@ -58,7 +58,7 @@ export const createWebRTCConnection = (
     };
 
     pc.oniceconnectionstatechange = () => {
-      if (disposed) return;
+      if (disposed) {return;}
       if (['failed', 'disconnected', 'closed'].includes(pc.iceConnectionState)) {
         logInfo(`WebRTC connection state is ${pc.iceConnectionState}, reconnecting...`);
         setRecordingStore({ webrtcConnected: false });
@@ -73,7 +73,7 @@ export const createWebRTCConnection = (
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    if (disposed || pc !== peerConnection) return;
+    if (disposed || pc !== peerConnection) {return;}
 
     try {
       const response = await fetch(
@@ -85,13 +85,13 @@ export const createWebRTCConnection = (
         },
       );
 
-      if (disposed || pc !== peerConnection) return;
+      if (disposed || pc !== peerConnection) {return;}
 
-      if (!response.ok) throw new Error('Failed to connect to stream');
+      if (!response.ok) {throw new Error('Failed to connect to stream');}
 
       await pc.setRemoteDescription({ type: 'answer', sdp: await response.text() });
     } catch (error) {
-      if (disposed || pc !== peerConnection) return;
+      if (disposed || pc !== peerConnection) {return;}
       logInfo('WebRTC connection failed, retrying in 3 seconds...', error);
       setHasError(true);
       setIsLoading(false);
@@ -101,7 +101,7 @@ export const createWebRTCConnection = (
 
   const dispose = () => {
     disposed = true;
-    if (retryTimeout) clearTimeout(retryTimeout);
+    if (retryTimeout) {clearTimeout(retryTimeout);}
     peerConnection?.close();
     peerConnection = null;
   };
@@ -123,20 +123,20 @@ export const createRecording = (getVideo: () => HTMLVideoElement | undefined): R
   const waitForPendingInvokes = () =>
     new Promise<void>((resolve) => {
       const check = () => {
-        if (pendingInvokes === 0) resolve();
-        else requestAnimationFrame(check);
+        if (pendingInvokes === 0) {resolve();}
+        else {requestAnimationFrame(check);}
       };
       check();
     });
 
   const start = async () => {
     const video = getVideo();
-    if (!video?.srcObject) return;
+    if (!video?.srcObject) {return;}
 
     const currentOp = ++operationId;
 
     await ensureVideoDirectory();
-    if (currentOp !== operationId) return;
+    if (currentOp !== operationId) {return;}
 
     const stream = video.srcObject as MediaStream;
     const videoTracks = stream.getVideoTracks();
@@ -173,7 +173,7 @@ export const createRecording = (getVideo: () => HTMLVideoElement | undefined): R
 
   const stop = async () => {
     ++operationId;
-    if (!mediaRecorder) return;
+    if (!mediaRecorder) {return;}
 
     const recorder = mediaRecorder;
     const filePath = tempFilePath;

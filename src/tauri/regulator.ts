@@ -10,6 +10,4 @@ const [regulatorSuggestions, setRegulatorSuggestions] = createSignal<RegulatorSu
 
 export { regulatorSuggestions };
 
-export const setupRegulatorListener = () => {
-  return createListener<RegulatorSuggestions>(EVENT, setRegulatorSuggestions);
-};
+export const setupRegulatorListener = () => createListener<RegulatorSuggestions>(EVENT, setRegulatorSuggestions);

@@ -27,7 +27,7 @@ function RecordingIndicator() {
     return () => clearInterval(interval);
   }, [isRecording, startTime]);
 
-  if (!isRecording) return null;
+  if (!isRecording) {return null;}
 
   return (
     <div className='flex h-4 w-28 items-center space-x-1'>

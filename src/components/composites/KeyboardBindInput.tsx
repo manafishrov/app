@@ -142,7 +142,7 @@ function KeyboardBindInput({ label, bind, defaultBind, onBindChange }: KeyboardB
   }, [isRecording]);
 
   useEffect(() => {
-    if (!isRecordingActive) return;
+    if (!isRecordingActive) {return;}
 
     function handleKeyDown(e: KeyboardEvent) {
       e.preventDefault();
@@ -166,7 +166,7 @@ function KeyboardBindInput({ label, bind, defaultBind, onBindChange }: KeyboardB
   }, [isRecordingActive, onBindChange]);
 
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording) {return;}
 
     function handleClickOutside(e: MouseEvent) {
       if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {

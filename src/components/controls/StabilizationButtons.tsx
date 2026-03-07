@@ -31,7 +31,7 @@ function StabilizationButtons() {
     await invoke('toggle_depth_hold').catch(() => toast.error('Failed to toggle depth hold'));
   }
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   return (
     <div className='flex gap-2'>

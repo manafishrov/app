@@ -33,7 +33,7 @@ function ThrusterPinSetupTable() {
   const [testDisabled, setTestDisabled] = useState<boolean[]>(Array(pinNumbers.length).fill(false));
 
   async function handleIdentifierChange(index: number, value: number) {
-    if (!thrusterPinSetup) return;
+    if (!thrusterPinSetup) {return;}
 
     const newIdentifiers = [...thrusterPinSetup.identifiers];
     newIdentifiers[index] = value;
@@ -45,7 +45,7 @@ function ThrusterPinSetupTable() {
   }
 
   async function handleSpinDirectionChange(index: number, value: number) {
-    if (!thrusterPinSetup) return;
+    if (!thrusterPinSetup) {return;}
 
     const newSpinDirections = [...thrusterPinSetup.spinDirections];
     newSpinDirections[index] = value;
@@ -78,7 +78,7 @@ function ThrusterPinSetupTable() {
       });
   }
 
-  if (!thrusterPinSetup) return;
+  if (!thrusterPinSetup) {return;}
 
   return (
     <>

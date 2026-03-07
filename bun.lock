@@ -10,6 +10,7 @@
         "@tanstack/router-plugin": "1.163.3",
         "@tanstack/solid-form": "1.28.3",
         "@tanstack/solid-router": "1.163.3",
+        "@tanstack/solid-virtual": "3.13.21",
         "@tauri-apps/api": "2.10.1",
         "@tauri-apps/plugin-dialog": "2.6.0",
         "@tauri-apps/plugin-fs": "2.4.5",
@@ -415,7 +416,11 @@
 
     "@tanstack/solid-store": ["@tanstack/solid-store@0.8.1", "", { "dependencies": { "@tanstack/store": "0.8.1" }, "peerDependencies": { "solid-js": "^1.6.0" } }, "sha512-1p4TTJGIZJ2J7130aTo7oWfHVRSCd9DxLP3HzcDMnzn56pz8krlyBEzsE+z/sHGXP0EC/JjT02fgj2L9+fmf8Q=="],
 
+    "@tanstack/solid-virtual": ["@tanstack/solid-virtual@3.13.21", "", { "dependencies": { "@tanstack/virtual-core": "3.13.21" }, "peerDependencies": { "solid-js": "^1.3.0" } }, "sha512-SOwgCLVFHzousW9TnbkRMlUxdCHWP8xmp+v9ay2S6aaNT4MgEp6w3/EAFPQuXGVoRgyh8i4M+KZKpmliyTsNfw=="],
+
     "@tanstack/store": ["@tanstack/store@0.9.1", "", {}, "sha512-+qcNkOy0N1qSGsP7omVCW0SDrXtaDcycPqBDE726yryiA5eTDFpjBReaYjghVJwNf1pcPMyzIwTGlYjCSQR0Fg=="],
+
+    "@tanstack/virtual-core": ["@tanstack/virtual-core@3.13.21", "", {}, "sha512-ww+fmLHyCbPSf7JNbWZP3g7wl6SdNo3ah5Aiw+0e9FDErkVHLKprYUrwTm7dF646FtEkN/KkAKPYezxpmvOjxw=="],
 
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.161.4", "", {}, "sha512-42WoRePf8v690qG8yGRe/YOh+oHni9vUaUUfoqlS91U2scd3a5rkLtVsc6b7z60w3RogH0I00vdrC5AaeiZ18w=="],
 

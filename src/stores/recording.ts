@@ -14,10 +14,8 @@ const defaultRecordingState: RecordingState = {
 
 const [recordingStore, setRecordingStore] = createStore<RecordingState>(defaultRecordingState);
 
-const getDuration = () => {
-  return recordingStore.isRecording && recordingStore.startTime
+const getDuration = () => recordingStore.isRecording && recordingStore.startTime
     ? Date.now() - recordingStore.startTime
     : 0;
-};
 
 export { recordingStore, setRecordingStore, getDuration, type RecordingState };

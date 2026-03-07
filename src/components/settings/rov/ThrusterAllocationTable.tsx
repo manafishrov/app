@@ -24,7 +24,7 @@ import {
 } from '@/stores/rovConfig';
 
 function transpose<T>(matrix: T[][]): T[][] {
-  if (!matrix.length || !matrix[0]?.length) return [];
+  if (matrix.length === 0 || !matrix[0]?.length) {return [];}
   return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]!));
 }
 
@@ -71,7 +71,7 @@ function ThrusterAllocationTable() {
     colIndex: number,
     value: string,
   ) {
-    if (!displayAllocation || !thrusterAllocation) return;
+    if (!displayAllocation || !thrusterAllocation) {return;}
 
     let displayValue = value;
 
@@ -84,7 +84,7 @@ function ThrusterAllocationTable() {
       } else {
         const parts = value.split('.');
         if (parts[1] && parts[1].length > 2) {
-          displayValue = `${parts[0]}.${parts[1].substring(0, 2)}`;
+          displayValue = `${parts[0]}.${parts[1].slice(0, 2)}`;
         }
 
         const parsedValue = Number.parseFloat(displayValue);
@@ -162,7 +162,7 @@ function ThrusterAllocationTable() {
                         colIndex,
                         event.target.value
                           .replace(',', '.')
-                          .replace(/[^\d.-]/g, ''),
+                          .replaceAll(/[^\d.-]/g, ''),
                       )
                     }
                   />
@@ -175,7 +175,7 @@ function ThrusterAllocationTable() {
       <Button
         className='w-40'
         onClick={async () => {
-          if (!displayAllocation) return;
+          if (!displayAllocation) {return;}
 
           const parsedDisplay = displayAllocation.map((row: string[]) =>
             row.map((cell) => {

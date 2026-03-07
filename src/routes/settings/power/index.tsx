@@ -1,8 +1,8 @@
-// import { PowerSettingsForm } from '@/components/settings/rov/PowerSettingsForm';
+// Import { PowerSettingsForm } from '@/components/settings/rov/PowerSettingsForm';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';

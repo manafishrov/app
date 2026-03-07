@@ -2,83 +2,83 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 function General() {
-  // const config = useStore(configStore, (state) =>
-  //   state
+  // Const config = useStore(configStore, (state) =>
+  //   State
   //     ? {
-  //         videoDirectory: state.videoDirectory,
-  //         autoUpdate: state.autoUpdate,
-  //         attitudeIndicator: state.attitudeIndicator,
-  //         workIndicator: state.workIndicator,
-  //         thrusterRpmOverlay: state.thrusterRpmOverlay,
+  //         VideoDirectory: state.videoDirectory,
+  //         AutoUpdate: state.autoUpdate,
+  //         AttitudeIndicator: state.attitudeIndicator,
+  //         WorkIndicator: state.workIndicator,
+  //         ThrusterRpmOverlay: state.thrusterRpmOverlay,
   //       }
   //     : null,
   // );
-  // const appVersion = Route.useLoaderData();
-  // const { theme, setTheme } = useTheme();
+  // Const appVersion = Route.useLoaderData();
+  // Const { theme, setTheme } = useTheme();
   //
-  // const [radioSelectedTheme, setRadioSelectedTheme] = useState<Theme>(theme);
+  // Const [radioSelectedTheme, setRadioSelectedTheme] = useState<Theme>(theme);
   //
-  // useEffect(() => {
-  //   if (theme !== radioSelectedTheme) {
+  // UseEffect(() => {
+  //   If (theme !== radioSelectedTheme) {
   //     // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
-  //     setRadioSelectedTheme(theme);
+  //     SetRadioSelectedTheme(theme);
   //   }
   //   //eslint-disable-next-line react-compiler/react-compiler
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [theme]);
   //
-  // const styleId = 'theme-transition-styles';
+  // Const styleId = 'theme-transition-styles';
   //
-  // const updateStyles = useCallback((css: string) => {
-  //   if (typeof window === 'undefined') return;
-  //   let styleElement = document.getElementById(styleId) as HTMLStyleElement;
-  //   if (!styleElement) {
-  //     styleElement = document.createElement('style');
-  //     styleElement.id = styleId;
-  //     document.head.appendChild(styleElement);
+  // Const updateStyles = useCallback((css: string) => {
+  //   If (typeof window === 'undefined') return;
+  //   Let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+  //   If (!styleElement) {
+  //     StyleElement = document.createElement('style');
+  //     StyleElement.id = styleId;
+  //     Document.head.appendChild(styleElement);
   //   }
   //
-  //   styleElement.textContent = css;
+  //   StyleElement.textContent = css;
   // }, []);
   //
-  // const setThemeWithAnimation = useCallback(
+  // Const setThemeWithAnimation = useCallback(
   //   (theme: Theme) => {
-  //     const animation = createAnimation();
+  //     Const animation = createAnimation();
   //
-  //     updateStyles(animation);
+  //     UpdateStyles(animation);
   //
-  //     if (typeof window === 'undefined') return;
+  //     If (typeof window === 'undefined') return;
   //
-  //     const switchTheme = () => {
-  //       setTheme(theme);
+  //     Const switchTheme = () => {
+  //       SetTheme(theme);
   //     };
   //
-  //     if (!document.startViewTransition) {
-  //       switchTheme();
-  //       return;
+  //     If (!document.startViewTransition) {
+  //       SwitchTheme();
+  //       Return;
   //     }
   //
-  //     document.startViewTransition(switchTheme);
+  //     Document.startViewTransition(switchTheme);
   //   },
   //   [setTheme, updateStyles],
   // );
   //
-  // if (!config) return;
+  // If (!config) return;
   //
-  // async function selectVideoDirectory() {
-  //   try {
-  //     const result = await open({
-  //       directory: true,
-  //       multiple: false,
-  //       title: 'Select Video Directory',
-  //       defaultPath: config?.videoDirectory,
+  // Async function selectVideoDirectory() {
+  //   Try {
+  //     Const result = await open({
+  //       Directory: true,
+  //       Multiple: false,
+  //       Title: 'Select Video Directory',
+  //       DefaultPath: config?.videoDirectory,
   //     });
-  //     if (typeof result === 'string') {
-  //       await setConfig({ videoDirectory: result });
+  //     If (typeof result === 'string') {
+  //       Await setConfig({ videoDirectory: result });
   //     }
   //   } catch (error) {
-  //     logError('Error opening file picker dialog:', error);
-  //     toast.error('Failed to open file picker dialog');
+  //     LogError('Error opening file picker dialog:', error);
+  //     Toast.error('Failed to open file picker dialog');
   //   }
   // }
 
@@ -96,7 +96,7 @@ function General() {
       {/*         Current version of the Manafish application. */}
       {/*       </p> */}
       {/*       <Badge className='bg-primary/10 text-primary mt-2 rounded-full px-3 py-1 text-sm font-medium'> */}
-      {/*         v{appVersion} */}
+      {/*         V{appVersion} */}
       {/*       </Badge> */}
       {/*     </div> */}
       {/*   )} */}
@@ -107,10 +107,10 @@ function General() {
       {/*     </p> */}
       {/*     <div className='mt-2 flex items-center gap-3'> */}
       {/*       <Switch */}
-      {/*         id='autoUpdate' */}
-      {/*         checked={config.autoUpdate ?? false} */}
-      {/*         onCheckedChange={() => */}
-      {/*           setConfig({ autoUpdate: !config.autoUpdate }) */}
+      {/*         Id='autoUpdate' */}
+      {/*         Checked={config.autoUpdate ?? false} */}
+      {/*         OnCheckedChange={() => */}
+      {/*           SetConfig({ autoUpdate: !config.autoUpdate }) */}
       {/*         } */}
       {/*       /> */}
       {/*       <Label htmlFor='autoUpdate'>Enable automatic app updates</Label> */}
@@ -123,13 +123,13 @@ function General() {
       {/*     </p> */}
       {/*     <div className='mt-2 flex items-center gap-3'> */}
       {/*       <Input */}
-      {/*         readOnly */}
-      {/*         value={config.videoDirectory} */}
-      {/*         className='w-full max-w-xs' */}
+      {/*         ReadOnly */}
+      {/*         Value={config.videoDirectory} */}
+      {/*         ClassName='w-full max-w-xs' */}
       {/*       /> */}
       {/*       <Button */}
-      {/*         onClick={selectVideoDirectory} */}
-      {/*         aria-label='Select Video Directory' */}
+      {/*         OnClick={selectVideoDirectory} */}
+      {/*         Aria-label='Select Video Directory' */}
       {/*       > */}
       {/*         Select Directory */}
       {/*       </Button> */}
@@ -144,13 +144,13 @@ function General() {
       {/*           Select the color scheme for the application. */}
       {/*         </p> */}
       {/*         <RadioGroup */}
-      {/*           value={radioSelectedTheme} */}
-      {/*           onValueChange={(value) => { */}
-      {/*             const next = value as Theme; */}
-      {/*             setRadioSelectedTheme(next); */}
-      {/*             setThemeWithAnimation(next); */}
+      {/*           Value={radioSelectedTheme} */}
+      {/*           OnValueChange={(value) => { */}
+      {/*             Const next = value as Theme; */}
+      {/*             SetRadioSelectedTheme(next); */}
+      {/*             SetThemeWithAnimation(next); */}
       {/*           }} */}
-      {/*           className='mt-2 space-y-1' */}
+      {/*           ClassName='mt-2 space-y-1' */}
       {/*         > */}
       {/*           <div className='flex items-center gap-3'> */}
       {/*             <RadioGroupItem value='light' id='theme-light' /> */}
@@ -172,13 +172,13 @@ function General() {
       {/*           Select the style of the attitude indicator. */}
       {/*         </p> */}
       {/*         <RadioGroup */}
-      {/*           value={config.attitudeIndicator} */}
-      {/*           onValueChange={(value) => */}
-      {/*             setConfig({ */}
-      {/*               attitudeIndicator: value as AttitudeIndicator, */}
+      {/*           Value={config.attitudeIndicator} */}
+      {/*           OnValueChange={(value) => */}
+      {/*             SetConfig({ */}
+      {/*               AttitudeIndicator: value as AttitudeIndicator, */}
       {/*             }) */}
       {/*           } */}
-      {/*           className='mt-2 space-y-1' */}
+      {/*           ClassName='mt-2 space-y-1' */}
       {/*         > */}
       {/*           <div className='flex items-center gap-3'> */}
       {/*             <RadioGroupItem value='scientific' id='ai-scientific' /> */}
@@ -195,11 +195,11 @@ function General() {
       {/*         </RadioGroup> */}
       {/*         <div className='mt-6 flex items-center gap-2'> */}
       {/*           <Switch */}
-      {/*             id='work-indicator' */}
-      {/*             checked={config.workIndicator ?? false} */}
-      {/*             onCheckedChange={() => */}
-      {/*               setConfig({ */}
-      {/*                 workIndicator: !config.workIndicator, */}
+      {/*             Id='work-indicator' */}
+      {/*             Checked={config.workIndicator ?? false} */}
+      {/*             OnCheckedChange={() => */}
+      {/*               SetConfig({ */}
+      {/*                 WorkIndicator: !config.workIndicator, */}
       {/*               }) */}
       {/*             } */}
       {/*           /> */}
@@ -210,11 +210,11 @@ function General() {
       {/*         <h4 className='text-lg font-medium'>Thruster RPM Overlay</h4> */}
       {/*         <div className='mt-2 flex items-center gap-2'> */}
       {/*           <Switch */}
-      {/*             id='thruster-rpm-overlay' */}
-      {/*             checked={config.thrusterRpmOverlay ?? false} */}
-      {/*             onCheckedChange={() => */}
-      {/*               setConfig({ */}
-      {/*                 thrusterRpmOverlay: !config.thrusterRpmOverlay, */}
+      {/*             Id='thruster-rpm-overlay' */}
+      {/*             Checked={config.thrusterRpmOverlay ?? false} */}
+      {/*             OnCheckedChange={() => */}
+      {/*               SetConfig({ */}
+      {/*                 ThrusterRpmOverlay: !config.thrusterRpmOverlay, */}
       {/*               }) */}
       {/*             } */}
       {/*           /> */}
@@ -230,5 +230,5 @@ function General() {
 
 export const Route = createFileRoute('/settings/')({
   component: General,
-  // loader: fetchVersion,
+  // Loader: fetchVersion,
 });

@@ -54,13 +54,13 @@ function GamepadBindInput({
     axes: number[];
   } | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const animationRef = useRef<number | undefined>(undefined);
+  const animationRef = useRef<number | undefined>();
 
   const updateGamepadConnection = () => {
-    if (!navigator.getGamepads) return;
+    if (!navigator.getGamepads) {return;}
 
     const gamepads = navigator.getGamepads();
-    const hasConnectedGamepad = Array.from(gamepads).some((gamepad) => gamepad !== null);
+    const hasConnectedGamepad = [...gamepads].some((gamepad) => gamepad !== null);
     // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
     setGamepadConnected(hasConnectedGamepad);
   };
@@ -114,13 +114,13 @@ function GamepadBindInput({
   }, [isRecording, gamepadConnected]);
 
   useEffect(() => {
-    if (!isRecordingActive || !gamepadConnected || !initialGamepadState) return;
+    if (!isRecordingActive || !gamepadConnected || !initialGamepadState) {return;}
 
     function checkGamepadInput() {
       const gamepads = navigator.getGamepads();
 
       for (const gamepad of gamepads) {
-        if (!gamepad) continue;
+        if (!gamepad) {continue;}
 
         for (let i = 0; i < gamepad.buttons.length; i++) {
           const isPressed = gamepad.buttons[i]?.pressed ?? false;
@@ -199,7 +199,7 @@ function GamepadBindInput({
   }, [isRecordingActive, gamepadConnected, initialGamepadState, onBindChange, isJoystick]);
 
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording) {return;}
 
     const handleClickOutside = (e: MouseEvent) => {
       if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {

@@ -41,12 +41,10 @@ type ChangedInput = {
   input: GamepadInput['input'];
 };
 
-const snapshotGamepad = (gamepad: Gamepad): GamepadSnapshot => {
-  return {
+const snapshotGamepad = (gamepad: Gamepad): GamepadSnapshot => ({
     buttons: gamepad.buttons.map((button) => button?.value ?? 0),
     axes: [...gamepad.axes],
-  };
-};
+  });
 
 const detectChangedInput = (
   initial: GamepadSnapshot,
@@ -57,7 +55,7 @@ const detectChangedInput = (
     const endValue = latest.buttons[index] ?? 0;
     const delta = Math.abs(endValue - startValue);
 
-    if (delta < GAMEPAD_CAPTURE_THRESHOLD) continue;
+    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {continue;}
 
     return {
       input: { Button: index },
@@ -69,7 +67,7 @@ const detectChangedInput = (
     const endValue = latest.axes[index] ?? 0;
     const delta = Math.abs(endValue - startValue);
 
-    if (delta < GAMEPAD_CAPTURE_THRESHOLD) continue;
+    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {continue;}
 
     return {
       input: { Axis: index },
@@ -182,18 +180,16 @@ function GamepadBindInput(props: GamepadBindInputProps) {
     stopRecording();
   });
 
-  const formatBindMarkerValue = (value: number): string => {
-    return value.toFixed(2);
-  };
+  const formatBindMarkerValue = (value: number): string => value.toFixed(2);
 
   const startCapture = (): void => {
-    if (isRecording()) return;
+    if (isRecording()) {return;}
 
     const gamepad = getActiveGamepad(props.selectedGamepadId);
-    if (!gamepad) return;
+    if (!gamepad) {return;}
 
     escapeListener = (event: KeyboardEvent): void => {
-      if (event.code !== 'Escape') return;
+      if (event.code !== 'Escape') {return;}
       props.onChange(null);
       stopRecording();
     };

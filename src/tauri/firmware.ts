@@ -7,9 +7,7 @@ import { createListener } from '@/tauri/core';
 
 const EVENT = 'firmware_version_recieved';
 
-export const setupFirmwareListener = () => {
-  return createListener<string>(EVENT, setFirmwareVersionStore);
-};
+export const setupFirmwareListener = () => createListener<string>(EVENT, setFirmwareVersionStore);
 
 export const flashMicrocontrollerFirmware = async (variant: MicrocontrollerFirmwareVariant) => {
   await invoke('flash_microcontroller_firmware', {

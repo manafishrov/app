@@ -1,15 +1,14 @@
-// import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
-// import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
+// Import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
+// Import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
 
-const Calibration: Component = () => {
-  return (
+const Calibration: Component = () => (
     <>
       <div class='mb-6 flex flex-col gap-2'>
         <H1>Calibration</H1>
@@ -30,7 +29,6 @@ const Calibration: Component = () => {
       </Show>
     </>
   );
-};
 
 export const Route = createFileRoute('/settings/calibration/')({
   component: Calibration,

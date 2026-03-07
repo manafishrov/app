@@ -6,9 +6,9 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 function getBatteryIcon(percentage: number) {
-  if (percentage > 70) return BatteryFullIcon;
-  if (percentage > 40) return BatteryMediumIcon;
-  if (percentage > 10) return BatteryLowIcon;
+  if (percentage > 70) {return BatteryFullIcon;}
+  if (percentage > 40) {return BatteryMediumIcon;}
+  if (percentage > 10) {return BatteryLowIcon;}
   return BatteryIcon;
 }
 
@@ -18,7 +18,7 @@ function BatteryIndicator() {
 
   const Icon = getBatteryIcon(batteryPercentage);
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   return (
     <div

@@ -91,7 +91,7 @@ const ScientificAttitudeIndicator = memo(function ScientificAttitudeIndicator({
                 alignmentBaseline='middle'
                 transform={`
                   rotate(${-deg} ${center} ${size * 0.17})
-                  translate(0 ${deg === -180 || deg === 180 ? 2 : deg === 0 ? -2 : 1})
+                  translate(0 ${deg === -180 || deg === 180 ? 2 : (deg === 0 ? -2 : 1)})
                 `}
               >
                 {deg === -180

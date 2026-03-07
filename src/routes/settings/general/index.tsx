@@ -4,7 +4,7 @@ import { Spinner } from '@manafishrov/ui/spinner';
 import { toast } from '@manafishrov/ui/toaster';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { logError } from '@/lib/log';
 import { connectionStatusStore } from '@/stores/connectionStatus';

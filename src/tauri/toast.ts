@@ -23,9 +23,7 @@ type ToastPayload = {
 
 const activeLoadingToasts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const camelToSnake = (str: string): string => {
-  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-};
+const camelToSnake = (str: string): string => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
 const toastTypeMap: Record<string, 'success' | 'info' | 'warning' | 'error' | 'loading'> = {
   success: 'success',
@@ -38,7 +36,7 @@ const toastTypeMap: Record<string, 'success' | 'info' | 'warning' | 'error' | 'l
 export const setupToastListener = async (): Promise<CleanupFn> => {
   const unlisten = await listen<ToastPayload>(EVENT, ({ payload }) => {
     const type = toastTypeMap[payload.toastType ?? 'info'] ?? 'info';
-    const message = payload.message;
+    const {message} = payload;
 
     if (payload.id && activeLoadingToasts.has(payload.id)) {
       clearTimeout(activeLoadingToasts.get(payload.id)!);
@@ -52,7 +50,7 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
           type: 'error',
         });
         activeLoadingToasts.delete(payload.id!);
-      }, 15000);
+      }, 15_000);
       activeLoadingToasts.set(payload.id, timeout);
     }
 

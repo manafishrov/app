@@ -11,17 +11,15 @@ type GamepadData = {
   index: number;
   connected: boolean;
   mapping: string;
-  axes: ReadonlyArray<number>;
-  buttons: ReadonlyArray<{ pressed: boolean; value: number }>;
+  axes: readonly number[];
+  buttons: readonly { pressed: boolean; value: number }[];
   timestamp: number;
   vibrationActuator: { type: string } | null;
 };
 
 const gamepads: (Gamepad | null)[] = [null, null, null, null];
 
-const getGamepads = () => {
-  return [...gamepads];
-};
+const getGamepads = () => [...gamepads];
 
 const createGamepadFromEvent = (event: GamepadData): Gamepad => {
   const { id, index, axes, connected, mapping, timestamp, vibrationActuator } = event;

@@ -18,7 +18,7 @@ const router = createRouter({
 });
 
 declare module '@tanstack/solid-router' {
-  interface Register {
+  type Register = {
     router: typeof router;
   }
 }

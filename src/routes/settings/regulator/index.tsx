@@ -1,9 +1,9 @@
-// import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
-// import { PidForm } from '@/components/settings/rov/PidForm';
+// Import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
+// Import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';

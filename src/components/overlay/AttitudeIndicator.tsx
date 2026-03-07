@@ -64,10 +64,10 @@ const AttitudeIndicator = memo(function AttitudeIndicator() {
     return { shadowStyle, cornerIndicatorStyle };
   }, [workIndicator, workIndicatorPercentage]);
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   switch (attitudeIndicator) {
-    case 'scientific':
+    case 'scientific': {
       return (
         <ScientificAttitudeIndicator
           size={size}
@@ -78,7 +78,8 @@ const AttitudeIndicator = memo(function AttitudeIndicator() {
           style={shadowStyle}
         />
       );
-    case 'dimensional3D':
+    }
+    case 'dimensional3D': {
       return (
         <Dimensional3DAttitudeIndicator
           size={size}
@@ -88,8 +89,10 @@ const AttitudeIndicator = memo(function AttitudeIndicator() {
           style={shadowStyle}
         />
       );
-    default:
+    }
+    default: {
       return <div className='h-4 w-4 rounded-full' style={cornerIndicatorStyle} />;
+    }
   }
 });
 

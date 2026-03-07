@@ -80,8 +80,7 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
 ];
 
-const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => {
-  return {
+const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => ({
     surgeForward: bindings.surgeForward ? { ...bindings.surgeForward } : null,
     surgeBackward: bindings.surgeBackward ? { ...bindings.surgeBackward } : null,
     swayRight: bindings.swayRight ? { ...bindings.swayRight } : null,
@@ -101,8 +100,7 @@ const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => 
     autoStabilization: bindings.autoStabilization ? { ...bindings.autoStabilization } : null,
     depthHold: bindings.depthHold ? { ...bindings.depthHold } : null,
     record: bindings.record ? { ...bindings.record } : null,
-  };
-};
+  });
 
 const updateKeyboardBinding = async (
   bindingKey: keyof KeyboardBindings,

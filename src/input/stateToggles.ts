@@ -92,6 +92,6 @@ export const createStateToggleLoop = (
   loop();
 
   return () => {
-    if (frame !== undefined) cancelAnimationFrame(frame);
+    if (frame !== undefined) {cancelAnimationFrame(frame);}
   };
 };

@@ -12,7 +12,7 @@ const TemperatureIndicator = memo(function TemperatureIndicator() {
   }));
   const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   return (
     <>

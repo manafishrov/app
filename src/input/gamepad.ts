@@ -4,28 +4,24 @@ import { normalizeBindValue } from '@/input/bindings';
 
 const GAMEPAD_KEY_SEPARATOR = '@@';
 
-export const toGamepadBindingKey = (gamepad: Pick<Gamepad, 'id' | 'index'>): string => {
-  return `${gamepad.id}${GAMEPAD_KEY_SEPARATOR}${gamepad.index}`;
-};
+export const toGamepadBindingKey = (gamepad: Pick<Gamepad, 'id' | 'index'>): string => `${gamepad.id}${GAMEPAD_KEY_SEPARATOR}${gamepad.index}`;
 
 const parseGamepadBindingKey = (key: string): { id: string; index: number } | null => {
   const separatorIndex = key.lastIndexOf(GAMEPAD_KEY_SEPARATOR);
-  if (separatorIndex <= 0) return null;
+  if (separatorIndex <= 0) {return null;}
 
   const id = key.slice(0, separatorIndex);
   const indexPart = key.slice(separatorIndex + GAMEPAD_KEY_SEPARATOR.length);
   const index = Number.parseInt(indexPart, 10);
 
-  if (!Number.isInteger(index)) return null;
+  if (!Number.isInteger(index)) {return null;}
   return { id, index };
 };
 
-export const mapGamepadValue = (rawValue: number, minValue: number, maxValue: number): number => {
-  return normalizeBindValue(rawValue, minValue, maxValue);
-};
+export const mapGamepadValue = (rawValue: number, minValue: number, maxValue: number): number => normalizeBindValue(rawValue, minValue, maxValue);
 
 export const readGamepadInput = (input: GamepadInput | null, gamepad: Gamepad | null): number => {
-  if (!input || !gamepad) return 0;
+  if (!input || !gamepad) {return 0;}
 
   if ('Button' in input.input) {
     const idx = input.input.Button;
@@ -46,7 +42,7 @@ export const getGamepadBindings = (
   gamepad: Gamepad | null,
   config: Config,
 ): GamepadBindings | null => {
-  if (!gamepad) return null;
+  if (!gamepad) {return null;}
 
   if (config.selectedGamepadId) {
     const selectedBindings = config.gamepad[config.selectedGamepadId];
@@ -70,14 +66,12 @@ export const getGamepadBindings = (
 
 export const getConnectedGamepads = (): Gamepad[] => {
   const gamepads = navigator.getGamepads?.() ?? [];
-  return Array.from(gamepads).filter((gamepad): gamepad is Gamepad => {
-    return Boolean(gamepad && gamepad.connected);
-  });
+  return [...gamepads].filter((gamepad): gamepad is Gamepad => Boolean(gamepad && gamepad.connected));
 };
 
 export const getActiveGamepad = (selectedGamepadId: string | null): Gamepad | null => {
   const connectedGamepads = getConnectedGamepads();
-  if (connectedGamepads.length === 0) return null;
+  if (connectedGamepads.length === 0) {return null;}
 
   if (!selectedGamepadId) {
     return null;

@@ -17,13 +17,13 @@ export const ensureVideoDirectory = async (): Promise<void> => {
 };
 
 export const createRecordingPath = async (): Promise<string> => {
-  const timestamp = new Date().toISOString().replace('T', '_').replace(/[:.]/g, '-').slice(0, 19);
+  const timestamp = new Date().toISOString().replace('T', '_').replaceAll(/[:.]/g, '-').slice(0, 19);
   return join(configStore.videoDirectory, `Recording_${timestamp}_temp.webm`);
 };
 
 export const appendRecordingChunk = async (tempPath: string, chunk: Uint8Array): Promise<void> => {
   try {
-    await invokeCommand('append_recording_chunk', { tempPath, chunk: Array.from(chunk) });
+    await invokeCommand('append_recording_chunk', { tempPath, chunk: [...chunk] });
   } catch (error) {
     logError('Failed to append recording chunk:', error);
   }
@@ -39,8 +39,8 @@ export const saveRecording = async (tempPath: string): Promise<void> => {
 };
 
 export const recoverTempRecordings = async (): Promise<void> => {
-  const videoDirectory = configStore.videoDirectory;
-  if (!videoDirectory) return;
+  const {videoDirectory} = configStore;
+  if (!videoDirectory) {return;}
 
   try {
     const entries = await readDir(videoDirectory);
@@ -57,8 +57,8 @@ export const recoverTempRecordings = async (): Promise<void> => {
 
       for (const fileName of tempFiles) {
         const tempPath = await join(videoDirectory, fileName);
-        await invokeCommand('save_recording', { tempPath }).catch((err) => {
-          logError('Failed to recover temp file:', fileName, err);
+        await invokeCommand('save_recording', { tempPath }).catch((error) => {
+          logError('Failed to recover temp file:', fileName, error);
         });
       }
     }

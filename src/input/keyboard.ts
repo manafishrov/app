@@ -38,7 +38,7 @@ export const createKeyboardTracker = (): {
 };
 
 export const getKeyboardValue = (input: KeyboardInput | null, pressedKeys: Set<string>): number => {
-  if (!input) return 0;
+  if (!input) {return 0;}
 
   const rawValue = pressedKeys.has(input.key) ? 1 : 0;
   return normalizeBindValue(rawValue, input.minValue, input.maxValue);

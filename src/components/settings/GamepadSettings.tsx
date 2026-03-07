@@ -120,8 +120,7 @@ const SettingsGrid: Component<{
   bindings: GamepadBindings;
   resetBindings: GamepadBindings;
   onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput | null) => void;
-}> = (props) => {
-  return (
+}> = (props) => (
     <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
       <For each={BINDING_SECTIONS}>
         {(section) => (
@@ -143,7 +142,6 @@ const SettingsGrid: Component<{
       </For>
     </div>
   );
-};
 
 const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
   const totalsById = new Map<string, number>();
@@ -165,8 +163,7 @@ const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
   });
 };
 
-const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => {
-  return {
+const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => ({
     surgeForward: bindings.surgeForward
       ? { ...bindings.surgeForward, input: { ...bindings.surgeForward.input } }
       : null,
@@ -222,8 +219,7 @@ const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => {
       ? { ...bindings.depthHold, input: { ...bindings.depthHold.input } }
       : null,
     record: bindings.record ? { ...bindings.record, input: { ...bindings.record.input } } : null,
-  };
-};
+  });
 
 const cloneGamepadMap = (map: Record<string, GamepadBindings>): Record<string, GamepadBindings> => {
   const entries = Object.entries(map).map(([id, bindings]) => [id, cloneGamepadBindings(bindings)]);
@@ -265,25 +261,21 @@ const GamepadSettings: Component = () => {
 
   const selectedGamepadId = (): string | null => configStore.selectedGamepadId;
 
-  const gamepadOptions = createMemo(() => {
-    return toGamepadOptions(connectedGamepads());
-  });
+  const gamepadOptions = createMemo(() => toGamepadOptions(connectedGamepads()));
 
-  const gamepadCollection = createMemo(() => {
-    return createListCollection<SelectItemOption>({
+  const gamepadCollection = createMemo(() => createListCollection<SelectItemOption>({
       items: gamepadOptions(),
-    });
-  });
+    }));
 
   const selectedBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) return null;
+    if (!selectedId) {return null;}
     return configStore.gamepad[selectedId] ?? createNullGamepadBindings();
   });
 
   const selectedResetBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) return null;
+    if (!selectedId) {return null;}
     return initialGamepadBindings()[selectedId] ?? createNullGamepadBindings();
   });
 
@@ -324,7 +316,7 @@ const GamepadSettings: Component = () => {
     value: GamepadInput | null,
   ) => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) return;
+    if (!selectedId) {return;}
 
     const currentBindings = configStore.gamepad[selectedId] ?? createNullGamepadBindings();
     const updatedBindings: GamepadBindings = {
@@ -342,13 +334,13 @@ const GamepadSettings: Component = () => {
 
   const selectedGamepadConnected = createMemo(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) return false;
+    if (!selectedId) {return false;}
     return connectedGamepads().some((gamepad) => toGamepadBindingKey(gamepad) === selectedId);
   });
 
   createEffect(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) return;
+    if (!selectedId) {return;}
 
     const selectedAvailable = gamepadOptions().some((option) => option.value === selectedId);
 

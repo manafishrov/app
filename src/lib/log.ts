@@ -68,10 +68,6 @@ async function withErrorHandling<T>(
 }
 
 async function createLogRecord(logEntry: LogEntry): Promise<void> {
-  if (logEntry.level === 'info' && !configStore.infoLogging) {
-    return;
-  }
-
   await withErrorHandling(async (db) => {
     const newRecord: NewLogRecord = {
       ...logEntry,

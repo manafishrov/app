@@ -188,7 +188,6 @@ type Config = {
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
   webSocketPort: number;
-  infoLogging: boolean;
   keyboard: KeyboardBindings;
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
@@ -248,7 +247,6 @@ const defaultConfig: Config = {
   webrtcSignalingApiPort: 1984,
   webrtcSignalingApiPath: '/api/webrtc?src=cam',
   webSocketPort: 9000,
-  infoLogging: false,
   keyboard: createNullKeyboardBindings(),
   selectedGamepadId: null,
   gamepad: {},

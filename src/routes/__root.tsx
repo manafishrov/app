@@ -2,7 +2,7 @@ import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
 import { Toaster } from '@manafishrov/ui/toaster';
 import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { Header } from '@/components/Header';
 import * as m from '@/paraglide/messages';

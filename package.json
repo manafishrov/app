@@ -21,6 +21,7 @@
     "@tanstack/router-plugin": "1.163.3",
     "@tanstack/solid-form": "1.28.3",
     "@tanstack/solid-router": "1.163.3",
+    "@tanstack/solid-virtual": "3.13.21",
     "@tauri-apps/api": "2.10.1",
     "@tauri-apps/plugin-dialog": "2.6.0",
     "@tauri-apps/plugin-fs": "2.4.5",

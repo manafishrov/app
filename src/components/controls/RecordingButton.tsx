@@ -18,7 +18,7 @@ function RecordingButton() {
     });
   }
 
-  if (!webrtcConnected) return;
+  if (!webrtcConnected) {return;}
 
   return (
     <TooltipProvider>

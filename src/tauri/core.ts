@@ -41,8 +41,7 @@ export const createListener = <T>(
   event: string,
   handler: (payload: T) => void,
   options?: ListenerOptions,
-): Promise<UnlistenFn> => {
-  return listen<T>(event, (event: Event<T>) => {
+): Promise<UnlistenFn> => listen<T>(event, (event: Event<T>) => {
     try {
       handler(event.payload);
     } catch (error) {
@@ -64,7 +63,6 @@ export const createListener = <T>(
     }
     return () => {};
   });
-};
 
 /**
  * Type-safe wrapper around Tauri's invoke command with consistent error handling.
@@ -73,8 +71,7 @@ export const invokeCommand = async <T>(
   command: string,
   args?: Record<string, unknown>,
   options?: ListenerOptions,
-): Promise<T> => {
-  return invoke<T>(command, args).catch((error) => {
+): Promise<T> => invoke<T>(command, args).catch((error) => {
     const errorMsg = `Failed to invoke '${command}'`;
     if (options?.warnOnly) {
       logWarn(errorMsg, error);
@@ -84,4 +81,3 @@ export const invokeCommand = async <T>(
     }
     throw error;
   });
-};

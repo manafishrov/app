@@ -9,7 +9,7 @@ const DepthIndicator = memo(function DepthIndicator() {
   const depth = useStore(rovTelemetryStore, (state) => state.depth);
   const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
 
-  if (!isConnected) return;
+  if (!isConnected) {return;}
 
   return (
     <div className='flex w-14 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>

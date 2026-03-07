@@ -1,8 +1,6 @@
 import type { GamepadInputType, KeyboardKey } from '@/stores/config';
 
-const clamp = (value: number, min: number, max: number): number => {
-  return Math.max(min, Math.min(max, value));
-};
+const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value));
 
 export const BIND_CAPTURE_TIMEOUT_MS = 8000;
 export const BIND_CAPTURE_SETTLE_MS = 500;
@@ -19,7 +17,7 @@ export const normalizeBindValue = (
   maxValue: number,
 ): number => {
   const range = maxValue - minValue;
-  if (range === 0) return 0;
+  if (range === 0) {return 0;}
   return clamp((rawValue - minValue) / range, 0, 1);
 };
 
@@ -27,7 +25,7 @@ export const getGamepadRawInputValue = (
   input: GamepadInputType | null,
   gamepad: Gamepad,
 ): number => {
-  if (!input) return 0;
+  if (!input) {return 0;}
 
   if ('Button' in input) {
     const index = input.Button;
@@ -38,20 +36,18 @@ export const getGamepadRawInputValue = (
   return gamepad.axes[index] ?? 0;
 };
 
-export const formatKeyboardKeyLabel = (key: string): string => {
-  return key
+export const formatKeyboardKeyLabel = (key: string): string => key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
     .replace(/([A-Za-z])(\d)/g, '$1 $2')
     .replace(/(\d)([A-Za-z])/g, '$1 $2')
     .trim();
-};
 
 export const isKeyboardKey = (key: string): key is KeyboardKey => {
-  if (/^Key[A-Z]$/.test(key)) return true;
-  if (/^Digit[0-9]$/.test(key)) return true;
-  if (/^F([1-9]|1[0-2])$/.test(key)) return true;
-  if (/^Numpad[0-9]$/.test(key)) return true;
+  if (/^Key[A-Z]$/.test(key)) {return true;}
+  if (/^Digit[0-9]$/.test(key)) {return true;}
+  if (/^F([1-9]|1[0-2])$/.test(key)) {return true;}
+  if (/^Numpad[0-9]$/.test(key)) {return true;}
 
   return [
     'Enter',

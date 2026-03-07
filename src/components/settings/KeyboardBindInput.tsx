@@ -28,9 +28,7 @@ type KeyboardBindInputProps = {
   onChange: (next: KeyboardInput | null) => void;
 };
 
-const toKeyboardValue = (isPressed: boolean): number => {
-  return isPressed ? 1 : 0;
-};
+const toKeyboardValue = (isPressed: boolean): number => isPressed ? 1 : 0;
 
 function KeyboardBindInput(props: KeyboardBindInputProps) {
   const [pressedKeys, setPressedKeys] = createSignal<Set<string>>(new Set<string>());
@@ -66,7 +64,7 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
 
   const onKeyDown = (event: KeyboardEvent): void => {
     setPressedKeys((prev) => {
-      if (prev.has(event.code)) return prev;
+      if (prev.has(event.code)) {return prev;}
       const next = new Set<string>(prev);
       next.add(event.code);
       return next;
@@ -75,7 +73,7 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
 
   const onKeyUp = (event: KeyboardEvent): void => {
     setPressedKeys((prev) => {
-      if (!prev.has(event.code)) return prev;
+      if (!prev.has(event.code)) {return prev;}
       const next = new Set<string>(prev);
       next.delete(event.code);
       return next;
@@ -103,31 +101,29 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   });
 
   const progressValue = createMemo(() => {
-    if (!props.value) return 0;
+    if (!props.value) {return 0;}
 
     const rawValue = toKeyboardValue(pressedKeys().has(props.value.key));
     return normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue);
   });
 
   const currentValue = createMemo(() => {
-    if (!props.value) return 0;
+    if (!props.value) {return 0;}
 
     return pressedKeys().has(props.value.key) ? props.value.maxValue : props.value.minValue;
   });
 
-  const formatBindMarkerValue = (value: number): string => {
-    return value.toFixed(2);
-  };
+  const formatBindMarkerValue = (value: number): string => value.toFixed(2);
 
   const startCapture = (): void => {
-    if (isRecording()) return;
+    if (isRecording()) {return;}
 
     const initialSnapshot = new Set(pressedKeys());
     let firstChangedKey: string | null = null;
     let settleScheduled = false;
 
     const scheduleSecondSnapshot = (): void => {
-      if (settleScheduled || !firstChangedKey) return;
+      if (settleScheduled || !firstChangedKey) {return;}
       settleScheduled = true;
 
       settleTimeout = window.setTimeout(() => {
@@ -208,9 +204,9 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
           <span class='truncate'>
             {isRecording()
               ? 'Press a key...'
-              : props.value
+              : (props.value
                 ? formatKeyboardKeyLabel(props.value.key)
-                : 'Unbound'}
+                : 'Unbound')}
           </span>
         </Button>
         <Tooltip positioning={{ placement: 'top' }}>

@@ -13,7 +13,7 @@ import {
   useSidebar,
 } from '@manafishrov/ui/sidebar';
 import { useLocation } from '@tanstack/solid-router';
-import { type Component, type ComponentProps } from 'solid-js';
+import type { Component, ComponentProps } from 'solid-js';
 import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';
@@ -92,7 +92,7 @@ const ROV_ITEMS: SidebarItem[] = [
 const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
 
-const joinClasses = (...classes: Array<string | undefined>): string =>
+const joinClasses = (...classes: (string | undefined)[]): string =>
   classes.filter((className) => Boolean(className)).join(' ');
 
 type SidebarLinkItemProps = {
@@ -119,7 +119,7 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
         isActive={props.isActive(props.item.to)}
         asChild={(triggerProps) => {
           const buttonProps = triggerProps();
-          const Icon = props.item.Icon;
+          const {Icon} = props.item;
           return (
             <Link
               {...buttonProps}

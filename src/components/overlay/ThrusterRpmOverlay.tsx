@@ -22,7 +22,7 @@ const ThrusterRpmOverlay = memo(function ThrusterRpmOverlay() {
   const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
   const thrusterRpmOverlay = useStore(configStore, (state) => state?.thrusterRpmOverlay);
 
-  if (!isConnected || !thrusterRpmOverlay) return;
+  if (!isConnected || !thrusterRpmOverlay) {return;}
 
   return (
     <div className='flex flex-col items-end gap-2 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>

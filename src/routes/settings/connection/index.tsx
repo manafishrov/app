@@ -1,11 +1,10 @@
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
-// import { ConnectionSettingsForm } from '@/components/settings/ConnectionSettingsForm';
+// Import { ConnectionSettingsForm } from '@/components/settings/ConnectionSettingsForm';
 
-const Connection: Component = () => {
-  return (
+const Connection: Component = () => (
     <>
       <div class='mb-6 flex flex-col gap-2'>
         <H1>Connection</H1>
@@ -17,7 +16,6 @@ const Connection: Component = () => {
       {/* <ConnectionSettingsForm /> */}
     </>
   );
-};
 
 export const Route = createFileRoute('/settings/connection/')({
   component: Connection,
