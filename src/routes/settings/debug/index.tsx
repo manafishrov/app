@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { LogViewer } from '@/components/debug/LogViewer';
+import { LogViewer } from '@/components/LogViewer';
 
 const Debug: Component = () => (
   <>
