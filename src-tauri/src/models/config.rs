@@ -190,7 +190,6 @@ pub enum AttitudeIndicator {
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
-  pub auto_update: bool,
   pub attitude_indicator: AttitudeIndicator,
   pub work_indicator: bool,
   pub thruster_rpm_overlay: bool,
@@ -225,7 +224,6 @@ impl Default for Config {
     };
 
     Config {
-      auto_update: false,
       attitude_indicator: AttitudeIndicator::Scientific,
       work_indicator: false,
       thruster_rpm_overlay: false,

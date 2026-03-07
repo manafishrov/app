@@ -1,16 +1,9 @@
 use tauri::AppHandle;
 use tauri_plugin_updater::{Result, UpdaterExt};
 
-use crate::config::get_config_from_file;
-use crate::log_info;
 use crate::toast::{toast_info, toast_loading};
 
 pub async fn update_app(app: AppHandle) -> Result<()> {
-  let config = get_config_from_file();
-  if !config.auto_update {
-    log_info!("Auto-update is disabled in config, skipping update check");
-    return Ok(());
-  }
 
   if let Some(update) = app.updater()?.check().await? {
     toast_info(
