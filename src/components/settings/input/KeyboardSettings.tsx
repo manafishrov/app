@@ -1,6 +1,6 @@
 import { For, createSignal, type Component } from 'solid-js';
 
-import { KeyboardBindInput } from '@/components/settings/KeyboardBindInput';
+import { KeyboardBindInput } from '@/components/settings/input/KeyboardBindInput';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
 
 type BindingField = {
@@ -81,26 +81,26 @@ const BINDING_SECTIONS: BindingSection[] = [
 ];
 
 const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => ({
-    surgeForward: bindings.surgeForward ? { ...bindings.surgeForward } : null,
-    surgeBackward: bindings.surgeBackward ? { ...bindings.surgeBackward } : null,
-    swayRight: bindings.swayRight ? { ...bindings.swayRight } : null,
-    swayLeft: bindings.swayLeft ? { ...bindings.swayLeft } : null,
-    heaveUp: bindings.heaveUp ? { ...bindings.heaveUp } : null,
-    heaveDown: bindings.heaveDown ? { ...bindings.heaveDown } : null,
-    pitchUp: bindings.pitchUp ? { ...bindings.pitchUp } : null,
-    pitchDown: bindings.pitchDown ? { ...bindings.pitchDown } : null,
-    yawRight: bindings.yawRight ? { ...bindings.yawRight } : null,
-    yawLeft: bindings.yawLeft ? { ...bindings.yawLeft } : null,
-    rollLeft: bindings.rollLeft ? { ...bindings.rollLeft } : null,
-    rollRight: bindings.rollRight ? { ...bindings.rollRight } : null,
-    action1Positive: bindings.action1Positive ? { ...bindings.action1Positive } : null,
-    action1Negative: bindings.action1Negative ? { ...bindings.action1Negative } : null,
-    action2Positive: bindings.action2Positive ? { ...bindings.action2Positive } : null,
-    action2Negative: bindings.action2Negative ? { ...bindings.action2Negative } : null,
-    autoStabilization: bindings.autoStabilization ? { ...bindings.autoStabilization } : null,
-    depthHold: bindings.depthHold ? { ...bindings.depthHold } : null,
-    record: bindings.record ? { ...bindings.record } : null,
-  });
+  surgeForward: bindings.surgeForward ? { ...bindings.surgeForward } : null,
+  surgeBackward: bindings.surgeBackward ? { ...bindings.surgeBackward } : null,
+  swayRight: bindings.swayRight ? { ...bindings.swayRight } : null,
+  swayLeft: bindings.swayLeft ? { ...bindings.swayLeft } : null,
+  heaveUp: bindings.heaveUp ? { ...bindings.heaveUp } : null,
+  heaveDown: bindings.heaveDown ? { ...bindings.heaveDown } : null,
+  pitchUp: bindings.pitchUp ? { ...bindings.pitchUp } : null,
+  pitchDown: bindings.pitchDown ? { ...bindings.pitchDown } : null,
+  yawRight: bindings.yawRight ? { ...bindings.yawRight } : null,
+  yawLeft: bindings.yawLeft ? { ...bindings.yawLeft } : null,
+  rollLeft: bindings.rollLeft ? { ...bindings.rollLeft } : null,
+  rollRight: bindings.rollRight ? { ...bindings.rollRight } : null,
+  action1Positive: bindings.action1Positive ? { ...bindings.action1Positive } : null,
+  action1Negative: bindings.action1Negative ? { ...bindings.action1Negative } : null,
+  action2Positive: bindings.action2Positive ? { ...bindings.action2Positive } : null,
+  action2Negative: bindings.action2Negative ? { ...bindings.action2Negative } : null,
+  autoStabilization: bindings.autoStabilization ? { ...bindings.autoStabilization } : null,
+  depthHold: bindings.depthHold ? { ...bindings.depthHold } : null,
+  record: bindings.record ? { ...bindings.record } : null,
+});
 
 const updateKeyboardBinding = async (
   bindingKey: keyof KeyboardBindings,

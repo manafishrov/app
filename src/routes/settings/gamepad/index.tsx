@@ -2,7 +2,7 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import type { Component } from 'solid-js';
 
-import { GamepadSettings } from '@/components/settings/GamepadSettings';
+import { GamepadSettings } from '@/components/settings/input/GamepadSettings';
 
 const Gamepad: Component = () => (
     <>

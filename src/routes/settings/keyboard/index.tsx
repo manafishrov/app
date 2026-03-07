@@ -2,7 +2,7 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import type { Component } from 'solid-js';
 
-import { KeyboardSettings } from '@/components/settings/KeyboardSettings';
+import { KeyboardSettings } from '@/components/settings/input/KeyboardSettings';
 
 const Keyboard: Component = () => (
     <>

@@ -1,4 +1,11 @@
 import { createListCollection } from '@ark-ui/solid/collection';
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from '@manafishrov/ui/empty';
 import { Select } from '@manafishrov/ui/select';
 import {
   SelectContent,
@@ -23,7 +30,7 @@ import {
 } from 'solid-js';
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
-import { GamepadBindInput } from '@/components/settings/GamepadBindInput';
+import { GamepadBindInput } from '@/components/settings/input/GamepadBindInput';
 import { getConnectedGamepads, toGamepadBindingKey } from '@/input';
 import {
   type GamepadBindings,
@@ -121,27 +128,27 @@ const SettingsGrid: Component<{
   resetBindings: GamepadBindings;
   onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput | null) => void;
 }> = (props) => (
-    <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
-      <For each={BINDING_SECTIONS}>
-        {(section) => (
-          <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
-            <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
-            <For each={section.fields}>
-              {(field) => (
-                <GamepadBindInput
-                  label={field.label}
-                  value={props.bindings[field.key]}
-                  resetValue={props.resetBindings[field.key]}
-                  selectedGamepadId={props.selectedGamepadId}
-                  onChange={(next) => props.onBindChange(field.key, next)}
-                />
-              )}
-            </For>
-          </div>
-        )}
-      </For>
-    </div>
-  );
+  <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
+    <For each={BINDING_SECTIONS}>
+      {(section) => (
+        <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
+          <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
+          <For each={section.fields}>
+            {(field) => (
+              <GamepadBindInput
+                label={field.label}
+                value={props.bindings[field.key]}
+                resetValue={props.resetBindings[field.key]}
+                selectedGamepadId={props.selectedGamepadId}
+                onChange={(next) => props.onBindChange(field.key, next)}
+              />
+            )}
+          </For>
+        </div>
+      )}
+    </For>
+  </div>
+);
 
 const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
   const totalsById = new Map<string, number>();
@@ -164,62 +171,56 @@ const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
 };
 
 const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => ({
-    surgeForward: bindings.surgeForward
-      ? { ...bindings.surgeForward, input: { ...bindings.surgeForward.input } }
-      : null,
-    surgeBackward: bindings.surgeBackward
-      ? { ...bindings.surgeBackward, input: { ...bindings.surgeBackward.input } }
-      : null,
-    swayRight: bindings.swayRight
-      ? { ...bindings.swayRight, input: { ...bindings.swayRight.input } }
-      : null,
-    swayLeft: bindings.swayLeft
-      ? { ...bindings.swayLeft, input: { ...bindings.swayLeft.input } }
-      : null,
-    heaveUp: bindings.heaveUp
-      ? { ...bindings.heaveUp, input: { ...bindings.heaveUp.input } }
-      : null,
-    heaveDown: bindings.heaveDown
-      ? { ...bindings.heaveDown, input: { ...bindings.heaveDown.input } }
-      : null,
-    pitchUp: bindings.pitchUp
-      ? { ...bindings.pitchUp, input: { ...bindings.pitchUp.input } }
-      : null,
-    pitchDown: bindings.pitchDown
-      ? { ...bindings.pitchDown, input: { ...bindings.pitchDown.input } }
-      : null,
-    yawRight: bindings.yawRight
-      ? { ...bindings.yawRight, input: { ...bindings.yawRight.input } }
-      : null,
-    yawLeft: bindings.yawLeft
-      ? { ...bindings.yawLeft, input: { ...bindings.yawLeft.input } }
-      : null,
-    rollLeft: bindings.rollLeft
-      ? { ...bindings.rollLeft, input: { ...bindings.rollLeft.input } }
-      : null,
-    rollRight: bindings.rollRight
-      ? { ...bindings.rollRight, input: { ...bindings.rollRight.input } }
-      : null,
-    action1Positive: bindings.action1Positive
-      ? { ...bindings.action1Positive, input: { ...bindings.action1Positive.input } }
-      : null,
-    action1Negative: bindings.action1Negative
-      ? { ...bindings.action1Negative, input: { ...bindings.action1Negative.input } }
-      : null,
-    action2Positive: bindings.action2Positive
-      ? { ...bindings.action2Positive, input: { ...bindings.action2Positive.input } }
-      : null,
-    action2Negative: bindings.action2Negative
-      ? { ...bindings.action2Negative, input: { ...bindings.action2Negative.input } }
-      : null,
-    autoStabilization: bindings.autoStabilization
-      ? { ...bindings.autoStabilization, input: { ...bindings.autoStabilization.input } }
-      : null,
-    depthHold: bindings.depthHold
-      ? { ...bindings.depthHold, input: { ...bindings.depthHold.input } }
-      : null,
-    record: bindings.record ? { ...bindings.record, input: { ...bindings.record.input } } : null,
-  });
+  surgeForward: bindings.surgeForward
+    ? { ...bindings.surgeForward, input: { ...bindings.surgeForward.input } }
+    : null,
+  surgeBackward: bindings.surgeBackward
+    ? { ...bindings.surgeBackward, input: { ...bindings.surgeBackward.input } }
+    : null,
+  swayRight: bindings.swayRight
+    ? { ...bindings.swayRight, input: { ...bindings.swayRight.input } }
+    : null,
+  swayLeft: bindings.swayLeft
+    ? { ...bindings.swayLeft, input: { ...bindings.swayLeft.input } }
+    : null,
+  heaveUp: bindings.heaveUp ? { ...bindings.heaveUp, input: { ...bindings.heaveUp.input } } : null,
+  heaveDown: bindings.heaveDown
+    ? { ...bindings.heaveDown, input: { ...bindings.heaveDown.input } }
+    : null,
+  pitchUp: bindings.pitchUp ? { ...bindings.pitchUp, input: { ...bindings.pitchUp.input } } : null,
+  pitchDown: bindings.pitchDown
+    ? { ...bindings.pitchDown, input: { ...bindings.pitchDown.input } }
+    : null,
+  yawRight: bindings.yawRight
+    ? { ...bindings.yawRight, input: { ...bindings.yawRight.input } }
+    : null,
+  yawLeft: bindings.yawLeft ? { ...bindings.yawLeft, input: { ...bindings.yawLeft.input } } : null,
+  rollLeft: bindings.rollLeft
+    ? { ...bindings.rollLeft, input: { ...bindings.rollLeft.input } }
+    : null,
+  rollRight: bindings.rollRight
+    ? { ...bindings.rollRight, input: { ...bindings.rollRight.input } }
+    : null,
+  action1Positive: bindings.action1Positive
+    ? { ...bindings.action1Positive, input: { ...bindings.action1Positive.input } }
+    : null,
+  action1Negative: bindings.action1Negative
+    ? { ...bindings.action1Negative, input: { ...bindings.action1Negative.input } }
+    : null,
+  action2Positive: bindings.action2Positive
+    ? { ...bindings.action2Positive, input: { ...bindings.action2Positive.input } }
+    : null,
+  action2Negative: bindings.action2Negative
+    ? { ...bindings.action2Negative, input: { ...bindings.action2Negative.input } }
+    : null,
+  autoStabilization: bindings.autoStabilization
+    ? { ...bindings.autoStabilization, input: { ...bindings.autoStabilization.input } }
+    : null,
+  depthHold: bindings.depthHold
+    ? { ...bindings.depthHold, input: { ...bindings.depthHold.input } }
+    : null,
+  record: bindings.record ? { ...bindings.record, input: { ...bindings.record.input } } : null,
+});
 
 const cloneGamepadMap = (map: Record<string, GamepadBindings>): Record<string, GamepadBindings> => {
   const entries = Object.entries(map).map(([id, bindings]) => [id, cloneGamepadBindings(bindings)]);
@@ -263,19 +264,25 @@ const GamepadSettings: Component = () => {
 
   const gamepadOptions = createMemo(() => toGamepadOptions(connectedGamepads()));
 
-  const gamepadCollection = createMemo(() => createListCollection<SelectItemOption>({
+  const gamepadCollection = createMemo(() =>
+    createListCollection<SelectItemOption>({
       items: gamepadOptions(),
-    }));
+    }),
+  );
 
   const selectedBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) {return null;}
+    if (!selectedId) {
+      return null;
+    }
     return configStore.gamepad[selectedId] ?? createNullGamepadBindings();
   });
 
   const selectedResetBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) {return null;}
+    if (!selectedId) {
+      return null;
+    }
     return initialGamepadBindings()[selectedId] ?? createNullGamepadBindings();
   });
 
@@ -316,7 +323,9 @@ const GamepadSettings: Component = () => {
     value: GamepadInput | null,
   ) => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) {return;}
+    if (!selectedId) {
+      return;
+    }
 
     const currentBindings = configStore.gamepad[selectedId] ?? createNullGamepadBindings();
     const updatedBindings: GamepadBindings = {
@@ -334,13 +343,17 @@ const GamepadSettings: Component = () => {
 
   const selectedGamepadConnected = createMemo(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) {return false;}
+    if (!selectedId) {
+      return false;
+    }
     return connectedGamepads().some((gamepad) => toGamepadBindingKey(gamepad) === selectedId);
   });
 
   createEffect(() => {
     const selectedId = selectedGamepadId();
-    if (!selectedId) {return;}
+    if (!selectedId) {
+      return;
+    }
 
     const selectedAvailable = gamepadOptions().some((option) => option.value === selectedId);
 
@@ -354,13 +367,15 @@ const GamepadSettings: Component = () => {
       <Show
         when={connectedGamepads().length > 0}
         fallback={
-          <div class='flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center'>
-            <SportsEsportsIcon class='size-12 text-muted-foreground' />
-            <h3 class='mt-4 text-lg font-semibold text-muted-foreground'>No gamepad connected</h3>
-            <p class='mt-2 text-sm text-muted-foreground'>
-              Connect a gamepad to configure bindings.
-            </p>
-          </div>
+          <Empty>
+            <EmptyMedia>
+              <SportsEsportsIcon class='size-12 text-muted-foreground' />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle>No gamepad connected</EmptyTitle>
+              <EmptyDescription>Connect a gamepad to configure bindings.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         }
       >
         <div class='space-y-2'>
