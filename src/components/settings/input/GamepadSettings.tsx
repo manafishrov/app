@@ -233,30 +233,32 @@ const GamepadSettings: Component = () => {
     cloneGamepadMap(configStore.gamepad),
   );
   let pollInterval: number | undefined;
+  let gamepadConnectedHandler: (() => void) | undefined;
+  let gamepadDisconnectedHandler: (() => void) | undefined;
+
+  const updateConnectedGamepads = (): void => {
+    setConnectedGamepads(getConnectedGamepads());
+  };
 
   onMount(() => {
-    const updateConnectedGamepads = (): void => {
-      setConnectedGamepads(getConnectedGamepads());
-    };
-
-    const onGamepadChange = (): void => {
-      updateConnectedGamepads();
-    };
+    gamepadConnectedHandler = () => updateConnectedGamepads();
+    gamepadDisconnectedHandler = () => updateConnectedGamepads();
 
     updateConnectedGamepads();
-    window.addEventListener('gamepadconnected', onGamepadChange);
-    window.addEventListener('gamepaddisconnected', onGamepadChange);
+    window.addEventListener('gamepadconnected', gamepadConnectedHandler);
+    window.addEventListener('gamepaddisconnected', gamepadDisconnectedHandler);
     pollInterval = window.setInterval(updateConnectedGamepads, 500);
-
-    onCleanup(() => {
-      window.removeEventListener('gamepadconnected', onGamepadChange);
-      window.removeEventListener('gamepaddisconnected', onGamepadChange);
-    });
   });
 
   onCleanup(() => {
     if (pollInterval !== undefined) {
       window.clearInterval(pollInterval);
+    }
+    if (gamepadConnectedHandler) {
+      window.removeEventListener('gamepadconnected', gamepadConnectedHandler);
+    }
+    if (gamepadDisconnectedHandler) {
+      window.removeEventListener('gamepaddisconnected', gamepadDisconnectedHandler);
     }
   });
 

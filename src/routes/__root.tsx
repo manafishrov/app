@@ -1,8 +1,10 @@
+import type { Component } from 'solid-js';
+
 import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
 import { Toaster } from '@manafishrov/ui/toaster';
 import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools';
-import type { Component } from 'solid-js';
+import { onCleanup, onMount } from 'solid-js';
 
 import { Header } from '@/components/Header';
 import * as m from '@/paraglide/messages';
@@ -10,11 +12,15 @@ import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { getConfig, recoverTempRecordings, setupAllListeners } from '@/tauri';
 
 const RootComponent: Component = () => {
-  onMount(async () => {
-    const cleanup = await setupAllListeners();
-    await recoverTempRecordings();
+  let listenerCleanup: (() => void) | undefined;
 
-    return cleanup;
+  onMount(async () => {
+    listenerCleanup = await setupAllListeners();
+    await recoverTempRecordings();
+  });
+
+  onCleanup(() => {
+    listenerCleanup?.();
   });
 
   return (

@@ -8,27 +8,28 @@ import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';
 
 function Home() {
+  let keyboardCleanup: (() => void) | undefined;
+  let directionCleanup: (() => void) | undefined;
+  let stateCleanup: (() => void) | undefined;
+
   onMount(() => {
-    const { pressedKeys, cleanup: keyboardCleanup } = createKeyboardTracker();
+    const { pressedKeys, cleanup } = createKeyboardTracker();
+    keyboardCleanup = cleanup;
 
-    const directionCleanup = createDirectionVectorLoop(
-      configStore,
-      pressedKeys,
-      sendDirectionVector,
-    );
+    directionCleanup = createDirectionVectorLoop(configStore, pressedKeys, sendDirectionVector);
 
-    const stateCleanup = createStateToggleLoop(
+    stateCleanup = createStateToggleLoop(
       configStore,
       pressedKeys,
       () => recordingStore.isRecording,
       () => recordingStore.webrtcConnected,
     );
+  });
 
-    onCleanup(() => {
-      keyboardCleanup();
-      directionCleanup();
-      stateCleanup();
-    });
+  onCleanup(() => {
+    keyboardCleanup?.();
+    directionCleanup?.();
+    stateCleanup?.();
   });
 
   return (

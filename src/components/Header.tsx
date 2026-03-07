@@ -22,21 +22,25 @@ function Header() {
     setIsFullscreen(fullscreen);
   };
 
+  let unlistenFocus: (() => void) | undefined;
+  let unlistenResize: (() => void) | undefined;
+  let handleKeyDown: ((event: KeyboardEvent) => void) | undefined;
+
   onMount(async () => {
     const win = getCurrentWindow();
     await updateFullscreenState();
     setIsFocused(await win.isFocused());
 
-    const unlistenFocus = await win.onFocusChanged(({ payload }) => {
+    unlistenFocus = await win.onFocusChanged(({ payload }) => {
       setIsFocused(payload);
       setTimeout(() => void updateFullscreenState(), 100);
     });
 
-    const unlistenResize = await win.onResized(() => {
+    unlistenResize = await win.onResized(() => {
       setTimeout(() => void updateFullscreenState(), 100);
     });
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === ',') {
         event.preventDefault();
         navigate({ to: '/settings' });
@@ -44,12 +48,14 @@ function Header() {
     };
 
     globalThis.addEventListener('keydown', handleKeyDown);
+  });
 
-    onCleanup(() => {
-      unlistenFocus();
-      unlistenResize();
+  onCleanup(() => {
+    unlistenFocus?.();
+    unlistenResize?.();
+    if (handleKeyDown) {
       globalThis.removeEventListener('keydown', handleKeyDown);
-    });
+    }
   });
 
   const handleClose = () => {

@@ -22,17 +22,19 @@ const SettingsLayoutRoute: Component = () => {
     setIsFullscreen(await getCurrentWindow().isFullscreen());
   };
 
+  let unlistenResize: (() => void) | undefined;
+
   onMount(async () => {
     const win = getCurrentWindow();
     await updateFullscreenState();
 
-    const unlistenResize = await win.onResized(() => {
+    unlistenResize = await win.onResized(() => {
       void updateFullscreenState();
     });
+  });
 
-    onCleanup(() => {
-      unlistenResize();
-    });
+  onCleanup(() => {
+    unlistenResize?.();
   });
 
   return (
