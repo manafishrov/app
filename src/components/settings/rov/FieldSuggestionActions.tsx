@@ -1,59 +1,71 @@
-import { Button } from '@/components/ui/Button';
+import type { Component } from 'solid-js';
+
+import { Button } from '@manafishrov/ui/button';
 import {
   Tooltip,
+  TooltipArrow,
   TooltipContent,
+  TooltipPositioner,
   TooltipTrigger,
-} from '@/components/ui/Tooltip';
+} from '@manafishrov/ui/tooltip';
 
-type RegulatorFieldButtonsProps = {
+type FieldSuggestionActionsProps = {
   defaultValue: number;
-  suggestionValue?: number;
+  suggestionValue?: number | undefined;
   onChange: (value: number) => void;
   label: string;
 };
 
-function RegulatorFieldButtons({
+const FieldSuggestionActions: Component<FieldSuggestionActionsProps> = ({
   defaultValue,
   suggestionValue,
   onChange,
   label,
-}: RegulatorFieldButtonsProps) {
-  return (
-    <div className='ml-4 flex gap-2'>
-      <Tooltip>
-        <TooltipTrigger asChild>
+}) => (
+  <div class='ml-4 flex gap-2'>
+    <Tooltip>
+      <TooltipTrigger
+        asChild={(props) => (
           <Button
-            size='sm'
+            {...props()}
             variant='ghost'
             aria-label={`Reset ${label} to default value`}
             onClick={() => onChange(defaultValue)}
           >
             Reset to Default
           </Button>
-        </TooltipTrigger>
+        )}
+      />
+      <TooltipPositioner>
         <TooltipContent>
           <p>{`Reset ${label} to default value`}</p>
+          <TooltipArrow />
         </TooltipContent>
-      </Tooltip>
-      {suggestionValue && (
-        <Tooltip>
-          <TooltipTrigger asChild>
+      </TooltipPositioner>
+    </Tooltip>
+    {suggestionValue !== undefined && (
+      <Tooltip>
+        <TooltipTrigger
+          asChild={(props) => (
             <Button
-              size='sm'
+              {...props()}
               variant='outline'
               aria-label={`Use suggested value for ${label}`}
               onClick={() => onChange(suggestionValue)}
             >
               {`Use Suggestion (${suggestionValue})`}
             </Button>
-          </TooltipTrigger>
+          )}
+        />
+        <TooltipPositioner>
           <TooltipContent>
             <p>{`Use suggested value for ${label}`}</p>
+            <TooltipArrow />
           </TooltipContent>
-        </Tooltip>
-      )}
-    </div>
-  );
-}
+        </TooltipPositioner>
+      </Tooltip>
+    )}
+  </div>
+);
 
-export { RegulatorFieldButtons };
+export { FieldSuggestionActions };

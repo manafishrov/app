@@ -11,7 +11,7 @@ import { setupToastListener } from '@/tauri/toast';
 export { flashMicrocontrollerFirmware } from '@/tauri/microcontrollerFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { recoverTempRecordings, saveRecording } from '@/tauri/recording';
-export { regulatorSuggestions } from '@/tauri/regulator';
+export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
 export { sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
@@ -35,5 +35,7 @@ export const setupAllListeners = async (): Promise<CleanupFn> => {
 
   unlisteners.forEach((cleanup) => disposables.add(cleanup));
 
-  return disposables.dispose;
+  return () => {
+    disposables.dispose();
+  };
 };
