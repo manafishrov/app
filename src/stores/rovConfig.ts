@@ -54,7 +54,8 @@ type DirectionCoefficients = {
 };
 
 type Power = {
-  userMaxPower: number;
+  userMaxPowerThrusters: number;
+  userMaxPowerActions: number;
   regulatorMaxPower: number;
   batteryMinVoltage: number;
   batteryMaxVoltage: number;
@@ -112,7 +113,8 @@ const defaultRovConfig: RovConfig = {
   },
   directionCoefficients: { surge: 0, sway: 0, heave: 0 },
   power: {
-    userMaxPower: 0,
+    userMaxPowerThrusters: 0,
+    userMaxPowerActions: 0,
     regulatorMaxPower: 0,
     batteryMinVoltage: 0,
     batteryMaxVoltage: 0,
