@@ -43,7 +43,7 @@ const SettingsLayoutRoute: Component = () => {
         <SettingsSidebar isFullscreen={isFullscreen()} />
         <SidebarInset class={cn(isFullscreen() && 'mt-6')}>
           <ScrollArea class='relative size-full'>
-            <ScrollAreaViewport>
+            <ScrollAreaViewport tabIndex={-1}>
               <ScrollAreaContent>
                 <div class='w-full max-w-3xl mx-auto p-4 md:p-8 relative'>
                   <Outlet />

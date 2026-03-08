@@ -1,8 +1,8 @@
-import { useStore } from '@tanstack/react-store';
-import { useEffect } from 'react';
+import type { Component } from 'solid-js';
+
+import { useAppForm } from '@manafishrov/ui/form';
 import { z } from 'zod';
 
-import { useAppForm } from '@/components/ui/Form';
 import { configStore } from '@/stores/config';
 import { setConfig } from '@/tauri';
 
@@ -21,7 +21,7 @@ const formSchema = z.object({
     .max(65_535, 'Port must be between 1 and 65535'),
 });
 
-function ConnectionSettingsForm() {
+export const AppConnection: Component = () => {
   const config = useStore(configStore, (state) =>
     state
       ? {
@@ -46,29 +46,23 @@ function ConnectionSettingsForm() {
     onSubmit: ({ value }) => setConfig(value),
   });
 
-  useEffect(() => {
-    if (config) {
-      form.reset({
-        ipAddress: config.ipAddress,
-        webrtcSignalingApiPort: config.webrtcSignalingApiPort,
-        webrtcSignalingApiPath: config.webrtcSignalingApiPath,
-        webSocketPort: config.webSocketPort,
-      });
-    }
-  }, [config, form]);
+  // useEffect(() => {
+  //   if (config) {
+  //     form.reset({
+  //       ipAddress: config.ipAddress,
+  //       webrtcSignalingApiPort: config.webrtcSignalingApiPort,
+  //       webrtcSignalingApiPath: config.webrtcSignalingApiPath,
+  //       webSocketPort: config.webSocketPort,
+  //     });
+  //   }
+  // }, [config, form]);
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void form.handleSubmit();
-      }}
-      className='relative space-y-8'
-    >
-      <form.AppForm>
+    <form.AppForm>
+      <form.Form>
         <form.AppField name='ipAddress'>
           {(field) => (
-            <field.TextField
+            <field.TextInputField
               label='IP address'
               placeholder='10.10.10.10'
               description='The IP address of your Manafish.'
@@ -77,7 +71,7 @@ function ConnectionSettingsForm() {
         </form.AppField>
         <form.AppField name='webrtcSignalingApiPort'>
           {(field) => (
-            <field.NumberField
+            <field.NumberInputField
               label='WebRTC signaling API port'
               placeholder='1984'
               description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
@@ -86,7 +80,7 @@ function ConnectionSettingsForm() {
         </form.AppField>
         <form.AppField name='webrtcSignalingApiPath'>
           {(field) => (
-            <field.TextField
+            <field.TextInputField
               label='WebRTC signaling API path'
               placeholder='/api/webrtc?src=cam'
               description='The path for the WebRTC signaling API.'
@@ -95,17 +89,15 @@ function ConnectionSettingsForm() {
         </form.AppField>
         <form.AppField name='webSocketPort'>
           {(field) => (
-            <field.NumberField
+            <field.NumberInputField
               label='WebSocket port'
               placeholder='5000'
               description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
             />
           )}
         </form.AppField>
-        <form.SubmitButton className='w-28'>Save</form.SubmitButton>
-      </form.AppForm>
-    </form>
+        <form.SubmitButton class='w-28'>Save</form.SubmitButton>
+      </form.Form>
+    </form.AppForm>
   );
-}
-
-export { ConnectionSettingsForm };
+};
