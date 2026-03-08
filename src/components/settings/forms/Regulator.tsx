@@ -20,7 +20,7 @@ const axisSchema = z.object({
   kp: z.number().min(0).max(100),
   ki: z.number().min(0).max(100),
   kd: z.number().min(0).max(100),
-  rate: z.array(z.number().min(0).max(360)).length(1),
+  rate: z.array(z.number().min(5, 'The turn rate needs to be at least 5°/s').max(360)).length(1),
 });
 
 const formSchema = z.object({
@@ -184,7 +184,7 @@ export const Regulator: Component = () => {
             <form.AppField name='pitch.rate'>
               {(field) => (
                 <field.SliderField
-                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°"]'
+                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
                   label='Turn Rate'
                   description='The speed at which the ROV will try to reach the desired pitch angle.'
                   min={0}
@@ -263,7 +263,7 @@ export const Regulator: Component = () => {
             <form.AppField name='yaw.rate'>
               {(field) => (
                 <field.SliderField
-                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°"]'
+                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
                   label='Turn Rate'
                   description='The speed at which the ROV will try to reach the desired yaw angle.'
                   min={0}
@@ -342,7 +342,7 @@ export const Regulator: Component = () => {
             <form.AppField name='roll.rate'>
               {(field) => (
                 <field.SliderField
-                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°"]'
+                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
                   label='Turn Rate'
                   description='The speed at which the ROV will try to reach the desired roll angle.'
                   min={0}

@@ -80,7 +80,7 @@ type RegulatorSuggestions = {
   depth: AxisConfig;
 };
 
-const defaultAxisConfig: AxisConfig = { kp: 0, ki: 0, kd: 0, rate: 0 };
+const defaultAxisConfig: AxisConfig = { kp: 0, ki: 0, kd: 0, rate: 5 };
 const defaultRow: [number, number, number, number, number, number, number, number] = [
   0, 0, 0, 0, 0, 0, 0, 0,
 ];
