@@ -20,8 +20,8 @@ const GeneralSettingsPage: Component = () => {
         <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
           v{configStore.appVersion}
         </Badge>
-        <General />
       </div>
+      <General />
     </>
   );
 };
