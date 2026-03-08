@@ -7,7 +7,6 @@ import {
   RadioGroupItemControl,
   RadioGroupItemText,
 } from '@manafishrov/ui/radio-group';
-import { revalidateLogic } from '@tanstack/solid-form';
 import { z } from 'zod';
 
 import { configStore, setConfig } from '@/stores/config';
@@ -24,9 +23,8 @@ export const Appearance: Component = () => {
   const { theme, setTheme } = useTheme();
 
   const form = useAppForm(() => ({
-    validationLogic: revalidateLogic(),
     validators: {
-      onDynamic: formSchema,
+      onSubmit: formSchema,
     },
     defaultValues: {
       theme: theme(),
@@ -123,7 +121,7 @@ export const Appearance: Component = () => {
             <field.SwitchField label='Work Indicator' description='Show the work indicator.' />
           )}
         </form.AppField>
-        <form.AutoSubmit debounce={0} />
+        <form.AutoSubmit />
       </form.Form>
     </form.AppForm>
   );
