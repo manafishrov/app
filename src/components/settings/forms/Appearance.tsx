@@ -14,11 +14,7 @@ import { configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
-  overlayScale: z
-    .number()
-    .int()
-    .min(1, 'Overlay scale must be between 1 and 5')
-    .max(5, 'Overlay scale must be between 1 and 5'),
+  overlayScale: z.array(z.number().int().min(1).max(5)),
   attitudeIndicator: z.enum(['scientific', 'dimensional3D', 'disabled']),
   thrusterRpmOverlay: z.boolean(),
   workIndicator: z.boolean(),
@@ -34,19 +30,22 @@ export const Appearance: Component = () => {
     },
     defaultValues: {
       theme: theme(),
-      overlayScale: configStore.overlayScale,
+      overlayScale: [configStore.overlayScale],
       attitudeIndicator: configStore.attitudeIndicator,
       thrusterRpmOverlay: configStore.thrusterRpmOverlay,
       workIndicator: configStore.workIndicator,
     },
     onSubmit: ({ value }) => {
       setTheme(value.theme);
-      setConfig({
-        overlayScale: value.overlayScale,
-        attitudeIndicator: value.attitudeIndicator,
-        thrusterRpmOverlay: value.thrusterRpmOverlay,
-        workIndicator: value.workIndicator,
-      });
+      const overlayScale = value.overlayScale[0];
+      if (overlayScale !== undefined) {
+        setConfig({
+          overlayScale,
+          attitudeIndicator: value.attitudeIndicator,
+          thrusterRpmOverlay: value.thrusterRpmOverlay,
+          workIndicator: value.workIndicator,
+        });
+      }
     },
   }));
 
@@ -74,8 +73,9 @@ export const Appearance: Component = () => {
         <form.AppField name='overlayScale'>
           {(field) => (
             <field.SliderField
+              class='max-w-sm'
               label='Overlay Scale'
-              description='Adjust the scale of the overlay UI'
+              description='Adjust the scale of the overlay UI.'
               marks={[
                 { value: 1, label: '1' },
                 { value: 2, label: '2' },
@@ -83,6 +83,9 @@ export const Appearance: Component = () => {
                 { value: 4, label: '4' },
                 { value: 5, label: '5' },
               ]}
+              min={1}
+              max={5}
+              step={1}
             />
           )}
         </form.AppField>
