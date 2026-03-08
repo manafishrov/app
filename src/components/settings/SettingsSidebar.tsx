@@ -102,7 +102,6 @@ const normalizePath = (path: string): string =>
 type SidebarLinkItemProps = {
   item: SidebarItem;
   isActive: (path: string) => boolean;
-  disabled?: boolean;
 };
 
 type SettingsSidebarProps = {
@@ -116,7 +115,6 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
         tooltip={props.item.label()}
         aria-label={props.item.ariaLabel()}
         isActive={props.isActive(props.item.to)}
-        disabled={props.disabled}
         asChild={(triggerProps) => {
           const buttonProps = triggerProps();
           const { Icon } = props.item;
@@ -176,16 +174,18 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ROV_ITEMS.map((item) => (
-                <SidebarLinkItem item={item} isActive={isActive} disabled={!isConnected()} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <Show when={isConnected()}>
+          <SidebarGroup>
+            <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ROV_ITEMS.map((item) => (
+                  <SidebarLinkItem item={item} isActive={isActive} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </Show>
       </SidebarContent>
 
       <SidebarFooter>

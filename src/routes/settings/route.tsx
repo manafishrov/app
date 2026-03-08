@@ -8,15 +8,24 @@ import {
   ScrollAreaViewport,
 } from '@manafishrov/ui/scroll-area';
 import { SidebarInset, SidebarLayout, SidebarProvider } from '@manafishrov/ui/sidebar';
-import { Outlet, createFileRoute } from '@tanstack/solid-router';
+import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
+import { createEffect, createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { connectionStatusStore } from '@/stores/connectionStatus';
 import { requestRovConfig } from '@/tauri';
 
 const SettingsLayout: Component = () => {
   const [isFullscreen, setIsFullscreen] = createSignal(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  createEffect(() => {
+    if (!connectionStatusStore.isConnected && location().pathname.startsWith('/settings/rov')) {
+      navigate({ to: '/settings', replace: true });
+    }
+  });
 
   const updateFullscreenState = async (): Promise<void> => {
     setIsFullscreen(await getCurrentWindow().isFullscreen());

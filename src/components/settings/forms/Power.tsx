@@ -57,7 +57,7 @@ export const Power: Component = () => {
         <form.AppField name='userMaxPowerThrusters'>
           {(field) => (
             <field.SliderField
-              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:overflow-hidden **:data-[slot=slider-track]:rounded-full **:data-[slot=slider-track]:bg-muted **:data-[slot=slider-range]:bg-linear-to-r **:data-[slot=slider-range]:from-green-500 **:data-[slot=slider-range]:via-yellow-500 **:data-[slot=slider-range]:to-red-500 [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
               label='User Maximum Power (Thrusters)'
               description='The percentage of power given to the thrusters from user input.'
               min={0}
@@ -69,7 +69,7 @@ export const Power: Component = () => {
         <form.AppField name='userMaxPowerActions'>
           {(field) => (
             <field.SliderField
-              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:overflow-hidden **:data-[slot=slider-track]:rounded-full **:data-[slot=slider-track]:bg-muted **:data-[slot=slider-range]:bg-linear-to-r **:data-[slot=slider-range]:from-green-500 **:data-[slot=slider-range]:via-yellow-500 **:data-[slot=slider-range]:to-red-500 [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
               label='User Maximum Power (Actions)'
               description='The percentage of power given to the motors for actions from user input.'
               min={0}
@@ -81,7 +81,7 @@ export const Power: Component = () => {
         <form.AppField name='regulatorMaxPower'>
           {(field) => (
             <field.SliderField
-              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:overflow-hidden **:data-[slot=slider-track]:rounded-full **:data-[slot=slider-track]:bg-muted **:data-[slot=slider-range]:bg-linear-to-r **:data-[slot=slider-range]:from-green-500 **:data-[slot=slider-range]:via-yellow-500 **:data-[slot=slider-range]:to-red-500 [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
               label='Regulator Maximum Power'
               description='The percentage of power given to the thrusters by the regulator to keep the ROV stabilized.'
               min={0}
