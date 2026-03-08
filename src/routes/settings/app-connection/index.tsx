@@ -8,7 +8,7 @@ import { AppConnection } from '@/components/settings/forms/AppConnection';
 const AppConnectionSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex flex-col gap-2'>
-      <H1>Connection</H1>
+      <H1>App Connection</H1>
       <P>
         Configure your Manafish connection settings. Only change this if you know what you are
         doing.
