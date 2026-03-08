@@ -36,7 +36,7 @@ function HomePage() {
     <main class='flex flex-1 items-center justify-center overflow-hidden p-1 @container-[size]'>
       <AspectRatio
         ratio={4 / 3}
-        class='bg-card dark relative rounded-lg w-[min(100cqw,calc(100cqh*4/3))] h-[min(100cqh,calc(100cqw*3/4))]'
+        class='bg-muted relative rounded-lg w-[min(100cqw,calc(100cqh*4/3))] h-[min(100cqh,calc(100cqw*3/4))]'
       >
         <VideoStream />
       </AspectRatio>
