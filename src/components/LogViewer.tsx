@@ -7,6 +7,7 @@ import {
   ScrollAreaThumb,
   ScrollAreaViewport,
 } from '@manafishrov/ui/scroll-area';
+import { Spinner } from '@manafishrov/ui/spinner';
 import { Toggle } from '@manafishrov/ui/toggle';
 import { createVirtualizer } from '@tanstack/solid-virtual';
 import {
@@ -129,6 +130,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
   const [logs, setLogs] = createSignal<LogRecord[]>([]);
   const [searchQuery, setSearchQuery] = createSignal('');
   const [followTail, setFollowTail] = createSignal(true);
+  const [isLoading, setIsLoading] = createSignal(true);
 
   const [sourceFilters, setSourceFilters] = createSignal<Record<LogOrigin, boolean>>({
     frontend: true,
@@ -216,8 +218,10 @@ const LogViewer: Component<LogViewerProps> = (props) => {
   };
 
   const loadLogs = async () => {
+    setIsLoading(true);
     const records = await getAllLogRecords();
     setLogs(records);
+    setIsLoading(false);
     remeasureAndFollowTail();
   };
 
@@ -347,7 +351,12 @@ const LogViewer: Component<LogViewerProps> = (props) => {
           class='h-full w-full'
         >
           <ScrollAreaContent>
-            <Show when={filteredLogs().length === 0}>
+            <Show when={isLoading()}>
+              <div class='flex h-32 items-center justify-center'>
+                <Spinner class='size-6' />
+              </div>
+            </Show>
+            <Show when={!isLoading() && filteredLogs().length === 0}>
               <div class='flex h-20 items-center justify-center text-muted-foreground'>
                 {logs().length === 0 ? 'No logs recorded yet' : 'No logs match your filters'}
               </div>

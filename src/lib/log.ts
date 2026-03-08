@@ -128,11 +128,34 @@ function logError(...args: unknown[]): void {
 }
 
 async function getAllLogRecords(): Promise<LogRecord[]> {
+  await deleteOldLogRecords(7);
   return withErrorHandling((db) => db.getAll(LOG_STORE_NAME));
 }
 
 async function clearAllLogRecords(): Promise<void> {
   await withErrorHandling((db) => db.clear(LOG_STORE_NAME));
+}
+
+async function deleteOldLogRecords(maxAgeDays = 7): Promise<number> {
+  const cutoffDate = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+
+  return withErrorHandling(async (db) => {
+    const tx = db.transaction(LOG_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(LOG_STORE_NAME);
+    const index = store.index('timestamp');
+
+    let deletedCount = 0;
+    let cursor = await index.openCursor(IDBKeyRange.upperBound(cutoffDate));
+
+    while (cursor) {
+      await cursor.delete();
+      deletedCount++;
+      cursor = await cursor.continue();
+    }
+
+    await tx.done;
+    return deletedCount;
+  });
 }
 
 export {
@@ -141,6 +164,7 @@ export {
   logError,
   getAllLogRecords,
   clearAllLogRecords,
+  deleteOldLogRecords,
   createLogRecord,
   type LogRecord,
   type LogEntry,
