@@ -5,7 +5,7 @@ import { createFileRoute } from '@tanstack/solid-router';
 
 import { AppConnection } from '@/components/settings/forms/AppConnection';
 
-const Connection: Component = () => (
+const AppConnectionSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex flex-col gap-2'>
       <H1>Connection</H1>
@@ -18,6 +18,6 @@ const Connection: Component = () => (
   </>
 );
 
-export const Route = createFileRoute('/settings/connection/')({
-  component: Connection,
+export const Route = createFileRoute('/settings/app-connection/')({
+  component: AppConnectionSettingsPage,
 });

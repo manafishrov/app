@@ -4,7 +4,7 @@ import type { Component } from 'solid-js';
 
 import { KeyboardSettings } from '@/components/settings/input/KeyboardSettings';
 
-const Keyboard: Component = () => (
+const KeyboardSettingsPage: Component = () => (
     <>
       <div class='mb-6 flex flex-col gap-2'>
         <H1>Keyboard</H1>
@@ -15,5 +15,5 @@ const Keyboard: Component = () => (
   );
 
 export const Route = createFileRoute('/settings/keyboard/')({
-  component: Keyboard,
+  component: KeyboardSettingsPage,
 });

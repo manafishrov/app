@@ -30,6 +30,6 @@ const Calibration: Component = () => (
     </>
   );
 
-export const Route = createFileRoute('/settings/calibration/')({
+export const Route = createFileRoute('/settings/rov/calibration/')({
   component: Calibration,
 });

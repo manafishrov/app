@@ -20,6 +20,7 @@ import BuildIcon from '~icons/material-symbols/build';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
+import PaletteIcon from '~icons/material-symbols/palette';
 import SettingsIcon from '~icons/material-symbols/settings';
 import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
 import SpeedIcon from '~icons/material-symbols/speed';
@@ -43,6 +44,12 @@ const APPLICATION_ITEMS: SidebarItem[] = [
     Icon: SettingsIcon,
   },
   {
+    label: () => m.settings_application_appearence(),
+    ariaLabel: () => m.aria_labels_appearence_button(),
+    to: '/settings/appearence',
+    Icon: PaletteIcon,
+  },
+  {
     label: () => m.settings_application_keyboard(),
     ariaLabel: () => m.aria_labels_keyboard_button(),
     to: '/settings/keyboard',
@@ -55,36 +62,36 @@ const APPLICATION_ITEMS: SidebarItem[] = [
     Icon: SportsEsportsIcon,
   },
   {
-    label: () => m.settings_application_connection(),
-    ariaLabel: () => m.aria_labels_connection_button(),
-    to: '/settings/connection',
+    label: () => m.settings_application_app_connection(),
+    ariaLabel: () => m.aria_labels_app_connection_button(),
+    to: '/settings/app-connection',
     Icon: SettingsEthernetIcon,
   },
 ];
 
 const ROV_ITEMS: SidebarItem[] = [
   {
-    label: () => m.settings_rov_general_rov(),
-    ariaLabel: () => m.aria_labels_general_rov_button(),
-    to: '/settings/general',
+    label: () => m.settings_rov_system(),
+    ariaLabel: () => m.aria_labels_system_rov_button(),
+    to: '/settings/rov/system',
     Icon: Drone2Icon,
   },
   {
     label: () => m.settings_rov_calibration(),
     ariaLabel: () => m.aria_labels_calibration_button(),
-    to: '/settings/calibration',
+    to: '/settings/rov/calibration',
     Icon: BuildIcon,
   },
   {
     label: () => m.settings_rov_regulator(),
     ariaLabel: () => m.aria_labels_regulator_button(),
-    to: '/settings/regulator',
+    to: '/settings/rov/regulator',
     Icon: ExploreIcon,
   },
   {
     label: () => m.settings_rov_power(),
     ariaLabel: () => m.aria_labels_power_button(),
-    to: '/settings/power',
+    to: '/settings/rov/power',
     Icon: SpeedIcon,
   },
 ];

@@ -7,7 +7,7 @@ import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop
 import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';
 
-function Home() {
+function HomePage() {
   let keyboardCleanup: (() => void) | undefined;
   let directionCleanup: (() => void) | undefined;
   let stateCleanup: (() => void) | undefined;
@@ -45,5 +45,5 @@ function Home() {
 }
 
 export const Route = createFileRoute('/')({
-  component: Home,
+  component: HomePage,
 });

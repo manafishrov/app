@@ -12,14 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as SettingsRegulatorIndexRouteImport } from './routes/settings/regulator/index'
-import { Route as SettingsPowerIndexRouteImport } from './routes/settings/power/index'
 import { Route as SettingsKeyboardIndexRouteImport } from './routes/settings/keyboard/index'
-import { Route as SettingsGeneralIndexRouteImport } from './routes/settings/general/index'
 import { Route as SettingsGamepadIndexRouteImport } from './routes/settings/gamepad/index'
 import { Route as SettingsDebugIndexRouteImport } from './routes/settings/debug/index'
-import { Route as SettingsConnectionIndexRouteImport } from './routes/settings/connection/index'
-import { Route as SettingsCalibrationIndexRouteImport } from './routes/settings/calibration/index'
+import { Route as SettingsAppearenceIndexRouteImport } from './routes/settings/appearence/index'
+import { Route as SettingsAppConnectionIndexRouteImport } from './routes/settings/app-connection/index'
+import { Route as SettingsRovSystemIndexRouteImport } from './routes/settings/rov/system/index'
+import { Route as SettingsRovRegulatorIndexRouteImport } from './routes/settings/rov/regulator/index'
+import { Route as SettingsRovPowerIndexRouteImport } from './routes/settings/rov/power/index'
+import { Route as SettingsRovCalibrationIndexRouteImport } from './routes/settings/rov/calibration/index'
 
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: '/settings',
@@ -36,24 +37,9 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
-const SettingsRegulatorIndexRoute = SettingsRegulatorIndexRouteImport.update({
-  id: '/regulator/',
-  path: '/regulator/',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
-const SettingsPowerIndexRoute = SettingsPowerIndexRouteImport.update({
-  id: '/power/',
-  path: '/power/',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
 const SettingsKeyboardIndexRoute = SettingsKeyboardIndexRouteImport.update({
   id: '/keyboard/',
   path: '/keyboard/',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
-const SettingsGeneralIndexRoute = SettingsGeneralIndexRouteImport.update({
-  id: '/general/',
-  path: '/general/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsGamepadIndexRoute = SettingsGamepadIndexRouteImport.update({
@@ -66,15 +52,37 @@ const SettingsDebugIndexRoute = SettingsDebugIndexRouteImport.update({
   path: '/debug/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
-const SettingsConnectionIndexRoute = SettingsConnectionIndexRouteImport.update({
-  id: '/connection/',
-  path: '/connection/',
+const SettingsAppearenceIndexRoute = SettingsAppearenceIndexRouteImport.update({
+  id: '/appearence/',
+  path: '/appearence/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
-const SettingsCalibrationIndexRoute =
-  SettingsCalibrationIndexRouteImport.update({
-    id: '/calibration/',
-    path: '/calibration/',
+const SettingsAppConnectionIndexRoute =
+  SettingsAppConnectionIndexRouteImport.update({
+    id: '/app-connection/',
+    path: '/app-connection/',
+    getParentRoute: () => SettingsRouteRoute,
+  } as any)
+const SettingsRovSystemIndexRoute = SettingsRovSystemIndexRouteImport.update({
+  id: '/rov/system/',
+  path: '/rov/system/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsRovRegulatorIndexRoute =
+  SettingsRovRegulatorIndexRouteImport.update({
+    id: '/rov/regulator/',
+    path: '/rov/regulator/',
+    getParentRoute: () => SettingsRouteRoute,
+  } as any)
+const SettingsRovPowerIndexRoute = SettingsRovPowerIndexRouteImport.update({
+  id: '/rov/power/',
+  path: '/rov/power/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsRovCalibrationIndexRoute =
+  SettingsRovCalibrationIndexRouteImport.update({
+    id: '/rov/calibration/',
+    path: '/rov/calibration/',
     getParentRoute: () => SettingsRouteRoute,
   } as any)
 
@@ -82,40 +90,43 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/': typeof SettingsIndexRoute
-  '/settings/calibration/': typeof SettingsCalibrationIndexRoute
-  '/settings/connection/': typeof SettingsConnectionIndexRoute
+  '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
+  '/settings/appearence/': typeof SettingsAppearenceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
-  '/settings/general/': typeof SettingsGeneralIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
-  '/settings/power/': typeof SettingsPowerIndexRoute
-  '/settings/regulator/': typeof SettingsRegulatorIndexRoute
+  '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
+  '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
+  '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
+  '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsIndexRoute
-  '/settings/calibration': typeof SettingsCalibrationIndexRoute
-  '/settings/connection': typeof SettingsConnectionIndexRoute
+  '/settings/app-connection': typeof SettingsAppConnectionIndexRoute
+  '/settings/appearence': typeof SettingsAppearenceIndexRoute
   '/settings/debug': typeof SettingsDebugIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
-  '/settings/general': typeof SettingsGeneralIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
-  '/settings/power': typeof SettingsPowerIndexRoute
-  '/settings/regulator': typeof SettingsRegulatorIndexRoute
+  '/settings/rov/calibration': typeof SettingsRovCalibrationIndexRoute
+  '/settings/rov/power': typeof SettingsRovPowerIndexRoute
+  '/settings/rov/regulator': typeof SettingsRovRegulatorIndexRoute
+  '/settings/rov/system': typeof SettingsRovSystemIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/': typeof SettingsIndexRoute
-  '/settings/calibration/': typeof SettingsCalibrationIndexRoute
-  '/settings/connection/': typeof SettingsConnectionIndexRoute
+  '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
+  '/settings/appearence/': typeof SettingsAppearenceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
-  '/settings/general/': typeof SettingsGeneralIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
-  '/settings/power/': typeof SettingsPowerIndexRoute
-  '/settings/regulator/': typeof SettingsRegulatorIndexRoute
+  '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
+  '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
+  '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
+  '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,39 +134,42 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/settings/'
-    | '/settings/calibration/'
-    | '/settings/connection/'
+    | '/settings/app-connection/'
+    | '/settings/appearence/'
     | '/settings/debug/'
     | '/settings/gamepad/'
-    | '/settings/general/'
     | '/settings/keyboard/'
-    | '/settings/power/'
-    | '/settings/regulator/'
+    | '/settings/rov/calibration/'
+    | '/settings/rov/power/'
+    | '/settings/rov/regulator/'
+    | '/settings/rov/system/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
-    | '/settings/calibration'
-    | '/settings/connection'
+    | '/settings/app-connection'
+    | '/settings/appearence'
     | '/settings/debug'
     | '/settings/gamepad'
-    | '/settings/general'
     | '/settings/keyboard'
-    | '/settings/power'
-    | '/settings/regulator'
+    | '/settings/rov/calibration'
+    | '/settings/rov/power'
+    | '/settings/rov/regulator'
+    | '/settings/rov/system'
   id:
     | '__root__'
     | '/'
     | '/settings'
     | '/settings/'
-    | '/settings/calibration/'
-    | '/settings/connection/'
+    | '/settings/app-connection/'
+    | '/settings/appearence/'
     | '/settings/debug/'
     | '/settings/gamepad/'
-    | '/settings/general/'
     | '/settings/keyboard/'
-    | '/settings/power/'
-    | '/settings/regulator/'
+    | '/settings/rov/calibration/'
+    | '/settings/rov/power/'
+    | '/settings/rov/regulator/'
+    | '/settings/rov/system/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,32 +200,11 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
-    '/settings/regulator/': {
-      id: '/settings/regulator/'
-      path: '/regulator'
-      fullPath: '/settings/regulator/'
-      preLoaderRoute: typeof SettingsRegulatorIndexRouteImport
-      parentRoute: typeof SettingsRouteRoute
-    }
-    '/settings/power/': {
-      id: '/settings/power/'
-      path: '/power'
-      fullPath: '/settings/power/'
-      preLoaderRoute: typeof SettingsPowerIndexRouteImport
-      parentRoute: typeof SettingsRouteRoute
-    }
     '/settings/keyboard/': {
       id: '/settings/keyboard/'
       path: '/keyboard'
       fullPath: '/settings/keyboard/'
       preLoaderRoute: typeof SettingsKeyboardIndexRouteImport
-      parentRoute: typeof SettingsRouteRoute
-    }
-    '/settings/general/': {
-      id: '/settings/general/'
-      path: '/general'
-      fullPath: '/settings/general/'
-      preLoaderRoute: typeof SettingsGeneralIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/gamepad/': {
@@ -228,18 +221,46 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsDebugIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
-    '/settings/connection/': {
-      id: '/settings/connection/'
-      path: '/connection'
-      fullPath: '/settings/connection/'
-      preLoaderRoute: typeof SettingsConnectionIndexRouteImport
+    '/settings/appearence/': {
+      id: '/settings/appearence/'
+      path: '/appearence'
+      fullPath: '/settings/appearence/'
+      preLoaderRoute: typeof SettingsAppearenceIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
-    '/settings/calibration/': {
-      id: '/settings/calibration/'
-      path: '/calibration'
-      fullPath: '/settings/calibration/'
-      preLoaderRoute: typeof SettingsCalibrationIndexRouteImport
+    '/settings/app-connection/': {
+      id: '/settings/app-connection/'
+      path: '/app-connection'
+      fullPath: '/settings/app-connection/'
+      preLoaderRoute: typeof SettingsAppConnectionIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/rov/system/': {
+      id: '/settings/rov/system/'
+      path: '/rov/system'
+      fullPath: '/settings/rov/system/'
+      preLoaderRoute: typeof SettingsRovSystemIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/rov/regulator/': {
+      id: '/settings/rov/regulator/'
+      path: '/rov/regulator'
+      fullPath: '/settings/rov/regulator/'
+      preLoaderRoute: typeof SettingsRovRegulatorIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/rov/power/': {
+      id: '/settings/rov/power/'
+      path: '/rov/power'
+      fullPath: '/settings/rov/power/'
+      preLoaderRoute: typeof SettingsRovPowerIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/rov/calibration/': {
+      id: '/settings/rov/calibration/'
+      path: '/rov/calibration'
+      fullPath: '/settings/rov/calibration/'
+      preLoaderRoute: typeof SettingsRovCalibrationIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
   }
@@ -247,26 +268,28 @@ declare module '@tanstack/solid-router' {
 
 interface SettingsRouteRouteChildren {
   SettingsIndexRoute: typeof SettingsIndexRoute
-  SettingsCalibrationIndexRoute: typeof SettingsCalibrationIndexRoute
-  SettingsConnectionIndexRoute: typeof SettingsConnectionIndexRoute
+  SettingsAppConnectionIndexRoute: typeof SettingsAppConnectionIndexRoute
+  SettingsAppearenceIndexRoute: typeof SettingsAppearenceIndexRoute
   SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
   SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
-  SettingsGeneralIndexRoute: typeof SettingsGeneralIndexRoute
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
-  SettingsPowerIndexRoute: typeof SettingsPowerIndexRoute
-  SettingsRegulatorIndexRoute: typeof SettingsRegulatorIndexRoute
+  SettingsRovCalibrationIndexRoute: typeof SettingsRovCalibrationIndexRoute
+  SettingsRovPowerIndexRoute: typeof SettingsRovPowerIndexRoute
+  SettingsRovRegulatorIndexRoute: typeof SettingsRovRegulatorIndexRoute
+  SettingsRovSystemIndexRoute: typeof SettingsRovSystemIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsIndexRoute: SettingsIndexRoute,
-  SettingsCalibrationIndexRoute: SettingsCalibrationIndexRoute,
-  SettingsConnectionIndexRoute: SettingsConnectionIndexRoute,
+  SettingsAppConnectionIndexRoute: SettingsAppConnectionIndexRoute,
+  SettingsAppearenceIndexRoute: SettingsAppearenceIndexRoute,
   SettingsDebugIndexRoute: SettingsDebugIndexRoute,
   SettingsGamepadIndexRoute: SettingsGamepadIndexRoute,
-  SettingsGeneralIndexRoute: SettingsGeneralIndexRoute,
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
-  SettingsPowerIndexRoute: SettingsPowerIndexRoute,
-  SettingsRegulatorIndexRoute: SettingsRegulatorIndexRoute,
+  SettingsRovCalibrationIndexRoute: SettingsRovCalibrationIndexRoute,
+  SettingsRovPowerIndexRoute: SettingsRovPowerIndexRoute,
+  SettingsRovRegulatorIndexRoute: SettingsRovRegulatorIndexRoute,
+  SettingsRovSystemIndexRoute: SettingsRovSystemIndexRoute,
 }
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(

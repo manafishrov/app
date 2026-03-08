@@ -15,7 +15,7 @@ import { createSignal, onCleanup, onMount, type Component } from 'solid-js';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { requestRovConfig } from '@/tauri';
 
-const SettingsLayoutRoute: Component = () => {
+const SettingsLayout: Component = () => {
   const [isFullscreen, setIsFullscreen] = createSignal(false);
 
   const updateFullscreenState = async (): Promise<void> => {
@@ -62,6 +62,6 @@ const SettingsLayoutRoute: Component = () => {
 };
 
 export const Route = createFileRoute('/settings')({
-  component: SettingsLayoutRoute,
+  component: SettingsLayout,
   loader: requestRovConfig,
 });

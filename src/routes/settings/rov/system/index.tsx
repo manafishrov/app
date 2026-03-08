@@ -79,6 +79,6 @@ const General: Component = () => {
   );
 };
 
-export const Route = createFileRoute('/settings/general/')({
+export const Route = createFileRoute('/settings/rov/system/')({
   component: General,
 });

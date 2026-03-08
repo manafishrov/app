@@ -11,7 +11,7 @@ import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { getConfig, recoverTempRecordings, setupAllListeners } from '@/tauri';
 
-const RootComponent: Component = () => {
+const RootLayout: Component = () => {
   let listenerCleanup: (() => void) | undefined;
 
   onMount(async () => {
@@ -59,7 +59,7 @@ export const Route = createRootRoute({
       },
     ],
   }),
-  component: RootComponent,
+  component: RootLayout,
   beforeLoad: handleBeforeLoad,
   loader: getConfig,
 });

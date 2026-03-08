@@ -5,7 +5,7 @@ import { createFileRoute } from '@tanstack/solid-router';
 
 import { LogViewer } from '@/components/LogViewer';
 
-const Debug: Component = () => (
+const DebugSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex items-center justify-between'>
       <div class='flex flex-col gap-2'>
@@ -18,5 +18,5 @@ const Debug: Component = () => (
 );
 
 export const Route = createFileRoute('/settings/debug/')({
-  component: Debug,
+  component: DebugSettingsPage,
 });

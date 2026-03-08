@@ -1,4 +1,5 @@
-// Import { PowerSettingsForm } from '@/components/settings/rov/PowerSettingsForm';
+// Import { DirectionCoefficientsForm } from '@/components/settings/rov/DirectionCoefficientsForm';
+// Import { PidForm } from '@/components/settings/rov/PidForm';
 import { Spinner } from '@manafishrov/ui/spinner';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
@@ -7,15 +8,15 @@ import type { Component } from 'solid-js';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
 
-const Power: Component = () => {
+const Regulator: Component = () => {
   const isConnected = () => connectionStatusStore.isConnected;
   const rovConfig = () => rovConfigStore;
 
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <H1>Power</H1>
-        <P>Configure your Manafish power and battery settings.</P>
+        <H1>Regulator</H1>
+        <P>Adjust the regulator settings for the ROV.</P>
       </div>
       <Show
         when={isConnected() && rovConfig()}
@@ -25,12 +26,15 @@ const Power: Component = () => {
           </div>
         }
       >
-        {/* <PowerSettingsForm /> */}
+        <div class='space-y-8'>
+          {/* <PidForm /> */}
+          {/* <DirectionCoefficientsForm /> */}
+        </div>
       </Show>
     </>
   );
 };
 
-export const Route = createFileRoute('/settings/power/')({
-  component: Power,
+export const Route = createFileRoute('/settings/rov/regulator/')({
+  component: Regulator,
 });

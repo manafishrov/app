@@ -4,7 +4,7 @@ import type { Component } from 'solid-js';
 
 import { GamepadSettings } from '@/components/settings/input/GamepadSettings';
 
-const Gamepad: Component = () => (
+const GamepadSettingsPage: Component = () => (
     <>
       <div class='mb-6 flex flex-col gap-2'>
         <H1>Gamepad</H1>
@@ -15,5 +15,5 @@ const Gamepad: Component = () => (
   );
 
 export const Route = createFileRoute('/settings/gamepad/')({
-  component: Gamepad,
+  component: GamepadSettingsPage,
 });

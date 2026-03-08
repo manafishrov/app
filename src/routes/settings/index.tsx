@@ -1,7 +1,7 @@
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-function General() {
+function GeneralSettingsPage() {
   // Const config = useStore(configStore, (state) =>
   //   State
   //     ? {
@@ -229,6 +229,6 @@ function General() {
 }
 
 export const Route = createFileRoute('/settings/')({
-  component: General,
+  component: GeneralSettingsPage,
   // Loader: fetchVersion,
 });
