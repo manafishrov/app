@@ -6,20 +6,6 @@ import { z } from 'zod';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
 
-const POWER_SLIDER_CLASS = `max-w-sm
-  [&_[data-slot=slider-track]]:relative
-  [&_[data-slot=slider-track]]:bg-gradient-to-r
-  [&_[data-slot=slider-track]]:from-green-500
-  [&_[data-slot=slider-track]]:via-yellow-500
-  [&_[data-slot=slider-track]]:to-red-500
-  [&_[data-slot=slider-track]::after]:content-[""]
-  [&_[data-slot=slider-track]::after]:absolute
-  [&_[data-slot=slider-track]::after]:inset-0
-  [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))]
-  [&_[data-slot=slider-track]::after]:bg-muted
-  [&_[data-slot=slider-track]::after]:rounded-full
-  [&_[data-slot=slider-range]]:bg-transparent`.replace(/\n\s+/g, ' ');
-
 const formSchema = z
   .object({
     userMaxPowerThrusters: z.array(z.number().min(0).max(100)),
@@ -71,7 +57,7 @@ export const Power: Component = () => {
         <form.AppField name='userMaxPowerThrusters'>
           {(field) => (
             <field.SliderField
-              class={POWER_SLIDER_CLASS}
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent'
               label='User Maximum Power (Thrusters)'
               description='The percentage of power given to the thrusters from user input.'
               min={0}
@@ -83,7 +69,7 @@ export const Power: Component = () => {
         <form.AppField name='userMaxPowerActions'>
           {(field) => (
             <field.SliderField
-              class={POWER_SLIDER_CLASS}
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent'
               label='User Maximum Power (Actions)'
               description='The percentage of power given to the motors for actions from user input.'
               min={0}
@@ -95,7 +81,7 @@ export const Power: Component = () => {
         <form.AppField name='regulatorMaxPower'>
           {(field) => (
             <field.SliderField
-              class={POWER_SLIDER_CLASS}
+              class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent'
               label='Regulator Maximum Power'
               description='The percentage of power given to the thrusters by the regulator to keep the ROV stabilized.'
               min={0}
