@@ -29,7 +29,7 @@ const formSchema = z.object({
     .array(z.enum([MicrocontrollerFirmwareVariant.pwm, MicrocontrollerFirmwareVariant.dshot]))
     .length(1),
   fluidType: z.array(z.enum([FluidType.freshwater, FluidType.saltwater])).length(1),
-  smoothingFactor: z.number(),
+  smoothingFactor: z.array(z.number().min(0).max(1)).length(1),
 });
 
 export const System: Component = () => {
@@ -40,19 +40,20 @@ export const System: Component = () => {
       onSubmit: formSchema,
     },
     defaultValues: {
-      microcontrollerFirmwareVariant: [rovConfigStore.microcontrollerFirmwareVariant],
       fluidType: [rovConfigStore.fluidType],
-      smoothingFactor: rovConfigStore.smoothingFactor,
+      microcontrollerFirmwareVariant: [rovConfigStore.microcontrollerFirmwareVariant],
+      smoothingFactor: [rovConfigStore.smoothingFactor],
     },
     onSubmit: ({ value }): Promise<void> => {
+      const fluidType = value.fluidType[0] ?? rovConfigStore.fluidType;
       const microcontrollerFirmwareVariant =
         value.microcontrollerFirmwareVariant[0] ?? rovConfigStore.microcontrollerFirmwareVariant;
-      const fluidType = value.fluidType[0] ?? rovConfigStore.fluidType;
+      const smoothingFactor = value.smoothingFactor[0] ?? rovConfigStore.smoothingFactor;
 
       return setRovConfig({
-        microcontrollerFirmwareVariant,
         fluidType,
-        smoothingFactor: value.smoothingFactor,
+        microcontrollerFirmwareVariant,
+        smoothingFactor,
       });
     },
   }));
@@ -78,6 +79,20 @@ export const System: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
+        <form.AppField name='fluidType'>
+          {(field) => (
+            <field.SelectField
+              label='Fluid type'
+              description='Set correct fluid type to get accurate water pressure readings.'
+              collection={fluidTypes}
+              placeholder='Select fluid type'
+            >
+              <For each={fluidTypes.items}>
+                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
+              </For>
+            </field.SelectField>
+          )}
+        </form.AppField>
         <form.AppField name='microcontrollerFirmwareVariant'>
           {(field) => (
             <field.SelectField
@@ -103,35 +118,26 @@ export const System: Component = () => {
             </field.SelectField>
           )}
         </form.AppField>
-
-        <form.AppField name='fluidType'>
-          {(field) => (
-            <field.SelectField
-              label='Fluid type'
-              description='Set correct fluid type to get accurate water pressure readings.'
-              collection={fluidTypes}
-              placeholder='Select fluid type'
-            >
-              <For each={fluidTypes.items}>
-                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
-              </For>
-            </field.SelectField>
-          )}
-        </form.AppField>
-
         <form.AppField name='smoothingFactor'>
           {(field) => (
-            <field.NumberInputField
+            <field.SliderField
               label='Smoothing factor'
               description='How much smoothing applied to the movement of the ROV. Smoothing can be nice for getting smooth movement and camera shots, but it can also make the ROV feel less responsive. 0 leads to no smoothing. As the value approaches 1, the smoothing increases exponentially.'
               min={0}
               max={1}
               step={0.01}
+              marks={[
+                { value: 0, label: '0' },
+                { value: 0.25, label: '0.25' },
+                { value: 0.5, label: '0.5' },
+                { value: 0.75, label: '0.75' },
+                { value: 1, label: '1' },
+              ]}
             />
           )}
         </form.AppField>
 
-        <form.AutoSubmit />
+        <form.AutoSubmit debounce={500} />
       </form.Form>
     </form.AppForm>
   );
