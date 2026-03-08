@@ -2,8 +2,9 @@ import type { Component } from 'solid-js';
 
 import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
 import { Toaster } from '@manafishrov/ui/toaster';
+import { TanStackDevtools } from '@tanstack/solid-devtools';
 import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
-import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools';
+import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 import { onCleanup, onMount } from 'solid-js';
 
 import { Header } from '@/components/Header';
@@ -26,7 +27,6 @@ const RootLayout: Component = () => {
   return (
     <>
       <HeadContent />
-      <TanStackRouterDevtools position='bottom-right' />
       <ThemeProvider>
         <LocaleProvider locale={getLocale()}>
           <Header />
@@ -34,6 +34,14 @@ const RootLayout: Component = () => {
           <Toaster />
         </LocaleProvider>
       </ThemeProvider>
+      <TanStackDevtools
+        plugins={[
+          {
+            name: 'TanStack Router',
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
+      />
     </>
   );
 };
