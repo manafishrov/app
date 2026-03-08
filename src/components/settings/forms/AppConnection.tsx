@@ -1,13 +1,14 @@
 import type { Component } from 'solid-js';
 
 import { useAppForm } from '@manafishrov/ui/form';
+import { revalidateLogic } from '@tanstack/solid-form';
 import { z } from 'zod';
 
 import { configStore } from '@/stores/config';
 import { setConfig } from '@/tauri';
 
 const formSchema = z.object({
-  ipAddress: z.string().ip('Invalid IP address'),
+  ipAddress: z.ipv4('Invalid IP address'),
   webrtcSignalingApiPort: z
     .number()
     .int()
@@ -22,40 +23,19 @@ const formSchema = z.object({
 });
 
 export const AppConnection: Component = () => {
-  const config = useStore(configStore, (state) =>
-    state
-      ? {
-          ipAddress: state.ipAddress,
-          webrtcSignalingApiPort: state.webrtcSignalingApiPort,
-          webrtcSignalingApiPath: state.webrtcSignalingApiPath,
-          webSocketPort: state.webSocketPort,
-        }
-      : null,
-  );
-
-  const form = useAppForm({
+  const form = useAppForm(() => ({
+    validationLogic: revalidateLogic(),
     validators: {
-      onSubmit: formSchema,
+      onDynamic: formSchema,
     },
     defaultValues: {
-      ipAddress: config?.ipAddress ?? '',
-      webrtcSignalingApiPort: config?.webrtcSignalingApiPort ?? 0,
-      webrtcSignalingApiPath: config?.webrtcSignalingApiPath ?? '',
-      webSocketPort: config?.webSocketPort ?? 0,
+      ipAddress: configStore.ipAddress,
+      webrtcSignalingApiPort: configStore.webrtcSignalingApiPort,
+      webrtcSignalingApiPath: configStore.webrtcSignalingApiPath,
+      webSocketPort: configStore.webSocketPort,
     },
     onSubmit: ({ value }) => setConfig(value),
-  });
-
-  // useEffect(() => {
-  //   if (config) {
-  //     form.reset({
-  //       ipAddress: config.ipAddress,
-  //       webrtcSignalingApiPort: config.webrtcSignalingApiPort,
-  //       webrtcSignalingApiPath: config.webrtcSignalingApiPath,
-  //       webSocketPort: config.webSocketPort,
-  //     });
-  //   }
-  // }, [config, form]);
+  }));
 
   return (
     <form.AppForm>
@@ -75,6 +55,8 @@ export const AppConnection: Component = () => {
               label='WebRTC signaling API port'
               placeholder='1984'
               description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
+              min={1}
+              max={65535}
             />
           )}
         </form.AppField>
@@ -93,10 +75,12 @@ export const AppConnection: Component = () => {
               label='WebSocket port'
               placeholder='5000'
               description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
+              min={1}
+              max={65535}
             />
           )}
         </form.AppField>
-        <form.SubmitButton class='w-28'>Save</form.SubmitButton>
+        <form.SubmitButton>Save</form.SubmitButton>
       </form.Form>
     </form.AppForm>
   );
