@@ -61,6 +61,7 @@ type Power = {
 };
 
 type RovConfig = {
+  firmwareVersion: string;
   microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant;
   fluidType: FluidType;
   smoothingFactor: number;
@@ -84,6 +85,7 @@ const defaultRow: [number, number, number, number, number, number, number, numbe
 ];
 
 const defaultRovConfig: RovConfig = {
+  firmwareVersion: 'N/A',
   microcontrollerFirmwareVariant: 'pwm',
   fluidType: 'freshwater',
   smoothingFactor: 0,

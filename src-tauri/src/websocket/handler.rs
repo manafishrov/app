@@ -3,7 +3,7 @@ use tokio_tungstenite::tungstenite::Message;
 
 use super::message::WebsocketMessage;
 use super::receive::config::{
-  handle_config, handle_firmware_version, handle_regulator_suggestions,
+  handle_config, handle_regulator_suggestions,
 };
 use super::receive::log::handle_log_message;
 use super::receive::status::handle_status_update;
@@ -23,7 +23,6 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
         WebsocketMessage::RegulatorSuggestions(payload) => {
           handle_regulator_suggestions(app_handle, &payload)
         },
-        WebsocketMessage::FirmwareVersion(payload) => handle_firmware_version(app_handle, &payload),
         other => {
           log_warn!("Received unhandled message type: {:?}", other);
           None

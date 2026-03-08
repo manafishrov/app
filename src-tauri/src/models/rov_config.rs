@@ -62,6 +62,7 @@ pub struct Power {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
+  pub firmware_version: String,
   pub microcontroller_firmware_variant: MicrocontrollerFirmwareVariant,
   pub fluid_type: FluidType,
   pub smoothing_factor: f32,
