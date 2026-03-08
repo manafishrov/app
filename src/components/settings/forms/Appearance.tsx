@@ -1,86 +1,126 @@
 import type { Component } from 'solid-js';
 
+import { useTheme } from '@manafishrov/ui';
 import { useAppForm } from '@manafishrov/ui/form';
+import {
+  RadioGroupItem,
+  RadioGroupItemControl,
+  RadioGroupItemText,
+} from '@manafishrov/ui/radio-group';
 import { revalidateLogic } from '@tanstack/solid-form';
 import { z } from 'zod';
 
-import { configStore } from '@/stores/config';
-import { setConfig } from '@/tauri';
+import { configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
-  ipAddress: z.ipv4('Invalid IP address'),
-  webrtcSignalingApiPort: z
+  theme: z.enum(['light', 'dark', 'system']),
+  overlayScale: z
     .number()
     .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65_535, 'Port must be between 1 and 65535'),
-  webrtcSignalingApiPath: z.string().startsWith('/', 'Path must start with a /'),
-  webSocketPort: z
-    .number()
-    .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65_535, 'Port must be between 1 and 65535'),
+    .min(1, 'Overlay scale must be between 1 and 5')
+    .max(5, 'Overlay scale must be between 1 and 5'),
+  attitudeIndicator: z.enum(['scientific', 'dimensional3D', 'disabled']),
+  thrusterRpmOverlay: z.boolean(),
+  workIndicator: z.boolean(),
 });
 
-export const Appearence: Component = () => {
+export const Appearance: Component = () => {
+  const { theme, setTheme } = useTheme();
+
   const form = useAppForm(() => ({
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: formSchema,
     },
     defaultValues: {
-      ipAddress: configStore.ipAddress,
-      webrtcSignalingApiPort: configStore.webrtcSignalingApiPort,
-      webrtcSignalingApiPath: configStore.webrtcSignalingApiPath,
-      webSocketPort: configStore.webSocketPort,
+      theme: theme(),
+      overlayScale: configStore.overlayScale,
+      attitudeIndicator: configStore.attitudeIndicator,
+      thrusterRpmOverlay: configStore.thrusterRpmOverlay,
+      workIndicator: configStore.workIndicator,
     },
-    onSubmit: ({ value }) => setConfig(value),
+    onSubmit: ({ value }) => {
+      setTheme(value.theme);
+      setConfig({
+        overlayScale: value.overlayScale,
+        attitudeIndicator: value.attitudeIndicator,
+        thrusterRpmOverlay: value.thrusterRpmOverlay,
+        workIndicator: value.workIndicator,
+      });
+    },
   }));
 
   return (
     <form.AppForm>
       <form.Form>
-        <form.AppField name='ipAddress'>
+        <form.AppField name='theme'>
           {(field) => (
-            <field.TextInputField
-              label='IP address'
-              placeholder='10.10.10.10'
-              description='The IP address of your Manafish.'
+            <field.RadioGroupField label='Theme' description='Select the application theme.'>
+              <RadioGroupItem value='light'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>Light</RadioGroupItemText>
+              </RadioGroupItem>
+              <RadioGroupItem value='dark'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>Dark</RadioGroupItemText>
+              </RadioGroupItem>
+              <RadioGroupItem value='system'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>System</RadioGroupItemText>
+              </RadioGroupItem>
+            </field.RadioGroupField>
+          )}
+        </form.AppField>
+        <form.AppField name='overlayScale'>
+          {(field) => (
+            <field.SliderField
+              label='Overlay Scale'
+              description='Adjust the scale of the overlay UI'
+              marks={[
+                { value: 1, label: '1' },
+                { value: 2, label: '2' },
+                { value: 3, label: '3' },
+                { value: 4, label: '4' },
+                { value: 5, label: '5' },
+              ]}
             />
           )}
         </form.AppField>
-        <form.AppField name='webrtcSignalingApiPort'>
+        <form.AppField name='attitudeIndicator'>
           {(field) => (
-            <field.NumberInputField
-              label='WebRTC signaling API port'
-              placeholder='1984'
-              description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
-              min={1}
-              max={65535}
+            <field.RadioGroupField
+              label='Attitude Indicator'
+              description='Select the attitude indicator style.'
+            >
+              <RadioGroupItem value='scientific'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>Scientific</RadioGroupItemText>
+              </RadioGroupItem>
+              <RadioGroupItem value='dimensional3D'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>3D Dimensional</RadioGroupItemText>
+              </RadioGroupItem>
+              <RadioGroupItem value='disabled'>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>Disabled</RadioGroupItemText>
+              </RadioGroupItem>
+            </field.RadioGroupField>
+          )}
+        </form.AppField>
+        <form.AppField name='thrusterRpmOverlay'>
+          {(field) => (
+            <field.SwitchField
+              label='Thruster RPM Overlay'
+              description='Show the thruster RPM overlay on the video feed.'
             />
           )}
         </form.AppField>
-        <form.AppField name='webrtcSignalingApiPath'>
+        <form.AppField name='workIndicator'>
           {(field) => (
-            <field.TextInputField
-              label='WebRTC signaling API path'
-              placeholder='/api/webrtc?src=cam'
-              description='The path for the WebRTC signaling API.'
-            />
+            <field.SwitchField label='Work Indicator' description='Show the work indicator.' />
           )}
         </form.AppField>
-        <form.AppField name='webSocketPort'>
-          {(field) => (
-            <field.NumberInputField
-              label='WebSocket port'
-              placeholder='5000'
-              description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
-              min={1}
-              max={65535}
-            />
-          )}
-        </form.AppField>
-        <form.SubmitButton>Save</form.SubmitButton>
+        <form.AutoSubmit debounce={0} />
       </form.Form>
     </form.AppForm>
   );

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@manafishrov/ui/select';
+import { H3 } from '@manafishrov/ui/typography';
 import {
   For,
   Show,
@@ -132,7 +133,7 @@ const SettingsGrid: Component<{
     <For each={BINDING_SECTIONS}>
       {(section) => (
         <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
-          <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
+          <H3>{section.title}</H3>
           <For each={section.fields}>
             {(field) => (
               <GamepadBindInput

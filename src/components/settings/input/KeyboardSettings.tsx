@@ -1,3 +1,4 @@
+import { H3 } from '@manafishrov/ui/typography';
 import { For, createSignal, type Component } from 'solid-js';
 
 import { KeyboardBindInput } from '@/components/settings/input/KeyboardBindInput';
@@ -124,7 +125,7 @@ const KeyboardSettings: Component = () => {
       <For each={BINDING_SECTIONS}>
         {(section) => (
           <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
-            <h3 class='text-2xl font-semibold tracking-tight'>{section.title}</h3>
+            <H3>{section.title}</H3>
             <For each={section.fields}>
               {(field) => (
                 <KeyboardBindInput

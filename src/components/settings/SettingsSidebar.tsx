@@ -143,7 +143,7 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   return (
     <Sidebar
       collapsible='icon'
-      style={{ '--sidebar-width': '10rem' }}
+      style={{ '--sidebar-width': '11rem' }}
       disableMobileSidebar
       {...(!local.isFullscreen ? { innerClass: 'rounded-bl-2xl' } : {})}
     >

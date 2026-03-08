@@ -180,6 +180,7 @@ const AttitudeIndicator = {
 
 type Config = {
   appVersion: string;
+  overlayScale: number;
   attitudeIndicator: AttitudeIndicator;
   workIndicator: boolean;
   thrusterRpmOverlay: boolean;
@@ -239,6 +240,7 @@ const createNullGamepadBindings = (): GamepadBindings => ({
 
 const defaultConfig: Config = {
   appVersion: 'N/A',
+  overlayScale: 2,
   attitudeIndicator: 'scientific',
   workIndicator: false,
   thrusterRpmOverlay: false,

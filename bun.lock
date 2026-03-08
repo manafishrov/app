@@ -5,7 +5,7 @@
     "": {
       "name": "manafish",
       "dependencies": {
-        "@manafishrov/ui": "1.3.3",
+        "@manafishrov/ui": "1.3.4",
         "@tailwindcss/vite": "4.2.1",
         "@tanstack/router-plugin": "1.163.3",
         "@tanstack/solid-form": "1.28.3",
@@ -180,7 +180,7 @@
 
     "@lix-js/server-protocol-schema": ["@lix-js/server-protocol-schema@0.1.1", "", {}, "sha512-jBeALB6prAbtr5q4vTuxnRZZv1M2rKe8iNqRQhFJ4Tv7150unEa0vKyz0hs8Gl3fUGsWaNJBh3J8++fpbrpRBQ=="],
 
-    "@manafishrov/ui": ["@manafishrov/ui@1.3.3", "", { "dependencies": { "@ark-ui/solid": "5.34.1", "@fontsource-variable/google-sans-flex": "5.2.1", "@fontsource/chakra-petch": "5.2.7", "@fontsource/rajdhani": "5.2.7", "tailwind-merge": "3.5.0", "tailwind-variants": "3.2.2", "tw-animate-css": "1.4.0" }, "peerDependencies": { "@iconify-json/material-symbols": "^1.2.9", "@tanstack/solid-form": "^1.28.0", "@tanstack/solid-router": "^1.162.1", "solid-js": "^1.9.0", "tailwindcss": "^4.0.0", "unplugin-icons": "^23.0.1" } }, "sha512-1zmeZY9EQX1RifNqiLPjme1P3m+7h1Pl/5dCrck606aYO3ILJmskYL4vUrjmupc3kMRp+l4ygjF+TOIoOKQ/Xg=="],
+    "@manafishrov/ui": ["@manafishrov/ui@1.3.4", "", { "dependencies": { "@ark-ui/solid": "5.34.1", "@fontsource-variable/google-sans-flex": "5.2.1", "@fontsource/chakra-petch": "5.2.7", "@fontsource/rajdhani": "5.2.7", "tailwind-merge": "3.5.0", "tailwind-variants": "3.2.2", "tw-animate-css": "1.4.0" }, "peerDependencies": { "@iconify-json/material-symbols": "^1.2.9", "@tanstack/solid-form": "^1.28.0", "@tanstack/solid-router": "^1.162.1", "solid-js": "^1.9.0", "tailwindcss": "^4.0.0", "unplugin-icons": "^23.0.1" } }, "sha512-J2vo6X8JTL7N7fhPYasM5M5QOcjFNDxRj+IZ/cDqjRiMUWVHcqF9X0cnHI6oHjUVT2z5fV3ZgeGPI5KUnRp8+w=="],
 
     "@nothing-but/utils": ["@nothing-but/utils@0.17.0", "", {}, "sha512-TuCHcHLOqDL0SnaAxACfuRHBNRgNJcNn9X0GiH5H3YSDBVquCr3qEIG3FOQAuMyZCbu9w8nk2CHhOsn7IvhIwQ=="],
 

@@ -191,6 +191,7 @@ pub enum AttitudeIndicator {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
   pub app_version: String,
+  pub overlay_scale: i8,
   pub attitude_indicator: AttitudeIndicator,
   pub work_indicator: bool,
   pub thruster_rpm_overlay: bool,
@@ -226,6 +227,7 @@ impl Default for Config {
 
     Config {
       app_version: env!("CARGO_PKG_VERSION").to_string(),
+      overlay_scale: 2,
       attitude_indicator: AttitudeIndicator::Scientific,
       work_indicator: false,
       thruster_rpm_overlay: false,
