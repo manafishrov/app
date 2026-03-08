@@ -8,20 +8,26 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 import { onCleanup, onMount } from 'solid-js';
 
 import { Header } from '@/components/Header';
+import { disableContextMenu } from '@/lib/contextMenu';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { getConfig, recoverTempRecordings, setupAllListeners } from '@/tauri';
 
 const RootLayout: Component = () => {
-  let listenerCleanup: (() => void) | undefined;
+  let cleanupFns: (() => void)[] = [];
 
   onMount(async () => {
-    listenerCleanup = await setupAllListeners();
+    const tauriCleanup = await setupAllListeners();
+    if (tauriCleanup) cleanupFns.push(tauriCleanup);
+
+    const contextMenuCleanup = disableContextMenu();
+    if (contextMenuCleanup) cleanupFns.push(contextMenuCleanup);
+
     await recoverTempRecordings();
   });
 
   onCleanup(() => {
-    listenerCleanup?.();
+    cleanupFns.forEach((fn) => fn());
   });
 
   return (
