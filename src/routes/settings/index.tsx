@@ -14,14 +14,12 @@ const GeneralSettingsPage: Component = () => {
         <H1>General</H1>
         <P>Generic settings for the Manafish application.</P>
       </div>
-      <div class='space-y-8'>
-        <div>
-          <H4>App Version</H4>
-          <p class='text-muted-foreground text-sm'>Current version of the Manafish application.</p>
-          <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
-            v{configStore.appVersion}
-          </Badge>
-        </div>
+      <div class='my-8'>
+        <H4>App Version</H4>
+        <p class='text-muted-foreground text-sm'>Current version of the Manafish application.</p>
+        <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
+          v{configStore.appVersion}
+        </Badge>
         <General />
       </div>
     </>

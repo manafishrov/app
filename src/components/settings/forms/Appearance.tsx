@@ -1,6 +1,7 @@
 import type { Component } from 'solid-js';
 
 import { useTheme } from '@manafishrov/ui';
+import { Theme } from '@manafishrov/ui';
 import { useAppForm } from '@manafishrov/ui/form';
 import {
   RadioGroupItem,
@@ -9,12 +10,16 @@ import {
 } from '@manafishrov/ui/radio-group';
 import { z } from 'zod';
 
-import { configStore, setConfig } from '@/stores/config';
+import { AttitudeIndicator, configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
-  theme: z.enum(['light', 'dark', 'system']),
+  theme: z.enum([Theme.light, Theme.dark, Theme.system]),
   overlayScale: z.array(z.number().int().min(1).max(5)),
-  attitudeIndicator: z.enum(['scientific', 'dimensional3D', 'disabled']),
+  attitudeIndicator: z.enum([
+    AttitudeIndicator.scientific,
+    AttitudeIndicator.dimensional3D,
+    AttitudeIndicator.disabled,
+  ]),
   thrusterRpmOverlay: z.boolean(),
   workIndicator: z.boolean(),
 });
