@@ -183,7 +183,7 @@ pub struct GamepadBindings {
 #[serde(rename_all = "camelCase")]
 pub enum AttitudeIndicator {
   Scientific,
-  Dimensional3D,
+  Model3D,
   Disabled,
 }
 

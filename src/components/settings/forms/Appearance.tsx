@@ -17,7 +17,7 @@ const formSchema = z.object({
   overlayScale: z.array(z.number().int().min(1).max(5)),
   attitudeIndicator: z.enum([
     AttitudeIndicator.scientific,
-    AttitudeIndicator.dimensional3D,
+    AttitudeIndicator.model3D,
     AttitudeIndicator.disabled,
   ]),
   thrusterRpmOverlay: z.boolean(),
@@ -102,9 +102,9 @@ export const Appearance: Component = () => {
                 <RadioGroupItemControl />
                 <RadioGroupItemText>Scientific</RadioGroupItemText>
               </RadioGroupItem>
-              <RadioGroupItem value='dimensional3D'>
+              <RadioGroupItem value='model3D'>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>3D Dimensional</RadioGroupItemText>
+                <RadioGroupItemText>3D Model</RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value='disabled'>
                 <RadioGroupItemControl />
