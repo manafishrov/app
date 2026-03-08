@@ -6,9 +6,7 @@ export {
   getActiveGamepad,
   getConnectedGamepads,
   getGamepadBindings,
-  mapGamepadValue,
   readGamepadInput,
-  toGamepadBindingKey,
 } from '@/input/gamepad';
 
 export {

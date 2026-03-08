@@ -19,20 +19,11 @@ import {
   SelectValue,
 } from '@manafishrov/ui/select';
 import { H3 } from '@manafishrov/ui/typography';
-import {
-  For,
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  onMount,
-  type Component,
-} from 'solid-js';
+import { type Component } from 'solid-js';
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
 import { GamepadBindInput } from '@/components/settings/input/GamepadBindInput';
-import { getConnectedGamepads, toGamepadBindingKey } from '@/input';
+import { getConnectedGamepads } from '@/input';
 import {
   type GamepadBindings,
   type GamepadInput,
@@ -165,7 +156,7 @@ const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
     const total = totalsById.get(gamepad.id) ?? 1;
 
     return {
-      value: toGamepadBindingKey(gamepad),
+      value: gamepad.id,
       label: total > 1 ? `${gamepad.id} (#${count})` : gamepad.id,
     };
   });
@@ -300,9 +291,7 @@ const GamepadSettings: Component = () => {
       return;
     }
 
-    const selectedGamepad = connectedGamepads().find(
-      (gamepad) => toGamepadBindingKey(gamepad) === gamepadId,
-    );
+    const selectedGamepad = connectedGamepads().find((gamepad) => gamepad.id === gamepadId);
 
     const fallbackLegacyBindings = selectedGamepad
       ? configStore.gamepad[selectedGamepad.id]
@@ -349,20 +338,7 @@ const GamepadSettings: Component = () => {
     if (!selectedId) {
       return false;
     }
-    return connectedGamepads().some((gamepad) => toGamepadBindingKey(gamepad) === selectedId);
-  });
-
-  createEffect(() => {
-    const selectedId = selectedGamepadId();
-    if (!selectedId) {
-      return;
-    }
-
-    const selectedAvailable = gamepadOptions().some((option) => option.value === selectedId);
-
-    if (!selectedAvailable) {
-      void setSelectedGamepad(null);
-    }
+    return connectedGamepads().some((gamepad) => gamepad.id === selectedId);
   });
 
   return (

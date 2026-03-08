@@ -1,5 +1,5 @@
 import { H3 } from '@manafishrov/ui/typography';
-import { For, createSignal, type Component } from 'solid-js';
+import { type Component } from 'solid-js';
 
 import { KeyboardBindInput } from '@/components/settings/input/KeyboardBindInput';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';

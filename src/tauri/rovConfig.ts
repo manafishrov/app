@@ -7,7 +7,9 @@ const EVENT = 'rov_config_received';
 export const setupRovConfigListener = () => createListener<RovConfig>(EVENT, setRovConfigStore);
 
 export const requestRovConfig = async () => {
-  if (!connectionStatusStore.isConnected) {return;}
+  if (!connectionStatusStore.isConnected) {
+    return;
+  }
   await invokeCommand('request_rov_config');
 };
 
