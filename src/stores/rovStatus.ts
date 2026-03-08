@@ -7,16 +7,14 @@ type SystemHealth = {
 };
 
 type RovStatus = {
-  pitchStabilization: boolean;
-  rollStabilization: boolean;
+  autoStabilization: boolean;
   depthHold: boolean;
   batteryPercentage: number;
   health: SystemHealth;
 };
 
 const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
-  pitchStabilization: false,
-  rollStabilization: false,
+  autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
   health: {

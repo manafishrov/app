@@ -11,8 +11,7 @@ pub struct SystemHealth {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RovStatus {
-  pub pitch_stabilization: bool,
-  pub roll_stabilization: bool,
+  pub auto_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
   pub health: SystemHealth,
