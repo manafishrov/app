@@ -6,7 +6,7 @@ import { useAppForm } from '@manafishrov/ui/form';
 import { createSignal } from 'solid-js';
 import { z } from 'zod';
 
-import { FieldSuggestionActions } from '@/components/settings/rov/FieldSuggestionActions';
+import { FieldSuggestionActions } from '@/components/settings/forms/FieldSuggestionActions';
 import {
   type AxisConfig,
   type DirectionCoefficients,
