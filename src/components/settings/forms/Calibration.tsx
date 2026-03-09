@@ -8,6 +8,7 @@ import {
   SelectControl,
   SelectIndicator,
   SelectItem,
+  SelectList,
   SelectPositioner,
   SelectTrigger,
   SelectValue,
@@ -21,9 +22,16 @@ import {
   TableRow,
 } from '@manafishrov/ui/table';
 import { toast } from '@manafishrov/ui/toaster';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@manafishrov/ui/tooltip';
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+} from '@manafishrov/ui/tooltip';
 import { invoke } from '@tauri-apps/api/core';
 import { type Component, type JSX, For, createSignal } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import { z } from 'zod';
 
 import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
@@ -75,8 +83,19 @@ const spinDirectionCollection = createListCollection<{ value: string; label: str
   ],
 });
 
-const identifierSchema = z.enum(['0', '1', '2', '3', '4', '5', '6', '7']);
-const spinDirectionSchema = z.enum(['1', '-1']);
+const IDENTIFIER_VALUES = ['0', '1', '2', '3', '4', '5', '6', '7'] as const;
+const SPIN_DIRECTION_VALUES = ['1', '-1'] as const;
+
+const identifierSchema = z.enum(IDENTIFIER_VALUES);
+const spinDirectionSchema = z.enum(SPIN_DIRECTION_VALUES);
+
+type IdentifierValue = z.infer<typeof identifierSchema>;
+type SpinDirectionValue = z.infer<typeof spinDirectionSchema>;
+type ThrusterIndex = (typeof THRUSTER_INDICES)[number];
+type ThrusterTuple<T> = [T, T, T, T, T, T, T, T];
+
+const mapThrusterTuple = <T,>(map: (index: ThrusterIndex) => T): ThrusterTuple<T> =>
+  THRUSTER_INDICES.map((index) => map(index)) as ThrusterTuple<T>;
 
 const formSchema = z.object({
   thrusterPinSetup: z.object({
@@ -109,16 +128,8 @@ const clampAllocationValue = (value: number): number => {
   return Math.round(clampedValue * 100) / 100;
 };
 
-const toRow = (values: number[] | undefined, fallback: Row): Row => [
-  clampAllocationValue(values?.[0] ?? fallback[0]),
-  clampAllocationValue(values?.[1] ?? fallback[1]),
-  clampAllocationValue(values?.[2] ?? fallback[2]),
-  clampAllocationValue(values?.[3] ?? fallback[3]),
-  clampAllocationValue(values?.[4] ?? fallback[4]),
-  clampAllocationValue(values?.[5] ?? fallback[5]),
-  clampAllocationValue(values?.[6] ?? fallback[6]),
-  clampAllocationValue(values?.[7] ?? fallback[7]),
-];
+const toRow = (values: number[] | undefined, fallback: Row): Row =>
+  mapThrusterTuple((index) => clampAllocationValue(values?.[index] ?? fallback[index]));
 
 const parseIdentifier = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -141,47 +152,23 @@ const parseSpinDirection = (value: string | undefined, fallback: number): number
   return fallback === -1 ? -1 : 1;
 };
 
-const toIdentifierValue = (value: number): z.infer<typeof identifierSchema> => {
-  if (value <= 0) {
-    return '0';
-  }
-  if (value === 1) {
-    return '1';
-  }
-  if (value === 2) {
-    return '2';
-  }
-  if (value === 3) {
-    return '3';
-  }
-  if (value === 4) {
-    return '4';
-  }
-  if (value === 5) {
-    return '5';
-  }
-  if (value === 6) {
-    return '6';
-  }
+const toIdentifierValue = (value: number): IdentifierValue => {
+  const clamped = Math.max(0, Math.min(7, Math.trunc(value)));
+  const parsed = String(clamped);
 
-  return '7';
+  return isIdentifierValue(parsed) ? parsed : '0';
 };
 
-const toSpinDirectionValue = (value: number): z.infer<typeof spinDirectionSchema> =>
-  value === -1 ? '-1' : '1';
+const toSpinDirectionValue = (value: number): SpinDirectionValue => (value === -1 ? '-1' : '1');
 
-const isIdentifierValue = (value: string): value is z.infer<typeof identifierSchema> =>
-  value === '0' ||
-  value === '1' ||
-  value === '2' ||
-  value === '3' ||
-  value === '4' ||
-  value === '5' ||
-  value === '6' ||
-  value === '7';
+const identifierValueSet = new Set<string>(IDENTIFIER_VALUES);
+const spinDirectionValueSet = new Set<string>(SPIN_DIRECTION_VALUES);
 
-const isSpinDirectionValue = (value: string): value is z.infer<typeof spinDirectionSchema> =>
-  value === '1' || value === '-1';
+const isIdentifierValue = (value: string): value is IdentifierValue =>
+  identifierValueSet.has(value);
+
+const isSpinDirectionValue = (value: string): value is SpinDirectionValue =>
+  spinDirectionValueSet.has(value);
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -212,75 +199,32 @@ export const Calibration: Component = () => {
       const currentAllocation = rovConfigStore.thrusterAllocation;
 
       const thrusterPinSetup: ThrusterPinSetup = {
-        identifiers: [
-          parseIdentifier(value.thrusterPinSetup.identifiers[0], currentPinSetup.identifiers[0]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[1], currentPinSetup.identifiers[1]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[2], currentPinSetup.identifiers[2]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[3], currentPinSetup.identifiers[3]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[4], currentPinSetup.identifiers[4]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[5], currentPinSetup.identifiers[5]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[6], currentPinSetup.identifiers[6]),
-          parseIdentifier(value.thrusterPinSetup.identifiers[7], currentPinSetup.identifiers[7]),
-        ],
-        spinDirections: [
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[0],
-            currentPinSetup.spinDirections[0],
+        identifiers: mapThrusterTuple((index) =>
+          parseIdentifier(
+            value.thrusterPinSetup.identifiers[index],
+            currentPinSetup.identifiers[index],
           ),
+        ),
+        spinDirections: mapThrusterTuple((index) =>
           parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[1],
-            currentPinSetup.spinDirections[1],
+            value.thrusterPinSetup.spinDirections[index],
+            currentPinSetup.spinDirections[index],
           ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[2],
-            currentPinSetup.spinDirections[2],
-          ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[3],
-            currentPinSetup.spinDirections[3],
-          ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[4],
-            currentPinSetup.spinDirections[4],
-          ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[5],
-            currentPinSetup.spinDirections[5],
-          ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[6],
-            currentPinSetup.spinDirections[6],
-          ),
-          parseSpinDirection(
-            value.thrusterPinSetup.spinDirections[7],
-            currentPinSetup.spinDirections[7],
-          ),
-        ],
+        ),
       };
 
-      const normalizedDisplayRows: [Row, Row, Row, Row, Row, Row, Row, Row] = [
-        toRow(value.thrusterAllocation[0], toRow(defaultAllocationRows[0], currentAllocation[0])),
-        toRow(value.thrusterAllocation[1], toRow(defaultAllocationRows[1], currentAllocation[1])),
-        toRow(value.thrusterAllocation[2], toRow(defaultAllocationRows[2], currentAllocation[2])),
-        toRow(value.thrusterAllocation[3], toRow(defaultAllocationRows[3], currentAllocation[3])),
-        toRow(value.thrusterAllocation[4], toRow(defaultAllocationRows[4], currentAllocation[4])),
-        toRow(value.thrusterAllocation[5], toRow(defaultAllocationRows[5], currentAllocation[5])),
-        toRow(value.thrusterAllocation[6], toRow(defaultAllocationRows[6], currentAllocation[6])),
-        toRow(value.thrusterAllocation[7], toRow(defaultAllocationRows[7], currentAllocation[7])),
-      ];
+      const normalizedDisplayRows: ThrusterTuple<Row> = mapThrusterTuple((index) =>
+        toRow(
+          value.thrusterAllocation[index],
+          toRow(defaultAllocationRows[index], currentAllocation[index]),
+        ),
+      );
 
       const allocationByThruster = transpose(normalizedDisplayRows);
 
-      const thrusterAllocation: ThrusterAllocation = [
-        toRow(allocationByThruster[0], currentAllocation[0]),
-        toRow(allocationByThruster[1], currentAllocation[1]),
-        toRow(allocationByThruster[2], currentAllocation[2]),
-        toRow(allocationByThruster[3], currentAllocation[3]),
-        toRow(allocationByThruster[4], currentAllocation[4]),
-        toRow(allocationByThruster[5], currentAllocation[5]),
-        toRow(allocationByThruster[6], currentAllocation[6]),
-        toRow(allocationByThruster[7], currentAllocation[7]),
-      ];
+      const thrusterAllocation: ThrusterAllocation = mapThrusterTuple((index) =>
+        toRow(allocationByThruster[index], currentAllocation[index]),
+      );
 
       return setRovConfig({
         thrusterPinSetup,
@@ -334,13 +278,17 @@ export const Calibration: Component = () => {
               <SelectIndicator />
             </SelectTrigger>
           </SelectControl>
-          <SelectPositioner>
-            <SelectContent>
-              <For each={identifierCollection.items}>
-                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
-              </For>
-            </SelectContent>
-          </SelectPositioner>
+          <Portal>
+            <SelectPositioner>
+              <SelectContent>
+                <SelectList>
+                  <For each={identifierCollection.items}>
+                    {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
+                  </For>
+                </SelectList>
+              </SelectContent>
+            </SelectPositioner>
+          </Portal>
         </Select>
       )}
     </form.AppField>
@@ -370,13 +318,17 @@ export const Calibration: Component = () => {
               <SelectIndicator />
             </SelectTrigger>
           </SelectControl>
-          <SelectPositioner>
-            <SelectContent>
-              <For each={spinDirectionCollection.items}>
-                {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
-              </For>
-            </SelectContent>
-          </SelectPositioner>
+          <Portal>
+            <SelectPositioner>
+              <SelectContent>
+                <SelectList>
+                  <For each={spinDirectionCollection.items}>
+                    {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
+                  </For>
+                </SelectList>
+              </SelectContent>
+            </SelectPositioner>
+          </Portal>
         </Select>
       )}
     </form.AppField>
@@ -418,41 +370,68 @@ export const Calibration: Component = () => {
                 <TableHead class='text-center'>
                   <Tooltip>
                     <TooltipTrigger>Pin</TooltipTrigger>
-                    <TooltipContent>
-                      <p>The general-purpose pin on the microcontroller that the thruster uses.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>
+                            The general-purpose pin on the microcontroller that the thruster uses.
+                          </p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
                 <TableHead>
                   <Tooltip>
                     <TooltipTrigger>Identifier</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Identifier used by thruster allocation for this physical thruster.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>Identifier used by thruster allocation for this physical thruster.</p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
                 <TableHead>
                   <Tooltip>
                     <TooltipTrigger>Spin Direction</TooltipTrigger>
-                    <TooltipContent>
-                      <p>The default propeller direction for this thruster.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>The default propeller direction for this thruster.</p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
                 <TableHead>
                   <Tooltip>
                     <TooltipTrigger>Test</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Run a short low-speed spin test on the selected pin.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>Run a short low-speed spin test on the selected pin.</p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
                 <TableHead class='text-right'>
                   <Tooltip>
                     <TooltipTrigger>RPM</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Live revolutions per minute from telemetry.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>Live revolutions per minute from telemetry.</p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
               </TableRow>
@@ -500,9 +479,14 @@ export const Calibration: Component = () => {
                 <TableHead>
                   <Tooltip>
                     <TooltipTrigger>Identifier</TooltipTrigger>
-                    <TooltipContent>
-                      <p>Identifier for each thruster, defined in thruster pin setup.</p>
-                    </TooltipContent>
+                    <Portal>
+                      <TooltipPositioner>
+                        <TooltipContent>
+                          <TooltipArrow />
+                          <p>Identifier for each thruster, defined in thruster pin setup.</p>
+                        </TooltipContent>
+                      </TooltipPositioner>
+                    </Portal>
                   </Tooltip>
                 </TableHead>
                 <For each={THRUSTER_COLUMNS}>
@@ -521,9 +505,14 @@ export const Calibration: Component = () => {
                     <TableCell>
                       <Tooltip>
                         <TooltipTrigger>{rowLabel}</TooltipTrigger>
-                        <TooltipContent>
-                          <p>{ROW_LABEL_TOOLTIPS[rowIndex()]}</p>
-                        </TooltipContent>
+                        <Portal>
+                          <TooltipPositioner>
+                            <TooltipContent>
+                              <TooltipArrow />
+                              <p>{ROW_LABEL_TOOLTIPS[rowIndex()]}</p>
+                            </TooltipContent>
+                          </TooltipPositioner>
+                        </Portal>
                       </Tooltip>
                     </TableCell>
                     <For each={THRUSTER_COLUMNS}>
