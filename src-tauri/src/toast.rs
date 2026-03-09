@@ -14,66 +14,66 @@ pub fn toast_init(app_handle: AppHandle) {
 
 #[allow(dead_code)]
 pub fn toast(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, None, message, description, cancel);
+  toast_message(identifier, None, message, description, cancel);
 }
 
 #[allow(dead_code)]
 pub fn toast_success(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, Some(ToastType::Success), message, description, cancel);
+  toast_message(identifier, Some(ToastType::Success), message, description, cancel);
 }
 
 #[allow(dead_code)]
 pub fn toast_info(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, Some(ToastType::Info), message, description, cancel);
+  toast_message(identifier, Some(ToastType::Info), message, description, cancel);
 }
 
 #[allow(dead_code)]
 pub fn toast_warn(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, Some(ToastType::Warn), message, description, cancel);
+  toast_message(identifier, Some(ToastType::Warn), message, description, cancel);
 }
 
 #[allow(dead_code)]
 pub fn toast_error(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, Some(ToastType::Error), message, description, cancel);
+  toast_message(identifier, Some(ToastType::Error), message, description, cancel);
 }
 
 #[allow(dead_code)]
 pub fn toast_loading(
-  id: Option<String>,
+  identifier: Option<String>,
   message: String,
   description: Option<String>,
   cancel: Option<ToastCancel>,
 ) {
-  toast_message(id, Some(ToastType::Loading), message, description, cancel);
+  toast_message(identifier, Some(ToastType::Loading), message, description, cancel);
 }
 
 fn toast_message(
-  id: Option<String>,
+  identifier: Option<String>,
   toast_type: Option<ToastType>,
   message: String,
   description: Option<String>,
@@ -84,7 +84,7 @@ fn toast_message(
       .emit(
         "show_toast",
         Toast {
-          id,
+          identifier,
           toast_type,
           message,
           description,

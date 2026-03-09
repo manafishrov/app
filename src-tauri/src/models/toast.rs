@@ -22,7 +22,7 @@ pub enum ToastCancel {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Toast {
-  pub id: Option<String>,
+  pub identifier: Option<String>,
   pub toast_type: Option<ToastType>,
   pub message: String,
   pub description: Option<String>,

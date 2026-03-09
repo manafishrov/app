@@ -14,7 +14,7 @@ type Cancel = {
 };
 
 type ToastPayload = {
-  id?: string;
+  identifier?: string;
   toastType?: 'success' | 'info' | 'warn' | 'error' | 'loading';
   message: string;
   description?: string;
@@ -23,7 +23,8 @@ type ToastPayload = {
 
 const activeLoadingToasts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const camelToSnake = (str: string): string => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+const camelToSnake = (str: string): string =>
+  str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
 const toastTypeMap: Record<string, 'success' | 'info' | 'warning' | 'error' | 'loading'> = {
   success: 'success',
@@ -36,22 +37,22 @@ const toastTypeMap: Record<string, 'success' | 'info' | 'warning' | 'error' | 'l
 export const setupToastListener = async (): Promise<CleanupFn> => {
   const unlisten = await listen<ToastPayload>(EVENT, ({ payload }) => {
     const type = toastTypeMap[payload.toastType ?? 'info'] ?? 'info';
-    const {message} = payload;
+    const { message } = payload;
 
-    if (payload.id && activeLoadingToasts.has(payload.id)) {
-      clearTimeout(activeLoadingToasts.get(payload.id)!);
-      activeLoadingToasts.delete(payload.id);
+    if (payload.identifier && activeLoadingToasts.has(payload.identifier)) {
+      clearTimeout(activeLoadingToasts.get(payload.identifier)!);
+      activeLoadingToasts.delete(payload.identifier);
     }
 
-    if (payload.toastType === 'loading' && payload.id) {
+    if (payload.toastType === 'loading' && payload.identifier) {
       const timeout = setTimeout(() => {
         toast.create({
           title: 'Operation timed out',
           type: 'error',
         });
-        activeLoadingToasts.delete(payload.id!);
+        activeLoadingToasts.delete(payload.identifier!);
       }, 15_000);
-      activeLoadingToasts.set(payload.id, timeout);
+      activeLoadingToasts.set(payload.identifier, timeout);
     }
 
     const toastOptions: {
@@ -86,9 +87,9 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
               });
             });
           }
-          if (payload.id && activeLoadingToasts.has(payload.id)) {
-            clearTimeout(activeLoadingToasts.get(payload.id)!);
-            activeLoadingToasts.delete(payload.id);
+          if (payload.identifier && activeLoadingToasts.has(payload.identifier)) {
+            clearTimeout(activeLoadingToasts.get(payload.identifier)!);
+            activeLoadingToasts.delete(payload.identifier);
           }
         },
       };
