@@ -528,8 +528,7 @@ export const Calibration: Component = () => {
             </TableBody>
           </Table>
         </Fieldset>
-
-        <form.AutoSubmit debounce={500} />
+        <form.AutoSubmit />
       </form.Form>
     </form.AppForm>
   );
