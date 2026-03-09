@@ -1,20 +1,23 @@
-import type { Component } from 'solid-js';
-
 import { Button } from '@manafishrov/ui/button';
 import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
 import { useAppForm } from '@manafishrov/ui/form';
-import { createSignal } from 'solid-js';
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+} from '@manafishrov/ui/tooltip';
+import { createSignal, type Component } from 'solid-js';
 import { z } from 'zod';
 
-import { FieldSuggestionActions } from '@/components/settings/forms/FieldSuggestionActions';
 import {
   type AxisConfig,
   type DirectionCoefficients,
   type Regulator as RegulatorType,
   rovConfigStore,
 } from '@/stores/rovConfig';
-import { setRovConfig } from '@/tauri';
-import { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri';
+import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
 
 const axisSchema = z.object({
   kp: z.number().min(0).max(100),
@@ -47,6 +50,65 @@ type FormValues = {
   heave: number;
   sway: number;
 };
+
+type FieldSuggestionActionsProps = {
+  defaultValue: number;
+  suggestionValue?: number | undefined;
+  onChange: (value: number) => void;
+  label: string;
+};
+
+const FieldSuggestionActions: Component<FieldSuggestionActionsProps> = ({
+  defaultValue,
+  suggestionValue,
+  onChange,
+  label,
+}) => (
+  <div class='ml-4 flex gap-2'>
+    <Tooltip>
+      <TooltipTrigger
+        asChild={(props) => (
+          <Button
+            {...props()}
+            variant='ghost'
+            aria-label={`Reset ${label} to default value`}
+            onClick={() => onChange(defaultValue)}
+          >
+            Reset to Default
+          </Button>
+        )}
+      />
+      <TooltipPositioner>
+        <TooltipContent>
+          <p>{`Reset ${label} to default value`}</p>
+          <TooltipArrow />
+        </TooltipContent>
+      </TooltipPositioner>
+    </Tooltip>
+    {suggestionValue !== undefined && (
+      <Tooltip>
+        <TooltipTrigger
+          asChild={(props) => (
+            <Button
+              {...props()}
+              variant='outline'
+              aria-label={`Use suggested value for ${label}`}
+              onClick={() => onChange(suggestionValue)}
+            >
+              {`Use Suggestion (${suggestionValue})`}
+            </Button>
+          )}
+        />
+        <TooltipPositioner>
+          <TooltipContent>
+            <p>{`Use suggested value for ${label}`}</p>
+            <TooltipArrow />
+          </TooltipContent>
+        </TooltipPositioner>
+      </Tooltip>
+    )}
+  </div>
+);
 
 export const Regulator: Component = () => {
   const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(false);
