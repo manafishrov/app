@@ -1,4 +1,6 @@
 import { createListCollection } from '@ark-ui/solid/collection';
+import { Button } from '@manafishrov/ui/button';
+import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
 import { useAppForm } from '@manafishrov/ui/form';
 import {
   Select,
@@ -10,13 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@manafishrov/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@manafishrov/ui/table';
 import { toast } from '@manafishrov/ui/toaster';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@manafishrov/ui/tooltip';
 import { invoke } from '@tauri-apps/api/core';
 import { type Component, type JSX, For, createSignal } from 'solid-js';
 import { z } from 'zod';
 
-import { ThrusterAllocationTable } from '@/components/settings/rov/ThrusterAllocationTable';
-import { ThrusterPinSetupTable } from '@/components/settings/rov/ThrusterPinSetupTable';
+import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
 import { logError } from '@/lib/log';
 import {
   type Row,
@@ -28,6 +38,7 @@ import { rovTelemetryStore } from '@/stores/rovTelemetry';
 import { setRovConfig } from '@/tauri';
 
 const THRUSTER_INDICES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+const THRUSTER_COLUMNS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 const PIN_NUMBERS = [6, 7, 8, 9, 18, 19, 20, 21] as const;
 const ROW_LABELS = [
   'Surge',
@@ -395,20 +406,139 @@ export const Calibration: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <ThrusterPinSetupTable
-          pinNumbers={PIN_NUMBERS}
-          thrusterRpms={rovTelemetryStore.thrusterRpms}
-          testDisabled={testDisabled()}
-          onTestThruster={handleTestThruster}
-          renderIdentifierField={renderIdentifierField}
-          renderSpinDirectionField={renderSpinDirectionField}
-        />
+        <Fieldset>
+          <FieldLegend>Thruster pin setup</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>
+            Configure each microcontroller pin and test it to identify the matching thruster. Set
+            spin direction so each thruster rotates forward for your propeller type.
+          </p>
+          <Table class='border'>
+            <TableHeader>
+              <TableRow>
+                <TableHead class='text-center'>
+                  <Tooltip>
+                    <TooltipTrigger>Pin</TooltipTrigger>
+                    <TooltipContent>
+                      <p>The general-purpose pin on the microcontroller that the thruster uses.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <TableHead>
+                  <Tooltip>
+                    <TooltipTrigger>Identifier</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Identifier used by thruster allocation for this physical thruster.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <TableHead>
+                  <Tooltip>
+                    <TooltipTrigger>Spin Direction</TooltipTrigger>
+                    <TooltipContent>
+                      <p>The default propeller direction for this thruster.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <TableHead>
+                  <Tooltip>
+                    <TooltipTrigger>Test</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Run a short low-speed spin test on the selected pin.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <TableHead class='text-right'>
+                  <Tooltip>
+                    <TooltipTrigger>RPM</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Live revolutions per minute from telemetry.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <For each={PIN_NUMBERS}>
+                {(pin, index) => (
+                  <TableRow>
+                    <TableCell class='text-center'>GP{pin}</TableCell>
+                    <TableCell>{renderIdentifierField(index())}</TableCell>
+                    <TableCell>{renderSpinDirectionField(index())}</TableCell>
+                    <TableCell>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        disabled={testDisabled()[index()] ?? false}
+                        onClick={() => {
+                          handleTestThruster(index());
+                        }}
+                      >
+                        Test
+                      </Button>
+                    </TableCell>
+                    <TableCell class='w-24'>
+                      <div class='flex items-center justify-end gap-2'>
+                        <ThrusterRpm rpm={rovTelemetryStore.thrusterRpms[index()] ?? 0} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </For>
+            </TableBody>
+          </Table>
+        </Fieldset>
 
-        <ThrusterAllocationTable
-          rowLabels={ROW_LABELS}
-          rowLabelTooltips={ROW_LABEL_TOOLTIPS}
-          renderAllocationField={renderAllocationField}
-        />
+        <Fieldset>
+          <FieldLegend>Thruster allocation</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>
+            Tune how each thruster contributes to each movement axis. Use values between -1 and 1,
+            where positive is forward thrust, negative is reverse thrust, and 0 disables thrust.
+          </p>
+          <Table class='border'>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Tooltip>
+                    <TooltipTrigger>Identifier</TooltipTrigger>
+                    <TooltipContent>
+                      <p>Identifier for each thruster, defined in thruster pin setup.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TableHead>
+                <For each={THRUSTER_COLUMNS}>
+                  {(identifier) => (
+                    <TableHead class='text-center' aria-label={`Thruster ${identifier}`}>
+                      {identifier}
+                    </TableHead>
+                  )}
+                </For>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <For each={ROW_LABELS}>
+                {(rowLabel, rowIndex) => (
+                  <TableRow>
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger>{rowLabel}</TooltipTrigger>
+                        <TooltipContent>
+                          <p>{ROW_LABEL_TOOLTIPS[rowIndex()]}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <For each={THRUSTER_COLUMNS}>
+                      {(_, columnIndex) => (
+                        <TableCell class='w-20'>
+                          {renderAllocationField(rowIndex(), columnIndex())}
+                        </TableCell>
+                      )}
+                    </For>
+                  </TableRow>
+                )}
+              </For>
+            </TableBody>
+          </Table>
+        </Fieldset>
 
         <form.AutoSubmit debounce={500} />
       </form.Form>
