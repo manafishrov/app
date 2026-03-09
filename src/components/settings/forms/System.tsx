@@ -37,6 +37,7 @@ export const System: Component = () => {
 
   const form = useAppForm(() => ({
     validators: {
+      onChange: formSchema,
       onSubmit: formSchema,
     },
     defaultValues: {

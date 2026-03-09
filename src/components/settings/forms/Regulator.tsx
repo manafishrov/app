@@ -20,7 +20,12 @@ const axisSchema = z.object({
   kp: z.number().min(0).max(100),
   ki: z.number().min(0).max(100),
   kd: z.number().min(0).max(100),
-  rate: z.array(z.number().min(5, 'The turn rate needs to be at least 5°/s').max(360)).length(1),
+  rate: z
+    .array(z.number().max(360))
+    .length(1)
+    .refine(([rate]) => rate === undefined || rate >= 5, {
+      message: 'The turn rate needs to be at least 5°/s',
+    }),
 });
 
 const formSchema = z.object({
@@ -48,6 +53,7 @@ export const Regulator: Component = () => {
 
   const form = useAppForm(() => ({
     validators: {
+      onChange: formSchema,
       onSubmit: formSchema,
     },
     defaultValues: {
@@ -421,7 +427,7 @@ export const Regulator: Component = () => {
             <form.AppField name='depth.rate'>
               {(field) => (
                 <field.SliderField
-                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°"]'
+                  class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
                   label='Turn Rate'
                   description='The speed at which the ROV will try to reach the desired depth.'
                   min={0}
@@ -502,7 +508,6 @@ export const Regulator: Component = () => {
             </form.AppField>
           </div>
         </Fieldset>
-
         <form.AutoSubmit debounce={500} />
       </form.Form>
     </form.AppForm>

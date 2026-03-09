@@ -1,16 +1,4 @@
-import { useStore } from '@tanstack/react-store';
-import { invoke } from '@tauri-apps/api/core';
-import { useState } from 'react';
-
-import { ThrusterRpm } from '@/components/composites/ThrusterRpm';
-import { Button } from '@/components/ui/Button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/Select';
+import { Button } from '@manafishrov/ui/button';
 import {
   Table,
   TableBody,
@@ -18,189 +6,111 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/Table';
-import { toast } from '@/components/ui/Toaster';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/Tooltip';
-import { logError } from '@/lib/log';
-import { type Row, rovConfigStore } from '@/stores/rovConfig';
-import { rovTelemetryStore } from '@/stores/rovTelemetry';
-import { setRovConfig } from '@/tauri';
+} from '@manafishrov/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@manafishrov/ui/tooltip';
+import { type Component, type JSX, For } from 'solid-js';
 
-function ThrusterPinSetupTable() {
-  const thrusterPinSetup = useStore(rovConfigStore, (state) => state?.thrusterPinSetup);
-  const thrusterRpms = useStore(rovTelemetryStore, (state) => state?.thrusterRpms);
-  const pinNumbers = [6, 7, 8, 9, 18, 19, 20, 21];
-  const [testDisabled, setTestDisabled] = useState<boolean[]>(Array(pinNumbers.length).fill(false));
+import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
 
-  async function handleIdentifierChange(index: number, value: number) {
-    if (!thrusterPinSetup) {return;}
+type ThrusterPinSetupTableProps = {
+  pinNumbers: readonly number[];
+  thrusterRpms: readonly number[];
+  testDisabled: readonly boolean[];
+  onTestThruster: (index: number) => Promise<void>;
+  renderIdentifierField: (index: number) => JSX.Element;
+  renderSpinDirectionField: (index: number) => JSX.Element;
+};
 
-    const newIdentifiers = [...thrusterPinSetup.identifiers];
-    newIdentifiers[index] = value;
-    const newThrusterPinSetup = {
-      ...thrusterPinSetup,
-      identifiers: newIdentifiers as Row,
-    };
-    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
-  }
+const ThrusterPinSetupHeader: Component = () => (
+  <TableHeader>
+    <TableRow>
+      <TableHead class='text-center'>
+        <Tooltip>
+          <TooltipTrigger>Pin</TooltipTrigger>
+          <TooltipContent>
+            <p>The general-purpose pin on the microcontroller that the thruster uses.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <TableHead>
+        <Tooltip>
+          <TooltipTrigger>Identifier</TooltipTrigger>
+          <TooltipContent>
+            <p>Identifier used by thruster allocation for this physical thruster.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <TableHead>
+        <Tooltip>
+          <TooltipTrigger>Spin Direction</TooltipTrigger>
+          <TooltipContent>
+            <p>The default propeller direction for this thruster.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <TableHead>
+        <Tooltip>
+          <TooltipTrigger>Test</TooltipTrigger>
+          <TooltipContent>
+            <p>Run a short low-speed spin test on the selected pin.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <TableHead class='text-right'>
+        <Tooltip>
+          <TooltipTrigger>RPM</TooltipTrigger>
+          <TooltipContent>
+            <p>Live revolutions per minute from telemetry.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+    </TableRow>
+  </TableHeader>
+);
 
-  async function handleSpinDirectionChange(index: number, value: number) {
-    if (!thrusterPinSetup) {return;}
+const ThrusterPinSetupBody: Component<ThrusterPinSetupTableProps> = (props) => (
+  <TableBody>
+    <For each={props.pinNumbers}>
+      {(pin, index) => (
+        <TableRow>
+          <TableCell class='text-center'>GP{pin}</TableCell>
+          <TableCell>{props.renderIdentifierField(index())}</TableCell>
+          <TableCell>{props.renderSpinDirectionField(index())}</TableCell>
+          <TableCell>
+            <Button
+              type='button'
+              variant='outline'
+              disabled={props.testDisabled[index()] ?? false}
+              onClick={() => {
+                props.onTestThruster(index());
+              }}
+            >
+              Test
+            </Button>
+          </TableCell>
+          <TableCell class='w-24'>
+            <div class='flex items-center justify-end gap-2'>
+              <ThrusterRpm rpm={props.thrusterRpms[index()] ?? 0} />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </For>
+  </TableBody>
+);
 
-    const newSpinDirections = [...thrusterPinSetup.spinDirections];
-    newSpinDirections[index] = value;
-    const newThrusterPinSetup = {
-      ...thrusterPinSetup,
-      spinDirections: newSpinDirections as Row,
-    };
-    await setRovConfig({ thrusterPinSetup: newThrusterPinSetup });
-  }
-
-  async function testThruster(index: number) {
-    setTestDisabled((prev: boolean[]): boolean[] => {
-      const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
-      updated[index] = true;
-      return updated;
-    });
-    await invoke('start_thruster_test', { payload: index })
-      .catch((error) => {
-        logError('Failed to start thruster test:', error);
-        toast.error('Failed to start thruster test');
-      })
-      .finally(() => {
-        setTimeout(() => {
-          setTestDisabled((prev: boolean[]): boolean[] => {
-            const updated: boolean[] = Array.isArray(prev) ? [...prev] : [];
-            updated[index] = false;
-            return updated;
-          });
-        }, 2000);
-      });
-  }
-
-  if (!thrusterPinSetup) {return;}
-
-  return (
-    <>
-      <div>
-        <h3 className='text-2xl font-semibold tracking-tight'>Thruster pin setup</h3>
-        <p className='text-muted-foreground text-sm'>
-          Use this table to configure each thruster connected to your ROV. For each pin, choose the
-          identifier by observing which thruster spins when you test it and adjust the spin
-          direction so that the thruster rotates forward according to your propeller type.
-        </p>
-      </div>
-      <div className='relative space-y-4'>
-        <Table className='border'>
-          <TableHeader>
-            <TableRow>
-              <TableHead className='text-center'>
-                <Tooltip>
-                  <TooltipTrigger>Pin</TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      The general purpose pin on the microcontroller that the thruster is connected
-                      to.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead>
-                <Tooltip>
-                  <TooltipTrigger>Identifier</TooltipTrigger>
-                  <TooltipContent>
-                    <p>Identifier to be used for the thruster in the thruster allocation.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead>
-                <Tooltip>
-                  <TooltipTrigger>Spin direction</TooltipTrigger>
-                  <TooltipContent>
-                    <p>The default spin direction for the propeller on the thruster.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead>
-                <Tooltip>
-                  <TooltipTrigger>Test</TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Spins the thruster slowly in the specified direction on the specified pin.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-              <TableHead>
-                <Tooltip>
-                  <TooltipTrigger className='ml-4'>RPM</TooltipTrigger>
-                  <TooltipContent>
-                    <p>The revolutions per minute of the thruster.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pinNumbers.map((pin, index) => (
-              <TableRow key={pin}>
-                <TableCell className='text-center'>GP{pin}</TableCell>
-                <TableCell>
-                  <Select
-                    value={String(thrusterPinSetup.identifiers[index])}
-                    onValueChange={(value) => void handleIdentifierChange(index, Number(value))}
-                  >
-                    <SelectTrigger className='w-16'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 8 }, (_, i) => ({
-                        value: String(i),
-                        label: String(i + 1),
-                      })).map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={String(thrusterPinSetup.spinDirections[index])}
-                    onValueChange={(value) => void handleSpinDirectionChange(index, Number(value))}
-                  >
-                    <SelectTrigger className='w-28'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='1'>Normal</SelectItem>
-                      <SelectItem value='-1'>Reversed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={testDisabled[index] ?? false}
-                    onClick={async () => {
-                      await testThruster(index);
-                    }}
-                  >
-                    Test
-                  </Button>
-                </TableCell>
-                <TableCell className='flex w-24 items-center justify-end gap-2'>
-                  <ThrusterRpm rpm={thrusterRpms[index] ?? 0} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </>
-  );
-}
-
-export { ThrusterPinSetupTable };
+export const ThrusterPinSetupTable: Component<ThrusterPinSetupTableProps> = (props) => (
+  <div class='space-y-4'>
+    <div>
+      <h3 class='text-2xl font-semibold tracking-tight'>Thruster pin setup</h3>
+      <p class='text-muted-foreground text-sm'>
+        Configure each microcontroller pin and test it to identify the matching thruster. Set spin
+        direction so each thruster rotates forward for your propeller type.
+      </p>
+    </div>
+    <Table class='border'>
+      <ThrusterPinSetupHeader />
+      <ThrusterPinSetupBody {...props} />
+    </Table>
+  </div>
+);

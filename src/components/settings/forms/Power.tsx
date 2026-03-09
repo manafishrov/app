@@ -22,6 +22,7 @@ const formSchema = z
 export const Power: Component = () => {
   const form = useAppForm(() => ({
     validators: {
+      onChange: formSchema,
       onSubmit: formSchema,
     },
     defaultValues: {

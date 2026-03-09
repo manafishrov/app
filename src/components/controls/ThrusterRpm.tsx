@@ -1,17 +1,20 @@
-import { FanIcon } from 'lucide-react';
+import type { Component } from 'solid-js';
 
-function ThrusterRpm({ rpm }: { rpm: number }) {
+import { cn } from '@manafishrov/ui';
+import ModeFan2Icon from '~icons/material-symbols/mode-fan';
+
+const ThrusterRpm: Component<{ rpm: number }> = ({ rpm }) => {
   return (
     <>
       {Math.round(rpm)}
-      <FanIcon
-        className={rpm > 0 ? 'animate-spin' : ''}
+      <ModeFan2Icon
+        class={cn('size-5', rpm > 0 && 'animate-spin')}
         style={{
-          animationDuration: `${rpm > 0 ? 60_000 / (rpm / 30) : 0}ms`,
+          'animation-duration': `${rpm > 0 ? 60_000 / (rpm / 30) : 0}ms`,
         }}
       />
     </>
   );
-}
+};
 
 export { ThrusterRpm };

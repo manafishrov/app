@@ -1,8 +1,3 @@
-import { useStore } from '@tanstack/react-store';
-import { useState } from 'react';
-
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import {
   Table,
   TableBody,
@@ -10,194 +5,78 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/Table';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/Tooltip';
+} from '@manafishrov/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@manafishrov/ui/tooltip';
+import { type Component, type JSX, For } from 'solid-js';
 
-import {
-  type ThrusterAllocation,
-  rovConfigStore,
-  setRovConfig,
-} from '@/stores/rovConfig';
+const THRUSTER_COLUMNS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-function transpose<T>(matrix: T[][]): T[][] {
-  if (matrix.length === 0 || !matrix[0]?.length) {return [];}
-  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]!));
-}
+type ThrusterAllocationTableProps = {
+  rowLabels: readonly string[];
+  rowLabelTooltips: readonly string[];
+  renderAllocationField: (rowIndex: number, columnIndex: number) => JSX.Element;
+};
 
-function ThrusterAllocationTable() {
-  const thrusterAllocation = useStore(
-    rovConfigStore,
-    (state) => state?.thrusterAllocation,
-  );
-  const [displayAllocation, setDisplayAllocation] = useState<string[][] | null>(
-    null,
-  );
+const ThrusterAllocationHeader: Component = () => (
+  <TableHeader>
+    <TableRow>
+      <TableHead>
+        <Tooltip>
+          <TooltipTrigger>Identifier</TooltipTrigger>
+          <TooltipContent>
+            <p>Identifier for each thruster, defined in thruster pin setup.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TableHead>
+      <For each={THRUSTER_COLUMNS}>
+        {(identifier) => (
+          <TableHead class='text-center' aria-label={`Thruster ${identifier}`}>
+            {identifier}
+          </TableHead>
+        )}
+      </For>
+    </TableRow>
+  </TableHeader>
+);
 
-  if (thrusterAllocation && !displayAllocation) {
-    const initialDisplay = transpose(thrusterAllocation).map((row) =>
-      row.map((cell) => String(cell)),
-    );
-    setDisplayAllocation(initialDisplay);
-  }
-
-  const rowLabels = [
-    'Surge',
-    'Sway',
-    'Heave',
-    'Pitch',
-    'Yaw',
-    'Roll',
-    'Action 1',
-    'Action 2',
-  ];
-
-  const rowLabelTooltips = [
-    'Thrusters to activate to move forward',
-    'Thrusters to activate to move right',
-    'Thrusters to activate to move upwards',
-    'Thrusters to activate to pitch up',
-    'Thrusters to activate to yaw right',
-    'Thrusters to activate to roll right',
-    'Thrusters to activate for action 1 (custom or auxiliary function).',
-    'Thrusters to activate for action 2 (custom or auxiliary function).',
-  ];
-
-  function handleAllocationChange(
-    rowIndex: number,
-    colIndex: number,
-    value: string,
-  ) {
-    if (!displayAllocation || !thrusterAllocation) {return;}
-
-    let displayValue = value;
-
-    if (value !== '' && value !== '-') {
-      const hasMultipleDots = (value.match(/\./g) ?? []).length > 1;
-      const hasMisplacedMinus = value.lastIndexOf('-') > 0;
-
-      if (hasMultipleDots || hasMisplacedMinus) {
-        displayValue = '0';
-      } else {
-        const parts = value.split('.');
-        if (parts[1] && parts[1].length > 2) {
-          displayValue = `${parts[0]}.${parts[1].slice(0, 2)}`;
-        }
-
-        const parsedValue = Number.parseFloat(displayValue);
-
-        if (parsedValue > 1) {
-          displayValue = '1';
-        } else if (parsedValue < -1) {
-          displayValue = '-1';
-        }
-      }
-    }
-
-    const newDisplayAllocation = displayAllocation.map((row, rIndex) =>
-      rIndex === rowIndex
-        ? row.map((cell, cIndex) => (cIndex === colIndex ? displayValue : cell))
-        : row,
-    );
-    setDisplayAllocation(newDisplayAllocation);
-  }
-
-  return (
-    <>
-      <div>
-        <h3 className='text-2xl font-semibold tracking-tight'>
-          Thruster allocation
-        </h3>
-        <p className='text-muted-foreground text-sm'>
-          Use this matrix to control how each thruster responds to different
-          movement input. Assign a value between -1 and 1 to specify the amount
-          of thrust each thruster should provide: positive values produce
-          forward thrust, negative values produce reverse thrust, and 0 disables
-          the thruster for that action.
-        </p>
-      </div>
-      <Table className='border'>
-        <TableHeader>
-          <TableRow>
-            <TableHead>
-              <Tooltip>
-                <TooltipTrigger>Identifier</TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    Identifier for the given thruster, defined in the pin setup.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TableHead>
-            {Array.from({ length: 8 }, (_, index) => (
-              <TableHead key={index} className='text-center'>
-                {index + 1}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rowLabels.map((rowLabel, rowIndex) => (
-            <TableRow key={rowLabel}>
-              <TableCell>
-                <Tooltip>
-                  <TooltipTrigger>{rowLabel}</TooltipTrigger>
-                  <TooltipContent>
-                    <p>{rowLabelTooltips[rowIndex]}</p>
-                  </TooltipContent>
-                </Tooltip>
+const ThrusterAllocationBody: Component<ThrusterAllocationTableProps> = (props) => (
+  <TableBody>
+    <For each={props.rowLabels}>
+      {(rowLabel, rowIndex) => (
+        <TableRow>
+          <TableCell>
+            <Tooltip>
+              <TooltipTrigger>{rowLabel}</TooltipTrigger>
+              <TooltipContent>
+                <p>{props.rowLabelTooltips[rowIndex()]}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+          <For each={THRUSTER_COLUMNS}>
+            {(_, columnIndex) => (
+              <TableCell class='w-20'>
+                {props.renderAllocationField(rowIndex(), columnIndex())}
               </TableCell>
-              {Array.from({ length: 8 }, (_, colIndex) => (
-                <TableCell key={`${rowLabel}-${colIndex}`}>
-                  <Input
-                    className='w-14 text-center'
-                    inputMode='numeric'
-                    value={displayAllocation?.[rowIndex]?.[colIndex] ?? ''}
-                    onChange={(event) =>
-                      handleAllocationChange(
-                        rowIndex,
-                        colIndex,
-                        event.target.value
-                          .replace(',', '.')
-                          .replaceAll(/[^\d.-]/g, ''),
-                      )
-                    }
-                  />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <Button
-        className='w-40'
-        onClick={async () => {
-          if (!displayAllocation) {return;}
+            )}
+          </For>
+        </TableRow>
+      )}
+    </For>
+  </TableBody>
+);
 
-          const parsedDisplay = displayAllocation.map((row: string[]) =>
-            row.map((cell) => {
-              const parsedValue = Number.parseFloat(cell);
-              return Number.isNaN(parsedValue) ? 0 : parsedValue;
-            }),
-          );
-
-          const newThrusterAllocation = transpose(
-            parsedDisplay,
-          ) as ThrusterAllocation;
-
-          await setRovConfig({ thrusterAllocation: newThrusterAllocation });
-          setDisplayAllocation(
-            transpose(newThrusterAllocation).map((row) => row.map(String)),
-          );
-        }}
-      >
-        Update Thrusters
-      </Button>
-    </>
-  );
-}
-
-export { ThrusterAllocationTable };
+export const ThrusterAllocationTable: Component<ThrusterAllocationTableProps> = (props) => (
+  <div class='space-y-4'>
+    <div>
+      <h3 class='text-2xl font-semibold tracking-tight'>Thruster allocation</h3>
+      <p class='text-muted-foreground text-sm'>
+        Tune how each thruster contributes to each movement axis. Use values between -1 and 1, where
+        positive is forward thrust, negative is reverse thrust, and 0 disables thrust.
+      </p>
+    </div>
+    <Table class='border'>
+      <ThrusterAllocationHeader />
+      <ThrusterAllocationBody {...props} />
+    </Table>
+  </div>
+);
