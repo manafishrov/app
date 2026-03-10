@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use crate::models::rov_config::ThrusterTest;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum ToastType {
+pub enum ToastVariant {
   Success,
   Info,
   Warn,
@@ -13,18 +14,28 @@ pub enum ToastType {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(tag = "type", content = "payload", rename_all = "camelCase")]
-pub enum ToastCancel {
-  CancelThrusterTest(ThrusterTest),
-  CancelRegulatorAutoTuning,
+#[serde(rename_all = "camelCase")]
+pub struct ToastAction {
+  pub label_key: Option<String>,
+  pub label_args: Option<HashMap<String, Value>>,
+  pub message_type: String,
+  pub payload: Option<Value>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ToastContent {
+  pub message_key: String,
+  pub message_args: Option<HashMap<String, Value>>,
+  pub description_key: Option<String>,
+  pub description_args: Option<HashMap<String, Value>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Toast {
   pub identifier: Option<String>,
-  pub toast_type: Option<ToastType>,
-  pub message: String,
-  pub description: Option<String>,
-  pub cancel: Option<ToastCancel>,
+  pub variant: Option<ToastVariant>,
+  pub content: ToastContent,
+  pub action: Option<ToastAction>,
 }

@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use tokio::sync::mpsc::Sender;
 
 use crate::models::config::Config;
+use crate::models::toast::ToastContent;
 use crate::toast::{toast_success, toast_warn};
 use crate::{log_error, log_warn};
 
@@ -53,8 +54,12 @@ pub fn get_config_from_file() -> Config {
       log_warn!("Failed to read config: {}. Using default config.", e);
       toast_warn(
         None,
-        "Failed to parse app config, using default config instead".to_string(),
-        None,
+        ToastContent {
+          message_key: "toasts_app_config_parse_failed_using_default".to_string(),
+          message_args: None,
+          description_key: None,
+          description_args: None,
+        },
         None,
       );
       return Config::default();
@@ -68,8 +73,12 @@ pub fn get_config_from_file() -> Config {
       log_warn!("Failed to parse config: {}. Using default config.", e);
       toast_warn(
         None,
-        "Failed to parse app config, using default config instead".to_string(),
-        None,
+        ToastContent {
+          message_key: "toasts_app_config_parse_failed_using_default".to_string(),
+          message_args: None,
+          description_key: None,
+          description_args: None,
+        },
         None,
       );
       let default_config = Config::default();
@@ -124,7 +133,16 @@ pub async fn set_config_to_file(
 
   state.tx.send(payload).await.map_err(|e| e.to_string())?;
 
-  toast_success(None, "Config set successfully".to_string(), None, None);
+  toast_success(
+    None,
+    ToastContent {
+      message_key: "toasts_app_config_set_success".to_string(),
+      message_args: None,
+      description_key: None,
+      description_args: None,
+    },
+    None,
+  );
 
   Ok(())
 }

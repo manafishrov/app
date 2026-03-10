@@ -1,6 +1,10 @@
+use std::collections::HashMap;
+
+use serde_json::Value;
 use tauri::AppHandle;
 use tauri_plugin_updater::{Result, UpdaterExt};
 
+use crate::models::toast::ToastContent;
 use crate::toast::{toast_info, toast_loading};
 
 pub async fn update_app(app: AppHandle) -> Result<()> {
@@ -8,8 +12,12 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
   if let Some(update) = app.updater()?.check().await? {
     toast_info(
       None,
-      "Update available".to_string(),
-      Some("Downloading update...".to_string()),
+      ToastContent {
+        message_key: "toasts_update_available".to_string(),
+        message_args: None,
+        description_key: Some("toasts_update_downloading".to_string()),
+        description_args: None,
+      },
       None,
     );
     let mut downloaded = 0;
@@ -21,10 +29,16 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
           if actual_content_length > 0 {
             let progress_percent =
               (downloaded as f64 / actual_content_length as f64 * 100.0).round() as u64;
+            let mut message_args = HashMap::<String, Value>::new();
+            let _ = message_args.insert("percent".to_string(), Value::from(progress_percent));
             toast_loading(
               Some("update-progress".to_string()),
-              format!("Downloading: {}%", progress_percent),
-              None,
+              ToastContent {
+                message_key: "toasts_update_downloading_progress".to_string(),
+                message_args: Some(message_args),
+                description_key: None,
+                description_args: None,
+              },
               None,
             );
           }
@@ -32,8 +46,12 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
         || {
           toast_info(
             Some("update-progress".to_string()),
-            "Update downloaded".to_string(),
-            Some("Installing...".to_string()),
+            ToastContent {
+              message_key: "toasts_update_downloaded".to_string(),
+              message_args: None,
+              description_key: Some("toasts_update_installing".to_string()),
+              description_args: None,
+            },
             None,
           );
         },
@@ -41,8 +59,12 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
       .await?;
     toast_info(
       Some("update-progress".to_string()),
-      "Update ready".to_string(),
-      Some("Restart the app to apply the update.".to_string()),
+      ToastContent {
+        message_key: "toasts_update_ready".to_string(),
+        message_args: None,
+        description_key: Some("toasts_update_restart_to_apply".to_string()),
+        description_args: None,
+      },
       None,
     );
   }
