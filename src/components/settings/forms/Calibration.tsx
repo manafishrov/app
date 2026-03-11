@@ -2,6 +2,7 @@ import { createListCollection } from '@ark-ui/solid/collection';
 import { Button } from '@manafishrov/ui/button';
 import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
 import { useAppForm } from '@manafishrov/ui/form';
+import { Menu, MenuContent, MenuItem, MenuPositioner, MenuTrigger } from '@manafishrov/ui/menu';
 import {
   Select,
   SelectContent,
@@ -33,9 +34,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { type Component, type JSX, For, createSignal } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { z } from 'zod';
+import RestartAltIcon from '~icons/material-symbols/restart-alt';
 
 import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
 import { logError } from '@/lib/log';
+import { THRUSTER_PRESETS, type ThrusterPresetRow } from '@/lib/thrusterPresets';
 import {
   type Row,
   type ThrusterAllocation,
@@ -68,6 +71,17 @@ const ROW_LABEL_TOOLTIPS = [
   'Thrusters to activate for action 1 (custom or auxiliary function).',
   'Thrusters to activate for action 2 (custom or auxiliary function).',
 ] as const;
+
+const PRESET_ROW_KEYS: (keyof ThrusterPresetRow)[] = [
+  'surge',
+  'sway',
+  'heave',
+  'pitch',
+  'yaw',
+  'roll',
+  'action1',
+  'action2',
+];
 
 const identifierCollection = createListCollection<{ value: string; label: string }>({
   items: THRUSTER_INDICES.map((index) => ({
@@ -178,6 +192,9 @@ export const Calibration: Component = () => {
   );
 
   const defaultAllocationRows = transpose(rovConfigStore.thrusterAllocation);
+  const [initialAllocation] = createSignal<number[][]>(
+    defaultAllocationRows.map((row) => [...row]),
+  );
 
   const form = useAppForm(() => ({
     validators: {
@@ -232,6 +249,26 @@ export const Calibration: Component = () => {
       });
     },
   }));
+
+  const applyPreset = (presetRows: ThrusterPresetRow): void => {
+    PRESET_ROW_KEYS.forEach((key, rowIndex) => {
+      const presetRow = presetRows[key];
+      if (presetRow !== undefined) {
+        presetRow.forEach((value, colIndex) => {
+          form.setFieldValue(`thrusterAllocation[${rowIndex}][${colIndex}]`, value);
+        });
+      }
+    });
+  };
+
+  const resetAllocation = (): void => {
+    const initial = initialAllocation();
+    initial.forEach((row, rowIndex) => {
+      row.forEach((value, colIndex) => {
+        form.setFieldValue(`thrusterAllocation[${rowIndex}][${colIndex}]`, value);
+      });
+    });
+  };
 
   const handleTestThruster = async (index: number): Promise<void> => {
     setTestDisabled((previous) => {
@@ -357,7 +394,7 @@ export const Calibration: Component = () => {
 
   return (
     <form.AppForm>
-      <form.Form>
+      <form.Form class='mb-24'>
         <Fieldset>
           <FieldLegend>Thruster pin setup</FieldLegend>
           <p class='text-muted-foreground mb-4 text-sm'>
@@ -368,7 +405,11 @@ export const Calibration: Component = () => {
             <TableHeader>
               <TableRow>
                 <TableHead class='text-center'>
-                  <Tooltip>
+                  <Tooltip
+                    positioning={{
+                      placement: 'top',
+                    }}
+                  >
                     <TooltipTrigger>Pin</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
@@ -383,7 +424,11 @@ export const Calibration: Component = () => {
                   </Tooltip>
                 </TableHead>
                 <TableHead>
-                  <Tooltip>
+                  <Tooltip
+                    positioning={{
+                      placement: 'top',
+                    }}
+                  >
                     <TooltipTrigger>Identifier</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
@@ -396,7 +441,11 @@ export const Calibration: Component = () => {
                   </Tooltip>
                 </TableHead>
                 <TableHead>
-                  <Tooltip>
+                  <Tooltip
+                    positioning={{
+                      placement: 'top',
+                    }}
+                  >
                     <TooltipTrigger>Spin Direction</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
@@ -409,7 +458,11 @@ export const Calibration: Component = () => {
                   </Tooltip>
                 </TableHead>
                 <TableHead>
-                  <Tooltip>
+                  <Tooltip
+                    positioning={{
+                      placement: 'top',
+                    }}
+                  >
                     <TooltipTrigger>Test</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
@@ -422,7 +475,11 @@ export const Calibration: Component = () => {
                   </Tooltip>
                 </TableHead>
                 <TableHead class='text-right'>
-                  <Tooltip>
+                  <Tooltip
+                    positioning={{
+                      placement: 'top',
+                    }}
+                  >
                     <TooltipTrigger>RPM</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
@@ -473,6 +530,60 @@ export const Calibration: Component = () => {
             Tune how each thruster contributes to each movement axis. Use values between -1 and 1,
             where positive is forward thrust, negative is reverse thrust, and 0 disables thrust.
           </p>
+          <div class='flex items-center gap-2'>
+            <Menu>
+              <MenuTrigger
+                asChild={(triggerProps) => (
+                  <Button {...triggerProps()} variant='outline'>
+                    Presets
+                  </Button>
+                )}
+              />
+              <Portal>
+                <MenuPositioner>
+                  <MenuContent>
+                    <For each={THRUSTER_PRESETS}>
+                      {(preset) => (
+                        <MenuItem value={preset.name} onClick={() => applyPreset(preset.rows)}>
+                          <div class='flex flex-col'>
+                            <span>{preset.name}</span>
+                            {preset.description && (
+                              <span class='text-xs text-muted-foreground'>
+                                {preset.description}
+                              </span>
+                            )}
+                          </div>
+                        </MenuItem>
+                      )}
+                    </For>
+                  </MenuContent>
+                </MenuPositioner>
+              </Portal>
+            </Menu>
+            <Tooltip positioning={{ placement: 'top' }}>
+              <TooltipTrigger
+                asChild={(tooltipProps) => (
+                  <Button
+                    {...tooltipProps()}
+                    variant='ghost'
+                    size='icon'
+                    aria-label='Reset allocation'
+                    onClick={resetAllocation}
+                  >
+                    <RestartAltIcon class='size-4' />
+                  </Button>
+                )}
+              />
+              <Portal>
+                <TooltipPositioner>
+                  <TooltipContent>
+                    Restore initial allocation
+                    <TooltipArrow />
+                  </TooltipContent>
+                </TooltipPositioner>
+              </Portal>
+            </Tooltip>
+          </div>
           <Table class='border'>
             <TableHeader>
               <TableRow>

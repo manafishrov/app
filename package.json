@@ -15,7 +15,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@manafishrov/ui": "1.4.0",
+    "@manafishrov/ui": "1.4.1",
     "@tailwindcss/vite": "4.2.1",
     "@tanstack/router-plugin": "1.163.3",
     "@tanstack/solid-form": "1.28.3",
