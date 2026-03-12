@@ -18,6 +18,7 @@ const formSchema = z.object({
   attitudeIndicator: z.enum([
     AttitudeIndicator.scientific,
     AttitudeIndicator.model3D,
+    AttitudeIndicator.classic,
     AttitudeIndicator.disabled,
   ]),
   thrusterRpmOverlay: z.boolean(),
@@ -98,15 +99,19 @@ export const Appearance: Component = () => {
               label='Attitude Indicator'
               description='Select the attitude indicator style.'
             >
-              <RadioGroupItem value='scientific'>
+              <RadioGroupItem value={AttitudeIndicator.scientific}>
                 <RadioGroupItemControl />
                 <RadioGroupItemText>Scientific</RadioGroupItemText>
               </RadioGroupItem>
-              <RadioGroupItem value='model3D' disabled>
+              <RadioGroupItem value={AttitudeIndicator.model3D}>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>3D Model (Coming Soon)</RadioGroupItemText>
+                <RadioGroupItemText>3D Model</RadioGroupItemText>
               </RadioGroupItem>
-              <RadioGroupItem value='disabled'>
+              <RadioGroupItem value={AttitudeIndicator.classic}>
+                <RadioGroupItemControl />
+                <RadioGroupItemText>Classic</RadioGroupItemText>
+              </RadioGroupItem>
+              <RadioGroupItem value={AttitudeIndicator.disabled}>
                 <RadioGroupItemControl />
                 <RadioGroupItemText>Disabled</RadioGroupItemText>
               </RadioGroupItem>

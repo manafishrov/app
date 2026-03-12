@@ -170,11 +170,12 @@ type GamepadBindings = {
   record: NullableGamepadInput;
 };
 
-type AttitudeIndicator = 'scientific' | 'model3D' | 'disabled';
+type AttitudeIndicator = 'scientific' | 'model3D' | 'classic' | 'disabled';
 
 const AttitudeIndicator = {
   scientific: 'scientific',
   model3D: 'model3D',
+  classic: 'classic',
   disabled: 'disabled',
 } as const;
 

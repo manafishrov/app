@@ -1,7 +1,9 @@
 import { type Component, createMemo } from 'solid-js';
 
+import { ClassicAttitudeIndicator } from '@/components/overlay/ClassicAttitudeIndicator';
+import { Model3DAttitudeIndicator } from '@/components/overlay/Model3DAttitudeIndicator';
 import { ScientificAttitudeIndicator } from '@/components/overlay/ScientificAttitudeIndicator';
-import { configStore } from '@/stores/config';
+import { AttitudeIndicator as AttitudeIndicatorEnum, configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
@@ -38,13 +40,32 @@ const AttitudeIndicator: Component = () => {
 
   return (
     <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
-      {configStore.attitudeIndicator === 'scientific' ? (
+      {configStore.attitudeIndicator === AttitudeIndicatorEnum.scientific ? (
         <ScientificAttitudeIndicator
           size={SCIENTIFIC_ATTITUDE_SIZE}
           pitch={rovTelemetryStore.pitch}
           roll={rovTelemetryStore.roll}
           desiredPitch={rovTelemetryStore.desiredPitch}
           desiredRoll={rovTelemetryStore.desiredRoll}
+          style={shadowStyle()}
+        />
+      ) : configStore.attitudeIndicator === AttitudeIndicatorEnum.model3D ? (
+        <Model3DAttitudeIndicator
+          size={SCIENTIFIC_ATTITUDE_SIZE}
+          pitch={rovTelemetryStore.pitch}
+          roll={rovTelemetryStore.roll}
+          yaw={rovTelemetryStore.yaw}
+          style={shadowStyle()}
+        />
+      ) : configStore.attitudeIndicator === AttitudeIndicatorEnum.classic ? (
+        <ClassicAttitudeIndicator
+          size={SCIENTIFIC_ATTITUDE_SIZE}
+          pitch={rovTelemetryStore.pitch}
+          roll={rovTelemetryStore.roll}
+          yaw={rovTelemetryStore.yaw}
+          desiredPitch={rovTelemetryStore.desiredPitch}
+          desiredRoll={rovTelemetryStore.desiredRoll}
+          desiredYaw={rovTelemetryStore.desiredYaw}
           style={shadowStyle()}
         />
       ) : (

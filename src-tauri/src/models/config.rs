@@ -184,6 +184,7 @@ pub struct GamepadBindings {
 pub enum AttitudeIndicator {
   Scientific,
   Model3D,
+  Classic,
   Disabled,
 }
 
