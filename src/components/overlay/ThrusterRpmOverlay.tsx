@@ -9,10 +9,12 @@ import { rovTelemetryStore } from '@/stores/rovTelemetry';
 const ThrusterItem: Component<{ index: number }> = (props) => (
   <Badge
     variant='secondary'
-    class='bg-background/50 backdrop-blur-sm border-border/50 justify-end w-16'
+    class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-end gap-1 min-w-[6.5rem] lg:min-w-28 whitespace-nowrap'
   >
-    <ThrusterRpm rpm={rovTelemetryStore.thrusterRpms[props.index] ?? 0} />
-    <span class='w-4 text-right ml-1'>T{props.index + 1}</span>
+    <div class='flex shrink-0 items-center gap-1 tabular-nums font-mono'>
+      <ThrusterRpm rpm={rovTelemetryStore.thrusterRpms[props.index] ?? 0} />
+    </div>
+    <span class='w-4 shrink-0 text-right'>T{props.index + 1}</span>
   </Badge>
 );
 

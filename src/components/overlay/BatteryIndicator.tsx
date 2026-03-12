@@ -36,7 +36,7 @@ const BatteryIndicator: Component = () => {
         variant={
           rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
         }
-        class='bg-background/50 backdrop-blur-sm border-border/50'
+        class='bg-background/50 backdrop-blur-sm border-border/50 w-[4.75rem] justify-between tabular-nums font-mono whitespace-nowrap'
       >
         {getBatteryIcon(rovStatusStore.batteryPercentage)}
         {rovStatusStore.batteryPercentage.toFixed(0)}%
