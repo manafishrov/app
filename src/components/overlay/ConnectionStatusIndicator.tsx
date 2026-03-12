@@ -1,20 +1,21 @@
-import { useStore } from '@tanstack/react-store';
+import type { Component } from 'solid-js';
+
+import { Badge } from '@manafishrov/ui/badge';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
-function ConnectionStatusIndicator() {
-  const { isConnected, delay } = useStore(connectionStatusStore);
-
-  return (
-    <div className='flex h-4 w-28 items-center space-x-2'>
-      <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-destructive'}`} />
-      {isConnected ? (
-        <span className='text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>{delay} ms</span>
-      ) : (
-        <span className='text-xs drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>Disconnected</span>
-      )}
-    </div>
-  );
-}
+const ConnectionStatusIndicator: Component = () => (
+  <Badge
+    variant={connectionStatusStore.isConnected ? 'secondary' : 'destructive'}
+    class='bg-background/50 backdrop-blur-sm border-border/50'
+  >
+    <div
+      class={`h-2 w-2 rounded-full mr-1.5 ${
+        connectionStatusStore.isConnected ? 'bg-green-500' : 'bg-destructive'
+      }`}
+    />
+    {connectionStatusStore.isConnected ? `${connectionStatusStore.delay} ms` : 'Disconnected'}
+  </Badge>
+);
 
 export { ConnectionStatusIndicator };

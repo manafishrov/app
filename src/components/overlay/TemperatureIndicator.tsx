@@ -1,37 +1,36 @@
-import { useStore } from '@tanstack/react-store';
-import { CircuitBoardIcon, ThermometerIcon, WavesIcon } from 'lucide-react';
-import { memo } from 'react';
+import type { Component } from 'solid-js';
+
+import { Badge } from '@manafishrov/ui/badge';
+import ThermometerIcon from '~icons/material-symbols/device-thermostat';
+import WaterIcon from '~icons/material-symbols/water-drop';
+import CircuitIcon from '~icons/material-symbols/memory';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-const TemperatureIndicator = memo(function TemperatureIndicator() {
-  const { waterTemperature, electronicsTemperature } = useStore(rovTelemetryStore, (state) => ({
-    waterTemperature: state.waterTemperature,
-    electronicsTemperature: state.electronicsTemperature,
-  }));
-  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
-
-  if (!isConnected) {return;}
-
-  return (
-    <>
-      <div className='flex w-17 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
-        <span className='relative'>
-          <CircuitBoardIcon className='h-4 w-4' />
-          <ThermometerIcon className='absolute top-0 -left-2.5 h-4 w-4' />
-        </span>
-        <span className='text-xs'>{electronicsTemperature.toFixed(1)}°C</span>
+const TemperatureIndicator: Component = () => (
+  <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
+    <Badge variant="secondary" class="bg-background/50 backdrop-blur-sm border-border/50 justify-between w-28">
+      <div class="flex items-center text-muted-foreground">
+        <div class="relative flex items-center mr-1">
+          <ThermometerIcon class="size-4 -ml-1" />
+          <WaterIcon class="size-3 -ml-1" />
+        </div>
+        <span class="text-[10px] uppercase tracking-wider">Ext</span>
       </div>
-      <div className='flex w-17 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
-        <span className='relative'>
-          <WavesIcon className='h-4 w-4' />
-          <ThermometerIcon className='absolute top-0 -left-2.5 h-4 w-4' />
-          <span className='text-xs'>{waterTemperature.toFixed(1)}°C</span>
-        </span>
+      <span class="tabular-nums font-mono">{rovTelemetryStore.waterTemperature.toFixed(1)}°C</span>
+    </Badge>
+    <Badge variant="secondary" class="bg-background/50 backdrop-blur-sm border-border/50 justify-between w-28">
+      <div class="flex items-center text-muted-foreground">
+        <div class="relative flex items-center mr-1">
+          <ThermometerIcon class="size-4 -ml-1" />
+          <CircuitIcon class="size-3 -ml-1" />
+        </div>
+        <span class="text-[10px] uppercase tracking-wider">Int</span>
       </div>
-    </>
-  );
-});
+      <span class="tabular-nums font-mono">{rovTelemetryStore.electronicsTemperature.toFixed(1)}°C</span>
+    </Badge>
+  </div>
+);
 
 export { TemperatureIndicator };

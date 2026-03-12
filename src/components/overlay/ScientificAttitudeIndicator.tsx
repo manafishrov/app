@@ -1,198 +1,210 @@
-import { memo } from 'react';
+import type { JSX } from 'solid-js';
+
+import { type Component, For } from 'solid-js';
 
 type ScientificAttitudeIndicatorProps = {
   size: number;
   pitch: number;
   roll: number;
+  yaw: number;
   desiredPitch: number;
   desiredRoll: number;
-  style?: React.CSSProperties;
+  desiredYaw: number;
+  style?: JSX.CSSProperties;
 };
 
-const ScientificAttitudeIndicator = memo(function ScientificAttitudeIndicator({
-  size,
-  pitch,
-  roll,
-  desiredPitch,
-  desiredRoll,
-  style,
-}: ScientificAttitudeIndicatorProps) {
-  const center = size / 2;
-  const pitchScale = size / 200;
+const getYawLabel = (deg: number): string => {
+  if (deg === -180 || deg === 180) return '90';
+  if (deg === -135 || deg === 45) return '-45';
+  if (deg === -90 || deg === 90) return '0';
+  if (deg === -45 || deg === 135) return '45';
+  if (deg === 0) return '-90';
+  return '';
+};
+
+const getYawTranslateY = (deg: number): number => {
+  if (deg === -180 || deg === 180) return 2;
+  if (deg === 0) return -2;
+  return 1;
+};
+
+const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> = (props) => {
+  const center = () => props.size / 2;
+  const pitchScale = () => props.size / 200;
+  const textSize = (ratio: number) => `${props.size * ratio}px`;
 
   return (
     <div
-      className='bg-muted relative rounded-2xl opacity-75'
-      style={{ width: size, height: size, ...style }}
+      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75'
+      style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg
-        width={size}
-        height={size}
-        viewBox={`-${size * 0.05} -${size * 0.05} ${size * 1.1} ${size * 1.1}`}
+        width={props.size}
+        height={props.size}
+        viewBox={`-${props.size * 0.05} -${props.size * 0.05} ${props.size * 1.1} ${props.size * 1.1}`}
       >
         <circle
-          cx={center}
-          cy={center}
-          r={center - size * 0.05}
+          cx={center()}
+          cy={center()}
+          r={center() - props.size * 0.05}
           fill='transparent'
           stroke='oklch(1 0 0 / 10%)'
-          strokeWidth={size * 0.01}
+          stroke-width={props.size * 0.01}
         />
 
-        {[-90, -60, -30, -15, 0, 15, 30, 60, 90].map((deg) => (
-          <g key={deg}>
-            <line
-              x1={center - size * 0.4}
-              y1={center + deg * pitchScale}
-              x2={center + size * 0.4}
-              y2={center + deg * pitchScale}
-              stroke='oklch(0.985 0 0)'
-              strokeWidth={size * 0.005}
-              strokeOpacity='0.5'
-            />
-            <text
-              x={center - size * 0.4 - size * 0.025}
-              y={center + deg * pitchScale + size * 0.025}
-              fill='oklch(0.985 0 0)'
-              fontSize={size * 0.05}
-              textAnchor='end'
-            >
-              {deg}°
-            </text>
-            <text
-              x={center + size * 0.4 + size * 0.025}
-              y={center + deg * pitchScale + size * 0.025}
-              fill='oklch(0.985 0 0)'
-              fontSize={size * 0.05}
-              textAnchor='start'
-            >
-              {deg}°
-            </text>
-          </g>
-        ))}
-
-        {[-180, -135, -90, -45, 0, 45, 90, 135, 180].map((deg) => (
-          <g key={deg} transform={`rotate(${deg} ${center} ${center})`}>
-            <line
-              x1={center}
-              y1={size * 0.075}
-              x2={center}
-              y2={size * 0.125}
-              stroke='oklch(0.985 0 0)'
-              strokeWidth={size * 0.01}
-            />
-            {(deg <= -90 || (deg >= -45 && deg <= 90) || deg >= 135) && (
+        <For each={[-90, -60, -30, -15, 0, 15, 30, 60, 90]}>
+          {(deg) => (
+            <g>
+              <line
+                x1={center() - props.size * 0.4}
+                y1={center() + deg * pitchScale()}
+                x2={center() + props.size * 0.4}
+                y2={center() + deg * pitchScale()}
+                stroke='oklch(0.985 0 0)'
+                stroke-width={props.size * 0.005}
+                stroke-opacity='0.5'
+              />
               <text
-                x={center}
-                y={size * 0.17}
+                x={center() - props.size * 0.4 - props.size * 0.025}
+                y={center() + deg * pitchScale() + props.size * 0.025}
                 fill='oklch(0.985 0 0)'
-                fontSize={size * 0.06}
-                textAnchor='middle'
-                alignmentBaseline='middle'
-                transform={`
-                  rotate(${-deg} ${center} ${size * 0.17})
-                  translate(0 ${deg === -180 || deg === 180 ? 2 : (deg === 0 ? -2 : 1)})
-                `}
+                font-size={textSize(0.05)}
+                text-anchor='end'
               >
-                {deg === -180
-                  ? 90
-                  : deg === -135
-                    ? -45
-                    : deg === -90
-                      ? 0
-                      : deg === -45
-                        ? 45
-                        : deg === 0
-                          ? -90
-                          : deg === 45
-                            ? -45
-                            : deg === 90
-                              ? 0
-                              : deg === 135
-                                ? 45
-                                : deg === 180
-                                  ? 90
-                                  : ''}
-                °
+                {deg}°
               </text>
-            )}
-          </g>
-        ))}
+              <text
+                x={center() + props.size * 0.4 + props.size * 0.025}
+                y={center() + deg * pitchScale() + props.size * 0.025}
+                fill='oklch(0.985 0 0)'
+                font-size={textSize(0.05)}
+                text-anchor='start'
+              >
+                {deg}°
+              </text>
+            </g>
+          )}
+        </For>
+
+        <For each={[-180, -135, -90, -45, 0, 45, 90, 135, 180]}>
+          {(deg) => (
+            <g transform={`rotate(${deg} ${center()} ${center()})`}>
+              <line
+                x1={center()}
+                y1={props.size * 0.075}
+                x2={center()}
+                y2={props.size * 0.125}
+                stroke='oklch(0.985 0 0)'
+                stroke-width={props.size * 0.01}
+              />
+              {(deg <= -90 || (deg >= -45 && deg <= 90) || deg >= 135) && (
+                <text
+                  x={center()}
+                  y={props.size * 0.17}
+                  fill='oklch(0.985 0 0)'
+                  font-size={textSize(0.06)}
+                  text-anchor='middle'
+                  alignment-baseline='middle'
+                  transform={`
+                    rotate(${-deg} ${center()} ${props.size * 0.17})
+                    translate(0 ${getYawTranslateY(deg)})
+                  `}
+                >
+                  {getYawLabel(deg)}°
+                </text>
+              )}
+            </g>
+          )}
+        </For>
 
         <g
           style={{
             transform: `
-              translate(${center}px, ${center}px)
-              translateY(${-desiredPitch * pitchScale}px)
-              rotate(${desiredRoll}deg)
-              translate(${-center}px, ${-center}px)
+              translate(${center()}px, ${center()}px)
+              translateY(${-props.desiredPitch * pitchScale()}px)
+              rotate(${props.desiredRoll}deg)
+              translate(${-center()}px, ${-center()}px)
             `,
           }}
         >
           <line
-            x1={center - size * 0.25}
-            y1={center}
-            x2={center + size * 0.25}
-            y2={center}
+            x1={center() - props.size * 0.25}
+            y1={center()}
+            x2={center() + props.size * 0.25}
+            y2={center()}
             stroke='#ffff00'
-            strokeWidth={size * 0.01}
-            strokeDasharray={`${size * 0.02} ${size * 0.02}`}
+            stroke-width={props.size * 0.01}
+            stroke-dasharray={`${props.size * 0.02} ${props.size * 0.02}`}
           />
           <path
-            d={`M ${-size * 0.02},${-size * 0.02} L 0,${-size * 0.04} L ${size * 0.02},${-size * 0.02}`}
+            d={`M ${-props.size * 0.02},${-props.size * 0.02} L 0,${-props.size * 0.04} L ${props.size * 0.02},${-props.size * 0.02}`}
             fill='#ffff00'
-            transform={`translate(${center} ${center})`}
+            transform={`translate(${center()} ${center()})`}
           />
         </g>
 
         <g
           style={{
             transform: `
-              translate(${center}px, ${center}px)
-              translateY(${-pitch * pitchScale}px)
-              rotate(${roll}deg)
-              translate(${-center}px, ${-center}px)
+              translate(${center()}px, ${center()}px)
+              translateY(${-props.pitch * pitchScale()}px)
+              rotate(${props.roll}deg)
+              translate(${-center()}px, ${-center()}px)
             `,
           }}
         >
           <line
-            x1={center - size * 0.25}
-            y1={center}
-            x2={center - size * 0.075}
-            y2={center}
+            x1={center() - props.size * 0.25}
+            y1={center()}
+            x2={center() - props.size * 0.075}
+            y2={center()}
             stroke='#00ff00'
-            strokeWidth={size * 0.01}
+            stroke-width={props.size * 0.01}
           />
           <line
-            x1={center + size * 0.075}
-            y1={center}
-            x2={center + size * 0.25}
-            y2={center}
+            x1={center() + props.size * 0.075}
+            y1={center()}
+            x2={center() + props.size * 0.25}
+            y2={center()}
             stroke='#00ff00'
-            strokeWidth={size * 0.01}
+            stroke-width={props.size * 0.01}
           />
-          <circle cx={center} cy={center} r={size * 0.02} fill='#00ff00' />
+          <circle cx={center()} cy={center()} r={props.size * 0.02} fill='#00ff00' />
           <path
-            d={`M ${-size * 0.02},${-size * 0.02} L 0,${-size * 0.04} L ${size * 0.02},${-size * 0.02}`}
+            d={`M ${-props.size * 0.02},${-props.size * 0.02} L 0,${-props.size * 0.04} L ${props.size * 0.02},${-props.size * 0.02}`}
             fill='#00ff00'
-            transform={`translate(${center} ${center})`}
+            transform={`translate(${center()} ${center()})`}
           />
         </g>
 
-        <text x={size * 0.1} y={size - size * 0.1} fill='oklch(0.985 0 0)' fontSize={size * 0.06}>
-          Pitch: {pitch.toFixed(1)}°
+        <text
+          x={props.size * 0.1}
+          y={props.size - props.size * 0.1}
+          fill='oklch(0.985 0 0)'
+          font-size={textSize(0.06)}
+        >
+          P: {props.pitch.toFixed(1)}°
         </text>
         <text
-          x={size - size * 0.4}
-          y={size - size * 0.1}
+          x={props.size - props.size * 0.4}
+          y={props.size - props.size * 0.1}
           fill='oklch(0.985 0 0)'
-          fontSize={size * 0.06}
+          font-size={textSize(0.06)}
         >
-          Roll: {roll.toFixed(1)}°
+          R: {props.roll.toFixed(1)}°
+        </text>
+        <text
+          x={center()}
+          y={props.size - props.size * 0.02}
+          fill='oklch(0.985 0 0)'
+          font-size={textSize(0.06)}
+          text-anchor='middle'
+        >
+          Y: {props.yaw.toFixed(1)}°
         </text>
       </svg>
     </div>
   );
-});
+};
 
 export { ScientificAttitudeIndicator };

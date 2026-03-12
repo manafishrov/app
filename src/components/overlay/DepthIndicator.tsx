@@ -1,22 +1,28 @@
-import { useStore } from '@tanstack/react-store';
-import { RulerDimensionLineIcon } from 'lucide-react';
-import { memo } from 'react';
+import type { Component } from 'solid-js';
+
+import { Badge } from '@manafishrov/ui/badge';
+import RulerIcon from '~icons/material-symbols/straighten';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
-const DepthIndicator = memo(function DepthIndicator() {
-  const depth = useStore(rovTelemetryStore, (state) => state.depth);
-  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
-
-  if (!isConnected) {return;}
-
-  return (
-    <div className='flex w-14 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]'>
-      <RulerDimensionLineIcon className='h-4 w-4 rotate-90' />
-      <span className='text-xs'>{depth.toFixed(1)}m</span>
-    </div>
-  );
-});
+const DepthIndicator: Component = () => (
+  <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
+    <Badge variant="secondary" class="bg-background/50 backdrop-blur-sm border-border/50 justify-between w-28">
+      <div class="flex items-center text-muted-foreground">
+        <RulerIcon class="size-4 mr-1 rotate-90" />
+        <span class="text-[10px] uppercase tracking-wider">Cur</span>
+      </div>
+      <span class="tabular-nums font-mono">{rovTelemetryStore.depth.toFixed(1)}m</span>
+    </Badge>
+    <Badge variant="secondary" class="bg-background/50 backdrop-blur-sm border-border/50 justify-between w-28">
+      <div class="flex items-center text-muted-foreground">
+        <RulerIcon class="size-4 mr-1 rotate-90 opacity-50" />
+        <span class="text-[10px] uppercase tracking-wider">Tgt</span>
+      </div>
+      <span class="tabular-nums font-mono text-muted-foreground">{rovTelemetryStore.desiredDepth.toFixed(1)}m</span>
+    </Badge>
+  </div>
+);
 
 export { DepthIndicator };

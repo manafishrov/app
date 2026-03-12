@@ -137,7 +137,9 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
       toastOptions.id = toastId;
     }
 
-    toastOptions.description = description;
+    if (description !== undefined) {
+      toastOptions.description = description;
+    }
 
     if (payload.action) {
       toastOptions.action = {

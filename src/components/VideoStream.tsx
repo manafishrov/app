@@ -4,6 +4,7 @@ import { logInfo } from '@/lib/log';
 import { createWebRTCConnection, createRecording } from '@/lib/stream';
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
+
 const VideoStream = () => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);

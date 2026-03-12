@@ -1,36 +1,48 @@
-import { useStore } from '@tanstack/react-store';
-import { BatteryFullIcon, BatteryIcon, BatteryLowIcon, BatteryMediumIcon } from 'lucide-react';
+import type { Component, JSX } from 'solid-js';
 
-import { cx } from '@/lib/utils';
+import { Badge } from '@manafishrov/ui/badge';
+import BatteryEmptyIcon from '~icons/material-symbols/battery-0-bar';
+import BatteryLowIcon from '~icons/material-symbols/battery-2-bar';
+import BatteryMediumIcon from '~icons/material-symbols/battery-5-bar';
+import BatteryFullIcon from '~icons/material-symbols/battery-full';
+
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
-function getBatteryIcon(percentage: number) {
-  if (percentage > 70) {return BatteryFullIcon;}
-  if (percentage > 40) {return BatteryMediumIcon;}
-  if (percentage > 10) {return BatteryLowIcon;}
-  return BatteryIcon;
-}
+const BATTERY_HIGH_THRESHOLD = 70;
+const BATTERY_MEDIUM_THRESHOLD = 40;
+const BATTERY_LOW_THRESHOLD = 10;
 
-function BatteryIndicator() {
-  const batteryPercentage = useStore(rovStatusStore, (state) => state.batteryPercentage);
-  const isConnected = useStore(connectionStatusStore, (state) => state.isConnected);
+const getBatteryIcon = (percentage: number): JSX.Element => {
+  if (percentage > BATTERY_HIGH_THRESHOLD) {
+    return <BatteryFullIcon class='size-4 mr-1' />;
+  }
 
-  const Icon = getBatteryIcon(batteryPercentage);
+  if (percentage > BATTERY_MEDIUM_THRESHOLD) {
+    return <BatteryMediumIcon class='size-4 mr-1' />;
+  }
 
-  if (!isConnected) {return;}
+  if (percentage > BATTERY_LOW_THRESHOLD) {
+    return <BatteryLowIcon class='size-4 mr-1' />;
+  }
 
+  return <BatteryEmptyIcon class='size-4 mr-1' />;
+};
+
+const BatteryIndicator: Component = () => {
   return (
-    <div
-      className={cx(
-        'flex w-14 items-center gap-1 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]',
-        batteryPercentage < 10 && 'text-destructive',
-      )}
-    >
-      <Icon className={cx('h-4 w-4', batteryPercentage < 10 && 'text-destructive')} />
-      <span className='text-xs'>{batteryPercentage.toFixed(0)}%</span>
+    <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
+      <Badge
+        variant={
+          rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
+        }
+        class='bg-background/50 backdrop-blur-sm border-border/50'
+      >
+        {getBatteryIcon(rovStatusStore.batteryPercentage)}
+        {rovStatusStore.batteryPercentage.toFixed(0)}%
+      </Badge>
     </div>
   );
-}
+};
 
 export { BatteryIndicator };

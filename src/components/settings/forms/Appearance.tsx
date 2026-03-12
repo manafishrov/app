@@ -102,9 +102,9 @@ export const Appearance: Component = () => {
                 <RadioGroupItemControl />
                 <RadioGroupItemText>Scientific</RadioGroupItemText>
               </RadioGroupItem>
-              <RadioGroupItem value='model3D'>
+              <RadioGroupItem value='model3D' disabled>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>3D Model</RadioGroupItemText>
+                <RadioGroupItemText>3D Model (Coming Soon)</RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value='disabled'>
                 <RadioGroupItemControl />
