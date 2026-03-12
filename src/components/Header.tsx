@@ -1,16 +1,10 @@
 import { cn } from '@manafishrov/ui';
-import { Kbd, KbdGroup } from '@manafishrov/ui/kbd';
-import { Link } from '@manafishrov/ui/link';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipPositioner,
-  TooltipTrigger,
-  TooltipArrow,
-} from '@manafishrov/ui/tooltip';
 import { useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import SettingsIcon from '~icons/ic/settings';
+
+import { RecordingButton } from '@/components/header/RecordingButton';
+import { SettingsLink } from '@/components/header/SettingsLink';
+import { SystemHealthPopover } from '@/components/header/SystemHealthPopover';
 
 function Header() {
   const navigate = useNavigate();
@@ -167,29 +161,10 @@ function Header() {
           Manafish
         </span>
 
-        <div data-tauri-drag-region={false}>
-          <Tooltip positioning={{ placement: 'bottom' }}>
-            <TooltipTrigger
-              tabIndex={-1}
-              asChild={(props) => (
-                <Link {...props()} to='/settings' size='icon-xs' variant='outline'>
-                  <SettingsIcon />
-                </Link>
-              )}
-            />
-            <TooltipPositioner>
-              <TooltipContent>
-                <div class='flex items-center gap-2'>
-                  <span>Settings</span>
-                  <KbdGroup>
-                    <Kbd>{isMac() ? '⌘' : 'Ctrl'}</Kbd>
-                    <Kbd>,</Kbd>
-                  </KbdGroup>
-                </div>
-                <TooltipArrow />
-              </TooltipContent>
-            </TooltipPositioner>
-          </Tooltip>
+        <div data-tauri-drag-region={false} class='flex items-center gap-1'>
+          <RecordingButton />
+          <SystemHealthPopover />
+          <SettingsLink isMac={isMac()} />
         </div>
       </div>
     </header>
