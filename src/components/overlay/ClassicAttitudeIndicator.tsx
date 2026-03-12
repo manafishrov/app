@@ -57,8 +57,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
             <circle cx={center()} cy={center()} r={radius()} />
           </clipPath>
         </defs>
-
-        {/* Bezel */}
         <circle
           cx={center()}
           cy={center()}
@@ -68,10 +66,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           stroke-opacity='0.15'
           stroke-width={props.size * 0.01}
         />
-
-        {/* Clipped area for moving parts */}
         <g clip-path={`url(#${clipId})`}>
-          {/* Moving Sky/Ground and Pitch Ladder */}
           <g
             style={{
               transform: `rotate(${-props.roll}deg)`,
@@ -79,7 +74,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
             }}
           >
             <g style={{ transform: `translateY(${props.pitch * pitchScale()}px)` }}>
-              {/* Sky */}
               <rect
                 x={center() - props.size * 1.5}
                 y={center() - props.size * 3}
@@ -87,7 +81,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
                 height={props.size * 3}
                 fill='#4A90D9'
               />
-              {/* Ground */}
               <rect
                 x={center() - props.size * 1.5}
                 y={center()}
@@ -95,7 +88,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
                 height={props.size * 3}
                 fill='#6B4226'
               />
-              {/* Horizon Line */}
               <line
                 x1={center() - props.size * 1.5}
                 y1={center()}
@@ -104,8 +96,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
                 stroke='white'
                 stroke-width={props.size * 0.01}
               />
-
-              {/* Pitch Ladder */}
               <For each={pitchLines}>
                 {(deg) => {
                   const isLong = Math.abs(deg) % 10 === 0;
@@ -150,8 +140,6 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
             </g>
           </g>
         </g>
-
-        {/* Fixed Roll Arc */}
         <g>
           <path
             d={`M ${center() - arcRadius()} ${center()} A ${arcRadius()} ${arcRadius()} 0 0 1 ${center() + arcRadius()} ${center()}`}
@@ -166,8 +154,8 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
                   <Match when={tick.type === 'triangle'}>
                     <polygon
                       points={`
-                        ${center()},${center() - arcRadius()} 
-                        ${center() - props.size * 0.02},${center() - arcRadius() - props.size * 0.04} 
+                        ${center()},${center() - arcRadius()}
+                        ${center() - props.size * 0.02},${center() - arcRadius() - props.size * 0.04}
                         ${center() + props.size * 0.02},${center() - arcRadius() - props.size * 0.04}
                       `}
                       fill='white'
@@ -198,20 +186,16 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
             )}
           </For>
         </g>
-
-        {/* Roll Pointer (moves with roll) */}
         <g transform={`rotate(${-props.roll} ${center()} ${center()})`}>
           <polygon
             points={`
-              ${center()},${center() - arcRadius()} 
-              ${center() - props.size * 0.02},${center() - arcRadius() + props.size * 0.045} 
+              ${center()},${center() - arcRadius()}
+              ${center() - props.size * 0.02},${center() - arcRadius() + props.size * 0.045}
               ${center() + props.size * 0.02},${center() - arcRadius() + props.size * 0.045}
             `}
             fill='white'
           />
         </g>
-
-        {/* Fixed Aircraft Reference Symbol */}
         <g>
           <line
             x1={center() - props.size * 0.27}
@@ -249,11 +233,9 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           />
           <circle cx={center()} cy={center()} r={props.size * 0.028} fill='#FFD700' />
         </g>
-
-        {/* Text Labels */}
         <text
-          x={props.size * 0.035}
-          y={props.size * 0.085}
+          x={props.size * 0.01}
+          y={props.size * 0.05}
           fill='white'
           font-size={textSize(0.055)}
           text-anchor='start'
@@ -263,8 +245,8 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           ΔYaw: {deltaYaw().toFixed(1)}°
         </text>
         <text
-          x={props.size * 0.035}
-          y={props.size - props.size * 0.03}
+          x={props.size * 0.01}
+          y={props.size - props.size * 0.01}
           fill='white'
           font-size={textSize(0.055)}
           text-anchor='start'
@@ -274,8 +256,8 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           Pitch: {props.pitch.toFixed(1)}°
         </text>
         <text
-          x={props.size * 0.62}
-          y={props.size - props.size * 0.03}
+          x={props.size * 0.58}
+          y={props.size - props.size * 0.01}
           fill='white'
           font-size={textSize(0.055)}
           text-anchor='start'
