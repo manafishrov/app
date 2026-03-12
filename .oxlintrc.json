@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["**/autoImports.d.ts", "**/paraglide/**", "**/*.gen.ts"],
   "env": {
     "browser": true,
     "es2022": true
@@ -89,12 +90,6 @@
             "ignore": ["^__root$", "^index$"]
           }
         ]
-      }
-    },
-    {
-      "files": ["**/*.gen.ts", "**/autoImports.d.ts"],
-      "rules": {
-        "unicorn/no-abusive-eslint-disable": "off"
       }
     }
   ]
