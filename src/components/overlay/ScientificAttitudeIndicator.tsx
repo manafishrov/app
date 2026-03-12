@@ -18,7 +18,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
 
   return (
     <div
-      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75'
+      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75 text-foreground'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg
@@ -31,7 +31,8 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           cy={center()}
           r={center() - props.size * 0.05}
           fill='transparent'
-          stroke='oklch(1 0 0 / 10%)'
+          stroke='currentColor'
+          stroke-opacity='0.15'
           stroke-width={props.size * 0.01}
         />
 
@@ -43,14 +44,14 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
                 y1={center() + deg * pitchScale()}
                 x2={center() + props.size * 0.4}
                 y2={center() + deg * pitchScale()}
-                stroke='oklch(0.985 0 0)'
+                stroke='currentColor'
                 stroke-width={props.size * 0.005}
                 stroke-opacity='0.5'
               />
               <text
                 x={center() - props.size * 0.4 - props.size * 0.025}
                 y={center() + deg * pitchScale() + props.size * 0.025}
-                fill='oklch(0.985 0 0)'
+                fill='currentColor'
                 font-size={textSize(0.05)}
                 text-anchor='end'
               >
@@ -59,7 +60,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
               <text
                 x={center() + props.size * 0.4 + props.size * 0.025}
                 y={center() + deg * pitchScale() + props.size * 0.025}
-                fill='oklch(0.985 0 0)'
+                fill='currentColor'
                 font-size={textSize(0.05)}
                 text-anchor='start'
               >
@@ -77,14 +78,14 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
                 y1={props.size * 0.075}
                 x2={center()}
                 y2={props.size * 0.125}
-                stroke='oklch(0.985 0 0)'
+                stroke='currentColor'
                 stroke-width={props.size * 0.01}
               />
               {(deg <= -90 || (deg >= -45 && deg <= 90) || deg >= 135) && (
                 <text
                   x={center()}
                   y={props.size * 0.17}
-                  fill='oklch(0.985 0 0)'
+                  fill='currentColor'
                   font-size={textSize(0.06)}
                   text-anchor='middle'
                   alignment-baseline='middle'
@@ -182,7 +183,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
         <text
           x={props.size * 0.1}
           y={props.size - props.size * 0.1}
-          fill='oklch(0.985 0 0)'
+          fill='currentColor'
           font-size={textSize(0.06)}
         >
           Pitch: {props.pitch.toFixed(1)}°
@@ -190,7 +191,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
         <text
           x={props.size - props.size * 0.4}
           y={props.size - props.size * 0.1}
-          fill='oklch(0.985 0 0)'
+          fill='currentColor'
           font-size={textSize(0.06)}
         >
           Roll: {props.roll.toFixed(1)}°

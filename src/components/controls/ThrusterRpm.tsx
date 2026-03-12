@@ -1,14 +1,13 @@
 import type { Component } from 'solid-js';
 
-import { cn } from '@manafishrov/ui';
-import ModeFan2Icon from '~icons/material-symbols/mode-fan';
+import { PropellerIcon } from '@/components/icons/PropellerIcon';
 
 const ThrusterRpm: Component<{ rpm: number }> = ({ rpm }) => {
   return (
     <>
       {Math.round(rpm)}
-      <ModeFan2Icon
-        class={cn('size-5', rpm > 0 && 'animate-spin')}
+      <PropellerIcon
+        class={rpm > 0 ? 'size-5 animate-spin' : 'size-5'}
         style={{
           'animation-duration': `${rpm > 0 ? 60_000 / (rpm / 30) : 0}ms`,
         }}

@@ -1,15 +1,15 @@
 import type { ComponentProps } from 'solid-js';
 
 type PropellerIconProps = ComponentProps<'svg'> & {
-  class?: string;
+  class?: string | undefined;
 };
 
 function PropellerIcon(props: PropellerIconProps) {
   return (
     <svg
-      width='72'
-      height='72'
-      viewBox='0 0 72 72'
+      width='1em'
+      height='1em'
+      viewBox='24 24 24 24'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
       {...props}
