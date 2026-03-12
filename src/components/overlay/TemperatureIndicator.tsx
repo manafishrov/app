@@ -4,6 +4,7 @@ import ThermometerIcon from '~icons/material-symbols/device-thermostat';
 import CircuitIcon from '~icons/material-symbols/memory';
 import WaterIcon from '~icons/material-symbols/water-drop';
 
+import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
@@ -23,7 +24,9 @@ const TemperatureIndicator: Component = () => {
             <ThermometerIcon class='size-4 -ml-1' />
             <WaterIcon class='size-3 -ml-1' />
           </div>
-          <span class='text-[10px] uppercase tracking-wider'>Ext</span>
+          <span class='text-[10px] uppercase tracking-wider'>
+            {m.overlay_temperature_external_short()}
+          </span>
         </div>
         <span class='shrink-0 tabular-nums font-mono'>
           {rovTelemetryStore.waterTemperature.toFixed(1)}°C
@@ -39,7 +42,9 @@ const TemperatureIndicator: Component = () => {
             <ThermometerIcon class='size-4 -ml-1' />
             <CircuitIcon class='size-3 -ml-1' />
           </div>
-          <span class='text-[10px] uppercase tracking-wider'>Int</span>
+          <span class='text-[10px] uppercase tracking-wider'>
+            {m.overlay_temperature_internal_short()}
+          </span>
         </div>
         <span class='shrink-0 tabular-nums font-mono'>
           {rovTelemetryStore.electronicsTemperature.toFixed(1)}°C

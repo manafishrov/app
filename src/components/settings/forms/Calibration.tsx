@@ -39,6 +39,7 @@ import RestartAltIcon from '~icons/material-symbols/restart-alt';
 import { ThrusterRpm } from '@/components/ThrusterRpm';
 import { logError } from '@/lib/log';
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from '@/lib/thrusterPresets';
+import * as m from '@/paraglide/messages';
 import {
   type Row,
   type ThrusterAllocation,
@@ -52,24 +53,24 @@ const THRUSTER_INDICES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 const THRUSTER_COLUMNS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 const PIN_NUMBERS = [6, 7, 8, 9, 18, 19, 20, 21] as const;
 const ROW_LABELS = [
-  'Surge',
-  'Sway',
-  'Heave',
-  'Pitch',
-  'Yaw',
-  'Roll',
-  'Action 1',
-  'Action 2',
+  m.calibration_thruster_allocation_surge(),
+  m.calibration_thruster_allocation_sway(),
+  m.calibration_thruster_allocation_heave(),
+  m.calibration_thruster_allocation_pitch(),
+  m.calibration_thruster_allocation_yaw(),
+  m.calibration_thruster_allocation_roll(),
+  m.calibration_thruster_allocation_action_1(),
+  m.calibration_thruster_allocation_action_2(),
 ] as const;
 const ROW_LABEL_TOOLTIPS = [
-  'Thrusters to activate to move forward.',
-  'Thrusters to activate to move right.',
-  'Thrusters to activate to move upwards.',
-  'Thrusters to activate to pitch up.',
-  'Thrusters to activate to yaw right.',
-  'Thrusters to activate to roll right.',
-  'Thrusters to activate for action 1 (custom or auxiliary function).',
-  'Thrusters to activate for action 2 (custom or auxiliary function).',
+  m.calibration_thruster_allocation_surge_tooltip(),
+  m.calibration_thruster_allocation_sway_tooltip(),
+  m.calibration_thruster_allocation_heave_tooltip(),
+  m.calibration_thruster_allocation_pitch_tooltip(),
+  m.calibration_thruster_allocation_yaw_tooltip(),
+  m.calibration_thruster_allocation_roll_tooltip(),
+  m.calibration_thruster_allocation_action_1_tooltip(),
+  m.calibration_thruster_allocation_action_2_tooltip(),
 ] as const;
 
 const PRESET_ROW_KEYS: (keyof ThrusterPresetRow)[] = [
@@ -92,8 +93,8 @@ const identifierCollection = createListCollection<{ value: string; label: string
 
 const spinDirectionCollection = createListCollection<{ value: string; label: string }>({
   items: [
-    { value: '1', label: 'Normal' },
-    { value: '-1', label: 'Reversed' },
+    { value: '1', label: m.calibration_thruster_pin_setup_spin_direction_normal() },
+    { value: '-1', label: m.calibration_thruster_pin_setup_spin_direction_reversed() },
   ],
 });
 
@@ -279,7 +280,7 @@ export const Calibration: Component = () => {
 
     await invoke('start_thruster_test', { payload: index }).catch((error) => {
       logError('Failed to start thruster test:', error);
-      toast.create({ title: 'Failed to start thruster test', type: 'error' });
+      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
     });
 
     setTimeout(() => {
@@ -396,10 +397,9 @@ export const Calibration: Component = () => {
     <form.AppForm>
       <form.Form class='mb-24'>
         <Fieldset>
-          <FieldLegend>Thruster pin setup</FieldLegend>
+          <FieldLegend>{m.calibration_thruster_pin_setup_title()}</FieldLegend>
           <p class='text-muted-foreground mb-4 text-sm'>
-            Configure each microcontroller pin and test it to identify the matching thruster. Set
-            spin direction so each thruster rotates forward for your propeller type.
+            {m.calibration_thruster_pin_setup_description()}
           </p>
           <Table class='border'>
             <TableHeader>
@@ -410,14 +410,12 @@ export const Calibration: Component = () => {
                       placement: 'top',
                     }}
                   >
-                    <TooltipTrigger>Pin</TooltipTrigger>
+                    <TooltipTrigger>{m.calibration_thruster_pin_setup_pin_label()}</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>
-                            The general-purpose pin on the microcontroller that the thruster uses.
-                          </p>
+                          <p>{m.calibration_thruster_pin_setup_pin_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -429,12 +427,14 @@ export const Calibration: Component = () => {
                       placement: 'top',
                     }}
                   >
-                    <TooltipTrigger>Identifier</TooltipTrigger>
+                    <TooltipTrigger>
+                      {m.calibration_thruster_pin_setup_identifier_label()}
+                    </TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>Identifier used by thruster allocation for this physical thruster.</p>
+                          <p>{m.calibration_thruster_pin_setup_identifier_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -446,12 +446,14 @@ export const Calibration: Component = () => {
                       placement: 'top',
                     }}
                   >
-                    <TooltipTrigger>Spin Direction</TooltipTrigger>
+                    <TooltipTrigger>
+                      {m.calibration_thruster_pin_setup_spin_direction_label()}
+                    </TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>The default propeller direction for this thruster.</p>
+                          <p>{m.calibration_thruster_pin_setup_spin_direction_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -463,12 +465,12 @@ export const Calibration: Component = () => {
                       placement: 'top',
                     }}
                   >
-                    <TooltipTrigger>Test</TooltipTrigger>
+                    <TooltipTrigger>{m.calibration_thruster_pin_setup_test_label()}</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>Run a short low-speed spin test on the selected pin.</p>
+                          <p>{m.calibration_thruster_pin_setup_test_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -480,12 +482,12 @@ export const Calibration: Component = () => {
                       placement: 'top',
                     }}
                   >
-                    <TooltipTrigger>RPM</TooltipTrigger>
+                    <TooltipTrigger>{m.calibration_thruster_pin_setup_rpm_label()}</TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>Live revolutions per minute from telemetry.</p>
+                          <p>{m.calibration_thruster_pin_setup_rpm_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -509,7 +511,7 @@ export const Calibration: Component = () => {
                           handleTestThruster(index());
                         }}
                       >
-                        Test
+                        {m.common_test()}
                       </Button>
                     </TableCell>
                     <TableCell class='w-24'>
@@ -525,17 +527,16 @@ export const Calibration: Component = () => {
         </Fieldset>
 
         <Fieldset>
-          <FieldLegend>Thruster allocation</FieldLegend>
+          <FieldLegend>{m.calibration_thruster_allocation_title()}</FieldLegend>
           <p class='text-muted-foreground mb-4 text-sm'>
-            Tune how each thruster contributes to each movement axis. Use values between -1 and 1,
-            where positive is forward thrust, negative is reverse thrust, and 0 disables thrust.
+            {m.calibration_thruster_allocation_description()}
           </p>
           <div class='flex items-center gap-2'>
             <Menu>
               <MenuTrigger
                 asChild={(triggerProps) => (
                   <Button {...triggerProps()} variant='outline'>
-                    Presets
+                    {m.calibration_allocation_presets()}
                   </Button>
                 )}
               />
@@ -567,7 +568,7 @@ export const Calibration: Component = () => {
                     {...tooltipProps()}
                     variant='ghost'
                     size='icon'
-                    aria-label='Reset allocation'
+                    aria-label={m.calibration_allocation_reset()}
                     onClick={resetAllocation}
                   >
                     <RestartAltIcon class='size-4' />
@@ -577,7 +578,7 @@ export const Calibration: Component = () => {
               <Portal>
                 <TooltipPositioner>
                   <TooltipContent>
-                    Restore initial allocation
+                    {m.calibration_allocation_restore_initial()}
                     <TooltipArrow />
                   </TooltipContent>
                 </TooltipPositioner>
@@ -589,12 +590,14 @@ export const Calibration: Component = () => {
               <TableRow>
                 <TableHead>
                   <Tooltip>
-                    <TooltipTrigger>Identifier</TooltipTrigger>
+                    <TooltipTrigger>
+                      {m.calibration_thruster_allocation_identifier()}
+                    </TooltipTrigger>
                     <Portal>
                       <TooltipPositioner>
                         <TooltipContent>
                           <TooltipArrow />
-                          <p>Identifier for each thruster, defined in thruster pin setup.</p>
+                          <p>{m.calibration_thruster_allocation_identifier_tooltip()}</p>
                         </TooltipContent>
                       </TooltipPositioner>
                     </Portal>
@@ -602,7 +605,10 @@ export const Calibration: Component = () => {
                 </TableHead>
                 <For each={THRUSTER_COLUMNS}>
                   {(identifier) => (
-                    <TableHead class='text-center' aria-label={`Thruster ${identifier}`}>
+                    <TableHead
+                      class='text-center'
+                      aria-label={m.calibration_allocation_thruster_aria({ identifier })}
+                    >
                       {identifier}
                     </TableHead>
                   )}

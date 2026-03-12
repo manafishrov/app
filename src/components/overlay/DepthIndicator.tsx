@@ -2,6 +2,7 @@ import { Badge } from '@manafishrov/ui/badge';
 import { type Component, createMemo } from 'solid-js';
 import RulerIcon from '~icons/material-symbols/straighten';
 
+import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
@@ -18,7 +19,9 @@ const DepthIndicator: Component = () => {
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
           <RulerIcon class='size-4 mr-1 rotate-90' />
-          <span class='text-[10px] uppercase tracking-wider'>Cur</span>
+          <span class='text-[10px] uppercase tracking-wider'>
+            {m.overlay_depth_current_short()}
+          </span>
         </div>
         <span class='shrink-0 tabular-nums font-mono'>{rovTelemetryStore.depth.toFixed(1)}m</span>
       </Badge>
@@ -29,7 +32,7 @@ const DepthIndicator: Component = () => {
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
           <RulerIcon class='size-4 mr-1 rotate-90 opacity-50' />
-          <span class='text-[10px] uppercase tracking-wider'>Tgt</span>
+          <span class='text-[10px] uppercase tracking-wider'>{m.overlay_depth_target_short()}</span>
         </div>
         <span class='shrink-0 tabular-nums font-mono text-muted-foreground'>
           {rovTelemetryStore.desiredDepth.toFixed(1)}m

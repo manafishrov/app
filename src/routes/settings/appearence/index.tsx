@@ -4,12 +4,13 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 import { Appearance } from '@/components/settings/forms/Appearance';
+import * as m from '@/paraglide/messages';
 
 const AppearenceSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex flex-col gap-2'>
-      <H1>Appearence</H1>
-      <P>How stuff looks.</P>
+      <H1>{m.settings_application_appearence()}</H1>
+      <P>{m.appearance_page_description()}</P>
     </div>
     <Appearance />
   </>

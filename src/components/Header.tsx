@@ -5,6 +5,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { RecordingButton } from '@/components/header/RecordingButton';
 import { SettingsLink } from '@/components/header/SettingsLink';
 import { SystemHealthPopover } from '@/components/header/SystemHealthPopover';
+import * as m from '@/paraglide/messages';
 
 function Header() {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ function Header() {
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#ff5f57]' : 'bg-border group-hover:bg-[#ff5f57]'
             }`}
-            aria-label='Close window'
+            aria-label={m.header_close_window()}
           >
             <div class='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'>
               <span class='absolute inset-0 m-auto h-[1.5px] w-2 rotate-45 rounded-[1px] bg-[#900]'></span>
@@ -110,7 +111,7 @@ function Header() {
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#febc2e]' : 'bg-border group-hover:bg-[#febc2e]'
             }`}
-            aria-label='Minimize window'
+            aria-label={m.header_minimize_window()}
           >
             <div class='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'>
               <span class='absolute inset-0 m-auto h-[1.5px] w-2 rounded-[1px] bg-[#985600]'></span>
@@ -122,7 +123,7 @@ function Header() {
             class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
               isFocused() ? 'bg-[#28c840]' : 'bg-border group-hover:bg-[#28c840]'
             }`}
-            aria-label='Toggle fullscreen'
+            aria-label={m.header_toggle_fullscreen()}
           >
             <div class='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'>
               <Show
@@ -158,7 +159,7 @@ function Header() {
         </div>
 
         <span class='pointer-events-none absolute left-1/2 -translate-x-1/2 text-sm font-medium text-foreground font-branding'>
-          Manafish
+          {m.header_app_name()}
         </span>
 
         <div data-tauri-drag-region={false} class='flex items-center gap-1'>

@@ -11,6 +11,7 @@ import {
 
 import { AutoStabilizationIcon } from '@/components/icons/AutoStabilizationIcon';
 import { DepthHoldIcon } from '@/components/icons/DepthHoldIcon';
+import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
@@ -56,7 +57,7 @@ const StabilizationIndicator: Component = () => (
   >
     <StabilizationToggle
       active={rovStatusStore.autoStabilization}
-      label='Auto Stabilization'
+      label={m.controls_stabilization_stabilization()}
       onToggle={() => {
         toggleAutoStabilization().catch(() => {});
       }}
@@ -65,7 +66,7 @@ const StabilizationIndicator: Component = () => (
     </StabilizationToggle>
     <StabilizationToggle
       active={rovStatusStore.depthHold}
-      label='Depth Hold'
+      label={m.controls_stabilization_depth_hold()}
       onToggle={() => {
         toggleDepthHold().catch(() => {});
       }}

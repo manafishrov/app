@@ -20,6 +20,7 @@ import {
   isKeyboardKey,
   normalizeBindValue,
 } from '@/input';
+import * as m from '@/paraglide/messages';
 
 type KeyboardBindInputProps = {
   label: string;
@@ -28,7 +29,7 @@ type KeyboardBindInputProps = {
   onChange: (next: KeyboardInput | null) => void;
 };
 
-const toKeyboardValue = (isPressed: boolean): number => isPressed ? 1 : 0;
+const toKeyboardValue = (isPressed: boolean): number => (isPressed ? 1 : 0);
 
 function KeyboardBindInput(props: KeyboardBindInputProps) {
   const [pressedKeys, setPressedKeys] = createSignal<Set<string>>(new Set<string>());
@@ -64,7 +65,9 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
 
   const onKeyDown = (event: KeyboardEvent): void => {
     setPressedKeys((prev) => {
-      if (prev.has(event.code)) {return prev;}
+      if (prev.has(event.code)) {
+        return prev;
+      }
       const next = new Set<string>(prev);
       next.add(event.code);
       return next;
@@ -73,7 +76,9 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
 
   const onKeyUp = (event: KeyboardEvent): void => {
     setPressedKeys((prev) => {
-      if (!prev.has(event.code)) {return prev;}
+      if (!prev.has(event.code)) {
+        return prev;
+      }
       const next = new Set<string>(prev);
       next.delete(event.code);
       return next;
@@ -101,14 +106,18 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   });
 
   const progressValue = createMemo(() => {
-    if (!props.value) {return 0;}
+    if (!props.value) {
+      return 0;
+    }
 
     const rawValue = toKeyboardValue(pressedKeys().has(props.value.key));
     return normalizeBindValue(rawValue, props.value.minValue, props.value.maxValue);
   });
 
   const currentValue = createMemo(() => {
-    if (!props.value) {return 0;}
+    if (!props.value) {
+      return 0;
+    }
 
     return pressedKeys().has(props.value.key) ? props.value.maxValue : props.value.minValue;
   });
@@ -116,14 +125,18 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
   const formatBindMarkerValue = (value: number): string => value.toFixed(2);
 
   const startCapture = (): void => {
-    if (isRecording()) {return;}
+    if (isRecording()) {
+      return;
+    }
 
     const initialSnapshot = new Set(pressedKeys());
     let firstChangedKey: string | null = null;
     let settleScheduled = false;
 
     const scheduleSecondSnapshot = (): void => {
-      if (settleScheduled || !firstChangedKey) {return;}
+      if (settleScheduled || !firstChangedKey) {
+        return;
+      }
       settleScheduled = true;
 
       settleTimeout = window.setTimeout(() => {
@@ -203,10 +216,10 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
           <KeyboardIcon class='size-4' />
           <span class='truncate'>
             {isRecording()
-              ? 'Press a key...'
-              : (props.value
+              ? m.binding_input_press_a_key()
+              : props.value
                 ? formatKeyboardKeyLabel(props.value.key)
-                : 'Unbound')}
+                : m.binding_input_unbound()}
           </span>
         </Button>
         <Tooltip positioning={{ placement: 'top' }}>
@@ -216,7 +229,7 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
                 {...tooltipProps()}
                 variant='ghost'
                 size='icon'
-                aria-label='Reset binding'
+                aria-label={m.aria_labels_reset_to_default_binding()}
                 onClick={resetToDefault}
               >
                 <RestartAltIcon class='size-4' />
@@ -225,7 +238,7 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
           />
           <TooltipPositioner>
             <TooltipContent>
-              Restore initial binding
+              {m.binding_input_restore_initial_binding()}
               <TooltipArrow />
             </TooltipContent>
           </TooltipPositioner>
@@ -237,9 +250,15 @@ function KeyboardBindInput(props: KeyboardBindInputProps) {
         </ProgressTrack>
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
-        <span>Min: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}</span>
-        <span>Current: {formatBindMarkerValue(currentValue())}</span>
-        <span>Max: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}</span>
+        <span>
+          {m.binding_input_min()}: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}
+        </span>
+        <span>
+          {m.binding_input_current()}: {formatBindMarkerValue(currentValue())}
+        </span>
+        <span>
+          {m.binding_input_max()}: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}
+        </span>
       </div>
     </div>
   );

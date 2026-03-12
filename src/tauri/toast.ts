@@ -94,8 +94,8 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
     );
     const actionLabel =
       resolveToastMessage(payload.action?.labelKey, payload.action?.labelArgs, undefined) ??
-      resolveToastMessage('common_cancel', undefined, 'Cancel') ??
-      'Cancel';
+      resolveToastMessage('common_cancel', undefined, m.common_cancel()) ??
+      m.common_cancel();
 
     if (toastId) {
       clearLoadingTimeout(toastId);
@@ -108,7 +108,7 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
           title: resolveToastMessage(
             'toasts_operation_timed_out',
             undefined,
-            'Operation timed out',
+            m.toasts_operation_timed_out(),
           ),
           type: 'error',
         });
@@ -154,7 +154,7 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
                 title: resolveToastMessage(
                   'toasts_failed_to_invoke_action',
                   undefined,
-                  'Failed to invoke action command',
+                  m.toasts_failed_to_invoke_action(),
                 ),
                 type: 'error',
               });
@@ -176,7 +176,7 @@ export const setupToastListener = async (): Promise<CleanupFn> => {
       title: resolveToastMessage(
         'toasts_failed_to_listen_toast_messages',
         undefined,
-        'Failed to listen to toast messages',
+        m.toasts_failed_to_listen_toast_messages(),
       ),
       type: 'error',
     });

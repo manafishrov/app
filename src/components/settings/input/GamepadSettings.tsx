@@ -24,6 +24,7 @@ import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
 import { GamepadBindInput } from '@/components/settings/input/GamepadBindInput';
 import { getConnectedGamepads } from '@/input';
+import * as m from '@/paraglide/messages';
 import {
   type GamepadBindings,
   type GamepadInput,
@@ -39,78 +40,78 @@ type SelectItemOption = {
 
 type BindingField = {
   key: keyof GamepadBindings;
-  label: string;
+  label: () => string;
 };
 
 type BindingSection = {
-  title: string;
+  title: () => string;
   fields: BindingField[];
   className?: string;
 };
 
 const BINDING_SECTIONS: BindingSection[] = [
   {
-    title: 'Surge',
+    title: () => m.bindings_section_surge(),
     fields: [
-      { key: 'surgeForward', label: 'Surge forward' },
-      { key: 'surgeBackward', label: 'Surge backward' },
+      { key: 'surgeForward', label: () => m.keyboard_surge_forward() },
+      { key: 'surgeBackward', label: () => m.keyboard_surge_backward() },
     ],
   },
   {
-    title: 'Sway',
+    title: () => m.bindings_section_sway(),
     fields: [
-      { key: 'swayRight', label: 'Sway right' },
-      { key: 'swayLeft', label: 'Sway left' },
+      { key: 'swayRight', label: () => m.keyboard_sway_right() },
+      { key: 'swayLeft', label: () => m.keyboard_sway_left() },
     ],
   },
   {
-    title: 'Heave',
+    title: () => m.gamepad_heave(),
     fields: [
-      { key: 'heaveUp', label: 'Heave up' },
-      { key: 'heaveDown', label: 'Heave down' },
+      { key: 'heaveUp', label: () => m.gamepad_heave_up() },
+      { key: 'heaveDown', label: () => m.gamepad_heave_down() },
     ],
   },
   {
-    title: 'Pitch',
+    title: () => m.bindings_section_pitch(),
     fields: [
-      { key: 'pitchUp', label: 'Pitch up' },
-      { key: 'pitchDown', label: 'Pitch down' },
+      { key: 'pitchUp', label: () => m.keyboard_pitch_up() },
+      { key: 'pitchDown', label: () => m.keyboard_pitch_down() },
     ],
   },
   {
-    title: 'Yaw',
+    title: () => m.bindings_section_yaw(),
     fields: [
-      { key: 'yawRight', label: 'Yaw right' },
-      { key: 'yawLeft', label: 'Yaw left' },
+      { key: 'yawRight', label: () => m.keyboard_yaw_right() },
+      { key: 'yawLeft', label: () => m.keyboard_yaw_left() },
     ],
   },
   {
-    title: 'Roll',
+    title: () => m.gamepad_roll(),
     fields: [
-      { key: 'rollRight', label: 'Roll right' },
-      { key: 'rollLeft', label: 'Roll left' },
+      { key: 'rollRight', label: () => m.gamepad_roll_right() },
+      { key: 'rollLeft', label: () => m.gamepad_roll_left() },
     ],
   },
   {
-    title: 'Actions',
+    title: () => m.gamepad_actions(),
     className: 'sm:row-span-2',
     fields: [
-      { key: 'action1Positive', label: 'Action 1 positive' },
-      { key: 'action1Negative', label: 'Action 1 negative' },
-      { key: 'action2Positive', label: 'Action 2 positive' },
-      { key: 'action2Negative', label: 'Action 2 negative' },
+      { key: 'action1Positive', label: () => m.gamepad_action_1_positive() },
+      { key: 'action1Negative', label: () => m.gamepad_action_1_negative() },
+      { key: 'action2Positive', label: () => m.gamepad_action_2_positive() },
+      { key: 'action2Negative', label: () => m.gamepad_action_2_negative() },
     ],
   },
   {
-    title: 'Stabilisation',
+    title: () => m.bindings_section_stabilization(),
     fields: [
-      { key: 'autoStabilization', label: 'Auto stabilization' },
-      { key: 'depthHold', label: 'Depth hold' },
+      { key: 'autoStabilization', label: () => m.bindings_action_auto_stabilization() },
+      { key: 'depthHold', label: () => m.gamepad_depth_hold() },
     ],
   },
   {
-    title: 'Other',
-    fields: [{ key: 'record', label: 'Record' }],
+    title: () => m.bindings_section_other(),
+    fields: [{ key: 'record', label: () => m.gamepad_record() }],
   },
 ];
 
@@ -124,11 +125,11 @@ const SettingsGrid: Component<{
     <For each={BINDING_SECTIONS}>
       {(section) => (
         <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
-          <H3>{section.title}</H3>
+          <H3>{section.title()}</H3>
           <For each={section.fields}>
             {(field) => (
               <GamepadBindInput
-                label={field.label}
+                label={field.label()}
                 value={props.bindings[field.key]}
                 resetValue={props.resetBindings[field.key]}
                 selectedGamepadId={props.selectedGamepadId}
@@ -157,7 +158,7 @@ const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
 
     return {
       value: gamepad.id,
-      label: total > 1 ? `${gamepad.id} (#${count})` : gamepad.id,
+      label: total > 1 ? m.gamepad_duplicate_label({ id: gamepad.id, count }) : gamepad.id,
     };
   });
 };
@@ -351,8 +352,8 @@ const GamepadSettings: Component = () => {
               <SportsEsportsIcon class='size-12 text-muted-foreground' />
             </EmptyMedia>
             <EmptyHeader>
-              <EmptyTitle>No gamepad connected</EmptyTitle>
-              <EmptyDescription>Connect a gamepad to configure bindings.</EmptyDescription>
+              <EmptyTitle>{m.gamepad_no_gamepad_connected_title()}</EmptyTitle>
+              <EmptyDescription>{m.gamepad_no_gamepad_connected_description()}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         }
@@ -367,10 +368,10 @@ const GamepadSettings: Component = () => {
               void setSelectedGamepad(gamepadId);
             }}
           >
-            <SelectLabel>Gamepad</SelectLabel>
+            <SelectLabel>{m.gamepad_select_label()}</SelectLabel>
             <SelectControl>
               <SelectTrigger>
-                <SelectValue placeholder='Select a gamepad' />
+                <SelectValue placeholder={m.gamepad_select_placeholder()} />
                 <Show when={selectedGamepadId()}>
                   <SelectClearTrigger />
                 </Show>
@@ -389,7 +390,9 @@ const GamepadSettings: Component = () => {
 
         <Show
           when={selectedBindings()}
-          fallback={<p class='text-sm text-muted-foreground'>Select a gamepad to edit bindings.</p>}
+          fallback={
+            <p class='text-sm text-muted-foreground'>{m.gamepad_select_to_edit_bindings()}</p>
+          }
         >
           {(bindings) => (
             <Show when={selectedResetBindings()} fallback={null}>
@@ -398,7 +401,7 @@ const GamepadSettings: Component = () => {
                   when={selectedGamepadConnected()}
                   fallback={
                     <p class='text-sm text-muted-foreground'>
-                      The selected gamepad is not connected. Reconnect it to capture input.
+                      {m.gamepad_selected_not_connected()}
                     </p>
                   }
                 >

@@ -1,6 +1,7 @@
 import { Badge } from '@manafishrov/ui/badge';
 import { type Component, createSignal, onCleanup, createEffect } from 'solid-js';
 
+import * as m from '@/paraglide/messages';
 import { getDuration, recordingStore } from '@/stores/recording';
 
 const formatTime = (seconds: number): string => {
@@ -29,7 +30,7 @@ const RecordingIndicator: Component = () => {
     <div class={recordingStore.isRecording ? 'block' : 'hidden'}>
       <Badge variant='destructive' class='bg-destructive/80 backdrop-blur-sm border-destructive'>
         <div class='bg-white h-2 w-2 animate-pulse rounded-full mr-1.5' />
-        REC {formatTime(elapsed())}
+        {m.overlay_recording_rec()} {formatTime(elapsed())}
       </Badge>
     </div>
   );

@@ -4,12 +4,13 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 import { Calibration } from '@/components/settings/forms/Calibration';
+import * as m from '@/paraglide/messages';
 
 const CalibrationRovSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex flex-col gap-2'>
-      <H1>Calibration</H1>
-      <P>Calibrate the thrusters of the ROV.</P>
+      <H1>{m.calibration_page_title()}</H1>
+      <P>{m.calibration_page_description()}</P>
     </div>
     <Calibration />
   </>

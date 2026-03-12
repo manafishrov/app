@@ -16,6 +16,7 @@ import {
 import { Show, createSignal } from 'solid-js';
 import HeartPulseIcon from '~icons/material-symbols/monitor-heart';
 
+import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
@@ -39,7 +40,7 @@ function SystemHealthPopover() {
                       tabIndex={-1}
                       size='icon-xs'
                       variant='outline'
-                      aria-label='System Health'
+                      aria-label={m.aria_labels_system_health()}
                     >
                       <HeartPulseIcon aria-hidden='true' />
                     </Button>
@@ -50,7 +51,7 @@ function SystemHealthPopover() {
           />
           <TooltipPositioner>
             <TooltipContent>
-              <span>System Health</span>
+              <span>{m.controls_system_health_title()}</span>
               <TooltipArrow />
             </TooltipContent>
           </TooltipPositioner>
@@ -59,15 +60,18 @@ function SystemHealthPopover() {
           <PopoverContent class='w-56'>
             <PopoverArrow />
             <div class='space-y-3'>
-              <div class='text-sm font-medium'>System Health</div>
+              <div class='text-sm font-medium'>{m.controls_system_health_title()}</div>
               <div class='space-y-2'>
-                <HealthItem label='IMU' healthy={rovStatusStore.health.imuHealthy} />
                 <HealthItem
-                  label='Pressure Sensor'
+                  label={m.controls_system_health_imu()}
+                  healthy={rovStatusStore.health.imuHealthy}
+                />
+                <HealthItem
+                  label={m.controls_system_health_pressure_sensor()}
                   healthy={rovStatusStore.health.pressureSensorHealthy}
                 />
                 <HealthItem
-                  label='Microcontroller'
+                  label={m.controls_system_health_microcontroller()}
                   healthy={rovStatusStore.health.microcontrollerHealthy}
                 />
               </div>

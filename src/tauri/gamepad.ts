@@ -2,6 +2,7 @@ import { toast } from '@manafishrov/ui/toaster';
 import { listen } from '@tauri-apps/api/event';
 
 import { logError } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 import { invokeCommand, type CleanupFn } from '@/tauri/core';
 
 const EVENT = 'gamepad_event';
@@ -87,7 +88,7 @@ export const setupGamepadListener = async (): Promise<CleanupFn> => {
   const unlisten = await listen<GamepadData>(EVENT, handleGamepadEvent).catch((error) => {
     logError('Failed to listen for gamepad events:', error);
     toast.create({
-      title: 'Failed to listen for gamepad events',
+      title: m.toasts_failed_to_listen_for_gamepad_events(),
       type: 'error',
     });
     return () => {};

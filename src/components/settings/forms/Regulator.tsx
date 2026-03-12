@@ -11,6 +11,7 @@ import {
 import { createSignal, type Component } from 'solid-js';
 import { z } from 'zod';
 
+import * as m from '@/paraglide/messages';
 import {
   type AxisConfig,
   type DirectionCoefficients,
@@ -19,27 +20,50 @@ import {
 } from '@/stores/rovConfig';
 import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
 
-const axisSchema = z.object({
-  kp: z.number().min(0).max(100),
-  ki: z.number().min(0).max(100),
-  kd: z.number().min(0).max(100),
-  rate: z
-    .array(z.number().max(360))
-    .length(1)
-    .refine(([rate]) => rate === undefined || rate >= 5, {
-      message: 'The turn rate needs to be at least 5°/s',
-    }),
-});
+const createAxisSchema = () =>
+  z.object({
+    kp: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+    ki: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+    kd: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+    rate: z
+      .array(z.number().max(360, m.validation_must_be_at_most_360()))
+      .length(1)
+      .refine(([rate]) => rate === undefined || rate >= 5, {
+        message: m.validation_turn_rate_at_least_5(),
+      }),
+  });
 
-const formSchema = z.object({
-  pitch: axisSchema,
-  yaw: axisSchema,
-  roll: axisSchema,
-  depth: axisSchema,
-  surge: z.number().min(0).max(100),
-  heave: z.number().min(0).max(100),
-  sway: z.number().min(0).max(100),
-});
+const createFormSchema = () => {
+  const axisSchema = createAxisSchema();
+
+  return z.object({
+    pitch: axisSchema,
+    yaw: axisSchema,
+    roll: axisSchema,
+    depth: axisSchema,
+    surge: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+    heave: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+    sway: z
+      .number()
+      .min(0, m.validation_must_be_at_least_0())
+      .max(100, m.validation_must_be_at_most_100()),
+  });
+};
 
 type FormValues = {
   pitch: Omit<AxisConfig, 'rate'> & { rate: number[] };
@@ -71,16 +95,16 @@ const FieldSuggestionActions: Component<FieldSuggestionActionsProps> = ({
           <Button
             {...props()}
             variant='ghost'
-            aria-label={`Reset ${label} to default value`}
+            aria-label={m.regulator_field_buttons_reset_to_default_for({ label })}
             onClick={() => onChange(defaultValue)}
           >
-            Reset to Default
+            {m.regulator_field_buttons_reset_to_default()}
           </Button>
         )}
       />
       <TooltipPositioner>
         <TooltipContent>
-          <p>{`Reset ${label} to default value`}</p>
+          <p>{m.regulator_field_buttons_reset_to_default_for({ label })}</p>
           <TooltipArrow />
         </TooltipContent>
       </TooltipPositioner>
@@ -92,16 +116,16 @@ const FieldSuggestionActions: Component<FieldSuggestionActionsProps> = ({
             <Button
               {...props()}
               variant='outline'
-              aria-label={`Use suggested value for ${label}`}
+              aria-label={m.regulator_field_buttons_use_suggestion_for({ label })}
               onClick={() => onChange(suggestionValue)}
             >
-              {`Use Suggestion (${suggestionValue})`}
+              {m.regulator_field_buttons_use_suggestion_with_value({ value: suggestionValue })}
             </Button>
           )}
         />
         <TooltipPositioner>
           <TooltipContent>
-            <p>{`Use suggested value for ${label}`}</p>
+            <p>{m.regulator_field_buttons_use_suggestion_for({ label })}</p>
             <TooltipArrow />
           </TooltipContent>
         </TooltipPositioner>
@@ -112,6 +136,7 @@ const FieldSuggestionActions: Component<FieldSuggestionActionsProps> = ({
 
 export const Regulator: Component = () => {
   const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(false);
+  const formSchema = createFormSchema();
 
   const form = useAppForm(() => ({
     validators: {
@@ -186,13 +211,13 @@ export const Regulator: Component = () => {
     <form.AppForm>
       <form.Form>
         <Fieldset>
-          <FieldLegend>Pitch</FieldLegend>
-          <p class='text-muted-foreground mb-4 text-sm'>Controls nose up/down.</p>
+          <FieldLegend>{m.regulator_pid_pitch_title()}</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>{m.regulator_pid_pitch_description()}</p>
           <div class='space-y-4'>
             <form.AppField name='pitch.kp'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kp'
+                  label={m.regulator_pid_kp()}
                   min={0}
                   max={100}
                   step={1}
@@ -203,7 +228,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.pitch.kp : undefined
                       }
                       onChange={field().handleChange}
-                      label='Pitch Kp'
+                      label={`${m.regulator_pid_pitch_title()} ${m.regulator_pid_kp()}`}
                     />
                   }
                 />
@@ -212,7 +237,7 @@ export const Regulator: Component = () => {
             <form.AppField name='pitch.ki'>
               {(field) => (
                 <field.NumberInputField
-                  label='Ki'
+                  label={m.regulator_pid_ki()}
                   min={0}
                   max={100}
                   step={1}
@@ -223,7 +248,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.pitch.ki : undefined
                       }
                       onChange={field().handleChange}
-                      label='Pitch Ki'
+                      label={`${m.regulator_pid_pitch_title()} ${m.regulator_pid_ki()}`}
                     />
                   }
                 />
@@ -232,7 +257,7 @@ export const Regulator: Component = () => {
             <form.AppField name='pitch.kd'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kd'
+                  label={m.regulator_pid_kd()}
                   min={0}
                   max={100}
                   step={1}
@@ -243,7 +268,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.pitch.kd : undefined
                       }
                       onChange={field().handleChange}
-                      label='Pitch Kd'
+                      label={`${m.regulator_pid_pitch_title()} ${m.regulator_pid_kd()}`}
                     />
                   }
                 />
@@ -253,8 +278,8 @@ export const Regulator: Component = () => {
               {(field) => (
                 <field.SliderField
                   class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
-                  label='Turn Rate'
-                  description='The speed at which the ROV will try to reach the desired pitch angle.'
+                  label={m.regulator_pid_turn_speed_label()}
+                  description={m.regulator_pid_turn_speed_description()}
                   min={0}
                   max={360}
                   step={1}
@@ -265,13 +290,13 @@ export const Regulator: Component = () => {
         </Fieldset>
 
         <Fieldset>
-          <FieldLegend>Yaw</FieldLegend>
-          <p class='text-muted-foreground mb-4 text-sm'>Controls left/right rotation.</p>
+          <FieldLegend>{m.regulator_direction_coefficients_yaw()}</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>{m.regulator_pid_yaw_description()}</p>
           <div class='space-y-4'>
             <form.AppField name='yaw.kp'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kp'
+                  label={m.regulator_pid_kp()}
                   min={0}
                   max={100}
                   step={1}
@@ -282,7 +307,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.yaw.kp : undefined
                       }
                       onChange={field().handleChange}
-                      label='Yaw Kp'
+                      label={`${m.regulator_direction_coefficients_yaw()} ${m.regulator_pid_kp()}`}
                     />
                   }
                 />
@@ -291,7 +316,7 @@ export const Regulator: Component = () => {
             <form.AppField name='yaw.ki'>
               {(field) => (
                 <field.NumberInputField
-                  label='Ki'
+                  label={m.regulator_pid_ki()}
                   min={0}
                   max={100}
                   step={1}
@@ -302,7 +327,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.yaw.ki : undefined
                       }
                       onChange={field().handleChange}
-                      label='Yaw Ki'
+                      label={`${m.regulator_direction_coefficients_yaw()} ${m.regulator_pid_ki()}`}
                     />
                   }
                 />
@@ -311,7 +336,7 @@ export const Regulator: Component = () => {
             <form.AppField name='yaw.kd'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kd'
+                  label={m.regulator_pid_kd()}
                   min={0}
                   max={100}
                   step={1}
@@ -322,7 +347,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.yaw.kd : undefined
                       }
                       onChange={field().handleChange}
-                      label='Yaw Kd'
+                      label={`${m.regulator_direction_coefficients_yaw()} ${m.regulator_pid_kd()}`}
                     />
                   }
                 />
@@ -332,8 +357,8 @@ export const Regulator: Component = () => {
               {(field) => (
                 <field.SliderField
                   class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
-                  label='Turn Rate'
-                  description='The speed at which the ROV will try to reach the desired yaw angle.'
+                  label={m.regulator_pid_turn_speed_label()}
+                  description={m.regulator_pid_turn_speed_description()}
                   min={0}
                   max={360}
                   step={1}
@@ -344,13 +369,13 @@ export const Regulator: Component = () => {
         </Fieldset>
 
         <Fieldset>
-          <FieldLegend>Roll</FieldLegend>
-          <p class='text-muted-foreground mb-4 text-sm'>Controls side-to-side tilt.</p>
+          <FieldLegend>{m.regulator_pid_roll_title()}</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>{m.regulator_pid_roll_description()}</p>
           <div class='space-y-4'>
             <form.AppField name='roll.kp'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kp'
+                  label={m.regulator_pid_kp()}
                   min={0}
                   max={100}
                   step={1}
@@ -361,7 +386,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.roll.kp : undefined
                       }
                       onChange={field().handleChange}
-                      label='Roll Kp'
+                      label={`${m.regulator_pid_roll_title()} ${m.regulator_pid_kp()}`}
                     />
                   }
                 />
@@ -370,7 +395,7 @@ export const Regulator: Component = () => {
             <form.AppField name='roll.ki'>
               {(field) => (
                 <field.NumberInputField
-                  label='Ki'
+                  label={m.regulator_pid_ki()}
                   min={0}
                   max={100}
                   step={1}
@@ -381,7 +406,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.roll.ki : undefined
                       }
                       onChange={field().handleChange}
-                      label='Roll Ki'
+                      label={`${m.regulator_pid_roll_title()} ${m.regulator_pid_ki()}`}
                     />
                   }
                 />
@@ -390,7 +415,7 @@ export const Regulator: Component = () => {
             <form.AppField name='roll.kd'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kd'
+                  label={m.regulator_pid_kd()}
                   min={0}
                   max={100}
                   step={1}
@@ -401,7 +426,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.roll.kd : undefined
                       }
                       onChange={field().handleChange}
-                      label='Roll Kd'
+                      label={`${m.regulator_pid_roll_title()} ${m.regulator_pid_kd()}`}
                     />
                   }
                 />
@@ -411,8 +436,8 @@ export const Regulator: Component = () => {
               {(field) => (
                 <field.SliderField
                   class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
-                  label='Turn Rate'
-                  description='The speed at which the ROV will try to reach the desired roll angle.'
+                  label={m.regulator_pid_turn_speed_label()}
+                  description={m.regulator_pid_turn_speed_description()}
                   min={0}
                   max={360}
                   step={1}
@@ -423,13 +448,13 @@ export const Regulator: Component = () => {
         </Fieldset>
 
         <Fieldset>
-          <FieldLegend>Depth</FieldLegend>
-          <p class='text-muted-foreground mb-4 text-sm'>Controls vertical position hold.</p>
+          <FieldLegend>{m.regulator_pid_depth_title()}</FieldLegend>
+          <p class='text-muted-foreground mb-4 text-sm'>{m.regulator_pid_depth_description()}</p>
           <div class='space-y-4'>
             <form.AppField name='depth.kp'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kp'
+                  label={m.regulator_pid_kp()}
                   min={0}
                   max={100}
                   step={1}
@@ -440,7 +465,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.depth.kp : undefined
                       }
                       onChange={field().handleChange}
-                      label='Depth Kp'
+                      label={`${m.regulator_pid_depth_title()} ${m.regulator_pid_kp()}`}
                     />
                   }
                 />
@@ -449,7 +474,7 @@ export const Regulator: Component = () => {
             <form.AppField name='depth.ki'>
               {(field) => (
                 <field.NumberInputField
-                  label='Ki'
+                  label={m.regulator_pid_ki()}
                   min={0}
                   max={100}
                   step={1}
@@ -460,7 +485,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.depth.ki : undefined
                       }
                       onChange={field().handleChange}
-                      label='Depth Ki'
+                      label={`${m.regulator_pid_depth_title()} ${m.regulator_pid_ki()}`}
                     />
                   }
                 />
@@ -469,7 +494,7 @@ export const Regulator: Component = () => {
             <form.AppField name='depth.kd'>
               {(field) => (
                 <field.NumberInputField
-                  label='Kd'
+                  label={m.regulator_pid_kd()}
                   min={0}
                   max={100}
                   step={1}
@@ -480,7 +505,7 @@ export const Regulator: Component = () => {
                         regulatorSuggestions() ? regulatorSuggestions()!.depth.kd : undefined
                       }
                       onChange={field().handleChange}
-                      label='Depth Kd'
+                      label={`${m.regulator_pid_depth_title()} ${m.regulator_pid_kd()}`}
                     />
                   }
                 />
@@ -490,8 +515,8 @@ export const Regulator: Component = () => {
               {(field) => (
                 <field.SliderField
                   class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
-                  label='Turn Rate'
-                  description='The speed at which the ROV will try to reach the desired depth.'
+                  label={m.regulator_pid_turn_speed_label()}
+                  description={m.regulator_pid_turn_speed_description()}
                   min={0}
                   max={360}
                   step={1}
@@ -503,22 +528,21 @@ export const Regulator: Component = () => {
 
         <div class='mt-6 flex items-center gap-4'>
           <Button variant='outline' onClick={handleAutoTuning} disabled={autoTuningDisabled()}>
-            Run Auto Tuning
+            {m.regulator_pid_run_auto_tuning()}
           </Button>
         </div>
 
         <Fieldset>
-          <FieldLegend>Direction Coefficients</FieldLegend>
+          <FieldLegend>{m.regulator_direction_coefficients_title()}</FieldLegend>
           <p class='text-muted-foreground mb-4 text-sm'>
-            Set the relative power for moving in each direction. The ratios between these values
-            determine how much force each thruster will use.
+            {m.regulator_direction_coefficients_description()}
           </p>
           <div class='space-y-4'>
             <form.AppField name='surge'>
               {(field) => (
                 <field.NumberInputField
-                  label='Surge'
-                  description='Forward/backward movement coefficient.'
+                  label={m.regulator_direction_coefficients_surge()}
+                  description={m.calibration_thruster_allocation_surge_tooltip()}
                   min={0}
                   max={100}
                   step={1}
@@ -526,7 +550,7 @@ export const Regulator: Component = () => {
                     <FieldSuggestionActions
                       defaultValue={0.8}
                       onChange={field().handleChange}
-                      label='Surge Direction Coefficient'
+                      label={`${m.regulator_direction_coefficients_surge()} ${m.regulator_direction_coefficients_title()}`}
                     />
                   }
                 />
@@ -535,8 +559,8 @@ export const Regulator: Component = () => {
             <form.AppField name='heave'>
               {(field) => (
                 <field.NumberInputField
-                  label='Heave'
-                  description='Up/down movement coefficient.'
+                  label={m.regulator_direction_coefficients_heave()}
+                  description={m.calibration_thruster_allocation_heave_tooltip()}
                   min={0}
                   max={100}
                   step={1}
@@ -544,7 +568,7 @@ export const Regulator: Component = () => {
                     <FieldSuggestionActions
                       defaultValue={0.5}
                       onChange={field().handleChange}
-                      label='Heave Direction Coefficient'
+                      label={`${m.regulator_direction_coefficients_heave()} ${m.regulator_direction_coefficients_title()}`}
                     />
                   }
                 />
@@ -553,8 +577,8 @@ export const Regulator: Component = () => {
             <form.AppField name='sway'>
               {(field) => (
                 <field.NumberInputField
-                  label='Sway'
-                  description='Left/right movement coefficient.'
+                  label={m.regulator_direction_coefficients_sway()}
+                  description={m.calibration_thruster_allocation_sway_tooltip()}
                   min={0}
                   max={100}
                   step={1}
@@ -562,7 +586,7 @@ export const Regulator: Component = () => {
                     <FieldSuggestionActions
                       defaultValue={0.35}
                       onChange={field().handleChange}
-                      label='Sway Direction Coefficient'
+                      label={`${m.regulator_direction_coefficients_sway()} ${m.regulator_direction_coefficients_title()}`}
                     />
                   }
                 />

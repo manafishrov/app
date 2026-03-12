@@ -1,5 +1,7 @@
 import type { Row } from '@/stores/rovConfig';
 
+import * as m from '@/paraglide/messages';
+
 export type ThrusterPresetRow = Partial<{
   surge: Row;
   sway: Row;
@@ -19,8 +21,8 @@ export type ThrusterPreset = {
 
 export const THRUSTER_PRESETS: ThrusterPreset[] = [
   {
-    name: '4-Thruster Horizontal',
-    description: 'Standard 4-thruster setup for horizontal movement',
+    name: m.thruster_preset_4_horizontal_name(),
+    description: m.thruster_preset_4_horizontal_description(),
     rows: {
       surge: [1, 1, 0, 0, -1, -1, 0, 0],
       sway: [1, -1, 0, 0, 1, -1, 0, 0],
@@ -28,8 +30,8 @@ export const THRUSTER_PRESETS: ThrusterPreset[] = [
     },
   },
   {
-    name: '4-Thruster Vertical',
-    description: 'Standard 4-thruster setup for vertical movement',
+    name: m.thruster_preset_4_vertical_name(),
+    description: m.thruster_preset_4_vertical_description(),
     rows: {
       heave: [0, 0, 1, 1, 0, 0, -1, -1],
       pitch: [0, 0, 1, -1, 0, 0, -1, 1],
@@ -37,8 +39,8 @@ export const THRUSTER_PRESETS: ThrusterPreset[] = [
     },
   },
   {
-    name: '6-Thruster Vectored',
-    description: '6-thruster vectored configuration',
+    name: m.thruster_preset_6_vectored_name(),
+    description: m.thruster_preset_6_vectored_description(),
     rows: {
       surge: [1, 1, 0, 0, 0, 0, 1, 1],
       sway: [1, -1, 0, 0, 0, 0, -1, 1],
@@ -49,8 +51,8 @@ export const THRUSTER_PRESETS: ThrusterPreset[] = [
     },
   },
   {
-    name: '8-Thruster Full',
-    description: 'Full 8-thruster configuration',
+    name: m.thruster_preset_8_full_name(),
+    description: m.thruster_preset_8_full_description(),
     rows: {
       surge: [1, 1, 0, 0, -1, -1, 0, 0],
       sway: [1, -1, 0, 0, 1, -1, 0, 0],
@@ -61,15 +63,15 @@ export const THRUSTER_PRESETS: ThrusterPreset[] = [
     },
   },
   {
-    name: 'Gripper Action1',
-    description: 'Gripper action 1 configuration',
+    name: m.thruster_preset_gripper_action_1_name(),
+    description: m.thruster_preset_gripper_action_1_description(),
     rows: {
       action1: [1, 0, 0, 0, 0, 0, 0, 0],
     },
   },
   {
-    name: 'Clear All',
-    description: 'Set all values to 0',
+    name: m.thruster_preset_clear_all_name(),
+    description: m.thruster_preset_clear_all_description(),
     rows: {
       surge: [0, 0, 0, 0, 0, 0, 0, 0],
       sway: [0, 0, 0, 0, 0, 0, 0, 0],

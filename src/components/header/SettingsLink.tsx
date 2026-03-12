@@ -25,6 +25,7 @@ import { useNavigate } from '@tanstack/solid-router';
 import { Portal } from 'solid-js/web';
 import SettingsIcon from '~icons/ic/settings';
 
+import * as m from '@/paraglide/messages';
 import { recordingStore } from '@/stores/recording';
 
 interface SettingsLinkProps {
@@ -50,7 +51,7 @@ function SettingsLink(props: SettingsLinkProps) {
           <TooltipPositioner>
             <TooltipContent>
               <div class='flex items-center gap-2'>
-                <span>Settings</span>
+                <span>{m.common_settings()}</span>
                 <KbdGroup>
                   <Kbd>{props.isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <Kbd>,</Kbd>
@@ -80,7 +81,7 @@ function SettingsLink(props: SettingsLinkProps) {
           <TooltipPositioner>
             <TooltipContent>
               <div class='flex items-center gap-2'>
-                <span>Settings</span>
+                <span>{m.common_settings()}</span>
                 <KbdGroup>
                   <Kbd>{props.isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <Kbd>,</Kbd>
@@ -95,19 +96,19 @@ function SettingsLink(props: SettingsLinkProps) {
           <AlertDialogPositioner>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Recording in Progress</AlertDialogTitle>
+                <AlertDialogTitle>{m.alerts_recording_in_progress_title()}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  If you navigate to settings, the recording will be stopped and saved.
+                  {m.alerts_recording_in_progress_description()}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
                     void navigate({ to: '/settings' });
                   }}
                 >
-                  Continue
+                  {m.common_continue()}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

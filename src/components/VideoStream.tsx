@@ -2,6 +2,7 @@ import { useLocation } from '@tanstack/solid-router';
 
 import { logInfo } from '@/lib/log';
 import { createWebRTCConnection, createRecording } from '@/lib/stream';
+import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
@@ -74,9 +75,9 @@ const VideoStream = () => {
         <div class='absolute inset-0 flex items-center justify-center'>
           <div class='text-center'>
             {isLoading() ? (
-              <p>Connecting to Manafish ROV camera...</p>
+              <p>{m.video_stream_connecting()}</p>
             ) : (
-              <p>Unable to connect to ROV camera. Retrying...</p>
+              <p>{m.video_stream_reconnecting()}</p>
             )}
           </div>
         </div>

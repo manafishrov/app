@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
 
 import { logError } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 
 type KeyboardKey =
   | 'KeyA'
@@ -240,7 +241,7 @@ const createNullGamepadBindings = (): GamepadBindings => ({
 });
 
 const defaultConfig: Config = {
-  appVersion: 'N/A',
+  appVersion: m.common_not_available(),
   overlayScale: 2,
   attitudeIndicator: 'scientific',
   workIndicator: false,
@@ -266,7 +267,7 @@ const getConfig = async () => {
     .then((payload) => setConfigStore(payload))
     .catch((error) => {
       logError('Failed to get config:', error);
-      toast.create({ title: 'Failed to get config', type: 'error' });
+      toast.create({ title: m.toasts_failed_to_get_config(), type: 'error' });
     });
 };
 
@@ -279,7 +280,7 @@ const setConfig = async (newConfigOptions: Partial<Config>) => {
   await invoke('set_config', { payload: newConfig }).catch((error) => {
     setConfigStore(currentConfig);
     logError('Failed to set config:', error);
-    toast.create({ title: 'Failed to set config. Changes reverted.', type: 'error' });
+    toast.create({ title: m.toasts_failed_to_set_config_reverted(), type: 'error' });
   });
 };
 

@@ -1,6 +1,9 @@
 import type { GamepadInputType, KeyboardKey } from '@/stores/config';
 
-const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value));
+import * as m from '@/paraglide/messages';
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
 
 export const BIND_CAPTURE_TIMEOUT_MS = 8000;
 export const BIND_CAPTURE_SETTLE_MS = 500;
@@ -17,7 +20,9 @@ export const normalizeBindValue = (
   maxValue: number,
 ): number => {
   const range = maxValue - minValue;
-  if (range === 0) {return 0;}
+  if (range === 0) {
+    return 0;
+  }
   return clamp((rawValue - minValue) / range, 0, 1);
 };
 
@@ -25,7 +30,9 @@ export const getGamepadRawInputValue = (
   input: GamepadInputType | null,
   gamepad: Gamepad,
 ): number => {
-  if (!input) {return 0;}
+  if (!input) {
+    return 0;
+  }
 
   if ('Button' in input) {
     const index = input.Button;
@@ -36,7 +43,8 @@ export const getGamepadRawInputValue = (
   return gamepad.axes[index] ?? 0;
 };
 
-export const formatKeyboardKeyLabel = (key: string): string => key
+export const formatKeyboardKeyLabel = (key: string): string =>
+  key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
     .replace(/([A-Za-z])(\d)/g, '$1 $2')
@@ -44,10 +52,18 @@ export const formatKeyboardKeyLabel = (key: string): string => key
     .trim();
 
 export const isKeyboardKey = (key: string): key is KeyboardKey => {
-  if (/^Key[A-Z]$/.test(key)) {return true;}
-  if (/^Digit[0-9]$/.test(key)) {return true;}
-  if (/^F([1-9]|1[0-2])$/.test(key)) {return true;}
-  if (/^Numpad[0-9]$/.test(key)) {return true;}
+  if (/^Key[A-Z]$/.test(key)) {
+    return true;
+  }
+  if (/^Digit[0-9]$/.test(key)) {
+    return true;
+  }
+  if (/^F([1-9]|1[0-2])$/.test(key)) {
+    return true;
+  }
+  if (/^Numpad[0-9]$/.test(key)) {
+    return true;
+  }
 
   return [
     'Enter',
@@ -100,12 +116,12 @@ export const isKeyboardKey = (key: string): key is KeyboardKey => {
 
 export const formatGamepadInputLabel = (input: GamepadInputType | null): string => {
   if (!input) {
-    return 'Unbound';
+    return m.binding_input_unbound();
   }
 
   if ('Button' in input) {
-    return `Button ${input.Button}`;
+    return m.binding_input_button({ index: input.Button });
   }
 
-  return `Axis ${input.Axis}`;
+  return m.binding_input_axis({ index: input.Axis });
 };

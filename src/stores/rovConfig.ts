@@ -1,5 +1,7 @@
 import { createStore, reconcile } from 'solid-js/store';
 
+import * as m from '@/paraglide/messages';
+
 type MicrocontrollerFirmwareVariant = 'pwm' | 'dshot';
 
 const MicrocontrollerFirmwareVariant = {
@@ -86,7 +88,7 @@ const defaultRow: [number, number, number, number, number, number, number, numbe
 ];
 
 const defaultRovConfig: RovConfig = {
-  firmwareVersion: 'N/A',
+  firmwareVersion: m.common_not_available(),
   microcontrollerFirmwareVariant: 'pwm',
   fluidType: 'freshwater',
   smoothingFactor: 0,

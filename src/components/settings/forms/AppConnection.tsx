@@ -4,25 +4,29 @@ import { useAppForm } from '@manafishrov/ui/form';
 import { revalidateLogic } from '@tanstack/solid-form';
 import { z } from 'zod';
 
+import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { setConfig } from '@/tauri';
 
-const formSchema = z.object({
-  ipAddress: z.ipv4('Invalid IP address'),
-  webrtcSignalingApiPort: z
-    .number()
-    .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65_535, 'Port must be between 1 and 65535'),
-  webrtcSignalingApiPath: z.string().startsWith('/', 'Path must start with a /'),
-  webSocketPort: z
-    .number()
-    .int()
-    .min(1, 'Port must be between 1 and 65535')
-    .max(65_535, 'Port must be between 1 and 65535'),
-});
+const createFormSchema = () =>
+  z.object({
+    ipAddress: z.ipv4(m.validation_invalid_ip_address()),
+    webrtcSignalingApiPort: z
+      .number()
+      .int()
+      .min(1, m.validation_port_must_be_between())
+      .max(65_535, m.validation_port_must_be_between()),
+    webrtcSignalingApiPath: z.string().startsWith('/', m.validation_path_must_start_with_slash()),
+    webSocketPort: z
+      .number()
+      .int()
+      .min(1, m.validation_port_must_be_between())
+      .max(65_535, m.validation_port_must_be_between()),
+  });
 
 export const AppConnection: Component = () => {
+  const formSchema = createFormSchema();
+
   const form = useAppForm(() => ({
     validationLogic: revalidateLogic(),
     validators: {
@@ -43,18 +47,18 @@ export const AppConnection: Component = () => {
         <form.AppField name='ipAddress'>
           {(field) => (
             <field.TextInputField
-              label='IP address'
-              placeholder='10.10.10.10'
-              description='The IP address of your Manafish.'
+              label={m.app_connection_ip_address_label()}
+              placeholder={m.app_connection_ip_address_placeholder()}
+              description={m.app_connection_ip_address_description()}
             />
           )}
         </form.AppField>
         <form.AppField name='webrtcSignalingApiPort'>
           {(field) => (
             <field.NumberInputField
-              label='WebRTC signaling API port'
-              placeholder='1984'
-              description='The port number for the WebRTC signaling API (used for establishing the video stream connection).'
+              label={m.app_connection_webrtc_signaling_api_port_label()}
+              placeholder={m.app_connection_webrtc_signaling_api_port_placeholder()}
+              description={m.app_connection_webrtc_signaling_api_port_description()}
               min={1}
               max={65535}
             />
@@ -63,24 +67,24 @@ export const AppConnection: Component = () => {
         <form.AppField name='webrtcSignalingApiPath'>
           {(field) => (
             <field.TextInputField
-              label='WebRTC signaling API path'
-              placeholder='/api/webrtc?src=cam'
-              description='The path for the WebRTC signaling API.'
+              label={m.app_connection_webrtc_signaling_api_path_label()}
+              placeholder={m.app_connection_webrtc_signaling_api_path_placeholder()}
+              description={m.app_connection_webrtc_signaling_api_path_description()}
             />
           )}
         </form.AppField>
         <form.AppField name='webSocketPort'>
           {(field) => (
             <field.NumberInputField
-              label='WebSocket port'
-              placeholder='5000'
-              description='The port number for the WebSocket connection (used for controlling the ROV and obtaining status).'
+              label={m.app_connection_web_socket_port_label()}
+              placeholder={m.app_connection_web_socket_port_placeholder()}
+              description={m.app_connection_web_socket_port_description()}
               min={1}
               max={65535}
             />
           )}
         </form.AppField>
-        <form.SubmitButton>Save</form.SubmitButton>
+        <form.SubmitButton>{m.common_save()}</form.SubmitButton>
       </form.Form>
     </form.AppForm>
   );

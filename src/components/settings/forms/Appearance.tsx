@@ -10,6 +10,7 @@ import {
 } from '@manafishrov/ui/radio-group';
 import { z } from 'zod';
 
+import * as m from '@/paraglide/messages';
 import { AttitudeIndicator, configStore, setConfig } from '@/stores/config';
 
 const formSchema = z.object({
@@ -58,18 +59,27 @@ export const Appearance: Component = () => {
       <form.Form>
         <form.AppField name='theme'>
           {(field) => (
-            <field.RadioGroupField label='Theme' description='Select the application theme.'>
+            <field.RadioGroupField
+              label={m.general_settings_appearance_theme_title()}
+              description={m.general_settings_appearance_theme_description()}
+            >
               <RadioGroupItem value='light'>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>Light</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_theme_light()}
+                </RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value='dark'>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>Dark</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_theme_dark()}
+                </RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value='system'>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>System</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_theme_system()}
+                </RadioGroupItemText>
               </RadioGroupItem>
             </field.RadioGroupField>
           )}
@@ -78,8 +88,8 @@ export const Appearance: Component = () => {
           {(field) => (
             <field.SliderField
               class='max-w-sm'
-              label='Overlay Scale'
-              description='Adjust the scale of the overlay UI.'
+              label={m.general_settings_appearance_overlay_scale_title()}
+              description={m.general_settings_appearance_overlay_scale_description()}
               marks={[
                 { value: 1, label: '1' },
                 { value: 2, label: '2' },
@@ -96,24 +106,32 @@ export const Appearance: Component = () => {
         <form.AppField name='attitudeIndicator'>
           {(field) => (
             <field.RadioGroupField
-              label='Attitude Indicator'
-              description='Select the attitude indicator style.'
+              label={m.general_settings_appearance_attitude_indicator_title()}
+              description={m.general_settings_appearance_attitude_indicator_description()}
             >
               <RadioGroupItem value={AttitudeIndicator.scientific}>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>Scientific</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_attitude_indicator_scientific()}
+                </RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value={AttitudeIndicator.model3D}>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>3D Model</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_attitude_indicator_3d()}
+                </RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value={AttitudeIndicator.classic}>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>Classic</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_attitude_indicator_classic()}
+                </RadioGroupItemText>
               </RadioGroupItem>
               <RadioGroupItem value={AttitudeIndicator.disabled}>
                 <RadioGroupItemControl />
-                <RadioGroupItemText>Disabled</RadioGroupItemText>
+                <RadioGroupItemText>
+                  {m.general_settings_appearance_attitude_indicator_disabled()}
+                </RadioGroupItemText>
               </RadioGroupItem>
             </field.RadioGroupField>
           )}
@@ -121,14 +139,17 @@ export const Appearance: Component = () => {
         <form.AppField name='thrusterRpmOverlay'>
           {(field) => (
             <field.SwitchField
-              label='Thruster RPM Overlay'
-              description='Show the thruster RPM overlay on the video feed.'
+              label={m.general_settings_appearance_thruster_rpm_overlay_title()}
+              description={m.general_settings_appearance_thruster_rpm_overlay_description()}
             />
           )}
         </form.AppField>
         <form.AppField name='workIndicator'>
           {(field) => (
-            <field.SwitchField label='Work Indicator' description='Show the work indicator.' />
+            <field.SwitchField
+              label={m.general_settings_appearance_work_indicator_title()}
+              description={m.general_settings_appearance_work_indicator_description()}
+            />
           )}
         </form.AppField>
         <form.AutoSubmit />

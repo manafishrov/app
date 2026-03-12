@@ -23,6 +23,7 @@ import {
   normalizeBindValue,
   roundToBindIncrement,
 } from '@/input';
+import * as m from '@/paraglide/messages';
 
 type GamepadBindInputProps = {
   label: string;
@@ -42,9 +43,9 @@ type ChangedInput = {
 };
 
 const snapshotGamepad = (gamepad: Gamepad): GamepadSnapshot => ({
-    buttons: gamepad.buttons.map((button) => button?.value ?? 0),
-    axes: [...gamepad.axes],
-  });
+  buttons: gamepad.buttons.map((button) => button?.value ?? 0),
+  axes: [...gamepad.axes],
+});
 
 const detectChangedInput = (
   initial: GamepadSnapshot,
@@ -55,7 +56,9 @@ const detectChangedInput = (
     const endValue = latest.buttons[index] ?? 0;
     const delta = Math.abs(endValue - startValue);
 
-    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {continue;}
+    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {
+      continue;
+    }
 
     return {
       input: { Button: index },
@@ -67,7 +70,9 @@ const detectChangedInput = (
     const endValue = latest.axes[index] ?? 0;
     const delta = Math.abs(endValue - startValue);
 
-    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {continue;}
+    if (delta < GAMEPAD_CAPTURE_THRESHOLD) {
+      continue;
+    }
 
     return {
       input: { Axis: index },
@@ -183,13 +188,19 @@ function GamepadBindInput(props: GamepadBindInputProps) {
   const formatBindMarkerValue = (value: number): string => value.toFixed(2);
 
   const startCapture = (): void => {
-    if (isRecording()) {return;}
+    if (isRecording()) {
+      return;
+    }
 
     const gamepad = getActiveGamepad(props.selectedGamepadId);
-    if (!gamepad) {return;}
+    if (!gamepad) {
+      return;
+    }
 
     escapeListener = (event: KeyboardEvent): void => {
-      if (event.code !== 'Escape') {return;}
+      if (event.code !== 'Escape') {
+        return;
+      }
       props.onChange(null);
       stopRecording();
     };
@@ -232,7 +243,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
           <SportsEsportsIcon class='size-4' />
           <span class='truncate'>
             {isRecording()
-              ? 'Move a control...'
+              ? m.binding_input_move_a_control()
               : formatGamepadInputLabel(props.value?.input ?? null)}
           </span>
         </Button>
@@ -243,7 +254,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
                 {...tooltipProps()}
                 variant='ghost'
                 size='icon'
-                aria-label='Reset binding'
+                aria-label={m.aria_labels_reset_to_default_binding()}
                 onClick={resetToDefault}
                 disabled={!props.selectedGamepadId}
               >
@@ -253,7 +264,7 @@ function GamepadBindInput(props: GamepadBindInputProps) {
           />
           <TooltipPositioner>
             <TooltipContent>
-              Restore initial binding
+              {m.binding_input_restore_initial_binding()}
               <TooltipArrow />
             </TooltipContent>
           </TooltipPositioner>
@@ -265,9 +276,15 @@ function GamepadBindInput(props: GamepadBindInputProps) {
         </ProgressTrack>
       </Progress>
       <div class='flex items-center justify-between text-xs text-muted-foreground'>
-        <span>Min: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}</span>
-        <span>Current: {formatBindMarkerValue(currentValue())}</span>
-        <span>Max: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}</span>
+        <span>
+          {m.binding_input_min()}: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}
+        </span>
+        <span>
+          {m.binding_input_current()}: {formatBindMarkerValue(currentValue())}
+        </span>
+        <span>
+          {m.binding_input_max()}: {props.value ? formatBindMarkerValue(props.value.maxValue) : '-'}
+        </span>
       </div>
     </div>
   );

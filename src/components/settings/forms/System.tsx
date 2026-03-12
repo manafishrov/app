@@ -7,22 +7,37 @@ import { type Component, For, createSignal } from 'solid-js';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 import { FluidType, MicrocontrollerFirmwareVariant, rovConfigStore } from '@/stores/rovConfig';
 import { flashMicrocontrollerFirmware, setRovConfig } from '@/tauri';
 
-const firmwareVariants = createListCollection<{ value: string; label: string }>({
-  items: [
-    { value: MicrocontrollerFirmwareVariant.pwm as string, label: 'PWM' },
-    { value: MicrocontrollerFirmwareVariant.dshot as string, label: 'DShot' },
-  ],
-});
+const createFirmwareVariants = () =>
+  createListCollection<{ value: string; label: string }>({
+    items: [
+      {
+        value: MicrocontrollerFirmwareVariant.pwm as string,
+        label: m.general_rov_settings_microcontroller_firmware_pwm(),
+      },
+      {
+        value: MicrocontrollerFirmwareVariant.dshot as string,
+        label: m.general_rov_settings_microcontroller_firmware_dshot(),
+      },
+    ],
+  });
 
-const fluidTypes = createListCollection<{ value: string; label: string }>({
-  items: [
-    { value: FluidType.freshwater as string, label: 'Freshwater' },
-    { value: FluidType.saltwater as string, label: 'Saltwater' },
-  ],
-});
+const createFluidTypes = () =>
+  createListCollection<{ value: string; label: string }>({
+    items: [
+      {
+        value: FluidType.freshwater as string,
+        label: m.general_rov_settings_fluid_type_freshwater(),
+      },
+      {
+        value: FluidType.saltwater as string,
+        label: m.general_rov_settings_fluid_type_saltwater(),
+      },
+    ],
+  });
 
 const formSchema = z.object({
   microcontrollerFirmwareVariant: z
@@ -34,6 +49,8 @@ const formSchema = z.object({
 
 export const System: Component = () => {
   const [isFlashing, setIsFlashing] = createSignal(false);
+  const firmwareVariants = createFirmwareVariants();
+  const fluidTypes = createFluidTypes();
 
   const form = useAppForm(() => ({
     validators: {
@@ -66,11 +83,11 @@ export const System: Component = () => {
       .handleSubmit()
       .then(() => flashMicrocontrollerFirmware(rovConfigStore.microcontrollerFirmwareVariant))
       .then(() => {
-        toast.create({ title: 'Firmware flashing started', type: 'success' });
+        toast.create({ title: m.toasts_firmware_flashing_started(), type: 'success' });
       })
       .catch((error: unknown) => {
         logError('Failed to flash microcontroller firmware:', error);
-        toast.create({ title: 'Failed to flash firmware', type: 'error' });
+        toast.create({ title: m.toasts_flash_failed(), type: 'error' });
       })
       .finally(() => {
         setIsFlashing(false);
@@ -83,10 +100,10 @@ export const System: Component = () => {
         <form.AppField name='fluidType'>
           {(field) => (
             <field.SelectField
-              label='Fluid type'
-              description='Set correct fluid type to get accurate water pressure readings.'
+              label={m.general_rov_settings_fluid_type_title()}
+              description={m.general_rov_settings_fluid_type_description()}
               collection={fluidTypes}
-              placeholder='Select fluid type'
+              placeholder={m.general_rov_settings_fluid_type_select_placeholder()}
             >
               <For each={fluidTypes.items}>
                 {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
@@ -97,19 +114,19 @@ export const System: Component = () => {
         <form.AppField name='microcontrollerFirmwareVariant'>
           {(field) => (
             <field.SelectField
-              label='Microcontroller firmware'
-              description='Select and flash the firmware with the specified output protocol for the microcontroller that generates the control signals for the thrusters. DShot is a modern digital protocol that supports bi-directional communication, allowing reading of thruster RPM, voltage, current and temperature. However, it can be more sensitive to noise and may introduce higher latency if the ESCs are not powerful enough. PWM is the older analog protocol and does not support feedback, but it is generally more robust. It is recommended to use DShot first, and switch to PWM only if you encounter issues.'
+              label={m.general_rov_settings_microcontroller_firmware_title()}
+              description={m.general_rov_settings_microcontroller_firmware_description()}
               collection={firmwareVariants}
-              placeholder='Select firmware variant'
+              placeholder={m.general_rov_settings_microcontroller_firmware_select_placeholder()}
               trailingAddon={
                 <Button
                   type='button'
                   variant='outline'
                   loading={isFlashing()}
                   onClick={flashSelectedFirmware}
-                  aria-label='Flash microcontroller firmware'
+                  aria-label={m.general_rov_settings_microcontroller_firmware_title()}
                 >
-                  Flash
+                  {m.common_flash()}
                 </Button>
               }
             >
@@ -122,8 +139,8 @@ export const System: Component = () => {
         <form.AppField name='smoothingFactor'>
           {(field) => (
             <field.SliderField
-              label='Smoothing factor'
-              description='How much smoothing applied to the movement of the ROV. Smoothing can be nice for getting smooth movement and camera shots, but it can also make the ROV feel less responsive. 0 leads to no smoothing. As the value approaches 1, the smoothing increases exponentially.'
+              label={m.general_rov_settings_smoothing_factor_title()}
+              description={m.general_rov_settings_smoothing_factor_description()}
               min={0}
               max={1}
               step={0.01}

@@ -8,6 +8,7 @@ import {
 } from '@manafishrov/ui/tooltip';
 import VideoIcon from '~icons/material-symbols/video-camera-back';
 
+import * as m from '@/paraglide/messages';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
 function RecordingButton() {
@@ -30,7 +31,11 @@ function RecordingButton() {
               size='icon-xs'
               variant={recordingStore.isRecording ? 'destructive' : 'outline'}
               onClick={handleRecordingClick}
-              aria-label={recordingStore.isRecording ? 'Stop recording' : 'Start recording'}
+              aria-label={
+                recordingStore.isRecording
+                  ? m.controls_recording_stop_recording()
+                  : m.controls_recording_start_recording()
+              }
             >
               <VideoIcon />
             </Button>
@@ -38,7 +43,11 @@ function RecordingButton() {
         />
         <TooltipPositioner>
           <TooltipContent>
-            <span>{recordingStore.isRecording ? 'Stop recording' : 'Start recording'}</span>
+            <span>
+              {recordingStore.isRecording
+                ? m.controls_recording_stop_recording()
+                : m.controls_recording_start_recording()}
+            </span>
             <TooltipArrow />
           </TooltipContent>
         </TooltipPositioner>

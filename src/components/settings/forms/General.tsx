@@ -7,13 +7,17 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 import { configStore, setConfig } from '@/stores/config';
 
-const formSchema = z.object({
-  videoDirectory: z.string().min(1, 'Video directory is required'),
-});
+const createFormSchema = () =>
+  z.object({
+    videoDirectory: z.string().min(1, m.general_settings_video_directory_required()),
+  });
 
 export const General: Component = () => {
+  const formSchema = createFormSchema();
+
   const form = useAppForm(() => ({
     validators: {
       onSubmit: formSchema,
@@ -31,7 +35,7 @@ export const General: Component = () => {
       const result = await open({
         directory: true,
         multiple: false,
-        title: 'Select Video Directory',
+        title: m.general_settings_video_directory_select_dialog_title(),
         defaultPath: configStore.videoDirectory,
       });
       if (typeof result === 'string') {
@@ -40,7 +44,7 @@ export const General: Component = () => {
       }
     } catch (error) {
       logError('Error opening file picker dialog:', error);
-      toast.create({ title: 'Failed to open file picker dialog', type: 'error' });
+      toast.create({ title: m.toasts_failed_to_open_file_picker_dialog(), type: 'error' });
     }
   }
 
@@ -50,16 +54,16 @@ export const General: Component = () => {
         <form.AppField name='videoDirectory'>
           {(field) => (
             <field.TextInputField
-              label='Video Directory'
-              description='Set the directory where recordings are stored.'
+              label={m.general_settings_video_directory_title()}
+              description={m.general_settings_video_directory_description()}
               readonly
               trailingAddon={
                 <Button
                   onClick={selectVideoDirectory}
-                  aria-label='Select Video Directory'
+                  aria-label={m.aria_labels_select_video_directory()}
                   variant='outline'
                 >
-                  Select Directory
+                  {m.general_settings_video_directory_select_directory()}
                 </Button>
               }
             />

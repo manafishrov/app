@@ -5,18 +5,19 @@ import { H1, H4, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 import { General } from '@/components/settings/forms/General';
+import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 
 const GeneralSettingsPage: Component = () => {
   return (
     <>
       <div class='mb-6 flex flex-col gap-2'>
-        <H1>General</H1>
-        <P>Generic settings for the Manafish application.</P>
+        <H1>{m.general_settings_page_title()}</H1>
+        <P>{m.general_settings_page_description()}</P>
       </div>
       <div class='my-8'>
-        <H4>App Version</H4>
-        <p class='text-muted-foreground text-sm'>Current version of the Manafish application.</p>
+        <H4>{m.general_settings_app_version_title()}</H4>
+        <p class='text-muted-foreground text-sm'>{m.general_settings_app_version_description()}</p>
         <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
           v{configStore.appVersion}
         </Badge>

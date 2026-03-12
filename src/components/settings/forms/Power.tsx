@@ -3,23 +3,27 @@ import type { Component } from 'solid-js';
 import { useAppForm } from '@manafishrov/ui/form';
 import { z } from 'zod';
 
+import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
 
-const formSchema = z
-  .object({
-    userMaxPowerThrusters: z.array(z.number().min(0).max(100)),
-    userMaxPowerActions: z.array(z.number().min(0).max(100)),
-    regulatorMaxPower: z.array(z.number().min(0).max(100)),
-    batteryMinVoltage: z.number().positive('Must be a positive voltage'),
-    batteryMaxVoltage: z.number().positive('Must be a positive voltage'),
-  })
-  .refine((data) => data.batteryMinVoltage < data.batteryMaxVoltage, {
-    message: 'Min voltage must be less than max voltage',
-    path: ['batteryMinVoltage'],
-  });
+const createFormSchema = () =>
+  z
+    .object({
+      userMaxPowerThrusters: z.array(z.number().min(0).max(100)),
+      userMaxPowerActions: z.array(z.number().min(0).max(100)),
+      regulatorMaxPower: z.array(z.number().min(0).max(100)),
+      batteryMinVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
+      batteryMaxVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
+    })
+    .refine((data) => data.batteryMinVoltage < data.batteryMaxVoltage, {
+      message: m.validation_min_voltage_less_than_max(),
+      path: ['batteryMinVoltage'],
+    });
 
 export const Power: Component = () => {
+  const formSchema = createFormSchema();
+
   const form = useAppForm(() => ({
     validators: {
       onChange: formSchema,
@@ -59,8 +63,8 @@ export const Power: Component = () => {
           {(field) => (
             <field.SliderField
               class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
-              label='User Maximum Power (Thrusters)'
-              description='The percentage of power given to the thrusters from user input.'
+              label={m.power_user_max_power_thrusters_label()}
+              description={m.power_user_max_power_description()}
               min={0}
               max={100}
               step={1}
@@ -71,8 +75,8 @@ export const Power: Component = () => {
           {(field) => (
             <field.SliderField
               class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
-              label='User Maximum Power (Actions)'
-              description='The percentage of power given to the motors for actions from user input.'
+              label={m.power_user_max_power_actions_label()}
+              description={m.power_user_max_power_actions_description()}
               min={0}
               max={100}
               step={1}
@@ -83,8 +87,8 @@ export const Power: Component = () => {
           {(field) => (
             <field.SliderField
               class='max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]'
-              label='Regulator Maximum Power'
-              description='The percentage of power given to the thrusters by the regulator to keep the ROV stabilized.'
+              label={m.power_regulator_max_power_label()}
+              description={m.power_regulator_max_power_description()}
               min={0}
               max={100}
               step={1}
@@ -94,8 +98,8 @@ export const Power: Component = () => {
         <form.AppField name='batteryMinVoltage'>
           {(field) => (
             <field.NumberInputField
-              label='Battery Minimum Voltage'
-              description='The voltage of the battery when it is fully depleted. This will show as 0% battery in the app. Please include a margin to avoid damaging the battery.'
+              label={m.power_battery_min_voltage_label()}
+              description={m.power_battery_min_voltage_description()}
               min={0}
               step={0.1}
             />
@@ -104,8 +108,8 @@ export const Power: Component = () => {
         <form.AppField name='batteryMaxVoltage'>
           {(field) => (
             <field.NumberInputField
-              label='Battery Maximum Voltage'
-              description='The voltage of the battery when it is fully charged. This will show as 100% battery in the app.'
+              label={m.power_battery_max_voltage_label()}
+              description={m.power_battery_max_voltage_description()}
               min={0}
               step={0.1}
             />

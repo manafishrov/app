@@ -23,6 +23,7 @@ import {
 import SearchIcon from '~icons/material-symbols/search';
 
 import { getAllLogRecords, type LogRecord, type LogOrigin, type LogLevel } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 
 type LogViewerProps = {
   class?: string;
@@ -273,7 +274,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
           </InputGroupAddon>
           <InputGroupInput
             type='text'
-            placeholder='Search logs...'
+            placeholder={m.debug_search_logs_placeholder()}
             value={searchQuery()}
             onInput={(e) => {
               setSearchQuery(e.currentTarget.value);
@@ -284,14 +285,14 @@ const LogViewer: Component<LogViewerProps> = (props) => {
 
         <div class='flex flex-wrap items-center gap-3'>
           <div class='flex items-center gap-1'>
-            <span class='mr-1 text-xs text-muted-foreground'>Source:</span>
+            <span class='mr-1 text-xs text-muted-foreground'>{m.debug_source()}:</span>
             <Toggle
               size='sm'
               variant='outline'
               pressed={sourceFilters().frontend}
               onPressedChange={() => toggleSourceFilter('frontend')}
             >
-              Frontend
+              {m.debug_source_frontend()}
             </Toggle>
             <Toggle
               size='sm'
@@ -299,7 +300,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
               pressed={sourceFilters().backend}
               onPressedChange={() => toggleSourceFilter('backend')}
             >
-              Backend
+              {m.debug_source_backend()}
             </Toggle>
             <Toggle
               size='sm'
@@ -307,12 +308,12 @@ const LogViewer: Component<LogViewerProps> = (props) => {
               pressed={sourceFilters().firmware}
               onPressedChange={() => toggleSourceFilter('firmware')}
             >
-              Firmware
+              {m.debug_source_firmware()}
             </Toggle>
           </div>
 
           <div class='flex items-center gap-1'>
-            <span class='mr-1 text-xs text-muted-foreground'>Level:</span>
+            <span class='mr-1 text-xs text-muted-foreground'>{m.debug_level()}:</span>
             <Toggle
               size='sm'
               variant='outline'
@@ -320,7 +321,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
               onPressedChange={() => toggleLevelFilter('info')}
               class='data-pressed:bg-blue-500/15 data-pressed:text-blue-400'
             >
-              Info
+              {m.debug_level_info()}
             </Toggle>
             <Toggle
               size='sm'
@@ -329,7 +330,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
               onPressedChange={() => toggleLevelFilter('warn')}
               class='data-pressed:bg-yellow-500/15 data-pressed:text-yellow-500'
             >
-              Warn
+              {m.debug_level_warn()}
             </Toggle>
             <Toggle
               size='sm'
@@ -338,7 +339,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
               onPressedChange={() => toggleLevelFilter('error')}
               class='data-pressed:bg-red-500/15 data-pressed:text-red-400'
             >
-              Error
+              {m.debug_level_error()}
             </Toggle>
           </div>
         </div>
@@ -358,7 +359,9 @@ const LogViewer: Component<LogViewerProps> = (props) => {
             </Show>
             <Show when={!isLoading() && filteredLogs().length === 0}>
               <div class='flex h-20 items-center justify-center text-muted-foreground'>
-                {logs().length === 0 ? 'No logs recorded yet' : 'No logs match your filters'}
+                {logs().length === 0
+                  ? m.debug_no_logs_recorded_yet()
+                  : m.debug_no_logs_match_filters()}
               </div>
             </Show>
             <div
