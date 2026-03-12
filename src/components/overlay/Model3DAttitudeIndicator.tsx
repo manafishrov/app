@@ -11,6 +11,7 @@ type Model3DAttitudeIndicatorProps = {
   pitch: number;
   roll: number;
   yaw: number;
+  desiredYaw: number;
   style?: JSX.CSSProperties;
 };
 
@@ -37,6 +38,11 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
   scene.add(directionalLight);
 
   let modelGroup: THREE.Group | undefined;
+
+  const deltaYaw = () => {
+    const delta = props.desiredYaw - props.yaw;
+    return ((delta + 540) % 360) - 180;
+  };
 
   createEffect(() => {
     if (gltf.error) {
@@ -70,10 +76,11 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
         if (modelGroup) {
           modelGroup.rotation.x = (props.pitch * Math.PI) / 180;
           modelGroup.rotation.z = (props.roll * Math.PI) / 180;
-          modelGroup.rotation.y = (props.yaw * Math.PI) / 180;
+          modelGroup.rotation.y = (deltaYaw() * Math.PI) / 180;
         }
         renderer!.render(scene, camera);
       };
+
       animate();
     }
   });

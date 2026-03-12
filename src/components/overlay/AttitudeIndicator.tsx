@@ -55,6 +55,7 @@ const AttitudeIndicator: Component = () => {
           pitch={rovTelemetryStore.pitch}
           roll={rovTelemetryStore.roll}
           yaw={rovTelemetryStore.yaw}
+          desiredYaw={rovTelemetryStore.desiredYaw}
           style={shadowStyle()}
         />
       ) : configStore.attitudeIndicator === AttitudeIndicatorEnum.classic ? (
