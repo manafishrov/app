@@ -1,7 +1,7 @@
 import { Badge } from '@manafishrov/ui/badge';
 import { type Component, For } from 'solid-js';
 
-import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
+import { ThrusterRpm } from '@/components/ThrusterRpm';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';

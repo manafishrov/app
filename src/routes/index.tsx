@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createSignal, onCleanup, onMount } from 'solid-js';
 
-import { RovOverlay } from '@/components/overlay/RovOverlay';
+import { Overlay } from '@/components/Overlay';
 import { VideoStream } from '@/components/VideoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
@@ -73,7 +73,7 @@ function HomePage() {
         class='bg-muted relative rounded-lg w-[min(100cqw,calc(100cqh*4/3))] h-[min(100cqh,calc(100cqw*3/4))]'
       >
         <VideoStream />
-        <RovOverlay />
+        <Overlay />
       </AspectRatio>
     </main>
   );

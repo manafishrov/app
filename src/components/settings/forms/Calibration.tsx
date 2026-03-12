@@ -36,7 +36,7 @@ import { Portal } from 'solid-js/web';
 import { z } from 'zod';
 import RestartAltIcon from '~icons/material-symbols/restart-alt';
 
-import { ThrusterRpm } from '@/components/controls/ThrusterRpm';
+import { ThrusterRpm } from '@/components/ThrusterRpm';
 import { logError } from '@/lib/log';
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from '@/lib/thrusterPresets';
 import {

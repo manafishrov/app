@@ -29,35 +29,23 @@ const ScaledSection: Component<ScaledSectionProps> = (props) => (
   </div>
 );
 
-const RovOverlay: Component = () => {
+const Overlay: Component = () => {
   // Smaller increments and smaller max scale: 1 -> 0.9, 5 -> 1.3
   const scaleMultiplier = createMemo(() => 0.8 + configStore.overlayScale * 0.1);
 
   return (
     <div class='absolute inset-0 pointer-events-none overflow-hidden'>
-      <ScaledSection
-        class='absolute top-4 left-4 flex flex-col gap-2'
-        scale={scaleMultiplier()}
-      >
+      <ScaledSection class='absolute top-4 left-4 flex flex-col gap-2' scale={scaleMultiplier()}>
         <ConnectionStatusIndicator />
         <RecordingIndicator />
       </ScaledSection>
-      <ScaledSection
-        class='absolute bottom-4 left-4'
-        scale={scaleMultiplier()}
-      >
+      <ScaledSection class='absolute bottom-4 left-4' scale={scaleMultiplier()}>
         <AttitudeIndicator />
       </ScaledSection>
-      <ScaledSection
-        class='absolute top-1/2 left-4 -translate-y-1/2'
-        scale={scaleMultiplier()}
-      >
+      <ScaledSection class='absolute top-1/2 left-4 -translate-y-1/2' scale={scaleMultiplier()}>
         <StabilizationIndicator />
       </ScaledSection>
-      <ScaledSection
-        class='absolute top-1/2 right-4 -translate-y-1/2'
-        scale={scaleMultiplier()}
-      >
+      <ScaledSection class='absolute top-1/2 right-4 -translate-y-1/2' scale={scaleMultiplier()}>
         <ThrusterRpmOverlay />
       </ScaledSection>
       <ScaledSection
@@ -72,4 +60,4 @@ const RovOverlay: Component = () => {
   );
 };
 
-export { RovOverlay };
+export { Overlay };
