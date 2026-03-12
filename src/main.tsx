@@ -3,7 +3,6 @@ import { render } from 'solid-js/web';
 
 import { deLocalizeUrl, localizeUrl } from '@/paraglide/runtime';
 import { routeTree } from '@/routeTree.gen';
-
 import '@/styles.css';
 
 const router = createRouter({
@@ -18,7 +17,7 @@ const router = createRouter({
 });
 
 declare module '@tanstack/solid-router' {
-  type Register = {
+  interface Register {
     router: typeof router;
   }
 }

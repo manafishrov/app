@@ -1,25 +1,13 @@
-import { type Component, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
+import { type Component, createMemo } from 'solid-js';
 
 import { ScientificAttitudeIndicator } from '@/components/overlay/ScientificAttitudeIndicator';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
+const SCIENTIFIC_ATTITUDE_SIZE = 180;
+
 const AttitudeIndicator: Component = () => {
-  const [isDesktop, setIsDesktop] = createSignal(true);
-
-  onMount(() => {
-    const mediaQuery = globalThis.matchMedia('(min-width: 768px)');
-    setIsDesktop(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent): void => {
-      setIsDesktop(e.matches);
-    };
-    mediaQuery.addEventListener('change', handler);
-    onCleanup(() => mediaQuery.removeEventListener('change', handler));
-  });
-
-  const size = createMemo(() => (isDesktop() ? 220 : 160));
-
   const shadowStyle = createMemo(() => {
     let style: Record<string, string> = {};
 
@@ -52,13 +40,11 @@ const AttitudeIndicator: Component = () => {
     <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
       {configStore.attitudeIndicator === 'scientific' ? (
         <ScientificAttitudeIndicator
-          size={size()}
+          size={SCIENTIFIC_ATTITUDE_SIZE}
           pitch={rovTelemetryStore.pitch}
           roll={rovTelemetryStore.roll}
-          yaw={rovTelemetryStore.yaw}
           desiredPitch={rovTelemetryStore.desiredPitch}
           desiredRoll={rovTelemetryStore.desiredRoll}
-          desiredYaw={rovTelemetryStore.desiredYaw}
           style={shadowStyle()}
         />
       ) : (

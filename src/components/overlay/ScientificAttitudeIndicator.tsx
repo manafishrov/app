@@ -6,26 +6,9 @@ type ScientificAttitudeIndicatorProps = {
   size: number;
   pitch: number;
   roll: number;
-  yaw: number;
   desiredPitch: number;
   desiredRoll: number;
-  desiredYaw: number;
   style?: JSX.CSSProperties;
-};
-
-const getYawLabel = (deg: number): string => {
-  if (deg === -180 || deg === 180) return '90';
-  if (deg === -135 || deg === 45) return '-45';
-  if (deg === -90 || deg === 90) return '0';
-  if (deg === -45 || deg === 135) return '45';
-  if (deg === 0) return '-90';
-  return '';
-};
-
-const getYawTranslateY = (deg: number): number => {
-  if (deg === -180 || deg === 180) return 2;
-  if (deg === 0) return -2;
-  return 1;
 };
 
 const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> = (props) => {
@@ -107,10 +90,29 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
                   alignment-baseline='middle'
                   transform={`
                     rotate(${-deg} ${center()} ${props.size * 0.17})
-                    translate(0 ${getYawTranslateY(deg)})
+                    translate(0 ${deg === -180 || deg === 180 ? 2 : deg === 0 ? -2 : 1})
                   `}
                 >
-                  {getYawLabel(deg)}°
+                  {deg === -180
+                    ? 90
+                    : deg === -135
+                      ? -45
+                      : deg === -90
+                        ? 0
+                        : deg === -45
+                          ? 45
+                          : deg === 0
+                            ? -90
+                            : deg === 45
+                              ? -45
+                              : deg === 90
+                                ? 0
+                                : deg === 135
+                                  ? 45
+                                  : deg === 180
+                                    ? 90
+                                    : ''}
+                  °
                 </text>
               )}
             </g>
@@ -183,7 +185,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           fill='oklch(0.985 0 0)'
           font-size={textSize(0.06)}
         >
-          P: {props.pitch.toFixed(1)}°
+          Pitch: {props.pitch.toFixed(1)}°
         </text>
         <text
           x={props.size - props.size * 0.4}
@@ -191,16 +193,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           fill='oklch(0.985 0 0)'
           font-size={textSize(0.06)}
         >
-          R: {props.roll.toFixed(1)}°
-        </text>
-        <text
-          x={center()}
-          y={props.size - props.size * 0.02}
-          fill='oklch(0.985 0 0)'
-          font-size={textSize(0.06)}
-          text-anchor='middle'
-        >
-          Y: {props.yaw.toFixed(1)}°
+          Roll: {props.roll.toFixed(1)}°
         </text>
       </svg>
     </div>
