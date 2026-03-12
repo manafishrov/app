@@ -6,15 +6,25 @@ type ScientificAttitudeIndicatorProps = {
   size: number;
   pitch: number;
   roll: number;
+  yaw: number;
   desiredPitch: number;
   desiredRoll: number;
+  desiredYaw: number;
   style?: JSX.CSSProperties;
 };
 
 const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> = (props) => {
   const center = () => props.size / 2;
   const pitchScale = () => props.size / 200;
+  const yawScale = () => (props.size) / 180;
   const textSize = (ratio: number) => `${props.size * ratio}px`;
+
+  const deltaYaw = () => {
+    let dy = props.desiredYaw - props.yaw;
+    while (dy > 180) dy -= 360;
+    while (dy < -180) dy += 360;
+    return dy;
+  };
 
   return (
     <div
@@ -124,6 +134,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           style={{
             transform: `
               translate(${center()}px, ${center()}px)
+              translateX(${deltaYaw() * yawScale()}px)
               translateY(${-props.desiredPitch * pitchScale()}px)
               rotate(${props.desiredRoll}deg)
               translate(${-center()}px, ${-center()}px)
@@ -150,6 +161,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           style={{
             transform: `
               translate(${center()}px, ${center()}px)
+              translateX(${deltaYaw() * yawScale()}px)
               translateY(${-props.pitch * pitchScale()}px)
               rotate(${props.roll}deg)
               translate(${-center()}px, ${-center()}px)
@@ -180,6 +192,14 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           />
         </g>
 
+        <text
+          x={props.size * 0.1}
+          y={props.size * 0.15}
+          fill='currentColor'
+          font-size={textSize(0.06)}
+        >
+          ΔYaw: {deltaYaw().toFixed(1)}°
+        </text>
         <text
           x={props.size * 0.1}
           y={props.size - props.size * 0.1}
