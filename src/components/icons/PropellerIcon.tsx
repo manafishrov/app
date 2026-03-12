@@ -1,8 +1,8 @@
-import type { JSX } from 'solid-js';
+import type { ComponentProps } from 'solid-js';
 
-interface PropellerIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
+type PropellerIconProps = ComponentProps<'svg'> & {
   class?: string;
-}
+};
 
 function PropellerIcon(props: PropellerIconProps) {
   return (

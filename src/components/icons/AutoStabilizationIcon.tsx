@@ -1,10 +1,10 @@
-import type { JSX } from 'solid-js';
+import type { ComponentProps } from 'solid-js';
 
-interface DirectionIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
+type AutoStabilizationIconProps = ComponentProps<'svg'> & {
   class?: string;
-}
+};
 
-function DirectionIcon(props: DirectionIconProps) {
+function AutoStabilizationIcon(props: AutoStabilizationIconProps) {
   return (
     <svg
       width='72'
@@ -28,4 +28,4 @@ function DirectionIcon(props: DirectionIconProps) {
   );
 }
 
-export { DirectionIcon };
+export { AutoStabilizationIcon };

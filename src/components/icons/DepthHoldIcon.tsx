@@ -1,10 +1,10 @@
-import type { JSX } from 'solid-js';
+import type { ComponentProps } from 'solid-js';
 
-interface DiveIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
+type DepthHoldIconProps = ComponentProps<'svg'> & {
   class?: string;
-}
+};
 
-function DiveIcon(props: DiveIconProps) {
+function DepthHoldIcon(props: DepthHoldIconProps) {
   return (
     <svg
       width='72'
@@ -30,4 +30,4 @@ function DiveIcon(props: DiveIconProps) {
   );
 }
 
-export { DiveIcon };
+export { DepthHoldIcon };
