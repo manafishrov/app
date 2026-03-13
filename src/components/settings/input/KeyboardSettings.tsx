@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { H3 } from '@manafishrov/ui/typography';
-import { type Component } from 'solid-js';
 
 import { KeyboardBindInput } from '@/components/settings/input/KeyboardBindInput';
 import * as m from '@/paraglide/messages';
@@ -82,38 +83,21 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
 ];
 
-const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings => ({
-  surgeForward: bindings.surgeForward ? { ...bindings.surgeForward } : null,
-  surgeBackward: bindings.surgeBackward ? { ...bindings.surgeBackward } : null,
-  swayRight: bindings.swayRight ? { ...bindings.swayRight } : null,
-  swayLeft: bindings.swayLeft ? { ...bindings.swayLeft } : null,
-  heaveUp: bindings.heaveUp ? { ...bindings.heaveUp } : null,
-  heaveDown: bindings.heaveDown ? { ...bindings.heaveDown } : null,
-  pitchUp: bindings.pitchUp ? { ...bindings.pitchUp } : null,
-  pitchDown: bindings.pitchDown ? { ...bindings.pitchDown } : null,
-  yawRight: bindings.yawRight ? { ...bindings.yawRight } : null,
-  yawLeft: bindings.yawLeft ? { ...bindings.yawLeft } : null,
-  rollLeft: bindings.rollLeft ? { ...bindings.rollLeft } : null,
-  rollRight: bindings.rollRight ? { ...bindings.rollRight } : null,
-  action1Positive: bindings.action1Positive ? { ...bindings.action1Positive } : null,
-  action1Negative: bindings.action1Negative ? { ...bindings.action1Negative } : null,
-  action2Positive: bindings.action2Positive ? { ...bindings.action2Positive } : null,
-  action2Negative: bindings.action2Negative ? { ...bindings.action2Negative } : null,
-  autoStabilization: bindings.autoStabilization ? { ...bindings.autoStabilization } : null,
-  depthHold: bindings.depthHold ? { ...bindings.depthHold } : null,
-  record: bindings.record ? { ...bindings.record } : null,
-});
+const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings =>
+  structuredClone(bindings);
 
-const updateKeyboardBinding = async (
+import { logError } from '@/lib/log';
+
+const updateKeyboardBinding = (
   bindingKey: keyof KeyboardBindings,
   value: KeyboardInput | null,
-) => {
+): void => {
   const updatedBindings: KeyboardBindings = {
     ...configStore.keyboard,
     [bindingKey]: value,
   };
 
-  await setConfig({ keyboard: updatedBindings });
+  setConfig({ keyboard: updatedBindings }).catch(logError);
 };
 
 const KeyboardSettings: Component = () => {
@@ -133,7 +117,9 @@ const KeyboardSettings: Component = () => {
                   label={field.label()}
                   value={configStore.keyboard[field.key]}
                   resetValue={initialBindings()[field.key]}
-                  onChange={(next) => updateKeyboardBinding(field.key, next)}
+                  onChange={(next) => {
+                    updateKeyboardBinding(field.key, next);
+                  }}
                 />
               )}
             </For>

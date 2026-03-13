@@ -96,8 +96,10 @@ const ROV_ITEMS: SidebarItem[] = [
   },
 ];
 
+const SLICE_LAST_CHAR = -1;
+
 const normalizePath = (path: string): string =>
-  path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
+  path !== '/' && path.endsWith('/') ? path.slice(0, SLICE_LAST_CHAR) : path;
 
 type SidebarLinkItemProps = {
   item: SidebarItem;
@@ -105,30 +107,98 @@ type SidebarLinkItemProps = {
 };
 
 type SettingsSidebarProps = {
-  isFullscreen?: boolean;
+  isFullscreen?: boolean | undefined;
 };
 
-const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => {
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        tooltip={props.item.label()}
-        aria-label={props.item.ariaLabel()}
-        isActive={props.isActive(props.item.to)}
-        asChild={(triggerProps) => {
-          const buttonProps = triggerProps();
-          const { Icon } = props.item;
-          return (
-            <Link {...buttonProps} to={props.item.to} activeOptions={{ exact: true }}>
-              <Icon aria-hidden='true' />
-              <span>{props.item.label()}</span>
+const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => (
+  <SidebarMenuItem>
+    <SidebarMenuButton
+      tooltip={props.item.label()}
+      aria-label={props.item.ariaLabel()}
+      isActive={props.isActive(props.item.to)}
+      asChild={(triggerProps) => {
+        const buttonProps = triggerProps();
+        const { Icon } = props.item;
+        return (
+          <Link {...buttonProps} to={props.item.to} activeOptions={{ exact: true }}>
+            <Icon aria-hidden='true' />
+            <span>{props.item.label()}</span>
+          </Link>
+        );
+      }}
+    />
+  </SidebarMenuItem>
+);
+
+const SettingsSidebarHeader: Component<{ isFullscreen?: boolean | undefined }> = (props) => (
+  <SidebarHeader {...(props.isFullscreen === true ? { class: 'mt-6' } : {})}>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={m.common_back()}
+          aria-label={m.aria_labels_back_button()}
+          asChild={(triggerProps) => (
+            <Link {...triggerProps()} to='/'>
+              <ArrowBackIcon aria-hidden='true' />
+              <span>{m.common_back()}</span>
             </Link>
-          );
-        }}
-      />
-    </SidebarMenuItem>
-  );
-};
+          )}
+        />
+      </SidebarMenuItem>
+    </SidebarMenu>
+  </SidebarHeader>
+);
+
+const SettingsSidebarContent: Component<{
+  isActive: (path: string) => boolean;
+  isConnected: () => boolean;
+}> = (props) => (
+  <SidebarContent>
+    <SidebarGroup>
+      <SidebarGroupLabel>{m.settings_application_title()}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {APPLICATION_ITEMS.map((item) => (
+            <SidebarLinkItem item={item} isActive={props.isActive} />
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+
+    <Show when={props.isConnected()}>
+      <SidebarGroup>
+        <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {ROV_ITEMS.map((item) => (
+              <SidebarLinkItem item={item} isActive={props.isActive} />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </Show>
+  </SidebarContent>
+);
+
+const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> = (props) => (
+  <SidebarFooter>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={m.settings_debug_title()}
+          aria-label={m.aria_labels_debug_button()}
+          isActive={props.isActive('/settings/debug')}
+          asChild={(triggerProps) => (
+            <Link {...triggerProps()} to='/settings/debug' activeOptions={{ exact: true }}>
+              <BugReportIcon aria-hidden='true' />
+              <span>{m.settings_debug_title()}</span>
+            </Link>
+          )}
+        />
+      </SidebarMenuItem>
+    </SidebarMenu>
+  </SidebarFooter>
+);
 
 const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   const [local] = splitProps(props, ['isFullscreen']);
@@ -143,68 +213,11 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
       collapsible='icon'
       style={{ '--sidebar-width': '11rem' }}
       disableMobileSidebar
-      {...(!local.isFullscreen ? { innerClass: 'rounded-bl-2xl' } : {})}
+      {...(local.isFullscreen === true ? {} : { innerClass: 'rounded-bl-2xl' })}
     >
-      <SidebarHeader {...(local.isFullscreen ? { class: 'mt-6' } : {})}>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={m.common_back()}
-              aria-label={m.aria_labels_back_button()}
-              asChild={(props) => (
-                <Link {...props()} to='/'>
-                  <ArrowBackIcon aria-hidden='true' />
-                  <span>{m.common_back()}</span>
-                </Link>
-              )}
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{m.settings_application_title()}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {APPLICATION_ITEMS.map((item) => (
-                <SidebarLinkItem item={item} isActive={isActive} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Show when={isConnected()}>
-          <SidebarGroup>
-            <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {ROV_ITEMS.map((item) => (
-                  <SidebarLinkItem item={item} isActive={isActive} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </Show>
-      </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={m.settings_debug_title()}
-              aria-label={m.aria_labels_debug_button()}
-              isActive={isActive('/settings/debug')}
-              asChild={(props) => (
-                <Link {...props()} to='/settings/debug' activeOptions={{ exact: true }}>
-                  <BugReportIcon aria-hidden='true' />
-                  <span>{m.settings_debug_title()}</span>
-                </Link>
-              )}
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <SettingsSidebarHeader isFullscreen={local.isFullscreen} />
+      <SettingsSidebarContent isActive={isActive} isConnected={isConnected} />
+      <SettingsSidebarFooter isActive={isActive} />
     </Sidebar>
   );
 };
