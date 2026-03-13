@@ -1,4 +1,4 @@
-import { type Component, createMemo } from 'solid-js';
+import { type Component, createMemo, Match, Switch } from 'solid-js';
 
 import { ClassicAttitudeIndicator } from '@/components/overlay/ClassicAttitudeIndicator';
 import { Model3DAttitudeIndicator } from '@/components/overlay/Model3DAttitudeIndicator';
@@ -9,74 +9,99 @@ import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const SCIENTIFIC_ATTITUDE_SIZE = 180;
 
+const PERCENTAGE_DIVISOR = 100;
+const MAX_SHADOW_BLUR = 20;
+const MAX_SHADOW_SPREAD = 10;
+const MAX_SHADOW_OPACITY = 0.8;
+const HALF_INTENSITY = 0.5;
+const INTENSITY_MULTIPLIER = 2;
+const MAX_COLOR_VALUE = 255;
+
+const calculateShadowColor = (shadowIntensity: number): { redValue: number; greenValue: number; blueValue: number } => {
+  if (shadowIntensity <= HALF_INTENSITY) {
+    return {
+      redValue: Math.round(shadowIntensity * INTENSITY_MULTIPLIER * MAX_COLOR_VALUE),
+      greenValue: MAX_COLOR_VALUE,
+      blueValue: 0,
+    };
+  }
+  return {
+    redValue: MAX_COLOR_VALUE,
+    greenValue: Math.round((1 - shadowIntensity) * INTENSITY_MULTIPLIER * MAX_COLOR_VALUE),
+    blueValue: 0,
+  };
+};
+
+const calculateShadowStyle = (workIndicatorPercentage: number): Record<string, string> => {
+  const shadowIntensity = workIndicatorPercentage / PERCENTAGE_DIVISOR;
+  const shadowBlur = shadowIntensity * MAX_SHADOW_BLUR;
+  const shadowSpread = shadowIntensity * MAX_SHADOW_SPREAD;
+  const shadowOpacity = shadowIntensity * MAX_SHADOW_OPACITY;
+
+  const { redValue, greenValue, blueValue } = calculateShadowColor(shadowIntensity);
+
+  return {
+    'box-shadow': `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${redValue}, ${greenValue}, ${blueValue}, ${shadowOpacity})`,
+  };
+};
+
+const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (props) => (
+  <Switch
+    fallback={
+      <div
+        class='h-4 w-4 rounded-full bg-background/50 backdrop-blur-sm border border-border/50'
+        style={props.style}
+      />
+    }
+  >
+    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.scientific}>
+      <ScientificAttitudeIndicator
+        size={SCIENTIFIC_ATTITUDE_SIZE}
+        pitch={rovTelemetryStore.pitch}
+        roll={rovTelemetryStore.roll}
+        yaw={rovTelemetryStore.yaw}
+        desiredPitch={rovTelemetryStore.desiredPitch}
+        desiredRoll={rovTelemetryStore.desiredRoll}
+        desiredYaw={rovTelemetryStore.desiredYaw}
+        style={props.style}
+      />
+    </Match>
+    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.model3D}>
+      <Model3DAttitudeIndicator
+        size={SCIENTIFIC_ATTITUDE_SIZE}
+        pitch={rovTelemetryStore.pitch}
+        roll={rovTelemetryStore.roll}
+        yaw={rovTelemetryStore.yaw}
+        desiredYaw={rovTelemetryStore.desiredYaw}
+        style={props.style}
+      />
+    </Match>
+    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.classic}>
+      <ClassicAttitudeIndicator
+        size={SCIENTIFIC_ATTITUDE_SIZE}
+        pitch={rovTelemetryStore.pitch}
+        roll={rovTelemetryStore.roll}
+        yaw={rovTelemetryStore.yaw}
+        desiredPitch={rovTelemetryStore.desiredPitch}
+        desiredRoll={rovTelemetryStore.desiredRoll}
+        desiredYaw={rovTelemetryStore.desiredYaw}
+        style={props.style}
+      />
+    </Match>
+  </Switch>
+);
+
 const AttitudeIndicator: Component = () => {
   const shadowStyle = createMemo(() => {
-    let style: Record<string, string> = {};
-
     if (configStore.workIndicator && rovTelemetryStore.workIndicatorPercentage > 0) {
-      const shadowIntensity = rovTelemetryStore.workIndicatorPercentage / 100;
-      const shadowBlur = shadowIntensity * 20;
-      const shadowSpread = shadowIntensity * 10;
-      const shadowOpacity = shadowIntensity * 0.8;
-
-      let b, g, r;
-      if (shadowIntensity <= 0.5) {
-        r = Math.round(shadowIntensity * 2 * 255);
-        g = 255;
-        b = 0;
-      } else {
-        r = 255;
-        g = Math.round((1 - shadowIntensity) * 2 * 255);
-        b = 0;
-      }
-
-      style = {
-        'box-shadow': `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,
-      };
+      return calculateShadowStyle(rovTelemetryStore.workIndicatorPercentage);
     }
-
-    return style;
+    return {};
   });
 
   return (
     <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
-      {configStore.attitudeIndicator === AttitudeIndicatorEnum.scientific ? (
-        <ScientificAttitudeIndicator
-          size={SCIENTIFIC_ATTITUDE_SIZE}
-          pitch={rovTelemetryStore.pitch}
-          roll={rovTelemetryStore.roll}
-          yaw={rovTelemetryStore.yaw}
-          desiredPitch={rovTelemetryStore.desiredPitch}
-          desiredRoll={rovTelemetryStore.desiredRoll}
-          desiredYaw={rovTelemetryStore.desiredYaw}
-          style={shadowStyle()}
-        />
-      ) : configStore.attitudeIndicator === AttitudeIndicatorEnum.model3D ? (
-        <Model3DAttitudeIndicator
-          size={SCIENTIFIC_ATTITUDE_SIZE}
-          pitch={rovTelemetryStore.pitch}
-          roll={rovTelemetryStore.roll}
-          yaw={rovTelemetryStore.yaw}
-          desiredYaw={rovTelemetryStore.desiredYaw}
-          style={shadowStyle()}
-        />
-      ) : configStore.attitudeIndicator === AttitudeIndicatorEnum.classic ? (
-        <ClassicAttitudeIndicator
-          size={SCIENTIFIC_ATTITUDE_SIZE}
-          pitch={rovTelemetryStore.pitch}
-          roll={rovTelemetryStore.roll}
-          yaw={rovTelemetryStore.yaw}
-          desiredPitch={rovTelemetryStore.desiredPitch}
-          desiredRoll={rovTelemetryStore.desiredRoll}
-          desiredYaw={rovTelemetryStore.desiredYaw}
-          style={shadowStyle()}
-        />
-      ) : (
-        <div
-          class='h-4 w-4 rounded-full bg-background/50 backdrop-blur-sm border border-border/50'
-          style={shadowStyle()}
-        />
-      )}
+      <AttitudeIndicatorContent style={shadowStyle()} />
     </div>
   );
 };

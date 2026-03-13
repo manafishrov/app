@@ -23,13 +23,13 @@ export const createKeyboardTracker = (): {
     }
   };
 
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
+  globalThis.addEventListener('keydown', handleKeyDown);
+  globalThis.addEventListener('keyup', handleKeyUp);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  const cleanup = () => {
-    window.removeEventListener('keydown', handleKeyDown);
-    window.removeEventListener('keyup', handleKeyUp);
+  const cleanup = (): void => {
+    globalThis.removeEventListener('keydown', handleKeyDown);
+    globalThis.removeEventListener('keyup', handleKeyUp);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     pressedKeys.clear();
   };
@@ -38,7 +38,9 @@ export const createKeyboardTracker = (): {
 };
 
 export const getKeyboardValue = (input: KeyboardInput | null, pressedKeys: Set<string>): number => {
-  if (!input) {return 0;}
+  if (!input) {
+    return 0;
+  }
 
   const rawValue = pressedKeys.has(input.key) ? 1 : 0;
   return normalizeBindValue(rawValue, input.minValue, input.maxValue);

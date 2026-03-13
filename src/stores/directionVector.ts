@@ -6,7 +6,7 @@ const [directionVectorStore, setDirectionVectorStoreInternal] = createStore<Dire
   0, 0, 0, 0, 0, 0, 0, 0,
 ]);
 
-const setDirectionVectorStore = (value: DirectionVector) => {
+const setDirectionVectorStore = (value: DirectionVector): void => {
   setDirectionVectorStoreInternal(reconcile(value));
 };
 

@@ -2,20 +2,23 @@ import { createStore } from 'solid-js/store';
 
 type RecordingState = {
   isRecording: boolean;
-  startTime: number | null;
+  startTime: number | undefined;
   webrtcConnected: boolean;
 };
 
+const [undef] = [] as (number | undefined)[];
+
 const defaultRecordingState: RecordingState = {
   isRecording: false,
-  startTime: null,
+  startTime: undef,
   webrtcConnected: false,
 };
 
 const [recordingStore, setRecordingStore] = createStore<RecordingState>(defaultRecordingState);
 
-const getDuration = () => recordingStore.isRecording && recordingStore.startTime
-    ? Date.now() - recordingStore.startTime
+const getDuration = (): number =>
+  recordingStore.isRecording && (recordingStore.startTime ?? 0) > 0
+    ? Date.now() - (recordingStore.startTime ?? 0)
     : 0;
 
 export { recordingStore, setRecordingStore, getDuration, type RecordingState };

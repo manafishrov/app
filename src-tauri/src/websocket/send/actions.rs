@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use tauri::State;
 
 use crate::log_error;

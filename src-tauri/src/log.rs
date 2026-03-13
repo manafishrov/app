@@ -5,6 +5,28 @@ use crate::models::log::{LogEntry, LogLevel, LogOrigin};
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
+fn emit_log(level: LogLevel, message: &str) {
+  if let Some(handle) = APP_HANDLE.get() {
+    if let Err(error) = handle.emit(
+      "log_message",
+      LogEntry {
+        origin: LogOrigin::Backend,
+        level,
+        message: message.to_string(),
+      },
+    ) {
+      eprintln!("Failed to emit backend log message: {error}");
+      eprintln!("{message}");
+    }
+  } else {
+    match level {
+      LogLevel::Info => println!("INFO: {message}"),
+      LogLevel::Warn => println!("WARN: {message}"),
+      LogLevel::Error => eprintln!("ERROR: {message}"),
+    }
+  }
+}
+
 pub fn log_init(app_handle: AppHandle) {
   if APP_HANDLE.get().is_none() {
     let _ = APP_HANDLE.set(app_handle);
@@ -13,56 +35,17 @@ pub fn log_init(app_handle: AppHandle) {
 
 #[allow(dead_code)]
 pub fn log_info(message: &str) {
-  if let Some(handle) = APP_HANDLE.get() {
-    handle
-      .emit(
-        "log_message",
-        LogEntry {
-          origin: LogOrigin::Backend,
-          level: LogLevel::Info,
-          message: message.to_string(),
-        },
-      )
-      .unwrap();
-  } else {
-    println!("INFO: {}", message);
-  }
+  emit_log(LogLevel::Info, message);
 }
 
 #[allow(dead_code)]
 pub fn log_warn(message: &str) {
-  if let Some(handle) = APP_HANDLE.get() {
-    handle
-      .emit(
-        "log_message",
-        LogEntry {
-          origin: LogOrigin::Backend,
-          level: LogLevel::Warn,
-          message: message.to_string(),
-        },
-      )
-      .unwrap();
-  } else {
-    println!("WARN: {}", message);
-  }
+  emit_log(LogLevel::Warn, message);
 }
 
 #[allow(dead_code)]
 pub fn log_error(message: &str) {
-  if let Some(handle) = APP_HANDLE.get() {
-    handle
-      .emit(
-        "log_message",
-        LogEntry {
-          origin: LogOrigin::Backend,
-          level: LogLevel::Error,
-          message: message.to_string(),
-        },
-      )
-      .unwrap();
-  } else {
-    eprintln!("ERROR: {}", message);
-  }
+  emit_log(LogLevel::Error, message);
 }
 
 #[macro_export]

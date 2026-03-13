@@ -4,7 +4,7 @@ export const CAMERA_NEAR = 0.1;
 export const CAMERA_FAR = 100;
 export const CAMERA_Z = 3.5;
 
-export const LIGHT_COLOR = 0xff_ff_ff;
+export const LIGHT_COLOR = 0xFF_FF_FF;
 export const AMBIENT_LIGHT_INTENSITY = 0.5;
 export const DIRECTIONAL_LIGHT_INTENSITY = 1;
 export const DIRECTIONAL_LIGHT_POS_X = 10;

@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use tauri::{State, command};
 
 use crate::config::{ConfigSendChannelState, get_config_from_file, set_config_to_file};

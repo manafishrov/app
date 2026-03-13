@@ -1,6 +1,4 @@
-import type { Component, JSX } from 'solid-js';
-
-import { createMemo } from 'solid-js';
+import { createMemo, type Component, type JSX } from 'solid-js';
 
 import { AttitudeIndicator } from '@/components/overlay/AttitudeIndicator';
 import { BatteryIndicator } from '@/components/overlay/BatteryIndicator';
@@ -18,6 +16,9 @@ type ScaledSectionProps = {
   scale: number;
 };
 
+const SCALE_BASE = 0.8;
+const SCALE_INCREMENT = 0.1;
+
 const ScaledSection: Component<ScaledSectionProps> = (props) => (
   <div
     class={props.class}
@@ -31,7 +32,7 @@ const ScaledSection: Component<ScaledSectionProps> = (props) => (
 
 const Overlay: Component = () => {
   // Smaller increments and smaller max scale: 1 -> 0.9, 5 -> 1.3
-  const scaleMultiplier = createMemo(() => 0.8 + configStore.overlayScale * 0.1);
+  const scaleMultiplier = createMemo(() => SCALE_BASE + configStore.overlayScale * SCALE_INCREMENT);
 
   return (
     <div class='absolute inset-0 pointer-events-none overflow-hidden'>

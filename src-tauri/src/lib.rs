@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 mod commands {
   pub mod actions;
   pub mod config;
@@ -61,6 +63,7 @@ use websocket::client::{
 };
 use websocket::message::WebsocketMessage;
 
+#[allow(clippy::unnecessary_wraps)]
 fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   let log_handle = app.app_handle().clone();
   log_init(log_handle);
@@ -70,7 +73,9 @@ fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
   let update_handle = app.app_handle().clone();
   spawn(async move {
-    update_app(update_handle).await.unwrap();
+    if let Err(error) = update_app(update_handle).await {
+      log_error!("Failed to update app: {error}");
+    }
   });
 
   let websocket_handle = app.app_handle().clone();
@@ -89,6 +94,7 @@ fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   Ok(())
 }
 
+#[allow(clippy::expect_used, clippy::missing_panics_doc)]
 pub fn run() {
   let builder = Builder::default()
     .plugin(tauri_plugin_opener::init())

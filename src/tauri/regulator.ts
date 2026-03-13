@@ -6,15 +6,12 @@ import { createListener, invokeCommand } from '@/tauri/core';
 
 const EVENT = 'regulator_suggestions_received';
 
-const [regulatorSuggestions, setRegulatorSuggestions] = createSignal<RegulatorSuggestions | null>(
-  null,
-);
+const [regulatorSuggestions, setRegulatorSuggestions] = createSignal<RegulatorSuggestions>();
 
 export { regulatorSuggestions };
 
-export const setupRegulatorListener = () =>
+export const setupRegulatorListener = (): Promise<() => void> =>
   createListener<RegulatorSuggestions>(EVENT, setRegulatorSuggestions);
 
-export const startRegulatorAutoTuning = async () => {
-  await invokeCommand('start_regulator_auto_tuning');
-};
+export const startRegulatorAutoTuning = (): Promise<void> =>
+  invokeCommand('start_regulator_auto_tuning');

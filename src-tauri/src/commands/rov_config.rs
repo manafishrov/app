@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use tauri::{State, command};
 
 use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, ThrusterTest};

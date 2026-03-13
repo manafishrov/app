@@ -1,4 +1,5 @@
 import { useLocation } from '@tanstack/solid-router';
+import { type Component, createSignal, createEffect, on, onCleanup } from 'solid-js';
 
 import { logInfo } from '@/lib/log';
 import { createWebRTCConnection, createRecording } from '@/lib/stream';
@@ -6,15 +7,9 @@ import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
-const VideoStream = () => {
-  const [isLoading, setIsLoading] = createSignal(true);
-  const [hasError, setHasError] = createSignal(false);
-  const location = useLocation();
+const [undef] = [] as undefined[];
 
-  let video: HTMLVideoElement | undefined;
-
-  const connection = createWebRTCConnection(() => video, setIsLoading, setHasError);
-  const recording = createRecording(() => video);
+const useConnectionEffect = (connection: ReturnType<typeof createWebRTCConnection>): void => {
   createEffect(
     on(
       () =>
@@ -30,6 +25,13 @@ const VideoStream = () => {
       },
     ),
   );
+};
+
+const useRecordingEffects = (
+  connection: ReturnType<typeof createWebRTCConnection>,
+  recording: ReturnType<typeof createRecording>,
+): void => {
+  const location = useLocation();
 
   createEffect(
     on(
@@ -41,7 +43,9 @@ const VideoStream = () => {
         if (currentBool && !prevBool) {
           recording.start();
         } else if (!currentBool && prevBool) {
-          recording.stop();
+          recording.stop().catch((error: unknown) => {
+            logInfo('Failed to stop recording', error);
+          });
         }
       },
     ),
@@ -52,8 +56,10 @@ const VideoStream = () => {
       () => location().pathname,
       () => {
         if (recordingStore.isRecording) {
-          recording.stop();
-          setRecordingStore({ isRecording: false, startTime: null });
+          recording.stop().catch((error: unknown) => {
+            logInfo('Failed to stop recording on navigation', error);
+          });
+          setRecordingStore({ isRecording: false, startTime: undef });
         }
       },
       { defer: true },
@@ -63,10 +69,25 @@ const VideoStream = () => {
   onCleanup(() => {
     connection.dispose();
     if (recordingStore.isRecording) {
-      recording.stop().catch(() => {});
-      setRecordingStore({ isRecording: false, startTime: null });
+      recording.stop().catch((error: unknown) => {
+        logInfo('Failed to stop recording on cleanup', error);
+      });
+      setRecordingStore({ isRecording: false, startTime: undef });
     }
   });
+};
+
+const VideoStream: Component = () => {
+  const [isLoading, setIsLoading] = createSignal(true);
+  const [hasError, setHasError] = createSignal(false);
+
+  let video: HTMLVideoElement | undefined = undef;
+
+  const connection = createWebRTCConnection(() => video, setIsLoading, setHasError);
+  const recording = createRecording(() => video);
+
+  useConnectionEffect(connection);
+  useRecordingEffects(connection, recording);
 
   return (
     <>

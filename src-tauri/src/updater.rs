@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use std::collections::HashMap;
 
 use serde_json::Value;
@@ -7,8 +9,12 @@ use tauri_plugin_updater::{Result, UpdaterExt};
 use crate::models::toast::ToastContent;
 use crate::toast::{toast_info, toast_loading};
 
-pub async fn update_app(app: AppHandle) -> Result<()> {
+#[allow(clippy::cast_sign_loss)]
+fn to_progress_percent(downloaded: usize, total: u64) -> u64 {
+  ((downloaded as f64 / total as f64) * 100.0).round() as u64
+}
 
+pub async fn update_app(app: AppHandle) -> Result<()> {
   if let Some(update) = app.updater()?.check().await? {
     toast_info(
       None,
@@ -27,8 +33,7 @@ pub async fn update_app(app: AppHandle) -> Result<()> {
           let actual_content_length = content_length_opt.unwrap_or(0);
           downloaded += chunk_length;
           if actual_content_length > 0 {
-            let progress_percent =
-              (downloaded as f64 / actual_content_length as f64 * 100.0).round() as u64;
+            let progress_percent = to_progress_percent(downloaded, actual_content_length);
             let mut message_args = HashMap::<String, Value>::new();
             let _ = message_args.insert("percent".to_string(), Value::from(progress_percent));
             toast_loading(

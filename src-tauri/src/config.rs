@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use std::cmp::Ordering;
 use std::fs;
 use std::path::PathBuf;
@@ -40,12 +42,9 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
 }
 
 pub fn get_config_from_file() -> Config {
-  let config_path = match get_config_path() {
-    Some(path) => path,
-    None => {
-      log_warn!("Failed to get config directory. Using default config.");
-      return Config::default();
-    },
+  let Some(config_path) = get_config_path() else {
+    log_warn!("Failed to get config directory. Using default config.");
+    return Config::default();
   };
 
   let content = match fs::read_to_string(&config_path) {
@@ -114,12 +113,9 @@ pub async fn set_config_to_file(
   state: &ConfigSendChannelState,
   mut payload: Config,
 ) -> Result<(), String> {
-  let config_path = match get_config_path() {
-    Some(path) => path,
-    None => {
-      log_error!("Failed to get config directory. Could not save config file.");
-      return Err("Failed to get config directory.".to_string());
-    },
+  let Some(config_path) = get_config_path() else {
+    log_error!("Failed to get config directory. Could not save config file.");
+    return Err("Failed to get config directory.".to_string());
   };
 
   if let Some(parent) = config_path.parent() {

@@ -29,20 +29,18 @@ const getBatteryIcon = (percentage: number): JSX.Element => {
   return <BatteryEmptyIcon class='size-4 mr-1' />;
 };
 
-const BatteryIndicator: Component = () => {
-  return (
-    <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
-      <Badge
-        variant={
-          rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
-        }
-        class='bg-background/50 backdrop-blur-sm border-border/50 w-[4.75rem] justify-between tabular-nums font-mono whitespace-nowrap'
-      >
-        {getBatteryIcon(rovStatusStore.batteryPercentage)}
-        {rovStatusStore.batteryPercentage.toFixed(0)}%
-      </Badge>
-    </div>
-  );
-};
+const BatteryIndicator: Component = () => (
+  <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
+    <Badge
+      variant={
+        rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
+      }
+      class='bg-background/50 backdrop-blur-sm border-border/50 w-[4.75rem] justify-between tabular-nums font-mono whitespace-nowrap'
+    >
+      {getBatteryIcon(rovStatusStore.batteryPercentage)}
+      {rovStatusStore.batteryPercentage.toFixed(0)}%
+    </Badge>
+  </div>
+);
 
 export { BatteryIndicator };

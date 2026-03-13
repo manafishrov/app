@@ -3,4 +3,5 @@ import { createListener } from '@/tauri/core';
 
 const EVENT = 'rov_connection_status_updated';
 
-export const setupConnectionListener = () => createListener<ConnectionStatus>(EVENT, setConnectionStatusStore, { warnOnly: true });
+export const setupConnectionListener = (): Promise<() => void> =>
+  createListener<ConnectionStatus>(EVENT, setConnectionStatusStore, { warnOnly: true });

@@ -1,5 +1,5 @@
 import type { CleanupFn } from '@/input/types';
-import type { Config, GamepadInput, KeyboardInput } from '@/stores/config';
+import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/stores/config';
 
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
@@ -12,6 +12,36 @@ type ToggleState = {
   record: boolean;
 };
 
+type ToggleContext = {
+  config: Config;
+  pressedKeys: Set<string>;
+  gamepad: Gamepad | null;
+  lastState: ToggleState;
+  getIsRecording: () => boolean;
+  getWebrtcConnected: () => boolean;
+};
+
+type ToggleActionArgs = {
+  isPressed: boolean;
+  state: keyof ToggleState;
+  lastState: ToggleState;
+  action: () => Promise<void>;
+};
+
+const THRESHOLD = 0.5;
+const [undefinedNumber] = [] as (number | undefined)[];
+
+const createNullValue = <ValueType>(): ValueType | null => {
+  const result = /a/.exec('');
+  if (Array.isArray(result)) {
+    throw new TypeError('Expected null match result');
+  }
+
+  return result;
+};
+
+const getNullValue = <ValueType>(): ValueType | null => createNullValue<ValueType>();
+
 const isInputPressed = (
   input: { keyboard: KeyboardInput | null; gamepad: GamepadInput | null },
   pressedKeys: Set<string>,
@@ -19,79 +49,145 @@ const isInputPressed = (
 ): boolean => {
   const kbValue = getKeyboardValue(input.keyboard, pressedKeys);
   const gpValue = input.gamepad && gamepad ? readGamepadInput(input.gamepad, gamepad) : 0;
-  return kbValue > 0.5 || gpValue > 0.5;
+  return kbValue > THRESHOLD || gpValue > THRESHOLD;
+};
+
+const executeActionSilently = (action: () => Promise<void>): void => {
+  action().catch(() => {
+    // Intentionally silent - prevents unhandled promise rejection
+  });
+};
+
+const handleToggle = ({ isPressed, state, lastState, action }: ToggleActionArgs): void => {
+  if (isPressed && !lastState[state]) {
+    executeActionSilently(action);
+    lastState[state] = true;
+  } else if (!isPressed) {
+    lastState[state] = false;
+  }
+};
+
+const getGamepadBindingsOrNull = (
+  gamepad: Gamepad | null,
+  config: Config,
+): GamepadBindings | null => {
+  if (!gamepad) {
+    return getNullValue<GamepadBindings>();
+  }
+
+  const bindings = getGamepadBindings(gamepad, config);
+  return bindings ?? getNullValue<GamepadBindings>();
+};
+
+const getGamepadInput = (
+  bindings: GamepadBindings | null,
+  key: keyof Pick<GamepadBindings, 'autoStabilization' | 'depthHold' | 'record'>,
+): GamepadInput | null => {
+  if (!bindings) {
+    return getNullValue<GamepadInput>();
+  }
+
+  return bindings[key];
+};
+
+const handleAutoStabilizationToggle = (ctx: ToggleContext): void => {
+  const kb = ctx.config.keyboard;
+  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
+
+  const autoStabPressed = isInputPressed(
+    { keyboard: kb.autoStabilization, gamepad: getGamepadInput(gp, 'autoStabilization') },
+    ctx.pressedKeys,
+    ctx.gamepad,
+  );
+  handleToggle({
+    isPressed: autoStabPressed,
+    state: 'autoStabilization',
+    lastState: ctx.lastState,
+    action: toggleAutoStabilization,
+  });
+};
+
+const handleDepthHoldToggle = (ctx: ToggleContext): void => {
+  const kb = ctx.config.keyboard;
+  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
+
+  const depthHoldPressed = isInputPressed(
+    { keyboard: kb.depthHold, gamepad: getGamepadInput(gp, 'depthHold') },
+    ctx.pressedKeys,
+    ctx.gamepad,
+  );
+  handleToggle({
+    isPressed: depthHoldPressed,
+    state: 'depthHold',
+    lastState: ctx.lastState,
+    action: toggleDepthHold,
+  });
+};
+
+const handleRecordingToggle = (ctx: ToggleContext): void => {
+  const kb = ctx.config.keyboard;
+  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
+
+  const recordPressed = isInputPressed(
+    { keyboard: kb.record, gamepad: getGamepadInput(gp, 'record') },
+    ctx.pressedKeys,
+    ctx.gamepad,
+  );
+
+  const isRecording = ctx.getIsRecording();
+  const webrtcConnected = ctx.getWebrtcConnected();
+
+  if (recordPressed && !ctx.lastState.record && webrtcConnected) {
+    const startTime = isRecording ? undefinedNumber : Date.now();
+    setRecordingStore({
+      isRecording: !isRecording,
+      startTime,
+    });
+    ctx.lastState.record = true;
+  } else if (!recordPressed) {
+    ctx.lastState.record = false;
+  }
 };
 
 export const createStateToggleLoop = (
-  config: Config,
-  pressedKeys: Set<string>,
-  getIsRecording: () => boolean,
-  getWebrtcConnected: () => boolean,
+  ...[config, pressedKeys, getIsRecording, getWebrtcConnected]: [
+    Config,
+    Set<string>,
+    () => boolean,
+    () => boolean,
+  ]
 ): CleanupFn => {
-  let frame: number | undefined;
+  let frame: number | null = getNullValue<number>();
   const lastState: ToggleState = {
     autoStabilization: false,
     depthHold: false,
     record: false,
   };
 
-  const handleToggle = (
-    isPressed: boolean,
-    state: keyof ToggleState,
-    action: () => Promise<void>,
-  ) => {
-    if (isPressed && !lastState[state]) {
-      void action();
-      lastState[state] = true;
-    } else if (!isPressed) {
-      lastState[state] = false;
-    }
-  };
-
-  const loop = () => {
-    const kb = config.keyboard;
+  const loop = (): void => {
     const gamepad = getActiveGamepad(config.selectedGamepadId);
-    const gp = getGamepadBindings(gamepad, config);
 
-    const autoStabPressed = isInputPressed(
-      { keyboard: kb.autoStabilization, gamepad: gp?.autoStabilization ?? null },
+    const ctx: ToggleContext = {
+      config,
       pressedKeys,
       gamepad,
-    );
-    handleToggle(autoStabPressed, 'autoStabilization', toggleAutoStabilization);
+      lastState,
+      getIsRecording,
+      getWebrtcConnected,
+    };
 
-    const depthHoldPressed = isInputPressed(
-      { keyboard: kb.depthHold, gamepad: gp?.depthHold ?? null },
-      pressedKeys,
-      gamepad,
-    );
-    handleToggle(depthHoldPressed, 'depthHold', toggleDepthHold);
-
-    const recordPressed = isInputPressed(
-      { keyboard: kb.record, gamepad: gp?.record ?? null },
-      pressedKeys,
-      gamepad,
-    );
-
-    const isRecording = getIsRecording();
-    const webrtcConnected = getWebrtcConnected();
-
-    if (recordPressed && !lastState.record && webrtcConnected) {
-      setRecordingStore({
-        isRecording: !isRecording,
-        startTime: isRecording ? null : Date.now(),
-      });
-      lastState.record = true;
-    } else if (!recordPressed) {
-      lastState.record = false;
-    }
+    handleAutoStabilizationToggle(ctx);
+    handleDepthHoldToggle(ctx);
+    handleRecordingToggle(ctx);
 
     frame = requestAnimationFrame(loop);
   };
 
   loop();
 
-  return () => {
-    if (frame !== undefined) {cancelAnimationFrame(frame);}
+  return (): void => {
+    if (frame !== null) {
+      cancelAnimationFrame(frame);
+    }
   };
 };

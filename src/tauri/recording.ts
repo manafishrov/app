@@ -7,69 +7,81 @@ import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
 
-export const ensureVideoDirectory = async (): Promise<void> => {
-  try {
-    await mkdir(configStore.videoDirectory, { recursive: true });
-  } catch (error) {
+const TIMESTAMP_LENGTH = 19;
+
+const resolveVoid: () => void = () => 0;
+
+const getTempFileNames = (entries: Awaited<ReturnType<typeof readDir>>): string[] =>
+  entries
+    .filter((entry) => entry.isFile && entry.name.endsWith('_temp.webm'))
+    .map((entry) => entry.name);
+
+const recoverTempFile = (videoDirectory: string, fileName: string): Promise<void> =>
+  join(videoDirectory, fileName)
+    .then((tempPath) =>
+      invokeCommand('save_recording', { tempPath }).catch((error: unknown) => {
+        logError('Failed to recover temp file:', fileName, error);
+      }),
+    )
+    .then(resolveVoid);
+
+export const ensureVideoDirectory = (): Promise<void> =>
+  mkdir(configStore.videoDirectory, { recursive: true }).catch((error: unknown) => {
     logError('Failed to create video directory:', error);
     toast.create({ title: m.toasts_failed_to_start_recording(), type: 'error' });
     throw error;
-  }
-};
+  });
 
-export const createRecordingPath = async (): Promise<string> => {
+export const createRecordingPath = (): Promise<string> => {
   const timestamp = new Date()
     .toISOString()
     .replace('T', '_')
     .replaceAll(/[:.]/g, '-')
-    .slice(0, 19);
+    .slice(0, TIMESTAMP_LENGTH);
   return join(configStore.videoDirectory, `Recording_${timestamp}_temp.webm`);
 };
 
-export const appendRecordingChunk = async (tempPath: string, chunk: Uint8Array): Promise<void> => {
-  try {
-    await invokeCommand('append_recording_chunk', { tempPath, chunk: [...chunk] });
-  } catch (error) {
-    logError('Failed to append recording chunk:', error);
-  }
-};
+export const appendRecordingChunk = (tempPath: string, chunk: Uint8Array): Promise<void> =>
+  invokeCommand('append_recording_chunk', { tempPath, chunk: [...chunk] })
+    .catch((error: unknown) => {
+      logError('Failed to append recording chunk:', error);
+    })
+    .then(resolveVoid);
 
-export const saveRecording = async (tempPath: string): Promise<void> => {
-  try {
-    await invokeCommand('save_recording', { tempPath });
-  } catch (error) {
-    logError('Failed to save recording:', error);
-    toast.create({ title: m.toasts_recording_save_failed(), type: 'error' });
-  }
-};
+export const saveRecording = (tempPath: string): Promise<void> =>
+  invokeCommand('save_recording', { tempPath })
+    .catch((error: unknown) => {
+      logError('Failed to save recording:', error);
+      toast.create({ title: m.toasts_recording_save_failed(), type: 'error' });
+    })
+    .then(resolveVoid);
 
-export const recoverTempRecordings = async (): Promise<void> => {
+export const recoverTempRecordings = (): Promise<void> => {
   const { videoDirectory } = configStore;
   if (!videoDirectory) {
-    return;
+    return Promise.resolve();
   }
 
-  try {
-    const entries = await readDir(videoDirectory);
-    const tempFiles = entries
-      .filter((entry) => entry.isFile && entry.name.endsWith('_temp.webm'))
-      .map((entry) => entry.name);
+  return readDir(videoDirectory)
+    .then((entries) => {
+      const tempFiles = getTempFileNames(entries);
+      if (tempFiles.length === 0) {
+        return;
+      }
 
-    if (tempFiles.length > 0) {
       toast.create({
         title: m.toasts_recovering_unfinished_recordings({ count: tempFiles.length }),
         type: 'info',
       });
       logInfo('Recovering temp files:', tempFiles);
 
-      for (const fileName of tempFiles) {
-        const tempPath = await join(videoDirectory, fileName);
-        await invokeCommand('save_recording', { tempPath }).catch((error) => {
-          logError('Failed to recover temp file:', fileName, error);
-        });
-      }
-    }
-  } catch (error) {
-    logError('Error during temp file recovery:', error);
-  }
+      return Promise.all(
+        tempFiles.map((fileName) => recoverTempFile(videoDirectory, fileName)),
+      ).then(resolveVoid);
+    })
+    .catch((error: unknown) => {
+      logError('Error during temp file recovery:', error);
+      return;
+    })
+    .then(resolveVoid);
 };

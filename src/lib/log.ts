@@ -9,7 +9,7 @@ type LogEntry = {
   message: string;
 };
 
-type LogRecord = {
+type StoredLogRecord = {
   id: number;
   origin: LogOrigin;
   level: LogLevel;
@@ -17,12 +17,14 @@ type LogRecord = {
   timestamp: Date;
 };
 
+type LogRecord = StoredLogRecord;
+
 type NewLogRecord = Omit<LogRecord, 'id'>;
 
 type LogDatabase = {
   logRecords: {
     key: number;
-    value: LogRecord;
+    value: NewLogRecord | StoredLogRecord;
     indexes: { timestamp: Date };
   };
 } & DBSchema;
@@ -30,11 +32,17 @@ type LogDatabase = {
 const DB_NAME = 'ManafishLogsDB';
 const DB_VERSION = 1;
 const LOG_STORE_NAME = 'logRecords';
+const DEFAULT_LOG_RETENTION_DAYS = 7;
+
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_HOUR = 60;
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
 
 const dbCallbacks: OpenDBCallbacks<LogDatabase> = {
-  upgrade(db) {
-    if (!db.objectStoreNames.contains(LOG_STORE_NAME)) {
-      const store = db.createObjectStore(LOG_STORE_NAME, {
+  upgrade: (database): void => {
+    if (!database.objectStoreNames.contains(LOG_STORE_NAME)) {
+      const store = database.createObjectStore(LOG_STORE_NAME, {
         keyPath: 'id',
         autoIncrement: true,
       });
@@ -43,54 +51,78 @@ const dbCallbacks: OpenDBCallbacks<LogDatabase> = {
   },
 };
 
-let dbPromise = openDB<LogDatabase>(DB_NAME, DB_VERSION, dbCallbacks);
+let dbPromise: Promise<IDBPDatabase<LogDatabase>> = openDB<LogDatabase>(
+  DB_NAME,
+  DB_VERSION,
+  dbCallbacks,
+);
 
-async function withErrorHandling<T>(
-  operation: (db: IDBPDatabase<LogDatabase>) => Promise<T>,
-  retry = true,
-): Promise<T> {
-  try {
-    const db = await dbPromise;
-    return await operation(db);
-  } catch (error) {
-    if (retry && error instanceof DOMException && error.name === 'NotFoundError') {
-      console.warn('Object store not found. Deleting database and retrying operation.');
-      const db = await dbPromise;
-      db.close();
-      await deleteDB(DB_NAME);
+const ignorePromiseRejection = (): void => {
+  Number.isNaN(Number.NaN);
+};
+
+const shouldRecoverNotFound = (retry: boolean, error: unknown): error is DOMException =>
+  retry && error instanceof DOMException && error.name === 'NotFoundError';
+
+const resetDatabase = (): Promise<void> =>
+  dbPromise
+    .then((database) => {
+      database.close();
+      return deleteDB(DB_NAME);
+    })
+    .then(() => {
       dbPromise = openDB<LogDatabase>(DB_NAME, DB_VERSION, dbCallbacks);
-      return await withErrorHandling(operation, false);
-    }
-    throw error;
-  }
-}
+    });
 
-async function createLogRecord(logEntry: LogEntry): Promise<void> {
-  await withErrorHandling(async (db) => {
+const withErrorHandling = <ResultType>(
+  operation: (database: IDBPDatabase<LogDatabase>) => Promise<ResultType>,
+  retry = true,
+): Promise<ResultType> =>
+  dbPromise
+    .then((database) => operation(database))
+    .catch((error: unknown) => {
+      if (!shouldRecoverNotFound(retry, error)) {
+        throw error;
+      }
+
+      return resetDatabase().then(() => withErrorHandling(operation, false));
+    });
+
+const dispatchLogAddedEvent = (record: LogRecord): void => {
+  globalThis.dispatchEvent(
+    new CustomEvent<LogRecord>('log:added', {
+      detail: record,
+    }),
+  );
+};
+
+const isStoredLogRecord = (value: unknown): value is StoredLogRecord =>
+  value instanceof Object && 'id' in value && typeof value.id === 'number';
+
+const createLogRecord = (logEntry: LogEntry): Promise<void> =>
+  withErrorHandling((database) => {
     const newRecord: NewLogRecord = {
       ...logEntry,
       timestamp: new Date(),
     };
 
-    const id = await db.add(LOG_STORE_NAME, newRecord as LogRecord);
-    const fullRecord = await db.get(LOG_STORE_NAME, id);
-
-    if (fullRecord) {
-      window.dispatchEvent(
-        new CustomEvent<LogRecord>('log:added', {
-          detail: fullRecord,
-        }),
-      );
-    }
+    return database
+      .add(LOG_STORE_NAME, newRecord)
+      .then((recordId) => database.get(LOG_STORE_NAME, recordId))
+      .then((fullRecord) => {
+        if (isStoredLogRecord(fullRecord)) {
+          dispatchLogAddedEvent(fullRecord);
+        }
+      });
   });
-}
 
-function formatLog(...args: unknown[]): string {
-  return args
+const formatLog = (...args: unknown[]): string =>
+  args
     .map((arg) => {
       if (arg instanceof Error) {
         return arg.stack ?? String(arg);
       }
+
       if (typeof arg === 'object' && arg !== null) {
         try {
           return JSON.stringify(arg);
@@ -98,65 +130,74 @@ function formatLog(...args: unknown[]): string {
           return '[Circular object]';
         }
       }
+
       return String(arg);
     })
     .join(' ');
-}
 
-function logInfo(...args: unknown[]): void {
-  void createLogRecord({
+const writeLog = (level: LogLevel, ...args: unknown[]): void => {
+  createLogRecord({
     message: formatLog(...args),
-    level: 'info',
+    level,
     origin: 'frontend',
-  });
-}
+  }).catch(ignorePromiseRejection);
+};
 
-function logWarn(...args: unknown[]): void {
-  void createLogRecord({
-    message: formatLog(...args),
-    level: 'warn',
-    origin: 'frontend',
-  });
-}
+const createRetentionCutoff = (maxAgeDays: number): Date =>
+  new Date(
+    Date.now() -
+      maxAgeDays * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND,
+  );
 
-function logError(...args: unknown[]): void {
-  void createLogRecord({
-    message: formatLog(...args),
-    level: 'error',
-    origin: 'frontend',
-  });
-}
+const deleteOldLogRecords = (maxAgeDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> => {
+  const cutoffDate = createRetentionCutoff(maxAgeDays);
 
-async function getAllLogRecords(): Promise<LogRecord[]> {
-  await deleteOldLogRecords(7);
-  return withErrorHandling((db) => db.getAll(LOG_STORE_NAME));
-}
-
-async function clearAllLogRecords(): Promise<void> {
-  await withErrorHandling((db) => db.clear(LOG_STORE_NAME));
-}
-
-async function deleteOldLogRecords(maxAgeDays = 7): Promise<number> {
-  const cutoffDate = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
-
-  return withErrorHandling(async (db) => {
-    const tx = db.transaction(LOG_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(LOG_STORE_NAME);
+  return withErrorHandling((database) => {
+    const transaction = database.transaction(LOG_STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(LOG_STORE_NAME);
     const index = store.index('timestamp');
 
-    let deletedCount = 0;
-    let cursor = await index.openCursor(IDBKeyRange.upperBound(cutoffDate));
+    return index.openCursor(IDBKeyRange.upperBound(cutoffDate)).then((initialCursor) => {
+      const deleteFromCursor = (
+        currentCursor: typeof initialCursor,
+        deletedCount: number,
+      ): Promise<number> => {
+        if (currentCursor === null) {
+          return transaction.done.then(() => deletedCount);
+        }
 
-    while (cursor) {
-      await cursor.delete();
-      deletedCount++;
-      cursor = await cursor.continue();
-    }
+        return currentCursor
+          .delete()
+          .then(() => currentCursor.continue())
+          .then((nextCursor) => deleteFromCursor(nextCursor, deletedCount + 1));
+      };
 
-    await tx.done;
-    return deletedCount;
+      return deleteFromCursor(initialCursor, 0);
+    });
   });
-}
+};
+
+const getAllLogRecords = (): Promise<LogRecord[]> =>
+  deleteOldLogRecords(DEFAULT_LOG_RETENTION_DAYS).then(() =>
+    withErrorHandling((database) => database.getAll(LOG_STORE_NAME)).then((records) =>
+      records.filter((record): record is StoredLogRecord => isStoredLogRecord(record)),
+    ),
+  );
+
+const clearAllLogRecords = (): Promise<void> =>
+  withErrorHandling((database) => database.clear(LOG_STORE_NAME));
+
+const logInfo = (...args: unknown[]): void => {
+  writeLog('info', ...args);
+};
+
+const logWarn = (...args: unknown[]): void => {
+  writeLog('warn', ...args);
+};
+
+const logError = (...args: unknown[]): void => {
+  writeLog('error', ...args);
+};
 
 export {
   logInfo,

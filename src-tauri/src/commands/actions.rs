@@ -1,6 +1,8 @@
+#![allow(clippy::missing_errors_doc)]
+
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::collections::HashMap;
 
 use ffmpeg_next as ffmpeg;
 use serde_json::Value;
@@ -45,6 +47,7 @@ pub async fn toggle_depth_hold(state: State<'_, MessageSendChannelState>) -> Res
 }
 
 #[command]
+#[allow(clippy::too_many_lines)]
 pub async fn save_recording(temp_path: String) -> Result<(), String> {
   let toast_identifier = format!("save_recording_{}", temp_path.replace(['/', '\\'], "_"));
   let show_recording_save_error = || {
@@ -75,7 +78,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
   if let Err(e) = ffmpeg::init() {
     log_error!("Failed to initialize FFmpeg: {}", e);
     show_recording_save_error();
-    return Err(format!("Failed to initialize FFmpeg: {}", e));
+    return Err(format!("Failed to initialize FFmpeg: {e}"));
   }
 
   let input_path = Path::new(&temp_path);
@@ -93,7 +96,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
     Err(e) => {
       log_error!("Failed to open input {}: {}", temp_path, e);
       show_recording_save_error();
-      return Err(format!("Failed to open input: {}", e));
+      return Err(format!("Failed to open input: {e}"));
     },
   };
 
@@ -108,7 +111,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
     Err(e) => {
       log_error!("Failed to create output {}: {}", output_path.display(), e);
       show_recording_save_error();
-      return Err(format!("Failed to create output: {}", e));
+      return Err(format!("Failed to create output: {e}"));
     },
   };
 
@@ -117,7 +120,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
       Ok(ost) => ost,
       Err(e) => {
         show_recording_save_error();
-        return Err(format!("Failed to find encoder: {}", e));
+        return Err(format!("Failed to find encoder: {e}"));
       },
     };
     ost.set_parameters(stream.parameters());
@@ -127,32 +130,38 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
   if let Err(e) = octx.write_header() {
     log_error!("Failed to write header: {}", e);
     show_recording_save_error();
-    return Err(format!("Failed to write header: {}", e));
+    return Err(format!("Failed to write header: {e}"));
   }
 
   for (stream, mut packet) in ictx.packets() {
-    packet.rescale_ts(stream.time_base(), octx.stream(stream.index()).unwrap().time_base());
+    let Some(output_stream) = octx.stream(stream.index()) else {
+      show_recording_save_error();
+      return Err(format!("Missing output stream for input stream {}", stream.index()));
+    };
+
+    packet.rescale_ts(stream.time_base(), output_stream.time_base());
     if let Err(e) = packet.write_interleaved(&mut octx) {
       show_recording_save_error();
-      return Err(format!("Failed to write packet: {}", e));
+      return Err(format!("Failed to write packet: {e}"));
     }
   }
 
   if let Err(e) = octx.write_trailer() {
     log_error!("Failed to write trailer: {}", e);
     show_recording_save_error();
-    return Err(format!("Failed to write trailer: {}", e));
+    return Err(format!("Failed to write trailer: {e}"));
   }
 
   if let Err(e) = fs::remove_file(&temp_path) {
     log_error!("Failed to remove temp file {}: {}", temp_path, e);
     show_recording_save_error();
-    return Err(format!("Failed to remove temp: {}", e));
+    return Err(format!("Failed to remove temp: {e}"));
   }
 
   log_info!("Recording conversion completed for {}", temp_path);
   let mut description_args = HashMap::<String, Value>::new();
-  let _ = description_args.insert("path".to_string(), Value::from(format!("{}", output_path.display())));
+  let _ =
+    description_args.insert("path".to_string(), Value::from(output_path.display().to_string()));
   toast_success(
     Some(toast_identifier),
     ToastContent {
@@ -176,11 +185,11 @@ pub async fn append_recording_chunk(temp_path: String, chunk: Vec<u8>) -> Result
     .create(true)
     .append(true)
     .open(&temp_path)
-    .map_err(|e| format!("Failed to open file: {}", e))?;
+    .map_err(|e| format!("Failed to open file: {e}"))?;
 
-  file.write_all(&chunk).map_err(|e| format!("Failed to write chunk: {}", e))?;
+  file.write_all(&chunk).map_err(|e| format!("Failed to write chunk: {e}"))?;
 
-  file.sync_all().map_err(|e| format!("Failed to sync file: {}", e))?;
+  file.sync_all().map_err(|e| format!("Failed to sync file: {e}"))?;
 
   Ok(())
 }

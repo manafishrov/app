@@ -9,8 +9,13 @@ import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
+const BASE_BADGE_WIDTH_REM = 7;
+const BADGE_WIDTH_SCALE_FACTOR = 0.5;
+
 const TemperatureIndicator: Component = () => {
-  const badgeWidth = createMemo(() => `${7 + (configStore.overlayScale - 1) * 0.5}rem`);
+  const badgeWidth = createMemo(
+    () => `${BASE_BADGE_WIDTH_REM + (configStore.overlayScale - 1) * BADGE_WIDTH_SCALE_FACTOR}rem`,
+  );
 
   return (
     <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>

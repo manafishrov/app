@@ -1,21 +1,23 @@
 import { setConfigStore, configStore, type Config } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
 
-export const getConfig = async () => {
-  const config = await invokeCommand<Config>('get_config');
-  if (config) {
-    setConfigStore(config);
-  }
-};
+const resolveVoid: () => void = () => 0;
 
-export const setConfig = async (newConfigOptions: Partial<Config>) => {
+export const getConfig = (): Promise<void> =>
+  invokeCommand<Config>('get_config').then((config) => {
+    setConfigStore(config);
+  });
+
+export const setConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
   const currentConfig = { ...configStore };
   const newConfig = { ...currentConfig, ...newConfigOptions };
 
   setConfigStore(newConfig);
 
-  await invokeCommand('set_config', { payload: newConfig }).catch((error) => {
-    setConfigStore(currentConfig);
-    throw error;
-  });
+  return invokeCommand('set_config', { payload: newConfig })
+    .then(resolveVoid)
+    .catch((error: unknown) => {
+      setConfigStore(currentConfig);
+      throw error;
+    });
 };

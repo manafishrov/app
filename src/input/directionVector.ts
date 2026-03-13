@@ -1,28 +1,99 @@
 import type { CleanupFn } from '@/input/types';
-import type { Config, GamepadInput, KeyboardInput } from '@/stores/config';
+import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/stores/config';
 import type { DirectionVector } from '@/stores/directionVector';
 
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
 
 const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
+const MIN_AXIS_VALUE = -1;
+const MAX_AXIS_VALUE = 1;
 
-const clamp = (value: number): number => Math.max(-1, Math.min(1, value));
+const ignorePromiseRejection = (): boolean => false;
+
+const clamp = (value: number): number => Math.max(MIN_AXIS_VALUE, Math.min(MAX_AXIS_VALUE, value));
+
+type OptionalInput<InputType> = InputType | null | undefined;
+
+type AxisBindingName =
+  | 'surgeForward'
+  | 'surgeBackward'
+  | 'swayRight'
+  | 'swayLeft'
+  | 'heaveDown'
+  | 'heaveUp'
+  | 'pitchUp'
+  | 'pitchDown'
+  | 'yawRight'
+  | 'yawLeft'
+  | 'rollRight'
+  | 'rollLeft'
+  | 'action1Positive'
+  | 'action1Negative'
+  | 'action2Positive'
+  | 'action2Negative';
+
+type AxisDefinition = {
+  positive: AxisBindingName;
+  negative: AxisBindingName;
+};
+
+const AXIS_DEFINITIONS = [
+  { positive: 'surgeForward', negative: 'surgeBackward' },
+  { positive: 'swayRight', negative: 'swayLeft' },
+  { positive: 'heaveDown', negative: 'heaveUp' },
+  { positive: 'pitchUp', negative: 'pitchDown' },
+  { positive: 'yawRight', negative: 'yawLeft' },
+  { positive: 'rollRight', negative: 'rollLeft' },
+  { positive: 'action1Positive', negative: 'action1Negative' },
+  { positive: 'action2Positive', negative: 'action2Negative' },
+] as const satisfies readonly [
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+  AxisDefinition,
+];
 
 type AxisInput = {
-  positiveKB: KeyboardInput | null;
-  negativeKB: KeyboardInput | null;
-  positiveGP: GamepadInput | null;
-  negativeGP: GamepadInput | null;
+  positiveKB: OptionalInput<KeyboardInput>;
+  negativeKB: OptionalInput<KeyboardInput>;
+  positiveGP: OptionalInput<GamepadInput>;
+  negativeGP: OptionalInput<GamepadInput>;
 };
+
+const getGamepadBinding = (
+  bindings: GamepadBindings | null,
+  key: AxisBindingName,
+): OptionalInput<GamepadInput> => {
+  if (!bindings) {
+    return;
+  }
+
+  return bindings[key];
+};
+
+const createAxisInput = (
+  definition: AxisDefinition,
+  keyboard: Config['keyboard'],
+  gamepadBindings: GamepadBindings | null,
+): AxisInput => ({
+  positiveKB: keyboard[definition.positive],
+  negativeKB: keyboard[definition.negative],
+  positiveGP: getGamepadBinding(gamepadBindings, definition.positive),
+  negativeGP: getGamepadBinding(gamepadBindings, definition.negative),
+});
 
 const computeAxisValue = (
   pressedKeys: Set<string>,
   gamepad: Gamepad | null,
   input: AxisInput,
 ): number => {
-  const posKB = getKeyboardValue(input.positiveKB, pressedKeys);
-  const negKB = getKeyboardValue(input.negativeKB, pressedKeys);
+  const posKB = input.positiveKB ? getKeyboardValue(input.positiveKB, pressedKeys) : 0;
+  const negKB = input.negativeKB ? getKeyboardValue(input.negativeKB, pressedKeys) : 0;
   const posGP = input.positiveGP && gamepad ? readGamepadInput(input.positiveGP, gamepad) : 0;
   const negGP = input.negativeGP && gamepad ? readGamepadInput(input.negativeGP, gamepad) : 0;
 
@@ -33,70 +104,25 @@ export const computeDirectionVector = (
   config: Config,
   pressedKeys: Set<string>,
 ): DirectionVector => {
-  const kb = config.keyboard;
-  const gamepad = getActiveGamepad(config.selectedGamepadId);
-  const gp = getGamepadBindings(gamepad, config);
+  const { keyboard, selectedGamepadId } = config;
+  const gamepad = getActiveGamepad(selectedGamepadId);
+  const gamepadBindings = getGamepadBindings(gamepad, config);
+  const [surge, sway, heave, pitch, yaw, roll, action1, action2] = AXIS_DEFINITIONS;
+  const computeAxis = (definition: AxisDefinition): number => {
+    const axisInput = createAxisInput(definition, keyboard, gamepadBindings);
+    return computeAxisValue(pressedKeys, gamepad, axisInput);
+  };
 
-  const input: DirectionVector = [...EMPTY_INPUT];
-
-  input[0] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.surgeForward,
-    negativeKB: kb.surgeBackward,
-    positiveGP: gp?.surgeForward ?? null,
-    negativeGP: gp?.surgeBackward ?? null,
-  });
-
-  input[1] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.swayRight,
-    negativeKB: kb.swayLeft,
-    positiveGP: gp?.swayRight ?? null,
-    negativeGP: gp?.swayLeft ?? null,
-  });
-
-  // Heave: NED convention - heaveDown is positive (+Z down), heaveUp is negative (-Z up)
-  input[2] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.heaveDown,
-    negativeKB: kb.heaveUp,
-    positiveGP: gp?.heaveDown ?? null,
-    negativeGP: gp?.heaveUp ?? null,
-  });
-
-  input[3] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.pitchUp,
-    negativeKB: kb.pitchDown,
-    positiveGP: gp?.pitchUp ?? null,
-    negativeGP: gp?.pitchDown ?? null,
-  });
-
-  input[4] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.yawRight,
-    negativeKB: kb.yawLeft,
-    positiveGP: gp?.yawRight ?? null,
-    negativeGP: gp?.yawLeft ?? null,
-  });
-
-  input[5] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.rollRight,
-    negativeKB: kb.rollLeft,
-    positiveGP: gp?.rollRight ?? null,
-    negativeGP: gp?.rollLeft ?? null,
-  });
-
-  input[6] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.action1Positive,
-    negativeKB: kb.action1Negative,
-    positiveGP: gp?.action1Positive ?? null,
-    negativeGP: gp?.action1Negative ?? null,
-  });
-
-  input[7] = computeAxisValue(pressedKeys, gamepad, {
-    positiveKB: kb.action2Positive,
-    negativeKB: kb.action2Negative,
-    positiveGP: gp?.action2Positive ?? null,
-    negativeGP: gp?.action2Negative ?? null,
-  });
-
-  return input;
+  return [
+    computeAxis(surge),
+    computeAxis(sway),
+    computeAxis(heave),
+    computeAxis(pitch),
+    computeAxis(yaw),
+    computeAxis(roll),
+    computeAxis(action1),
+    computeAxis(action2),
+  ];
 };
 
 export const createDirectionVectorLoop = (
@@ -104,18 +130,24 @@ export const createDirectionVectorLoop = (
   pressedKeys: Set<string>,
   sendFn: (vector: DirectionVector) => Promise<void>,
 ): CleanupFn => {
-  let frame: number | undefined;
+  let frame = 0;
 
-  const loop = () => {
+  const sendVector = (vector: DirectionVector): void => {
+    sendFn(vector).catch(ignorePromiseRejection);
+  };
+
+  const loop = (): void => {
     const vector = computeDirectionVector(config, pressedKeys);
-    void sendFn(vector);
+    sendVector(vector);
     frame = requestAnimationFrame(loop);
   };
 
   loop();
 
-  return () => {
-    if (frame !== undefined) {cancelAnimationFrame(frame);}
-    void sendFn(EMPTY_INPUT);
+  return (): void => {
+    if (frame > 0) {
+      cancelAnimationFrame(frame);
+    }
+    sendVector(EMPTY_INPUT);
   };
 };

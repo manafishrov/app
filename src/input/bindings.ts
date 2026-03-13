@@ -8,10 +8,12 @@ const clamp = (value: number, min: number, max: number): number =>
 export const BIND_CAPTURE_TIMEOUT_MS = 8000;
 export const BIND_CAPTURE_SETTLE_MS = 500;
 export const GAMEPAD_CAPTURE_THRESHOLD = 0.1;
+const BIND_INCREMENT = 0.05;
+const DECIMAL_PRECISION = 4;
 
 export const roundToBindIncrement = (value: number): number => {
-  const rounded = Math.round(value / 0.05) * 0.05;
-  return Number(rounded.toFixed(4));
+  const rounded = Math.round(value / BIND_INCREMENT) * BIND_INCREMENT;
+  return Number(rounded.toFixed(DECIMAL_PRECISION));
 };
 
 export const normalizeBindValue = (
@@ -36,22 +38,72 @@ export const getGamepadRawInputValue = (
 
   if ('Button' in input) {
     const index = input.Button;
-    return gamepad.buttons[index]?.value ?? 0;
+    const button = gamepad.buttons[index];
+    return button ? button.value : 0;
   }
 
   const index = input.Axis;
-  return gamepad.axes[index] ?? 0;
+  const axisValue = gamepad.axes[index];
+  return axisValue ?? 0;
 };
 
 export const formatKeyboardKeyLabel = (key: string): string =>
   key
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-    .replace(/([A-Za-z])(\d)/g, '$1 $2')
-    .replace(/(\d)([A-Za-z])/g, '$1 $2')
+    .replaceAll(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replaceAll(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .replaceAll(/([A-Za-z])(\d)/g, '$1 $2')
+    .replaceAll(/(\d)([A-Za-z])/g, '$1 $2')
     .trim();
 
-export const isKeyboardKey = (key: string): key is KeyboardKey => {
+const NAMED_KEYBOARD_KEYS = new Set([
+  'Enter',
+  'Escape',
+  'Backspace',
+  'Tab',
+  'Space',
+  'Minus',
+  'Equal',
+  'BracketLeft',
+  'BracketRight',
+  'Backslash',
+  'Semicolon',
+  'Quote',
+  'Backquote',
+  'Comma',
+  'Period',
+  'Slash',
+  'CapsLock',
+  'ArrowRight',
+  'ArrowLeft',
+  'ArrowDown',
+  'ArrowUp',
+  'ControlLeft',
+  'ShiftLeft',
+  'AltLeft',
+  'MetaLeft',
+  'ControlRight',
+  'ShiftRight',
+  'AltRight',
+  'MetaRight',
+  'PrintScreen',
+  'ScrollLock',
+  'Pause',
+  'Insert',
+  'Home',
+  'PageUp',
+  'Delete',
+  'End',
+  'PageDown',
+  'NumLock',
+  'NumpadDivide',
+  'NumpadMultiply',
+  'NumpadSubtract',
+  'NumpadAdd',
+  'NumpadEnter',
+  'NumpadDecimal',
+]);
+
+const isPatternKey = (key: string): boolean => {
   if (/^Key[A-Z]$/.test(key)) {
     return true;
   }
@@ -64,55 +116,11 @@ export const isKeyboardKey = (key: string): key is KeyboardKey => {
   if (/^Numpad[0-9]$/.test(key)) {
     return true;
   }
-
-  return [
-    'Enter',
-    'Escape',
-    'Backspace',
-    'Tab',
-    'Space',
-    'Minus',
-    'Equal',
-    'BracketLeft',
-    'BracketRight',
-    'Backslash',
-    'Semicolon',
-    'Quote',
-    'Backquote',
-    'Comma',
-    'Period',
-    'Slash',
-    'CapsLock',
-    'ArrowRight',
-    'ArrowLeft',
-    'ArrowDown',
-    'ArrowUp',
-    'ControlLeft',
-    'ShiftLeft',
-    'AltLeft',
-    'MetaLeft',
-    'ControlRight',
-    'ShiftRight',
-    'AltRight',
-    'MetaRight',
-    'PrintScreen',
-    'ScrollLock',
-    'Pause',
-    'Insert',
-    'Home',
-    'PageUp',
-    'Delete',
-    'End',
-    'PageDown',
-    'NumLock',
-    'NumpadDivide',
-    'NumpadMultiply',
-    'NumpadSubtract',
-    'NumpadAdd',
-    'NumpadEnter',
-    'NumpadDecimal',
-  ].includes(key);
+  return false;
 };
+
+export const isKeyboardKey = (key: string): key is KeyboardKey =>
+  isPatternKey(key) || NAMED_KEYBOARD_KEYS.has(key);
 
 export const formatGamepadInputLabel = (input: GamepadInputType | null): string => {
   if (!input) {

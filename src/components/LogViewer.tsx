@@ -2,14 +2,15 @@ import { cn } from '@manafishrov/ui';
 import { type Component, createEffect, onCleanup, onMount } from 'solid-js';
 
 import { logError } from '@/lib/log';
+
+import { LogViewerContent } from './LogViewer.content';
+import { LogViewerHeader } from './LogViewer.header';
 import {
   createFilteredLogs,
   createViewerActions,
   createViewerSignals,
   createVirtualizerTools,
 } from './logViewer.hooks';
-import { LogViewerHeader } from './LogViewer.header';
-import { LogViewerContent } from './LogViewer.content';
 
 type LogViewerProps = {
   class?: string;

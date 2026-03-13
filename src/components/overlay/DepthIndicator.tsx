@@ -7,8 +7,13 @@ import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
+const BASE_WIDTH_REM = 7;
+const SCALE_MULTIPLIER = 0.5;
+
 const DepthIndicator: Component = () => {
-  const badgeWidth = createMemo(() => `${7 + (configStore.overlayScale - 1) * 0.5}rem`);
+  const badgeWidth = createMemo(
+    () => `${BASE_WIDTH_REM + (configStore.overlayScale - 1) * SCALE_MULTIPLIER}rem`,
+  );
 
   return (
     <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>

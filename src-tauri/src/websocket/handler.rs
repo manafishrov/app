@@ -2,9 +2,7 @@ use tauri::AppHandle;
 use tokio_tungstenite::tungstenite::Message;
 
 use super::message::WebsocketMessage;
-use super::receive::config::{
-  handle_config, handle_regulator_suggestions,
-};
+use super::receive::config::{handle_config, handle_regulator_suggestions};
 use super::receive::log::handle_log_message;
 use super::receive::status::handle_status_update;
 use super::receive::telemetry::handle_telemetry;

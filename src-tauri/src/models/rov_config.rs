@@ -1,3 +1,5 @@
+#![allow(clippy::struct_field_names)]
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

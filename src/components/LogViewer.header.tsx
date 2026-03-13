@@ -1,9 +1,11 @@
+import type { Component } from 'solid-js';
+
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@manafishrov/ui/input-group';
 import { Toggle } from '@manafishrov/ui/toggle';
-import type { Component } from 'solid-js';
 import SearchIcon from '~icons/material-symbols/search';
 
 import * as m from '@/paraglide/messages';
+
 import type { ViewerSignals } from './logViewer.hooks';
 
 type LogViewerHeaderProps = {

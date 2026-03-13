@@ -30,7 +30,7 @@ const [rovTelemetryStore, setRovTelemetryStoreInternal] = createStore<RovTelemet
   workIndicatorPercentage: 0,
 });
 
-const setRovTelemetryStore = (value: RovTelemetry) => {
+const setRovTelemetryStore = (value: RovTelemetry): void => {
   setRovTelemetryStoreInternal(reconcile(value));
 };
 

@@ -16,35 +16,49 @@ import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { requestRovConfig } from '@/tauri';
 
-const SettingsLayout: Component = () => {
-  const [isFullscreen, setIsFullscreen] = createSignal(false);
+const noop = function noop(): void {
+  // Noop
+};
+
+const useSettingsLayoutSetup = (setIsFullscreen: (val: boolean) => void): void => {
   const location = useLocation();
   const navigate = useNavigate();
 
   createEffect(() => {
     if (!connectionStatusStore.isConnected && location().pathname.startsWith('/settings/rov')) {
-      navigate({ to: '/settings', replace: true });
+      navigate({ to: '/settings', replace: true }).catch(noop);
     }
   });
 
-  const updateFullscreenState = async (): Promise<void> => {
-    setIsFullscreen(await getCurrentWindow().isFullscreen());
+  const updateFullscreenState = (): void => {
+    getCurrentWindow().isFullscreen().then(setIsFullscreen).catch(noop);
   };
 
-  let unlistenResize: (() => void) | undefined;
+  let unlistenResize: () => void = noop;
 
-  onMount(async () => {
+  onMount(() => {
     const win = getCurrentWindow();
-    await updateFullscreenState();
+    updateFullscreenState();
 
-    unlistenResize = await win.onResized(() => {
-      void updateFullscreenState();
-    });
+    win
+      .onResized(() => {
+        updateFullscreenState();
+      })
+      .then((cleanup) => {
+        unlistenResize = cleanup;
+      })
+      .catch(noop);
   });
 
   onCleanup(() => {
-    unlistenResize?.();
+    unlistenResize();
   });
+};
+
+const SettingsLayout: Component = () => {
+  const [isFullscreen, setIsFullscreen] = createSignal(false);
+
+  useSettingsLayoutSetup(setIsFullscreen);
 
   return (
     <SidebarProvider defaultOpen>

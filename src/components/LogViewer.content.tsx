@@ -9,8 +9,11 @@ import { Spinner } from '@manafishrov/ui/spinner';
 import { type Component, For, type JSX, Show, type Accessor } from 'solid-js';
 
 import type { LogRecord } from '@/lib/log';
+
 import * as m from '@/paraglide/messages';
+
 import type { ViewerSignals, VirtualizerType } from './logViewer.hooks';
+
 import { VirtualLogRow } from './LogViewer.parts';
 
 type LogViewerContentProps = {
@@ -53,7 +56,7 @@ const LogList: Component<LogViewerContentProps> = (props) => (
       {(virtualItem): JSX.Element | undefined => {
         const log = props.filteredLogs()[virtualItem.index];
         if (!log) {
-          return undefined;
+          return;
         }
 
         return (

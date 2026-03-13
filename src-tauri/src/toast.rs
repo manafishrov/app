@@ -6,6 +6,12 @@ use crate::models::toast::{Toast, ToastAction, ToastContent, ToastVariant};
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
+fn emit_toast(handle: &AppHandle, toast: Toast) {
+  if let Err(error) = handle.emit("show_toast", toast) {
+    log_error!("Failed to emit toast event: {error}");
+  }
+}
+
 pub fn toast_init(app_handle: AppHandle) {
   if APP_HANDLE.get().is_none() {
     let _ = APP_HANDLE.set(app_handle);
@@ -13,11 +19,7 @@ pub fn toast_init(app_handle: AppHandle) {
 }
 
 #[allow(dead_code)]
-pub fn toast(
-  identifier: Option<String>,
-  content: ToastContent,
-  action: Option<ToastAction>,
-) {
+pub fn toast(identifier: Option<String>, content: ToastContent, action: Option<ToastAction>) {
   toast_message(identifier, None, content, action);
 }
 
@@ -31,29 +33,17 @@ pub fn toast_success(
 }
 
 #[allow(dead_code)]
-pub fn toast_info(
-  identifier: Option<String>,
-  content: ToastContent,
-  action: Option<ToastAction>,
-) {
+pub fn toast_info(identifier: Option<String>, content: ToastContent, action: Option<ToastAction>) {
   toast_message(identifier, Some(ToastVariant::Info), content, action);
 }
 
 #[allow(dead_code)]
-pub fn toast_warn(
-  identifier: Option<String>,
-  content: ToastContent,
-  action: Option<ToastAction>,
-) {
+pub fn toast_warn(identifier: Option<String>, content: ToastContent, action: Option<ToastAction>) {
   toast_message(identifier, Some(ToastVariant::Warn), content, action);
 }
 
 #[allow(dead_code)]
-pub fn toast_error(
-  identifier: Option<String>,
-  content: ToastContent,
-  action: Option<ToastAction>,
-) {
+pub fn toast_error(identifier: Option<String>, content: ToastContent, action: Option<ToastAction>) {
   toast_message(identifier, Some(ToastVariant::Error), content, action);
 }
 
@@ -73,17 +63,15 @@ fn toast_message(
   action: Option<ToastAction>,
 ) {
   if let Some(handle) = APP_HANDLE.get() {
-    handle
-      .emit(
-        "show_toast",
-        Toast {
-          identifier,
-          variant,
-          content,
-          action,
-        },
-      )
-      .unwrap();
+    emit_toast(
+      handle,
+      Toast {
+        identifier,
+        variant,
+        content,
+        action,
+      },
+    );
   } else {
     log_error!("Toast system not initialized. Cannot send toast message.");
   }

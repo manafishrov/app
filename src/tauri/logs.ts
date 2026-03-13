@@ -3,4 +3,11 @@ import { createListener } from '@/tauri/core';
 
 const EVENT = 'log_message';
 
-export const setupLogsListener = () => createListener<LogEntry>(EVENT, createLogRecord);
+const ignoreCreateLogRecordResult = (): void => {
+  Number.isNaN(Number.NaN);
+};
+
+export const setupLogsListener = (): Promise<() => void> =>
+  createListener<LogEntry>(EVENT, (entry): void => {
+    createLogRecord(entry).then(ignoreCreateLogRecordResult).catch(ignoreCreateLogRecordResult);
+  });

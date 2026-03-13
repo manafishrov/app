@@ -3,4 +3,5 @@ import { createListener } from '@/tauri/core';
 
 const EVENT = 'rov_telemetry';
 
-export const setupRovTelemetryListener = () => createListener<RovTelemetry>(EVENT, setRovTelemetryStore, { warnOnly: true });
+export const setupRovTelemetryListener = (): Promise<() => void> =>
+  createListener<RovTelemetry>(EVENT, setRovTelemetryStore, { warnOnly: true });

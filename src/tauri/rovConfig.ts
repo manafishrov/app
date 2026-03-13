@@ -4,23 +4,28 @@ import { createListener, invokeCommand } from '@/tauri/core';
 
 const EVENT = 'rov_config_received';
 
-export const setupRovConfigListener = () => createListener<RovConfig>(EVENT, setRovConfigStore);
+const resolveVoid: () => void = () => 0;
 
-export const requestRovConfig = async () => {
+export const setupRovConfigListener = (): Promise<() => void> =>
+  createListener<RovConfig>(EVENT, setRovConfigStore);
+
+export const requestRovConfig = (): Promise<void> | undefined => {
   if (!connectionStatusStore.isConnected) {
     return;
   }
-  await invokeCommand('request_rov_config');
+  return invokeCommand('request_rov_config');
 };
 
-export const setRovConfig = async (newConfigOptions: Partial<RovConfig>) => {
+export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void> => {
   const currentRovConfig = { ...rovConfigStore };
   const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
 
   setRovConfigStore(newRovConfig);
 
-  await invokeCommand('set_rov_config', { payload: newRovConfig }).catch((error) => {
-    setRovConfigStore(currentRovConfig);
-    throw error;
-  });
+  return invokeCommand('set_rov_config', { payload: newRovConfig })
+    .then(resolveVoid)
+    .catch((error: unknown) => {
+      setRovConfigStore(currentRovConfig);
+      throw error;
+    });
 };

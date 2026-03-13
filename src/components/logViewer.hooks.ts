@@ -2,6 +2,7 @@ import { createVirtualizer, type Virtualizer } from '@tanstack/solid-virtual';
 import { type Accessor, createMemo, createSignal } from 'solid-js';
 
 import { getAllLogRecords, type LogLevel, type LogOrigin, type LogRecord } from '@/lib/log';
+
 import { ROW_ESTIMATE, isNearBottom } from './logViewer.utils';
 
 export type ViewerSignals = {
@@ -16,9 +17,17 @@ export type ViewerSignals = {
   isLoading: Accessor<boolean>;
   setIsLoading: (value: boolean) => void;
   sourceFilters: Accessor<Record<LogOrigin, boolean>>;
-  setSourceFilters: (value: Record<LogOrigin, boolean> | ((prev: Record<LogOrigin, boolean>) => Record<LogOrigin, boolean>)) => void;
+  setSourceFilters: (
+    value:
+      | Record<LogOrigin, boolean>
+      | ((prev: Record<LogOrigin, boolean>) => Record<LogOrigin, boolean>),
+  ) => void;
   levelFilters: Accessor<Record<LogLevel, boolean>>;
-  setLevelFilters: (value: Record<LogLevel, boolean> | ((prev: Record<LogLevel, boolean>) => Record<LogLevel, boolean>)) => void;
+  setLevelFilters: (
+    value:
+      | Record<LogLevel, boolean>
+      | ((prev: Record<LogLevel, boolean>) => Record<LogLevel, boolean>),
+  ) => void;
 };
 
 export const createViewerSignals = (): ViewerSignals => {
@@ -64,14 +73,18 @@ export const createFilteredLogs = (signals: ViewerSignals): Accessor<LogRecord[]
     const levels = signals.levelFilters();
 
     return allLogs.filter((log) => {
-      if (!sources[log.origin]) { return false; }
-      if (!levels[log.level]) { return false; }
+      const isSourceMatch = sources[log.origin];
+      const isLevelMatch = levels[log.level];
 
-      if (query) {
+      if (!isSourceMatch || !isLevelMatch) {
+        return false;
+      }
+
+      if (query.length > 0) {
         const matchesMessage = log.message.toLowerCase().includes(query);
         const matchesLevel = log.level.toLowerCase().includes(query);
         const matchesOrigin = log.origin.toLowerCase().includes(query);
-        if (!matchesMessage && !matchesLevel && !matchesOrigin) { return false; }
+        return matchesMessage || matchesLevel || matchesOrigin;
       }
 
       return true;
@@ -80,39 +93,59 @@ export const createFilteredLogs = (signals: ViewerSignals): Accessor<LogRecord[]
 
 export type VirtualizerType = Virtualizer<HTMLDivElement, Element>;
 
-const createScrollToBottom = (virtualizer: VirtualizerType, filteredLogs: Accessor<LogRecord[]>, setFollowTail: (value: boolean) => void) => (): void => {
-  const items = filteredLogs();
-  if (items.length === 0) {
-    return;
+const createNullValue = (): null => {
+  const result = /a/.exec('');
+  if (Array.isArray(result)) {
+    throw new TypeError('Expected null from regex mismatch');
   }
-  virtualizer.scrollToIndex(items.length - 1, { align: 'end' });
-  setFollowTail(true);
+  return result;
 };
 
-const createMeasureRow = (virtualizer: VirtualizerType) => (element: HTMLDivElement): void => {
-  virtualizer.measureElement(element);
-  queueMicrotask((): void => {
-    virtualizer.measureElement(element);
-  });
-  requestAnimationFrame((): void => {
-    virtualizer.measureElement(element);
-  });
-};
+const NULL_VALUE = createNullValue();
 
-const createRemeasureAndFollowTail = (virtualizer: VirtualizerType, followTail: Accessor<boolean>, scrollToBottom: () => void) => (): void => {
-  queueMicrotask((): void => {
-    virtualizer.measure();
-    if (followTail()) {
-      scrollToBottom();
+const createScrollToBottom =
+  (
+    virtualizer: VirtualizerType,
+    filteredLogs: Accessor<LogRecord[]>,
+    setFollowTail: (value: boolean) => void,
+  ) =>
+  (): void => {
+    const items = filteredLogs();
+    if (items.length === 0) {
+      return;
     }
+    virtualizer.scrollToIndex(items.length - 1, { align: 'end' });
+    setFollowTail(true);
+  };
+
+const createMeasureRow =
+  (virtualizer: VirtualizerType) =>
+  (element: HTMLDivElement): void => {
+    virtualizer.measureElement(element);
+    queueMicrotask((): void => {
+      virtualizer.measureElement(element);
+    });
     requestAnimationFrame((): void => {
+      virtualizer.measureElement(element);
+    });
+  };
+
+const createRemeasureAndFollowTail =
+  (virtualizer: VirtualizerType, followTail: Accessor<boolean>, scrollToBottom: () => void) =>
+  (): void => {
+    queueMicrotask((): void => {
       virtualizer.measure();
       if (followTail()) {
         scrollToBottom();
       }
+      requestAnimationFrame((): void => {
+        virtualizer.measure();
+        if (followTail()) {
+          scrollToBottom();
+        }
+      });
     });
-  });
-};
+  };
 
 export const createVirtualizerTools = (args: {
   viewportRef: Accessor<HTMLDivElement | undefined>;
@@ -129,41 +162,74 @@ export const createVirtualizerTools = (args: {
       return args.filteredLogs().length;
     },
     get enabled() {
-      return args.viewportRef() !== undefined;
+      return Boolean(args.viewportRef());
     },
-    getScrollElement: () => args.viewportRef() ?? null,
+    getScrollElement: () => args.viewportRef() ?? NULL_VALUE,
     estimateSize: () => ROW_ESTIMATE,
     getItemKey: (index: number): number | string => {
       const item = args.filteredLogs()[index];
-      if (!item) { return index; }
+      if (!item) {
+        return index;
+      }
       return `${item.timestamp.toISOString()}-${item.origin}-${item.level}-${index}`;
     },
   });
 
   const scrollToBottom = createScrollToBottom(virtualizer, args.filteredLogs, args.setFollowTail);
   const measureRow = createMeasureRow(virtualizer);
-  const remeasureAndFollowTail = createRemeasureAndFollowTail(virtualizer, args.followTail, scrollToBottom);
+  const remeasureAndFollowTail = createRemeasureAndFollowTail(
+    virtualizer,
+    args.followTail,
+    scrollToBottom,
+  );
 
   return { virtualizer, measureRow, remeasureAndFollowTail };
 };
 
-const createLoadLogs = (signals: ViewerSignals, remeasureAndFollowTail: () => void) => (): Promise<void> => {
-  signals.setIsLoading(true);
-  return getAllLogRecords().then((records): void => {
-    signals.setLogs(records);
-    signals.setIsLoading(false);
-    remeasureAndFollowTail();
-  });
-};
+const createLoadLogs =
+  (signals: ViewerSignals, remeasureAndFollowTail: () => void) => (): Promise<void> => {
+    signals.setIsLoading(true);
+    return getAllLogRecords().then((records): void => {
+      signals.setLogs(records);
+      signals.setIsLoading(false);
+      remeasureAndFollowTail();
+    });
+  };
 
-const isCustomEvent = (event: Event): event is CustomEvent<LogRecord> => 'detail' in event;
+const isCustomEvent = (event: Event): event is CustomEvent<unknown> => 'detail' in event;
 
-const createHandleLogAdded = (signals: ViewerSignals, remeasureAndFollowTail: () => void) => (event: Event): void => {
-  if (isCustomEvent(event) && event.detail !== undefined) {
-    signals.setLogs((prev): LogRecord[] => [...prev, event.detail]);
-    remeasureAndFollowTail();
+const isLogRecord = (value: unknown): value is LogRecord => {
+  if (!(value instanceof Object)) {
+    return false;
   }
+
+  return (
+    'timestamp' in value &&
+    value.timestamp instanceof Date &&
+    'origin' in value &&
+    (value.origin === 'frontend' || value.origin === 'backend' || value.origin === 'firmware') &&
+    'level' in value &&
+    (value.level === 'info' || value.level === 'warn' || value.level === 'error') &&
+    'message' in value &&
+    typeof value.message === 'string'
+  );
 };
+
+const createHandleLogAdded =
+  (signals: ViewerSignals, remeasureAndFollowTail: () => void) =>
+  (event: Event): void => {
+    if (!isCustomEvent(event)) {
+      return;
+    }
+
+    const { detail } = event;
+    if (!isLogRecord(detail)) {
+      return;
+    }
+
+    signals.setLogs((prev): LogRecord[] => [...prev, detail]);
+    remeasureAndFollowTail();
+  };
 
 const createHandleViewportScroll = (signals: ViewerSignals) => (): void => {
   const viewport = signals.viewportRef();

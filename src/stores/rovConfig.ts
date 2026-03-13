@@ -125,7 +125,7 @@ const defaultRovConfig: RovConfig = {
 
 const [rovConfigStore, setRovConfigStoreInternal] = createStore<RovConfig>(defaultRovConfig);
 
-const setRovConfigStore = (value: RovConfig) => {
+const setRovConfigStore = (value: RovConfig): void => {
   setRovConfigStoreInternal(reconcile(value));
 };
 

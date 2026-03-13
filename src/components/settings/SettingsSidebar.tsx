@@ -36,65 +36,65 @@ type SidebarItem = {
   Icon: Component<ComponentProps<'svg'>>;
 };
 
-const APPLICATION_ITEMS: SidebarItem[] = [
+const APPLICATION_ITEMS = [
   {
-    label: () => m.settings_application_general(),
-    ariaLabel: () => m.aria_labels_general_button(),
+    label: (): string => m.settings_application_general(),
+    ariaLabel: (): string => m.aria_labels_general_button(),
     to: '/settings',
     Icon: SettingsIcon,
   },
   {
-    label: () => m.settings_application_appearence(),
-    ariaLabel: () => m.aria_labels_appearence_button(),
+    label: (): string => m.settings_application_appearence(),
+    ariaLabel: (): string => m.aria_labels_appearence_button(),
     to: '/settings/appearence',
     Icon: PaletteIcon,
   },
   {
-    label: () => m.settings_application_keyboard(),
-    ariaLabel: () => m.aria_labels_keyboard_button(),
+    label: (): string => m.settings_application_keyboard(),
+    ariaLabel: (): string => m.aria_labels_keyboard_button(),
     to: '/settings/keyboard',
     Icon: KeyboardIcon,
   },
   {
-    label: () => m.settings_application_gamepad(),
-    ariaLabel: () => m.aria_labels_gamepad_button(),
+    label: (): string => m.settings_application_gamepad(),
+    ariaLabel: (): string => m.aria_labels_gamepad_button(),
     to: '/settings/gamepad',
     Icon: SportsEsportsIcon,
   },
   {
-    label: () => m.settings_application_app_connection(),
-    ariaLabel: () => m.aria_labels_app_connection_button(),
+    label: (): string => m.settings_application_app_connection(),
+    ariaLabel: (): string => m.aria_labels_app_connection_button(),
     to: '/settings/app-connection',
     Icon: SettingsEthernetIcon,
   },
-];
+] as const satisfies readonly SidebarItem[];
 
-const ROV_ITEMS: SidebarItem[] = [
+const ROV_ITEMS = [
   {
-    label: () => m.settings_rov_system(),
-    ariaLabel: () => m.aria_labels_system_rov_button(),
+    label: (): string => m.settings_rov_system(),
+    ariaLabel: (): string => m.aria_labels_system_rov_button(),
     to: '/settings/rov/system',
     Icon: Drone2Icon,
   },
   {
-    label: () => m.settings_rov_calibration(),
-    ariaLabel: () => m.aria_labels_calibration_button(),
+    label: (): string => m.settings_rov_calibration(),
+    ariaLabel: (): string => m.aria_labels_calibration_button(),
     to: '/settings/rov/calibration',
     Icon: BuildIcon,
   },
   {
-    label: () => m.settings_rov_regulator(),
-    ariaLabel: () => m.aria_labels_regulator_button(),
+    label: (): string => m.settings_rov_regulator(),
+    ariaLabel: (): string => m.aria_labels_regulator_button(),
     to: '/settings/rov/regulator',
     Icon: ExploreIcon,
   },
   {
-    label: () => m.settings_rov_power(),
-    ariaLabel: () => m.aria_labels_power_button(),
+    label: (): string => m.settings_rov_power(),
+    ariaLabel: (): string => m.aria_labels_power_button(),
     to: '/settings/rov/power',
     Icon: SpeedIcon,
   },
-];
+] as const satisfies readonly SidebarItem[];
 
 const SLICE_LAST_CHAR = -1;
 
@@ -102,7 +102,7 @@ const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, SLICE_LAST_CHAR) : path;
 
 type SidebarLinkItemProps = {
-  item: SidebarItem;
+  item: (typeof APPLICATION_ITEMS)[number] | (typeof ROV_ITEMS)[number];
   isActive: (path: string) => boolean;
 };
 

@@ -16,12 +16,6 @@ const router = createRouter({
   },
 });
 
-declare module '@tanstack/solid-router' {
-  interface Register {
-    router: typeof router;
-  }
-}
-
 const rootElement = document.querySelector('#root');
 if (rootElement && !rootElement.innerHTML) {
   render(() => <RouterProvider router={router} />, rootElement);

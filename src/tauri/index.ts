@@ -28,14 +28,16 @@ const listeners = [
   setupToastListener,
 ];
 
-export const setupAllListeners = async (): Promise<CleanupFn> => {
+export const setupAllListeners = (): Promise<CleanupFn> => {
   const disposables = new DisposableStack();
 
-  const unlisteners = await Promise.all(listeners.map((setup) => setup()));
+  return Promise.all(listeners.map((setup) => setup())).then((unlisteners) => {
+    for (const cleanup of unlisteners) {
+      disposables.add(cleanup);
+    }
 
-  unlisteners.forEach((cleanup) => disposables.add(cleanup));
-
-  return () => {
-    disposables.dispose();
-  };
+    return () => {
+      disposables.dispose();
+    };
+  });
 };

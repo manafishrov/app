@@ -196,48 +196,59 @@ type Config = {
   gamepad: Record<string, GamepadBindings>;
 };
 
+const createNullValue = (): null => {
+  const result = /a/.exec('');
+  if (Array.isArray(result)) {
+    throw new TypeError('Expected null match result');
+  }
+  return result;
+};
+
+const NULL_VALUE = createNullValue();
+const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
+
 const createNullKeyboardBindings = (): KeyboardBindings => ({
-  surgeForward: null,
-  surgeBackward: null,
-  swayRight: null,
-  swayLeft: null,
-  heaveUp: null,
-  heaveDown: null,
-  pitchUp: null,
-  pitchDown: null,
-  yawRight: null,
-  yawLeft: null,
-  rollLeft: null,
-  rollRight: null,
-  action1Positive: null,
-  action1Negative: null,
-  action2Positive: null,
-  action2Negative: null,
-  autoStabilization: null,
-  depthHold: null,
-  record: null,
+  surgeForward: NULL_VALUE,
+  surgeBackward: NULL_VALUE,
+  swayRight: NULL_VALUE,
+  swayLeft: NULL_VALUE,
+  heaveUp: NULL_VALUE,
+  heaveDown: NULL_VALUE,
+  pitchUp: NULL_VALUE,
+  pitchDown: NULL_VALUE,
+  yawRight: NULL_VALUE,
+  yawLeft: NULL_VALUE,
+  rollLeft: NULL_VALUE,
+  rollRight: NULL_VALUE,
+  action1Positive: NULL_VALUE,
+  action1Negative: NULL_VALUE,
+  action2Positive: NULL_VALUE,
+  action2Negative: NULL_VALUE,
+  autoStabilization: NULL_VALUE,
+  depthHold: NULL_VALUE,
+  record: NULL_VALUE,
 });
 
 const createNullGamepadBindings = (): GamepadBindings => ({
-  surgeForward: null,
-  surgeBackward: null,
-  swayRight: null,
-  swayLeft: null,
-  heaveUp: null,
-  heaveDown: null,
-  pitchUp: null,
-  pitchDown: null,
-  yawRight: null,
-  yawLeft: null,
-  rollLeft: null,
-  rollRight: null,
-  action1Positive: null,
-  action1Negative: null,
-  action2Positive: null,
-  action2Negative: null,
-  autoStabilization: null,
-  depthHold: null,
-  record: null,
+  surgeForward: NULL_VALUE,
+  surgeBackward: NULL_VALUE,
+  swayRight: NULL_VALUE,
+  swayLeft: NULL_VALUE,
+  heaveUp: NULL_VALUE,
+  heaveDown: NULL_VALUE,
+  pitchUp: NULL_VALUE,
+  pitchDown: NULL_VALUE,
+  yawRight: NULL_VALUE,
+  yawLeft: NULL_VALUE,
+  rollLeft: NULL_VALUE,
+  rollRight: NULL_VALUE,
+  action1Positive: NULL_VALUE,
+  action1Negative: NULL_VALUE,
+  action2Positive: NULL_VALUE,
+  action2Negative: NULL_VALUE,
+  autoStabilization: NULL_VALUE,
+  depthHold: NULL_VALUE,
+  record: NULL_VALUE,
 });
 
 const defaultConfig: Config = {
@@ -252,36 +263,39 @@ const defaultConfig: Config = {
   webrtcSignalingApiPath: '/api/webrtc?src=cam',
   webSocketPort: 9000,
   keyboard: createNullKeyboardBindings(),
-  selectedGamepadId: null,
+  selectedGamepadId: NULL_VALUE,
   gamepad: {},
 };
 
 const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);
 
-const setConfigStore = (value: Config) => {
+const setConfigStore = (value: Config): void => {
   setConfigStoreInternal(reconcile(value));
 };
 
-const getConfig = async () => {
-  await invoke<Config>('get_config')
-    .then((payload) => setConfigStore(payload))
-    .catch((error) => {
+const getConfig = (): Promise<void> =>
+  invoke<Config>('get_config')
+    .then((payload) => {
+      setConfigStore(payload);
+    })
+    .catch((error: unknown) => {
       logError('Failed to get config:', error);
       toast.create({ title: m.toasts_failed_to_get_config(), type: 'error' });
     });
-};
 
-const setConfig = async (newConfigOptions: Partial<Config>) => {
+const setConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
   const currentConfig = { ...configStore };
   const newConfig = { ...currentConfig, ...newConfigOptions };
 
   setConfigStore(newConfig);
 
-  await invoke('set_config', { payload: newConfig }).catch((error) => {
-    setConfigStore(currentConfig);
-    logError('Failed to set config:', error);
-    toast.create({ title: m.toasts_failed_to_set_config_reverted(), type: 'error' });
-  });
+  return invoke('set_config', { payload: newConfig })
+    .catch((error: unknown) => {
+      setConfigStore(currentConfig);
+      logError('Failed to set config:', error);
+      toast.create({ title: m.toasts_failed_to_set_config_reverted(), type: 'error' });
+    })
+    .then(ignoreInvokeResult);
 };
 
 export {
@@ -302,3 +316,4 @@ export {
   type AttitudeIndicator as AttitudeIndicatorType,
   type Config,
 };
+/* eslint-disable max-lines */

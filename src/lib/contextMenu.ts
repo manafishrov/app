@@ -1,8 +1,15 @@
-export function disableContextMenu(): (() => void) | undefined {
-  if (!import.meta.env.PROD) return;
+const handleContextMenu = (event: MouseEvent): void => {
+  event.preventDefault();
+};
 
-  const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+export const disableContextMenu = (): (() => void) | undefined => {
+  if (!import.meta.env.PROD) {
+    return;
+  }
+
   document.addEventListener('contextmenu', handleContextMenu);
 
-  return () => document.removeEventListener('contextmenu', handleContextMenu);
-}
+  return () => {
+    document.removeEventListener('contextmenu', handleContextMenu);
+  };
+};

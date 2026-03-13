@@ -6,17 +6,20 @@ import {
   TooltipTrigger,
   TooltipArrow,
 } from '@manafishrov/ui/tooltip';
+import { Show, type JSX } from 'solid-js';
 import VideoIcon from '~icons/material-symbols/video-camera-back';
 
 import * as m from '@/paraglide/messages';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
-function RecordingButton() {
-  const handleRecordingClick = () => {
-    const isRecording = recordingStore.isRecording;
+const [undef] = [] as (number | undefined)[];
+
+const RecordingButton = (): JSX.Element => {
+  const handleRecordingClick = (): void => {
+    const { isRecording } = recordingStore;
     setRecordingStore({
       isRecording: !isRecording,
-      startTime: isRecording ? null : Date.now(),
+      startTime: isRecording ? undef : Date.now(),
     });
   };
 
@@ -54,6 +57,6 @@ function RecordingButton() {
       </Tooltip>
     </Show>
   );
-}
+};
 
 export { RecordingButton };

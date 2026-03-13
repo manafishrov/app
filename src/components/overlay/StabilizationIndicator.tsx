@@ -23,6 +23,10 @@ type StabilizationToggleProps = {
   children: JSX.Element;
 };
 
+const handleToggleError = (): void => {
+  // Silently ignore toggle errors (command failure is expected if not connected)
+};
+
 const StabilizationToggle: Component<StabilizationToggleProps> = (props) => (
   <Tooltip positioning={{ placement: 'right' }}>
     <TooltipTrigger
@@ -59,7 +63,7 @@ const StabilizationIndicator: Component = () => (
       active={rovStatusStore.autoStabilization}
       label={m.controls_stabilization_stabilization()}
       onToggle={() => {
-        toggleAutoStabilization().catch(() => {});
+        toggleAutoStabilization().catch(handleToggleError);
       }}
     >
       <AutoStabilizationIcon class='size-5' />
@@ -68,7 +72,7 @@ const StabilizationIndicator: Component = () => (
       active={rovStatusStore.depthHold}
       label={m.controls_stabilization_depth_hold()}
       onToggle={() => {
-        toggleDepthHold().catch(() => {});
+        toggleDepthHold().catch(handleToggleError);
       }}
     >
       <DepthHoldIcon class='size-5' />

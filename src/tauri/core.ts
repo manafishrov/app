@@ -5,6 +5,7 @@ import { listen, type Event, type UnlistenFn } from '@tauri-apps/api/event';
 import { logError, logWarn } from '@/lib/log';
 
 export type CleanupFn = () => void;
+const noop: CleanupFn = () => Number.NaN;
 
 export class DisposableStack {
   private cleanups: CleanupFn[] = [];
@@ -16,7 +17,9 @@ export class DisposableStack {
   dispose(): void {
     while (this.cleanups.length > 0) {
       const cleanup = this.cleanups.pop();
-      cleanup?.();
+      if (cleanup) {
+        cleanup();
+      }
     }
   }
 }
@@ -25,40 +28,42 @@ export type ListenerOptions = {
   warnOnly?: boolean;
 };
 
-export const createListener = <T>(
-  event: string,
-  handler: (payload: T) => void,
+export const createListener = <Payload>(
+  eventName: string,
+  handler: (payload: Payload) => void,
   options?: ListenerOptions,
-): Promise<UnlistenFn> => listen<T>(event, (event: Event<T>) => {
+): Promise<UnlistenFn> =>
+  listen<Payload>(eventName, (listenerEvent: Event<Payload>) => {
     try {
-      handler(event.payload);
+      handler(listenerEvent.payload);
     } catch (error) {
-      const errorMsg = `Error in listener '${event}'`;
-      if (options?.warnOnly) {
+      const errorMsg = `Error in listener '${eventName}'`;
+      if (options && options.warnOnly === true) {
         logWarn(errorMsg, error);
       } else {
         logError(errorMsg, error);
         toast.create({ title: errorMsg, type: 'error' });
       }
     }
-  }).catch((error) => {
-    const errorMsg = `Failed to setup listener '${event}'`;
-    if (options?.warnOnly) {
+  }).catch((error: unknown) => {
+    const errorMsg = `Failed to setup listener '${eventName}'`;
+    if (options && options.warnOnly === true) {
       logWarn(errorMsg, error);
     } else {
       logError(errorMsg, error);
       toast.create({ title: errorMsg, type: 'error' });
     }
-    return () => {};
+    return noop;
   });
 
-export const invokeCommand = async <T>(
+export const invokeCommand = <Response>(
   command: string,
   args?: Record<string, unknown>,
   options?: ListenerOptions,
-): Promise<T> => invoke<T>(command, args).catch((error) => {
+): Promise<Response> =>
+  invoke<Response>(command, args).catch((error: unknown) => {
     const errorMsg = `Failed to invoke '${command}'`;
-    if (options?.warnOnly) {
+    if (options && options.warnOnly === true) {
       logWarn(errorMsg, error);
     } else {
       logError(errorMsg, error);

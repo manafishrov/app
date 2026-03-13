@@ -18,95 +18,129 @@ type GamepadData = {
   vibrationActuator: { type: string } | null;
 };
 
-const gamepads: (Gamepad | null)[] = [null, null, null, null];
+const gamepads = new Map<number, Gamepad>();
 
-const getGamepads = () => [...gamepads];
+const noopCleanup: CleanupFn = () => 0;
+
+const resolveVoid: () => void = () => 0;
+
+const getGamepads = (): ReturnType<Navigator['getGamepads']> => [...gamepads.values()];
+
+const toMappingType = (mapping: string): GamepadMappingType =>
+  mapping === 'standard' ? 'standard' : '';
+
+const createVibrationActuator = (
+  index: number,
+  vibrationActuator: GamepadData['vibrationActuator'],
+): GamepadHapticActuator => {
+  const supportsVibration = Boolean(vibrationActuator);
+
+  return {
+    playEffect: (
+      type: GamepadHapticEffectType,
+      params?: GamepadEffectParameters,
+    ): Promise<GamepadHapticsResult> => {
+      if (!supportsVibration || type !== 'dual-rumble' || !params) {
+        return Promise.resolve('complete');
+      }
+
+      return invokeCommand('gamepad_vibrate', {
+        index,
+        low_freq: params.weakMagnitude ?? 0,
+        high_freq: params.strongMagnitude ?? 0,
+        duration_ms: params.duration ?? 0,
+      }).then((): GamepadHapticsResult => 'complete');
+    },
+    pulse: (value: number, duration: number): Promise<boolean> =>
+      invokeCommand('gamepad_vibrate', {
+        index,
+        low_freq: value,
+        high_freq: value,
+        duration_ms: duration,
+      })
+        .then((): boolean => true)
+        .catch((): boolean => false),
+    reset: (): Promise<GamepadHapticsResult> => Promise.resolve('complete'),
+  };
+};
 
 const createGamepadFromEvent = (event: GamepadData): Gamepad => {
   const { id, index, axes, connected, mapping, timestamp, vibrationActuator } = event;
-  const buttons = event.buttons.map(
-    (btn) =>
-      ({
-        value: btn.value,
-        touched: btn.value > 0,
-        pressed: btn.pressed,
-      }) as GamepadButton,
+  const buttons: GamepadButton[] = event.buttons.map(
+    (btn): GamepadButton => ({
+      value: btn.value,
+      touched: btn.value > 0,
+      pressed: btn.pressed,
+    }),
   );
+  const vibrationActuatorObj = createVibrationActuator(index, vibrationActuator);
+  const hapticActuators = vibrationActuator ? [vibrationActuatorObj] : [];
 
-  const vibrationActuatorObj = vibrationActuator
-    ? {
-        type: vibrationActuator.type as GamepadHapticEffectType,
-        playEffect: async (type: GamepadHapticEffectType, params?: GamepadEffectParameters) => {
-          if (type === 'dual-rumble' && params) {
-            await invokeCommand('gamepad_vibrate', {
-              index,
-              low_freq: params['weakMagnitude'] ?? 0,
-              high_freq: params['strongMagnitude'] ?? 0,
-              duration_ms: params['duration'] ?? 0,
-            });
-          }
-          return 'complete';
-        },
-      }
-    : null;
-
-  return {
+  const gamepad: Gamepad = {
     index,
     id,
     connected,
-    axes: axes as readonly number[],
-    buttons: buttons as readonly GamepadButton[],
+    axes,
+    buttons,
     timestamp,
-    mapping,
-    hapticActuators: [] as readonly GamepadHapticActuator[],
-    vibrationActuator: vibrationActuatorObj as GamepadHapticActuator | null,
-  } as Gamepad;
+    mapping: toMappingType(mapping),
+    hapticActuators,
+    vibrationActuator: vibrationActuatorObj,
+  };
+
+  return gamepad;
 };
 
-const handleGamepadEvent = ({ payload }: { payload: GamepadData }) => {
+const dispatchConnectionEvent = (
+  eventName: 'gamepadconnected' | 'gamepaddisconnected',
+  gamepad: Gamepad,
+): void => {
+  const customEvent = new GamepadEvent(eventName, { gamepad });
+  globalThis.dispatchEvent(customEvent);
+};
+
+const handleGamepadEvent = ({ payload }: { payload: GamepadData }): void => {
   const gamepad = createGamepadFromEvent(payload);
-  const prevConnected = gamepads[gamepad.index]?.connected ?? false;
+  const previousGamepad = gamepads.get(gamepad.index);
+  const prevConnected = previousGamepad ? previousGamepad.connected : false;
 
   if (payload.connected && !prevConnected) {
-    gamepads[gamepad.index] = gamepad;
-    const customEvent = new GamepadEvent('gamepadconnected', { gamepad });
-    window.dispatchEvent(customEvent);
+    gamepads.set(gamepad.index, gamepad);
+    dispatchConnectionEvent('gamepadconnected', gamepad);
   } else if (!payload.connected && prevConnected) {
-    gamepads[gamepad.index] = null;
-    const customEvent = new GamepadEvent('gamepaddisconnected', { gamepad });
-    window.dispatchEvent(customEvent);
+    gamepads.delete(gamepad.index);
+    dispatchConnectionEvent('gamepaddisconnected', gamepad);
   } else {
-    gamepads[gamepad.index] = gamepad;
+    gamepads.set(gamepad.index, gamepad);
   }
 };
 
-export const setupGamepadListener = async (): Promise<CleanupFn> => {
+export const setupGamepadListener = (): Promise<CleanupFn> => {
   navigator.getGamepads = getGamepads;
 
-  await invokeCommand('start_gamepad_stream');
-
-  const unlisten = await listen<GamepadData>(EVENT, handleGamepadEvent).catch((error) => {
-    logError('Failed to listen for gamepad events:', error);
-    toast.create({
-      title: m.toasts_failed_to_listen_for_gamepad_events(),
-      type: 'error',
-    });
-    return () => {};
-  });
-
-  return unlisten;
+  return invokeCommand('start_gamepad_stream').then(() =>
+    listen<GamepadData>(EVENT, handleGamepadEvent).catch((error: unknown): CleanupFn => {
+      logError('Failed to listen for gamepad events:', error);
+      toast.create({
+        title: m.toasts_failed_to_listen_for_gamepad_events(),
+        type: 'error',
+      });
+      return noopCleanup;
+    }),
+  );
 };
 
-export const vibrateGamepad = async (
-  index: number,
-  weakMagnitude: number,
-  strongMagnitude: number,
-  duration: number,
-) => {
-  await invokeCommand('gamepad_vibrate', {
+type VibrateGamepadFn = (
+  ...params: [index: number, weakMagnitude: number, strongMagnitude: number, duration: number]
+) => Promise<void>;
+
+export const vibrateGamepad: VibrateGamepadFn = (...params): Promise<void> => {
+  const [index, weakMagnitude, strongMagnitude, duration] = params;
+
+  return invokeCommand('gamepad_vibrate', {
     index,
     low_freq: weakMagnitude,
     high_freq: strongMagnitude,
     duration_ms: duration,
-  });
+  }).then(resolveVoid);
 };
