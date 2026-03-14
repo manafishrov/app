@@ -1,4 +1,4 @@
-import type { Component, JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { Toggle } from '@manafishrov/ui/toggle';
 import {
@@ -20,7 +20,7 @@ type StabilizationToggleProps = {
   active: boolean;
   label: string;
   onToggle: () => void;
-  children: JSX.Element;
+  children: JSXElement;
 };
 
 const handleToggleError = (): void => {
@@ -41,6 +41,7 @@ const StabilizationToggle: Component<StabilizationToggleProps> = (props) => (
             props.onToggle();
           }}
           class='size-9 justify-center bg-background/50 p-0 text-muted-foreground backdrop-blur-sm border-border/50 hover:bg-background/60 hover:text-foreground data-pressed:bg-background/80 data-pressed:text-emerald-300 data-pressed:border-emerald-300/30'
+          tabindex={-1}
         >
           {props.children}
         </Toggle>

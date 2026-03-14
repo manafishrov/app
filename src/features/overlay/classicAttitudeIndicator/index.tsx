@@ -18,7 +18,7 @@ import { getCenter, getRadius } from './math';
 const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (props) => {
   const center = (): number => getCenter(props.size);
   const radius = (): number => getRadius(props.size);
-  const clipId = (): string => `instrument-face-${createUniqueId()}`;
+  const clipId = `instrument-face-${createUniqueId()}`;
 
   return (
     <div
@@ -27,7 +27,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
     >
       <svg width={props.size} height={props.size} viewBox={`0 0 ${props.size} ${props.size}`}>
         <defs>
-          <clipPath id={clipId()}>
+          <clipPath id={clipId}>
             <circle cx={center()} cy={center()} r={radius()} />
           </clipPath>
         </defs>
@@ -40,7 +40,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           stroke-opacity={CONST.OPACITY}
           stroke-width={props.size * CONST.W_NORM}
         />
-        <g clip-path={`url(#${clipId()})`}>
+        <g clip-path={`url(#${clipId})`}>
           <PitchLadder size={props.size} center={center()} pitch={props.pitch} roll={props.roll} />
         </g>
         <RollIndicator size={props.size} center={center()} roll={props.roll} />

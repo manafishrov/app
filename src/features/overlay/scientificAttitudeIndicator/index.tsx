@@ -24,7 +24,7 @@ const HALF = 2;
 
 const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> = (props) => {
   const center = (): number => props.size / HALF;
-  const deltaYaw = computeScientificDeltaYaw(props.desiredYaw, props.yaw);
+  const deltaYaw = (): number => computeScientificDeltaYaw(props.desiredYaw, props.yaw);
 
   return (
     <div
@@ -51,15 +51,15 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           size={props.size}
           desiredPitch={props.desiredPitch}
           desiredRoll={props.desiredRoll}
-          deltaYaw={deltaYaw}
+          deltaYaw={deltaYaw()}
         />
         <ActualIndicator
           size={props.size}
           pitch={props.pitch}
           roll={props.roll}
-          deltaYaw={deltaYaw}
+          deltaYaw={deltaYaw()}
         />
-        <InfoTexts size={props.size} pitch={props.pitch} roll={props.roll} deltaYaw={deltaYaw} />
+        <InfoTexts size={props.size} pitch={props.pitch} roll={props.roll} deltaYaw={deltaYaw()} />
       </svg>
     </div>
   );

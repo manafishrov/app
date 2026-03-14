@@ -65,7 +65,7 @@
   "general_settings_appearance_attitude_indicator_classic": "Classic",
   "general_settings_appearance_attitude_indicator_disabled": "Disabled",
   "general_settings_appearance_work_indicator_title": "Work indicator",
-  "general_settings_appearance_work_indicator_description": "Show the work indicator.",
+  "general_settings_appearance_work_indicator_description": "Shows a shadow around the attitude indicator based on how much work the regulator is doing.",
   "general_settings_appearance_thruster_rpm_overlay_title": "Thruster RPM overlay",
   "general_settings_appearance_thruster_rpm_overlay_description": "Show the thruster RPM overlay on the video feed.",
 
