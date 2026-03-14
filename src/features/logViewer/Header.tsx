@@ -4,6 +4,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@manafishrov/ui/in
 import { Toggle } from '@manafishrov/ui/toggle';
 import SearchIcon from '~icons/material-symbols/search';
 
+import type { LogLevel } from '@/lib/log';
+import { LogOrigin } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 
 import type { ViewerSignals } from './logViewerPrimitives';
@@ -11,8 +13,8 @@ import type { ViewerSignals } from './logViewerPrimitives';
 type LogViewerHeaderProps = {
   signals: ViewerSignals;
   actions: {
-    toggleSourceFilter: (source: 'frontend' | 'backend' | 'firmware') => void;
-    toggleLevelFilter: (level: 'info' | 'warn' | 'error') => void;
+    toggleSourceFilter: (source: LogOrigin) => void;
+    toggleLevelFilter: (level: LogLevel) => void;
   };
 };
 
@@ -24,7 +26,7 @@ const SourceFilters: Component<LogViewerHeaderProps> = (props) => (
       variant='outline'
       pressed={props.signals.sourceFilters().frontend}
       onPressedChange={(): void => {
-        props.actions.toggleSourceFilter('frontend');
+        props.actions.toggleSourceFilter(LogOrigin.frontend);
       }}
     >
       {m.debug_source_frontend()}
@@ -34,7 +36,7 @@ const SourceFilters: Component<LogViewerHeaderProps> = (props) => (
       variant='outline'
       pressed={props.signals.sourceFilters().backend}
       onPressedChange={(): void => {
-        props.actions.toggleSourceFilter('backend');
+        props.actions.toggleSourceFilter(LogOrigin.backend);
       }}
     >
       {m.debug_source_backend()}
@@ -44,7 +46,7 @@ const SourceFilters: Component<LogViewerHeaderProps> = (props) => (
       variant='outline'
       pressed={props.signals.sourceFilters().firmware}
       onPressedChange={(): void => {
-        props.actions.toggleSourceFilter('firmware');
+        props.actions.toggleSourceFilter(LogOrigin.firmware);
       }}
     >
       {m.debug_source_firmware()}

@@ -1,7 +1,19 @@
 import { type DBSchema, type IDBPDatabase, type OpenDBCallbacks, deleteDB, openDB } from 'idb';
 
-type LogLevel = 'info' | 'warn' | 'error';
-type LogOrigin = 'frontend' | 'backend' | 'firmware';
+const LogLevel = {
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+} as const;
+
+const LogOrigin = {
+  frontend: 'frontend',
+  backend: 'backend',
+  firmware: 'firmware',
+} as const;
+
+type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+type LogOrigin = (typeof LogOrigin)[keyof typeof LogOrigin];
 
 type LogEntry = {
   origin: LogOrigin;
@@ -209,6 +221,6 @@ export {
   createLogRecord,
   type LogRecord,
   type LogEntry,
-  type LogLevel,
-  type LogOrigin,
+  LogLevel,
+  LogOrigin,
 };
