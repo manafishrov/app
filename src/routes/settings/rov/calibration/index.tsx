@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { Calibration } from '@/components/settings/forms/Calibration';
+import { Calibration } from '@/features/settings/forms/calibration';
 import * as m from '@/paraglide/messages';
 
 const CalibrationRovSettingsPage: Component = () => (

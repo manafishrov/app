@@ -5,7 +5,7 @@ import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-
 import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 import { onCleanup, onMount, type Component } from 'solid-js';
 
-import { Header } from '@/components/Header';
+import { Header } from '@/features/header';
 import { disableContextMenu } from '@/lib/contextMenu';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';

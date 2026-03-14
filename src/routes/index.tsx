@@ -4,8 +4,8 @@ import { createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createSignal, onCleanup, onMount, type JSX } from 'solid-js';
 
-import { Overlay } from '@/components/Overlay';
-import { VideoStream } from '@/components/VideoStream';
+import { Overlay } from '@/features/overlay';
+import { VideoStream } from '@/features/videoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
 import { sendDirectionVector } from '@/tauri';

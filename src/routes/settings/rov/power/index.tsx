@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { Power } from '@/components/settings/forms/Power';
+import { Power } from '@/features/settings/forms/Power';
 import * as m from '@/paraglide/messages';
 
 const PowerRovSettingsPage: Component = () => (

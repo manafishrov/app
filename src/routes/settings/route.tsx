@@ -12,7 +12,7 @@ import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/sol
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createEffect, createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
-import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { SettingsSidebar } from '@/features/settings/SettingsSidebar';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { requestRovConfig } from '@/tauri';
 

@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { GamepadSettings } from '@/components/settings/input/GamepadSettings';
+import { GamepadSettings } from '@/features/settings/input/gamepadSettings';
 import * as m from '@/paraglide/messages';
 
 const GamepadSettingsPage: Component = () => (

@@ -4,7 +4,7 @@ import { Badge } from '@manafishrov/ui/badge';
 import { H1, H4, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { System } from '@/components/settings/forms/System';
+import { System } from '@/features/settings/forms/System';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 

@@ -4,7 +4,7 @@ import { Badge } from '@manafishrov/ui/badge';
 import { H1, H4, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { General } from '@/components/settings/forms/General';
+import { General } from '@/features/settings/forms/General';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 

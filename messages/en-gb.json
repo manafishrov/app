@@ -31,7 +31,7 @@
 
   "settings_application_title": "Application",
   "settings_application_general": "General",
-  "settings_application_appearence": "Appearence",
+  "settings_application_appearance": "Appearance",
   "settings_application_keyboard": "Keyboard",
   "settings_application_gamepad": "Gamepad",
   "settings_application_app_connection": "App Connection",
@@ -338,7 +338,7 @@
   "aria_labels_select_video_directory": "Select Video Directory",
   "aria_labels_back_button": "Back",
   "aria_labels_general_button": "General",
-  "aria_labels_appearence_button": "Appearence",
+  "aria_labels_appearance_button": "Appearance",
   "aria_labels_keyboard_button": "Keyboard",
   "aria_labels_gamepad_button": "Gamepad",
   "aria_labels_app_connection_button": "App Connection",

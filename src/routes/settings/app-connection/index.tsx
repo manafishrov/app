@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { AppConnection } from '@/components/settings/forms/AppConnection';
+import { AppConnection } from '@/features/settings/forms/AppConnection';
 import * as m from '@/paraglide/messages';
 
 const AppConnectionSettingsPage: Component = () => (

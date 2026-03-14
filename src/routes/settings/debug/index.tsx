@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { LogViewer } from '@/components/LogViewer';
+import { LogViewer } from '@/features/logViewer';
 import * as m from '@/paraglide/messages';
 
 const DebugSettingsPage: Component = () => (

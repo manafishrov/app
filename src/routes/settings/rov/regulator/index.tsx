@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { Regulator } from '@/components/settings/forms/Regulator';
+import { Regulator } from '@/features/settings/forms/regulator';
 import * as m from '@/paraglide/messages';
 
 const RegulatorRovSettingsPage: Component = () => (

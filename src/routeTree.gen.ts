@@ -15,7 +15,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsKeyboardIndexRouteImport } from './routes/settings/keyboard/index'
 import { Route as SettingsGamepadIndexRouteImport } from './routes/settings/gamepad/index'
 import { Route as SettingsDebugIndexRouteImport } from './routes/settings/debug/index'
-import { Route as SettingsAppearenceIndexRouteImport } from './routes/settings/appearence/index'
+import { Route as SettingsAppearanceIndexRouteImport } from './routes/settings/appearance/index'
 import { Route as SettingsAppConnectionIndexRouteImport } from './routes/settings/app-connection/index'
 import { Route as SettingsRovSystemIndexRouteImport } from './routes/settings/rov/system/index'
 import { Route as SettingsRovRegulatorIndexRouteImport } from './routes/settings/rov/regulator/index'
@@ -52,9 +52,9 @@ const SettingsDebugIndexRoute = SettingsDebugIndexRouteImport.update({
   path: '/debug/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
-const SettingsAppearenceIndexRoute = SettingsAppearenceIndexRouteImport.update({
-  id: '/appearence/',
-  path: '/appearence/',
+const SettingsAppearanceIndexRoute = SettingsAppearanceIndexRouteImport.update({
+  id: '/appearance/',
+  path: '/appearance/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsAppConnectionIndexRoute =
@@ -91,7 +91,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/': typeof SettingsIndexRoute
   '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
-  '/settings/appearence/': typeof SettingsAppearenceIndexRoute
+  '/settings/appearance/': typeof SettingsAppearanceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
@@ -104,7 +104,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsIndexRoute
   '/settings/app-connection': typeof SettingsAppConnectionIndexRoute
-  '/settings/appearence': typeof SettingsAppearenceIndexRoute
+  '/settings/appearance': typeof SettingsAppearanceIndexRoute
   '/settings/debug': typeof SettingsDebugIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
@@ -119,7 +119,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/': typeof SettingsIndexRoute
   '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
-  '/settings/appearence/': typeof SettingsAppearenceIndexRoute
+  '/settings/appearance/': typeof SettingsAppearanceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
@@ -135,7 +135,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/settings/'
     | '/settings/app-connection/'
-    | '/settings/appearence/'
+    | '/settings/appearance/'
     | '/settings/debug/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
@@ -148,7 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/settings/app-connection'
-    | '/settings/appearence'
+    | '/settings/appearance'
     | '/settings/debug'
     | '/settings/gamepad'
     | '/settings/keyboard'
@@ -162,7 +162,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/settings/'
     | '/settings/app-connection/'
-    | '/settings/appearence/'
+    | '/settings/appearance/'
     | '/settings/debug/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
@@ -221,11 +221,11 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsDebugIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
-    '/settings/appearence/': {
-      id: '/settings/appearence/'
-      path: '/appearence'
-      fullPath: '/settings/appearence/'
-      preLoaderRoute: typeof SettingsAppearenceIndexRouteImport
+    '/settings/appearance/': {
+      id: '/settings/appearance/'
+      path: '/appearance'
+      fullPath: '/settings/appearance/'
+      preLoaderRoute: typeof SettingsAppearanceIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/app-connection/': {
@@ -269,7 +269,7 @@ declare module '@tanstack/solid-router' {
 interface SettingsRouteRouteChildren {
   SettingsIndexRoute: typeof SettingsIndexRoute
   SettingsAppConnectionIndexRoute: typeof SettingsAppConnectionIndexRoute
-  SettingsAppearenceIndexRoute: typeof SettingsAppearenceIndexRoute
+  SettingsAppearanceIndexRoute: typeof SettingsAppearanceIndexRoute
   SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
   SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
@@ -282,7 +282,7 @@ interface SettingsRouteRouteChildren {
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsIndexRoute: SettingsIndexRoute,
   SettingsAppConnectionIndexRoute: SettingsAppConnectionIndexRoute,
-  SettingsAppearenceIndexRoute: SettingsAppearenceIndexRoute,
+  SettingsAppearanceIndexRoute: SettingsAppearanceIndexRoute,
   SettingsDebugIndexRoute: SettingsDebugIndexRoute,
   SettingsGamepadIndexRoute: SettingsGamepadIndexRoute,
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,

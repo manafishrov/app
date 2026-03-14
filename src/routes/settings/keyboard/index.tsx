@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { KeyboardSettings } from '@/components/settings/input/KeyboardSettings';
+import { KeyboardSettings } from '@/features/settings/input/KeyboardSettings';
 import * as m from '@/paraglide/messages';
 
 const KeyboardSettingsPage: Component = () => (
