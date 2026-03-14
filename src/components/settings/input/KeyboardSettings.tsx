@@ -1,8 +1,10 @@
 import type { Component } from 'solid-js';
 
 import { H3 } from '@manafishrov/ui/typography';
+import { unwrap } from 'solid-js/store';
 
 import { KeyboardBindInput } from '@/components/settings/input/KeyboardBindInput';
+import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
 
@@ -84,9 +86,7 @@ const BINDING_SECTIONS: BindingSection[] = [
 ];
 
 const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings =>
-  structuredClone(bindings);
-
-import { logError } from '@/lib/log';
+  structuredClone(unwrap(bindings));
 
 const updateKeyboardBinding = (
   bindingKey: keyof KeyboardBindings,
