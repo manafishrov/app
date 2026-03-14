@@ -1,9 +1,17 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignore": ["**/autoImports.d.ts", "**/paraglide/**", "**/*.gen.ts"],
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "bun.lock",
+    "**/*.tsbuildinfo",
+    "**/autoImports.d.ts",
+    "**/paraglide/**",
+    "**/*.gen.ts"
+  ],
   "singleQuote": true,
   "jsxSingleQuote": true,
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": [
       "type-import",
       ["value-builtin", "value-external"],
@@ -14,12 +22,12 @@
       "unknown"
     ]
   },
-  "experimentalTailwindcss": {
+  "sortTailwindcss": {
     "stylesheet": "./packages/lib/src/theme.css",
     "functions": ["tv", "cn", "cx", "cnMerge"],
     "preserveWhitespace": true
   },
-  "experimentalSortPackageJson": {
+  "sortPackageJson": {
     "sortScripts": true
   }
 }

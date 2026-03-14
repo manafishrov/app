@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/autoImports.d.ts", "**/paraglide/**", "**/*.gen.ts"],
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "bun.lock",
+    "**/*.tsbuildinfo",
+    "**/autoImports.d.ts",
+    "**/paraglide/**",
+    "**/*.gen.ts"
+  ],
   "env": {
     "browser": true,
     "es2022": true
