@@ -28,4 +28,19 @@ const setRovStatusStore = (value: RovStatus): void => {
   setRovStatusStoreInternal(reconcile(value));
 };
 
-export { rovStatusStore, setRovStatusStore, type RovStatus, type SystemHealth };
+const setAutoStabilizationOptimistic = (value: boolean): void => {
+  setRovStatusStoreInternal('autoStabilization', value);
+};
+
+const setDepthHoldOptimistic = (value: boolean): void => {
+  setRovStatusStoreInternal('depthHold', value);
+};
+
+export {
+  rovStatusStore,
+  setAutoStabilizationOptimistic,
+  setDepthHoldOptimistic,
+  setRovStatusStore,
+  type RovStatus,
+  type SystemHealth,
+};
