@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = "==3.14.*"
+requires-python = "==3.14.3"
 resolution-markers = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
@@ -191,7 +191,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ultralytics", specifier = ">=8.3.228" }]
+requires-dist = [{ name = "ultralytics", specifier = "==8.3.228" }]
 
 [[package]]
 name = "markupsafe"
