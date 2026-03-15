@@ -23,7 +23,7 @@
       },
       "devDependencies": {
         "@iconify-json/material-symbols": "1.2.62",
-        "@inlang/paraglide-js": "2.14.1",
+        "@inlang/paraglide-js": "2.15.0",
         "@tanstack/devtools-vite": "0.5.5",
         "@tanstack/solid-devtools": "0.7.33",
         "@tanstack/solid-router-devtools": "1.166.8",
@@ -164,7 +164,7 @@
 
     "@iconify/utils": ["@iconify/utils@3.1.0", "", { "dependencies": { "@antfu/install-pkg": "^1.1.0", "@iconify/types": "^2.0.0", "mlly": "^1.8.0" } }, "sha512-Zlzem1ZXhI1iHeeERabLNzBHdOa4VhQbqAcOQaMKuTuyZCpwKbC2R4Dd0Zo3g9EAc+Y4fiarO8HIHRAth7+skw=="],
 
-    "@inlang/paraglide-js": ["@inlang/paraglide-js@2.14.1", "", { "dependencies": { "@inlang/recommend-sherlock": "^0.2.1", "@inlang/sdk": "^2.8.0", "commander": "11.1.0", "consola": "3.4.0", "json5": "2.2.3", "unplugin": "^2.1.2", "urlpattern-polyfill": "^10.0.0" }, "bin": { "paraglide-js": "bin/run.js" } }, "sha512-+aA3De09ZhgdRr/xsQ6Hyi85w/v3MrUa2WG/RvGt45NMXXgmeh84FWV2Wkw5Oas+uWdLqwN7aHxgtHhbMfciLQ=="],
+    "@inlang/paraglide-js": ["@inlang/paraglide-js@2.15.0", "", { "dependencies": { "@inlang/recommend-sherlock": "^0.2.1", "@inlang/sdk": "^2.8.0", "commander": "11.1.0", "consola": "3.4.0", "json5": "2.2.3", "unplugin": "^2.1.2", "urlpattern-polyfill": "^10.0.0" }, "bin": { "paraglide-js": "bin/run.js" } }, "sha512-2ZOa9nssVn4tjkKskqb88KP5A7cTIjo8AiM9xnPvH+vBhRIRenO+ftAbVOHhHcHjcFxy2QFcOfBAH/Cw1LIsUg=="],
 
     "@inlang/recommend-sherlock": ["@inlang/recommend-sherlock@0.2.1", "", { "dependencies": { "comment-json": "^4.2.3" } }, "sha512-ckv8HvHy/iTqaVAEKrr+gnl+p3XFNwe5D2+6w6wJk2ORV2XkcRkKOJ/XsTUJbPSiyi4PI+p+T3bqbmNx/rDUlg=="],
 
