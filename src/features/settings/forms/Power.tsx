@@ -13,15 +13,15 @@ const SLIDER_CLASS =
 
 const formSchema = z
   .object({
-    userMaxPowerThrusters: z.array(z.number().min(0).max(MAX_POWER)),
-    userMaxPowerActions: z.array(z.number().min(0).max(MAX_POWER)),
-    regulatorMaxPower: z.array(z.number().min(0).max(MAX_POWER)),
-    batteryMinVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
-    batteryMaxVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
+    thrustersLimit: z.array(z.number().min(0).max(MAX_POWER)),
+    actionsLimit: z.array(z.number().min(0).max(MAX_POWER)),
+    regulatorLimit: z.array(z.number().min(0).max(MAX_POWER)),
+    minBatteryVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
+    maxBatteryVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
   })
-  .refine((data) => data.batteryMinVoltage < data.batteryMaxVoltage, {
+  .refine((data) => data.minBatteryVoltage < data.maxBatteryVoltage, {
     message: m.validation_min_voltage_less_than_max(),
-    path: ['batteryMinVoltage'],
+    path: ['minBatteryVoltage'],
   });
 
 type PowerFieldApi = {
@@ -42,11 +42,11 @@ type PowerFieldApi = {
 };
 
 type PowerFieldName =
-  | 'userMaxPowerThrusters'
-  | 'userMaxPowerActions'
-  | 'regulatorMaxPower'
-  | 'batteryMinVoltage'
-  | 'batteryMaxVoltage';
+  | 'thrustersLimit'
+  | 'actionsLimit'
+  | 'regulatorLimit'
+  | 'minBatteryVoltage'
+  | 'maxBatteryVoltage';
 
 type PowerFieldRenderer = (props: {
   name: PowerFieldName;
@@ -55,36 +55,36 @@ type PowerFieldRenderer = (props: {
 
 const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
   <>
-    <props.AppField name='userMaxPowerThrusters'>
+    <props.AppField name='thrustersLimit'>
       {(field) => (
         <field.SliderField
           class={SLIDER_CLASS}
-          label={m.power_user_max_power_thrusters_label()}
-          description={m.power_user_max_power_description()}
+          label={m.power_thrusters_limit_label()}
+          description={m.power_thrusters_limit_description()}
           min={0}
           max={MAX_POWER}
           step={1}
         />
       )}
     </props.AppField>
-    <props.AppField name='userMaxPowerActions'>
+    <props.AppField name='actionsLimit'>
       {(field) => (
         <field.SliderField
           class={SLIDER_CLASS}
-          label={m.power_user_max_power_actions_label()}
-          description={m.power_user_max_power_actions_description()}
+          label={m.power_actions_limit_label()}
+          description={m.power_actions_limit_description()}
           min={0}
           max={MAX_POWER}
           step={1}
         />
       )}
     </props.AppField>
-    <props.AppField name='regulatorMaxPower'>
+    <props.AppField name='regulatorLimit'>
       {(field) => (
         <field.SliderField
           class={SLIDER_CLASS}
-          label={m.power_regulator_max_power_label()}
-          description={m.power_regulator_max_power_description()}
+          label={m.power_regulator_limit_label()}
+          description={m.power_regulator_limit_description()}
           min={0}
           max={MAX_POWER}
           step={1}
@@ -96,21 +96,21 @@ const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) =
 
 const PowerVoltageFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
   <>
-    <props.AppField name='batteryMinVoltage'>
+    <props.AppField name='minBatteryVoltage'>
       {(field) => (
         <field.NumberInputField
-          label={m.power_battery_min_voltage_label()}
-          description={m.power_battery_min_voltage_description()}
+          label={m.power_min_battery_voltage_label()}
+          description={m.power_min_battery_voltage_description()}
           min={0}
           step={0.1}
         />
       )}
     </props.AppField>
-    <props.AppField name='batteryMaxVoltage'>
+    <props.AppField name='maxBatteryVoltage'>
       {(field) => (
         <field.NumberInputField
-          label={m.power_battery_max_voltage_label()}
-          description={m.power_battery_max_voltage_description()}
+          label={m.power_max_battery_voltage_label()}
+          description={m.power_max_battery_voltage_description()}
           min={0}
           step={0.1}
         />
@@ -127,18 +127,16 @@ const PowerFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
 );
 
 const submitPowerSettings = (value: z.infer<typeof formSchema>): Promise<void> => {
-  const userMaxPowerThrusters =
-    value.userMaxPowerThrusters[0] ?? rovConfigStore.power.userMaxPowerThrusters;
-  const userMaxPowerActions =
-    value.userMaxPowerActions[0] ?? rovConfigStore.power.userMaxPowerActions;
-  const regulatorMaxPower = value.regulatorMaxPower[0] ?? rovConfigStore.power.regulatorMaxPower;
+  const thrustersLimit = value.thrustersLimit[0] ?? rovConfigStore.power.thrustersLimit;
+  const actionsLimit = value.actionsLimit[0] ?? rovConfigStore.power.actionsLimit;
+  const regulatorLimit = value.regulatorLimit[0] ?? rovConfigStore.power.regulatorLimit;
   return setRovConfig({
     power: {
-      userMaxPowerThrusters,
-      userMaxPowerActions,
-      regulatorMaxPower,
-      batteryMinVoltage: value.batteryMinVoltage,
-      batteryMaxVoltage: value.batteryMaxVoltage,
+      thrustersLimit,
+      actionsLimit,
+      regulatorLimit,
+      minBatteryVoltage: value.minBatteryVoltage,
+      maxBatteryVoltage: value.maxBatteryVoltage,
     },
   });
 };
@@ -147,11 +145,11 @@ export const Power: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: {
-      userMaxPowerThrusters: [rovConfigStore.power.userMaxPowerThrusters],
-      userMaxPowerActions: [rovConfigStore.power.userMaxPowerActions],
-      regulatorMaxPower: [rovConfigStore.power.regulatorMaxPower],
-      batteryMinVoltage: rovConfigStore.power.batteryMinVoltage,
-      batteryMaxVoltage: rovConfigStore.power.batteryMaxVoltage,
+      thrustersLimit: [rovConfigStore.power.thrustersLimit],
+      actionsLimit: [rovConfigStore.power.actionsLimit],
+      regulatorLimit: [rovConfigStore.power.regulatorLimit],
+      minBatteryVoltage: rovConfigStore.power.minBatteryVoltage,
+      maxBatteryVoltage: rovConfigStore.power.maxBatteryVoltage,
     },
     onSubmit: ({ value }): Promise<void> => submitPowerSettings(value),
   }));

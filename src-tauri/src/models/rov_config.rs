@@ -53,15 +53,10 @@ pub struct DirectionCoefficients {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Power {
-  #[serde(rename = "userMaxPowerThrusters")]
   pub thrusters_limit: f32,
-  #[serde(rename = "userMaxPowerActions")]
   pub actions_limit: f32,
-  #[serde(rename = "regulatorMaxPower")]
   pub regulator_limit: f32,
-  #[serde(rename = "batteryMinVoltage")]
   pub min_battery_voltage: f32,
-  #[serde(rename = "batteryMaxVoltage")]
   pub max_battery_voltage: f32,
 }
 
