@@ -1,9 +1,10 @@
+import type { Component, JSXElement, Setter } from 'solid-js';
+
 import { createListCollection } from '@ark-ui/solid/collection';
 import { Button } from '@manafishrov/ui/button';
 import { type SelectFieldProps, type SliderFieldProps, useAppForm } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
 import { toast } from '@manafishrov/ui/toaster';
-import { type Component, For, type JSX, type Setter, createSignal } from 'solid-js';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
@@ -104,14 +105,14 @@ type AppFieldContext = {
 
 type AppFieldComponent = Component<{
   name: 'fluidType' | 'microcontrollerFirmwareVariant' | 'smoothingFactor';
-  children: (field: AppFieldContext) => JSX.Element;
+  children: (field: AppFieldContext) => JSXElement;
 }>;
 
 const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: SelectCollection }> = (
   props,
 ) => (
   <props.AppField name='fluidType'>
-    {(field: AppFieldContext): JSX.Element => (
+    {(field: AppFieldContext): JSXElement => (
       <field.SelectField
         label={m.general_rov_settings_fluid_type_title()}
         description={m.general_rov_settings_fluid_type_description()}
@@ -119,7 +120,7 @@ const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: Selec
         placeholder={m.general_rov_settings_fluid_type_select_placeholder()}
       >
         <For each={props.fluidTypes.items}>
-          {(item: SelectOption): JSX.Element => <SelectItem item={item}>{item.label}</SelectItem>}
+          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
         </For>
       </field.SelectField>
     )}
@@ -133,7 +134,7 @@ const FirmwareField: Component<{
   onFlashFirmware: () => void;
 }> = (props) => (
   <props.AppField name='microcontrollerFirmwareVariant'>
-    {(field: AppFieldContext): JSX.Element => (
+    {(field: AppFieldContext): JSXElement => (
       <field.SelectField
         label={m.general_rov_settings_microcontroller_firmware_title()}
         description={m.general_rov_settings_microcontroller_firmware_description()}
@@ -152,7 +153,7 @@ const FirmwareField: Component<{
         }
       >
         <For each={props.firmwareVariants.items}>
-          {(item: SelectOption): JSX.Element => <SelectItem item={item}>{item.label}</SelectItem>}
+          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
         </For>
       </field.SelectField>
     )}
@@ -161,7 +162,7 @@ const FirmwareField: Component<{
 
 const SmoothingFactorField: Component<{ AppField: AppFieldComponent }> = (props) => (
   <props.AppField name='smoothingFactor'>
-    {(field: AppFieldContext): JSX.Element => (
+    {(field: AppFieldContext): JSXElement => (
       <field.SliderField
         label={m.general_rov_settings_smoothing_factor_title()}
         description={m.general_rov_settings_smoothing_factor_description()}

@@ -1,3 +1,5 @@
+import type { JSXElement } from 'solid-js';
+
 import { Button } from '@manafishrov/ui/button';
 import {
   Popover,
@@ -13,21 +15,20 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@manafishrov/ui/tooltip';
-import { Show, createSignal, type JSX } from 'solid-js';
 import HeartPulseIcon from '~icons/material-symbols/monitor-heart';
 
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
-const HealthItem = (props: { label: string; healthy: boolean }): JSX.Element => (
+const HealthItem = (props: { label: string; healthy: boolean }): JSXElement => (
   <div class='flex items-center justify-between gap-3'>
     <span class='text-xs text-muted-foreground'>{props.label}</span>
     <div class={`h-2 w-2 rounded-full ${props.healthy ? 'bg-green-500' : 'bg-destructive'}`} />
   </div>
 );
 
-const SystemHealthPopoverContent = (): JSX.Element => (
+const SystemHealthPopoverContent = (): JSXElement => (
   <PopoverPositioner>
     <PopoverContent class='w-56'>
       <PopoverArrow />
@@ -52,7 +53,7 @@ const SystemHealthPopoverContent = (): JSX.Element => (
   </PopoverPositioner>
 );
 
-const SystemHealthPopover = (): JSX.Element => {
+const SystemHealthPopover = (): JSXElement => {
   const [popoverOpen, setPopoverOpen] = createSignal(false);
 
   return (

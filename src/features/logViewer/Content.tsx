@@ -1,3 +1,5 @@
+import type { Component, JSXElement, Accessor } from 'solid-js';
+
 import {
   ScrollArea,
   ScrollAreaContent,
@@ -6,7 +8,6 @@ import {
   ScrollAreaViewport,
 } from '@manafishrov/ui/scroll-area';
 import { Spinner } from '@manafishrov/ui/spinner';
-import { type Component, For, type JSX, Show, type Accessor } from 'solid-js';
 
 import type { LogRecord } from '@/lib/log';
 
@@ -53,7 +54,7 @@ const LogList: Component<LogViewerContentProps> = (props) => (
     }}
   >
     <For each={props.virtualizer.getVirtualItems()}>
-      {(virtualItem): JSX.Element | undefined => {
+      {(virtualItem): JSXElement | undefined => {
         const log = props.filteredLogs()[virtualItem.index];
         if (!log) {
           return;

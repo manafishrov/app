@@ -1,4 +1,4 @@
-import { createMemo, type Component, type JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { configStore } from '@/stores/config';
 
@@ -13,7 +13,7 @@ import { ThrusterRpmOverlay } from './ThrusterRpmOverlay';
 
 type ScaledSectionProps = {
   class: string;
-  children: JSX.Element;
+  children: JSXElement;
   scale: number;
 };
 

@@ -1,6 +1,7 @@
+import type { Component } from 'solid-js';
+
 import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
-import { createSignal, type Component } from 'solid-js';
 
 import * as m from '@/paraglide/messages';
 import {

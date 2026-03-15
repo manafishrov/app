@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import {
   AlertDialog,
@@ -34,7 +34,7 @@ type SettingsLinkProps = {
   isMac: boolean;
 };
 
-const SettingsTooltipContent = (props: { isMac: boolean }): JSX.Element => (
+const SettingsTooltipContent = (props: { isMac: boolean }): JSXElement => (
   <TooltipContent>
     <div class='flex items-center gap-2'>
       <span>{m.common_settings()}</span>
@@ -51,7 +51,7 @@ const noop = function noop(): void {
   // Noop
 };
 
-const RecordingSettingsAlert = (props: { isMac: boolean }): JSX.Element => {
+const RecordingSettingsAlert = (props: { isMac: boolean }): JSXElement => {
   const navigate = useNavigate();
 
   return (
@@ -101,7 +101,7 @@ const RecordingSettingsAlert = (props: { isMac: boolean }): JSX.Element => {
   );
 };
 
-const SettingsLink = (props: SettingsLinkProps): JSX.Element => (
+const SettingsLink = (props: SettingsLinkProps): JSXElement => (
   <Show
     when={recordingStore.isRecording}
     fallback={

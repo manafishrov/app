@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { Badge } from '@manafishrov/ui/badge';
-import { type Component, createSignal, onCleanup, createEffect } from 'solid-js';
 
 import * as m from '@/paraglide/messages';
 import { getDuration, recordingStore } from '@/stores/recording';

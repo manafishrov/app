@@ -1,4 +1,4 @@
-import { For, type Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import {
   ACTUAL_CIRCLE_RADIUS,

@@ -1,10 +1,10 @@
-import type { ComponentProps, JSX } from 'solid-js';
+import type { ComponentProps, JSXElement } from 'solid-js';
 
 type PropellerIconProps = ComponentProps<'svg'> & {
   class?: string | undefined;
 };
 
-const PropellerIcon = (props: PropellerIconProps): JSX.Element => (
+const PropellerIcon = (props: PropellerIconProps): JSXElement => (
   <svg
     width='1em'
     height='1em'

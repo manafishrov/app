@@ -2,7 +2,7 @@ import { cn } from '@manafishrov/ui';
 import { AspectRatio } from '@manafishrov/ui/aspect-ratio';
 import { createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { createSignal, onCleanup, onMount, type JSX } from 'solid-js';
+import { createSignal, onCleanup, onMount, type JSXElement } from 'solid-js';
 
 import { Overlay } from '@/features/overlay';
 import { VideoStream } from '@/features/videoStream';
@@ -72,7 +72,7 @@ const useHomePageSetup = (setIsFullscreen: (val: boolean) => void): void => {
   });
 };
 
-const HomePage = (): JSX.Element => {
+const HomePage = (): JSXElement => {
   const [isFullscreen, setIsFullscreen] = createSignal(false);
 
   useHomePageSetup(setIsFullscreen);

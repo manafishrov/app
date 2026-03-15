@@ -1,10 +1,10 @@
-import type { ComponentProps, JSX } from 'solid-js';
+import type { ComponentProps, JSXElement } from 'solid-js';
 
 type DepthHoldIconProps = ComponentProps<'svg'> & {
   class?: string | undefined;
 };
 
-const DepthHoldIcon = (props: DepthHoldIconProps): JSX.Element => (
+const DepthHoldIcon = (props: DepthHoldIconProps): JSXElement => (
   <svg
     width='1em'
     height='1em'

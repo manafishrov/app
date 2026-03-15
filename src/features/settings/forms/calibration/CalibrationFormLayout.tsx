@@ -1,3 +1,5 @@
+import type { Accessor, Component, JSXElement } from 'solid-js';
+
 import { Button } from '@manafishrov/ui/button';
 import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
 import { Menu, MenuContent, MenuItem, MenuPositioner, MenuTrigger } from '@manafishrov/ui/menu';
@@ -16,7 +18,6 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@manafishrov/ui/tooltip';
-import { type Accessor, type Component, For, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import RestartAltIcon from '~icons/material-symbols/restart-alt';
 
@@ -25,6 +26,7 @@ import * as m from '@/paraglide/messages';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from './thrusterPresets';
+
 type SharedProps = {
   thrusterColumns: number[];
   rowLabels: readonly string[];
@@ -34,27 +36,25 @@ type PinSetupProps = {
   pinNumbers: readonly number[];
   testDisabled: Accessor<boolean[]>;
   onTestThruster: (index: number) => void;
-  renderIdentifierField: (index: number) => JSX.Element;
-  renderSpinDirectionField: (index: number) => JSX.Element;
+  renderIdentifierField: (index: number) => JSXElement;
+  renderSpinDirectionField: (index: number) => JSXElement;
   zeroValue: number;
 };
-
 type AllocationProps = {
   onApplyPreset: (presetRows: ThrusterPresetRow) => void;
   onResetAllocation: () => void;
-  renderAllocationField: (rowIndex: number, columnIndex: number) => JSX.Element;
+  renderAllocationField: (rowIndex: number, columnIndex: number) => JSXElement;
 };
-
 type LayoutProps = SharedProps &
   PinSetupProps &
   AllocationProps & {
-    AppForm: Component<{ children: JSX.Element }>;
-    Form: Component<{ class?: string; children: JSX.Element }>;
+    AppForm: Component<{ children: JSXElement }>;
+    Form: Component<{ class?: string; children: JSXElement }>;
     AutoSubmit: Component;
   };
 
-const TooltipHead: Component<{ label: string; tooltip: string; className?: string }> = (props) => (
-  <TableHead class={props.className}>
+const TooltipHead: Component<{ label: string; tooltip: string; class?: string }> = (props) => (
+  <TableHead class={props.class}>
     <Tooltip positioning={{ placement: 'top' }}>
       <TooltipTrigger>{props.label}</TooltipTrigger>
       <Portal>
@@ -138,7 +138,7 @@ const PinSetupHeader: Component = () => (
   <TableHeader>
     <TableRow>
       <TooltipHead
-        className='text-center'
+        class='text-center'
         label={m.calibration_thruster_pin_setup_pin_label()}
         tooltip={m.calibration_thruster_pin_setup_pin_tooltip()}
       />
@@ -155,7 +155,7 @@ const PinSetupHeader: Component = () => (
         tooltip={m.calibration_thruster_pin_setup_test_tooltip()}
       />
       <TooltipHead
-        className='text-right'
+        class='text-right'
         label={m.calibration_thruster_pin_setup_rpm_label()}
         tooltip={m.calibration_thruster_pin_setup_rpm_tooltip()}
       />

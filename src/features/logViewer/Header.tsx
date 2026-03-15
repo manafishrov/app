@@ -4,8 +4,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@manafishrov/ui/in
 import { Toggle } from '@manafishrov/ui/toggle';
 import SearchIcon from '~icons/material-symbols/search';
 
-import type { LogLevel } from '@/lib/log';
-import { LogOrigin } from '@/lib/log';
+import { LogOrigin, type LogLevel } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 
 import type { ViewerSignals } from './logViewerPrimitives';

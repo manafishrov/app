@@ -1,4 +1,4 @@
-import type { Component, JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { useAppForm } from '@manafishrov/ui/form';
 import { z } from 'zod';
@@ -32,13 +32,13 @@ type PowerFieldApi = {
     min?: number;
     max?: number;
     step?: number;
-  }) => JSX.Element;
+  }) => JSXElement;
   NumberInputField: (props: {
     label: string;
     description?: string;
     min?: number;
     step?: number;
-  }) => JSX.Element;
+  }) => JSXElement;
 };
 
 type PowerFieldName =
@@ -50,8 +50,8 @@ type PowerFieldName =
 
 type PowerFieldRenderer = (props: {
   name: PowerFieldName;
-  children: (field: PowerFieldApi) => JSX.Element;
-}) => JSX.Element;
+  children: (field: PowerFieldApi) => JSXElement;
+}) => JSXElement;
 
 const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
   <>

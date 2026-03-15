@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { cn } from '@manafishrov/ui';
-import { type Component, createEffect, onCleanup, onMount } from 'solid-js';
 
 import type { LogRecord } from '@/lib/log';
 

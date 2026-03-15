@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
 import {
@@ -68,7 +68,7 @@ const getMarkerLabel = (value: GamepadInput | null, marker: 'min' | 'max'): stri
   return formatBindMarkerValue(value.maxValue);
 };
 
-const GamepadBindActionRow = (props: GamepadBindActionRowProps): JSX.Element => (
+const GamepadBindActionRow = (props: GamepadBindActionRowProps): JSXElement => (
   <div class='flex items-center gap-2'>
     <Button
       variant={props.isRecording ? 'destructive' : 'outline'}
@@ -104,7 +104,7 @@ const GamepadBindActionRow = (props: GamepadBindActionRowProps): JSX.Element => 
   </div>
 );
 
-const GamepadBindStats = (props: GamepadBindStatsProps): JSX.Element => (
+const GamepadBindStats = (props: GamepadBindStatsProps): JSXElement => (
   <div class='flex items-center justify-between text-xs text-muted-foreground'>
     <span>
       {m.binding_input_min()}: {getMarkerLabel(props.value, 'min')}

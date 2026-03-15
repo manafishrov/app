@@ -1,3 +1,5 @@
+import type { JSXElement } from 'solid-js';
+
 import { Button } from '@manafishrov/ui/button';
 import {
   Tooltip,
@@ -6,7 +8,6 @@ import {
   TooltipTrigger,
   TooltipArrow,
 } from '@manafishrov/ui/tooltip';
-import { Show, type JSX } from 'solid-js';
 import VideoIcon from '~icons/material-symbols/video-camera-back';
 
 import * as m from '@/paraglide/messages';
@@ -14,7 +15,7 @@ import { recordingStore, setRecordingStore } from '@/stores/recording';
 
 const [undef] = [] as (number | undefined)[];
 
-const RecordingButton = (): JSX.Element => {
+const RecordingButton = (): JSXElement => {
   const handleRecordingClick = (): void => {
     const { isRecording } = recordingStore;
     setRecordingStore({

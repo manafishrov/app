@@ -1,4 +1,4 @@
-import type { Component, JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { Theme, useTheme } from '@manafishrov/ui';
 import { useAppForm } from '@manafishrov/ui/form';
@@ -86,8 +86,8 @@ type AppearanceFieldApi = {
   RadioGroupField: (props: {
     label: string;
     description?: string;
-    children: JSX.Element;
-  }) => JSX.Element;
+    children: JSXElement;
+  }) => JSXElement;
   SliderField: (props: {
     class?: string;
     label: string;
@@ -96,8 +96,8 @@ type AppearanceFieldApi = {
     min?: number;
     max?: number;
     step?: number;
-  }) => JSX.Element;
-  SwitchField: (props: { label: string; description?: string }) => JSX.Element;
+  }) => JSXElement;
+  SwitchField: (props: { label: string; description?: string }) => JSXElement;
 };
 
 type AppearanceFieldName =
@@ -109,8 +109,8 @@ type AppearanceFieldName =
 
 type AppearanceFieldRenderer = (props: {
   name: AppearanceFieldName;
-  children: (field: AppearanceFieldApi) => JSX.Element;
-}) => JSX.Element;
+  children: (field: AppearanceFieldApi) => JSXElement;
+}) => JSXElement;
 
 const AppearancePrimaryFields: Component<{ AppField: AppearanceFieldRenderer }> = (props) => (
   <>

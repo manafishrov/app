@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { useLocation } from '@tanstack/solid-router';
-import { type Component, createSignal, createEffect, on, onCleanup } from 'solid-js';
 
 import { logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';

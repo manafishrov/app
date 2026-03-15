@@ -1,3 +1,5 @@
+import type { JSXElement } from 'solid-js';
+
 import { createListCollection } from '@ark-ui/solid/collection';
 import {
   Select,
@@ -10,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@manafishrov/ui/select';
-import { For, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { z } from 'zod';
 
@@ -39,7 +40,7 @@ type CalibrationFieldAccessor = (() => {
     step?: number;
     allowOverflow?: boolean;
     clampValueOnBlur?: boolean;
-  }) => JSX.Element;
+  }) => JSXElement;
 };
 
 type CalibrationFormLike = {
@@ -53,8 +54,8 @@ type CalibrationFormLike = {
       | 'thrusterPinSetup.spinDirections'
       | `thrusterPinSetup.spinDirections[${number}]`
       | `thrusterAllocation[${number}]`;
-    children: (field: unknown) => JSX.Element;
-  }) => JSX.Element;
+    children: (field: unknown) => JSXElement;
+  }) => JSXElement;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -96,9 +97,9 @@ export const renderIdentifierField = (args: {
   index: number;
   zeroValue: number;
   identifierCollection: ReturnType<typeof createIdentifierCollection>;
-}): JSX.Element => (
+}): JSXElement => (
   <args.form.AppField name={`thrusterPinSetup.identifiers[${args.index}]`}>
-    {(field): JSX.Element => {
+    {(field): JSXElement => {
       if (!isCalibrationFieldAccessor(field)) {
         return <></>;
       }
@@ -130,7 +131,7 @@ export const renderIdentifierField = (args: {
               <SelectContent>
                 <SelectList>
                   <For each={args.identifierCollection.items}>
-                    {(item): JSX.Element => <SelectItem item={item}>{item.label}</SelectItem>}
+                    {(item): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
                   </For>
                 </SelectList>
               </SelectContent>
@@ -146,9 +147,9 @@ export const renderSpinDirectionField = (
   form: CalibrationFormLike,
   index: number,
   zeroValue: number,
-): JSX.Element => (
+): JSXElement => (
   <form.AppField name={`thrusterPinSetup.spinDirections[${index}]`}>
-    {(field): JSX.Element => {
+    {(field): JSXElement => {
       if (!isCalibrationFieldAccessor(field)) {
         return <></>;
       }
@@ -180,7 +181,7 @@ export const renderSpinDirectionField = (
               <SelectContent>
                 <SelectList>
                   <For each={spinDirectionCollection.items}>
-                    {(item): JSX.Element => <SelectItem item={item}>{item.label}</SelectItem>}
+                    {(item): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
                   </For>
                 </SelectList>
               </SelectContent>
@@ -199,9 +200,9 @@ export const renderAllocationField = (args: {
   minimumValue: number;
   maximumValue: number;
   stepValue: number;
-}): JSX.Element => (
+}): JSXElement => (
   <args.form.AppField name={`thrusterAllocation[${args.rowIndex}][${args.columnIndex}]`}>
-    {(field): JSX.Element => {
+    {(field): JSXElement => {
       if (!isCalibrationFieldAccessor(field)) {
         return <></>;
       }

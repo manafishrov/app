@@ -17,7 +17,7 @@ type BindingField = {
 type BindingSection = {
   title: () => string;
   fields: BindingField[];
-  className?: string;
+  class?: string;
 };
 
 const BINDING_SECTIONS: BindingSection[] = [
@@ -65,7 +65,7 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
   {
     title: () => m.keyboard_actions(),
-    className: 'sm:row-span-2',
+    class: 'sm:row-span-2',
     fields: [
       { key: 'action1Positive', label: () => m.keyboard_action_1_positive() },
       { key: 'action1Negative', label: () => m.keyboard_action_1_negative() },
@@ -110,7 +110,7 @@ const KeyboardSettings: Component = () => {
     <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
       <For each={BINDING_SECTIONS}>
         {(section) => (
-          <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
+          <div class={`space-y-2 ${section.class ?? ''}`.trim()}>
             <H3>{section.title()}</H3>
             <For each={section.fields}>
               {(field) => (

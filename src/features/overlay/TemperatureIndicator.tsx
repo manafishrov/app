@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { Badge } from '@manafishrov/ui/badge';
-import { type Component, createMemo } from 'solid-js';
 import ThermometerIcon from '~icons/material-symbols/device-thermostat';
 import CircuitIcon from '~icons/material-symbols/memory';
 import WaterIcon from '~icons/material-symbols/water-drop';

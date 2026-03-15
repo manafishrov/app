@@ -1,4 +1,4 @@
-import { type Component, createResource } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import {
   SVG_TEXT_FONT_SIZE_RATIO,

@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { Badge } from '@manafishrov/ui/badge';
-import { type Component, Index } from 'solid-js';
 
 import { ThrusterRpm } from '@/components/ThrusterRpm';
 import { configStore } from '@/stores/config';

@@ -1,7 +1,8 @@
+import type { Component, JSXElement } from 'solid-js';
+
 import { useAppForm } from '@manafishrov/ui/form';
 import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
-import { type Component, type JSX, createSignal } from 'solid-js';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
@@ -209,7 +210,7 @@ const resetAllocationInForm = (
   }
 };
 
-export const Calibration: Component = (): JSX.Element => {
+export const Calibration: Component = (): JSXElement => {
   const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
   const [testDisabled, setTestDisabled] = createSignal<boolean[]>(defaultDisabled);
   const defaultAllocationRows = transpose(rovConfigStore.thrusterAllocation);

@@ -1,4 +1,4 @@
-import type { Component, JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { Badge } from '@manafishrov/ui/badge';
 import BatteryEmptyIcon from '~icons/material-symbols/battery-0-bar';
@@ -13,7 +13,7 @@ const BATTERY_HIGH_THRESHOLD = 70;
 const BATTERY_MEDIUM_THRESHOLD = 40;
 const BATTERY_LOW_THRESHOLD = 10;
 
-const getBatteryIcon = (percentage: number): JSX.Element => {
+const getBatteryIcon = (percentage: number): JSXElement => {
   if (percentage > BATTERY_HIGH_THRESHOLD) {
     return <BatteryFullIcon class='size-4 mr-1' />;
   }

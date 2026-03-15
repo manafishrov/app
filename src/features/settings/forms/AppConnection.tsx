@@ -1,4 +1,4 @@
-import type { Component, JSX } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { useAppForm } from '@manafishrov/ui/form';
 import { revalidateLogic } from '@tanstack/solid-form';
@@ -30,14 +30,14 @@ type AppConnectionFieldApi = {
     label: string;
     placeholder?: string;
     description?: string;
-  }) => JSX.Element;
+  }) => JSXElement;
   NumberInputField: (props: {
     label: string;
     placeholder?: string;
     description?: string;
     min?: number;
     max?: number;
-  }) => JSX.Element;
+  }) => JSXElement;
 };
 
 type AppConnectionFieldName =
@@ -48,8 +48,8 @@ type AppConnectionFieldName =
 
 type AppConnectionFieldRenderer = (props: {
   name: AppConnectionFieldName;
-  children: (field: AppConnectionFieldApi) => JSX.Element;
-}) => JSX.Element;
+  children: (field: AppConnectionFieldApi) => JSXElement;
+}) => JSXElement;
 
 const AppConnectionFields: Component<{ AppField: AppConnectionFieldRenderer }> = (props) => (
   <>

@@ -1,5 +1,6 @@
+import type { Component } from 'solid-js';
+
 import { Badge } from '@manafishrov/ui/badge';
-import { type Component, createMemo } from 'solid-js';
 import RulerIcon from '~icons/material-symbols/straighten';
 
 import * as m from '@/paraglide/messages';

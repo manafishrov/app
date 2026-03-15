@@ -1,5 +1,6 @@
+import type { Accessor, JSXElement } from 'solid-js';
+
 import { Progress, ProgressIndicator, ProgressTrack } from '@manafishrov/ui/progress';
-import { createMemo, createSignal, onCleanup, onMount, type Accessor, type JSX } from 'solid-js';
 
 import type { KeyboardInput } from '@/stores/config';
 
@@ -243,7 +244,7 @@ const getCurrentValue = (
   }
   return pressedKeys().has(value.key) ? value.maxValue : value.minValue;
 };
-const KeyboardBindInput = (props: KeyboardBindInputProps): JSX.Element => {
+const KeyboardBindInput = (props: KeyboardBindInputProps): JSXElement => {
   const pressedKeys = usePressedKeys();
   const captureController = useKeyboardCapture(pressedKeys, props.onChange);
   const progressValue = createMemo((): number => getProgressValue(pressedKeys, props.value));

@@ -1,4 +1,5 @@
-import { type JSX, type Resource, createEffect, onCleanup } from 'solid-js';
+import type { JSX, Resource } from 'solid-js';
+
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 

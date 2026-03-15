@@ -15,7 +15,7 @@ type BindingField = {
 type BindingSection = {
   title: () => string;
   fields: BindingField[];
-  className?: string;
+  class?: string;
 };
 
 const BINDING_SECTIONS: BindingSection[] = [
@@ -63,7 +63,7 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
   {
     title: () => m.gamepad_actions(),
-    className: 'sm:row-span-2',
+    class: 'sm:row-span-2',
     fields: [
       { key: 'action1Positive', label: () => m.gamepad_action_1_positive() },
       { key: 'action1Negative', label: () => m.gamepad_action_1_negative() },

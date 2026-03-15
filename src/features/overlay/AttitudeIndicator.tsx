@@ -1,4 +1,4 @@
-import { type Component, createMemo, Match, Switch } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { AttitudeIndicator as AttitudeIndicatorEnum, configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';

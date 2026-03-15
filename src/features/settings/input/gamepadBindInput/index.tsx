@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import { Progress, ProgressIndicator, ProgressTrack } from '@manafishrov/ui/progress';
 
@@ -18,7 +18,7 @@ type GamepadBindInputProps = {
 const PROGRESS_MIN_VALUE = ZERO;
 const PROGRESS_MAX_VALUE = ONE;
 
-const GamepadBindInput = (props: GamepadBindInputProps): JSX.Element => {
+const GamepadBindInput = (props: GamepadBindInputProps): JSXElement => {
   const captureController = useGamepadCapture({
     value: () => props.value,
     resetValue: () => props.resetValue,

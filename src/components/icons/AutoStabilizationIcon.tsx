@@ -1,10 +1,10 @@
-import type { ComponentProps, JSX } from 'solid-js';
+import type { ComponentProps, JSXElement } from 'solid-js';
 
 type AutoStabilizationIconProps = ComponentProps<'svg'> & {
   class?: string | undefined;
 };
 
-const AutoStabilizationIcon = (props: AutoStabilizationIconProps): JSX.Element => (
+const AutoStabilizationIcon = (props: AutoStabilizationIconProps): JSXElement => (
   <svg
     width='1em'
     height='1em'

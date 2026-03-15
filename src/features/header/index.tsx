@@ -1,15 +1,8 @@
+import type { Component, JSXElement } from 'solid-js';
+
 import { cn } from '@manafishrov/ui';
 import { useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import {
-  createSignal,
-  onMount,
-  onCleanup,
-  createMemo,
-  Show,
-  type Component,
-  type JSX,
-} from 'solid-js';
 
 import * as m from '@/paraglide/messages';
 
@@ -25,7 +18,7 @@ const WindowButton: Component<{
   focusedColor: string;
   hoverColor: string;
   ariaLabel: string;
-  children: JSX.Element;
+  children: JSXElement;
 }> = (props) => (
   <button
     tabIndex={-1}

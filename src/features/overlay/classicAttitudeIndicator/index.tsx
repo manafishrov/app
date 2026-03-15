@@ -1,4 +1,4 @@
-import { type Component, type JSX, createUniqueId } from 'solid-js';
+import { createUniqueId, type Component, type JSX } from 'solid-js';
 
 type ClassicAttitudeIndicatorProps = {
   size: number;

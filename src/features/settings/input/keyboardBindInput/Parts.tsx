@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
 import {
@@ -42,7 +42,7 @@ const getCaptureButtonLabel = (isRecording: boolean, value: KeyboardInput | null
   return m.binding_input_unbound();
 };
 
-const KeyboardBindActionRow = (props: KeyboardBindActionRowProps): JSX.Element => (
+const KeyboardBindActionRow = (props: KeyboardBindActionRowProps): JSXElement => (
   <div class='flex items-center gap-2'>
     <Button
       variant={props.isRecording ? 'destructive' : 'outline'}
@@ -76,7 +76,7 @@ const KeyboardBindActionRow = (props: KeyboardBindActionRowProps): JSX.Element =
   </div>
 );
 
-const KeyboardBindStats = (props: KeyboardBindStatsProps): JSX.Element => (
+const KeyboardBindStats = (props: KeyboardBindStatsProps): JSXElement => (
   <div class='flex items-center justify-between text-xs text-muted-foreground'>
     <span>
       {m.binding_input_min()}: {props.value ? formatBindMarkerValue(props.value.minValue) : '-'}

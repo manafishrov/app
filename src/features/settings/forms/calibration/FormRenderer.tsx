@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import type { ThrusterPresetRow } from './thrusterPresets';
 
@@ -34,11 +34,11 @@ type RenderCalibrationLayoutArgs = {
   form: {
     AppField: (props: {
       name: CalibrationFieldName;
-      children: (field: unknown) => JSX.Element;
-    }) => JSX.Element;
-    AppForm: (props: { children: JSX.Element }) => JSX.Element;
-    Form: (props: { class?: string; children: JSX.Element }) => JSX.Element;
-    AutoSubmit: (props: Record<string, never>) => JSX.Element;
+      children: (field: unknown) => JSXElement;
+    }) => JSXElement;
+    AppForm: (props: { children: JSXElement }) => JSXElement;
+    Form: (props: { class?: string; children: JSXElement }) => JSXElement;
+    AutoSubmit: (props: Record<string, never>) => JSXElement;
   };
   identifierCollection: ReturnType<typeof createIdentifierCollection>;
   testDisabled: () => boolean[];
@@ -47,7 +47,7 @@ type RenderCalibrationLayoutArgs = {
   onResetAllocation: () => void;
 };
 
-const renderCalibrationLayout = (args: RenderCalibrationLayoutArgs): JSX.Element => {
+const renderCalibrationLayout = (args: RenderCalibrationLayoutArgs): JSXElement => {
   const formLike = { AppField: args.form.AppField };
   return (
     <CalibrationFormLayout

@@ -1,4 +1,4 @@
-import { type Component, For, Match, Show, Switch } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { CONST, ROLL_TICKS, type SubProps } from './constants';
 import { getArcRadius, getDeltaYaw, getPitchLines, getPitchScale, getTextSize } from './math';

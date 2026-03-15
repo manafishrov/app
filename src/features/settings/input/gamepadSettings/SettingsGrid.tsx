@@ -16,7 +16,7 @@ const SettingsGrid: Component<{
   <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
     <For each={BINDING_SECTIONS}>
       {(section) => (
-        <div class={`space-y-2 ${section.className ?? ''}`.trim()}>
+        <div class={`space-y-2 ${section.class ?? ''}`.trim()}>
           <H3>{section.title()}</H3>
           <For each={section.fields}>
             {(field) => (
