@@ -4,7 +4,7 @@ use crate::gamepad::{handle_gamepad_vibration, handle_start_gamepad_stream};
 
 #[command]
 pub async fn start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
-  handle_start_gamepad_stream(app);
+  handle_start_gamepad_stream(&app);
 }
 
 #[command]

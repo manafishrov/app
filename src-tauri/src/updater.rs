@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use std::collections::HashMap;
 
 use serde_json::Value;
@@ -9,7 +7,6 @@ use tauri_plugin_updater::{Result, UpdaterExt};
 use crate::models::toast::ToastContent;
 use crate::toast::{toast_info, toast_loading};
 
-#[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
 fn to_progress_percent(downloaded: usize, total: u64) -> u64 {
   if total == 0 {
     return 0;
@@ -18,6 +15,9 @@ fn to_progress_percent(downloaded: usize, total: u64) -> u64 {
   (percent / total).min(100)
 }
 
+/// # Errors
+/// Returns an error if checking for, downloading, or installing an update
+/// fails.
 pub async fn update_app(app: AppHandle) -> Result<()> {
   if let Some(update) = app.updater()?.check().await? {
     toast_info(

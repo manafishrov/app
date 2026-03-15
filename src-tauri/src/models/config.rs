@@ -1,5 +1,3 @@
-#![allow(clippy::too_many_lines)]
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -209,134 +207,74 @@ pub struct Config {
   pub gamepad: HashMap<String, GamepadBindings>,
 }
 
+fn default_video_directory() -> String {
+  if cfg!(target_os = "windows") {
+    format!(
+      "{}\\Videos\\Manafish",
+      std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())
+    )
+  } else if cfg!(target_os = "macos") {
+    format!(
+      "{}/Movies/Manafish",
+      std::env::var("HOME").unwrap_or_else(|_| "/Users/default".to_string())
+    )
+  } else {
+    format!(
+      "{}/Videos/Manafish",
+      std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string())
+    )
+  }
+}
+
+fn default_keyboard_input(key: KeyboardKey) -> KeyboardInput {
+  KeyboardInput {
+    key,
+    min_value: 0.0,
+    max_value: 1.0,
+  }
+}
+
+impl Default for KeyboardBindings {
+  fn default() -> Self {
+    Self {
+      surge_forward: Some(default_keyboard_input(KeyboardKey::KeyW)),
+      surge_backward: Some(default_keyboard_input(KeyboardKey::KeyS)),
+      sway_right: Some(default_keyboard_input(KeyboardKey::KeyD)),
+      sway_left: Some(default_keyboard_input(KeyboardKey::KeyA)),
+      heave_up: Some(default_keyboard_input(KeyboardKey::Space)),
+      heave_down: Some(default_keyboard_input(KeyboardKey::ShiftLeft)),
+      pitch_up: Some(default_keyboard_input(KeyboardKey::KeyI)),
+      pitch_down: Some(default_keyboard_input(KeyboardKey::KeyK)),
+      yaw_right: Some(default_keyboard_input(KeyboardKey::KeyL)),
+      yaw_left: Some(default_keyboard_input(KeyboardKey::KeyJ)),
+      roll_left: Some(default_keyboard_input(KeyboardKey::KeyQ)),
+      roll_right: Some(default_keyboard_input(KeyboardKey::KeyE)),
+      action1_positive: Some(default_keyboard_input(KeyboardKey::Digit1)),
+      action1_negative: Some(default_keyboard_input(KeyboardKey::Digit2)),
+      action2_positive: Some(default_keyboard_input(KeyboardKey::Digit3)),
+      action2_negative: Some(default_keyboard_input(KeyboardKey::Digit4)),
+      auto_stabilization: Some(default_keyboard_input(KeyboardKey::KeyU)),
+      depth_hold: Some(default_keyboard_input(KeyboardKey::KeyO)),
+      record: Some(default_keyboard_input(KeyboardKey::KeyR)),
+    }
+  }
+}
+
 impl Default for Config {
   fn default() -> Self {
-    let video_directory = if cfg!(target_os = "windows") {
-      format!(
-        "{}\\Videos\\Manafish",
-        std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())
-      )
-    } else if cfg!(target_os = "macos") {
-      format!(
-        "{}/Movies/Manafish",
-        std::env::var("HOME").unwrap_or_else(|_| "/Users/default".to_string())
-      )
-    } else {
-      format!(
-        "{}/Videos/Manafish",
-        std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string())
-      )
-    };
-
     Config {
       app_version: env!("CARGO_PKG_VERSION").to_string(),
       overlay_scale: 2,
       attitude_indicator: AttitudeIndicator::Scientific,
       work_indicator: false,
       thruster_rpm_overlay: false,
-      video_directory,
+      video_directory: default_video_directory(),
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
       web_socket_port: 9000,
       info_logging: false,
-      keyboard: KeyboardBindings {
-        surge_forward: Some(KeyboardInput {
-          key: KeyboardKey::KeyW,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        surge_backward: Some(KeyboardInput {
-          key: KeyboardKey::KeyS,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        sway_right: Some(KeyboardInput {
-          key: KeyboardKey::KeyD,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        sway_left: Some(KeyboardInput {
-          key: KeyboardKey::KeyA,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        heave_up: Some(KeyboardInput {
-          key: KeyboardKey::Space,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        heave_down: Some(KeyboardInput {
-          key: KeyboardKey::ShiftLeft,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        pitch_up: Some(KeyboardInput {
-          key: KeyboardKey::KeyI,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        pitch_down: Some(KeyboardInput {
-          key: KeyboardKey::KeyK,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        yaw_left: Some(KeyboardInput {
-          key: KeyboardKey::KeyJ,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        yaw_right: Some(KeyboardInput {
-          key: KeyboardKey::KeyL,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        roll_left: Some(KeyboardInput {
-          key: KeyboardKey::KeyQ,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        roll_right: Some(KeyboardInput {
-          key: KeyboardKey::KeyE,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        action1_positive: Some(KeyboardInput {
-          key: KeyboardKey::Digit1,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        action1_negative: Some(KeyboardInput {
-          key: KeyboardKey::Digit2,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        action2_positive: Some(KeyboardInput {
-          key: KeyboardKey::Digit3,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        action2_negative: Some(KeyboardInput {
-          key: KeyboardKey::Digit4,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        auto_stabilization: Some(KeyboardInput {
-          key: KeyboardKey::KeyU,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        depth_hold: Some(KeyboardInput {
-          key: KeyboardKey::KeyO,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-        record: Some(KeyboardInput {
-          key: KeyboardKey::KeyR,
-          min_value: 0.0,
-          max_value: 1.0,
-        }),
-      },
+      keyboard: KeyboardBindings::default(),
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
     }

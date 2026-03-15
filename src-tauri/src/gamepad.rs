@@ -35,15 +35,36 @@ fn emit_gamepad_event<R: Runtime>(app: &AppHandle<R>, payload: serde_json::Value
   }
 }
 
-#[allow(clippy::cast_possible_truncation)]
 fn scale_rumble_frequency(value: f32) -> u16 {
-  (value.clamp(0.0, 1.0) * RUMBLE_SCALE).round() as u16
+  let target = value.clamp(0.0, 1.0) * RUMBLE_SCALE;
+  let mut low = 0_u16;
+  let mut high = u16::MAX;
+
+  while low < high {
+    let step = (high - low).div_ceil(2);
+    let mid = low + step;
+
+    if f32::from(mid) <= target {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  let next = low.saturating_add(1);
+  if next != low && f32::from(next) - target < target - f32::from(low) {
+    next
+  } else {
+    low
+  }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+/// # Errors
+/// Returns an error if SDL initialization fails or the gamepad event loop
+/// cannot access the controller subsystems.
 fn run_gamepad_stream<R: Runtime>(
-  app: AppHandle<R>,
-  rx: mpsc::Receiver<VibrateCommand>,
+  app: &AppHandle<R>,
+  rx: &mpsc::Receiver<VibrateCommand>,
 ) -> Result<(), String> {
   let sdl = sdl2::init()?;
   let controller_subsystem = sdl.game_controller()?;
@@ -62,13 +83,13 @@ fn run_gamepad_stream<R: Runtime>(
         let id = controller.instance_id();
         let payload = gamecontroller_to_json(&controller);
         controllers.insert(id, controller);
-        emit_gamepad_event(&app, payload);
+        emit_gamepad_event(app, payload);
       }
     } else if let Ok(joystick) = joystick_subsystem.open(i) {
       let id = joystick.instance_id();
       let payload = joystick_to_json(&joystick);
       joysticks.insert(id, joystick);
-      emit_gamepad_event(&app, payload);
+      emit_gamepad_event(app, payload);
     }
   }
 
@@ -88,7 +109,7 @@ fn run_gamepad_stream<R: Runtime>(
             let id = controller.instance_id();
             let payload = gamecontroller_to_json(&controller);
             controllers.insert(id, controller);
-            emit_gamepad_event(&app, payload);
+            emit_gamepad_event(app, payload);
           }
         },
 
@@ -96,7 +117,7 @@ fn run_gamepad_stream<R: Runtime>(
           if let Some(controller) = controllers.remove(&which) {
             let mut payload = gamecontroller_to_json(&controller);
             payload["connected"] = json!(false);
-            emit_gamepad_event(&app, payload);
+            emit_gamepad_event(app, payload);
           }
         },
 
@@ -107,7 +128,7 @@ fn run_gamepad_stream<R: Runtime>(
             let id = joystick.instance_id();
             let payload = joystick_to_json(&joystick);
             joysticks.insert(id, joystick);
-            emit_gamepad_event(&app, payload);
+            emit_gamepad_event(app, payload);
           }
         },
 
@@ -115,7 +136,7 @@ fn run_gamepad_stream<R: Runtime>(
           if let Some(joystick) = joysticks.remove(&which) {
             let mut payload = joystick_to_json(&joystick);
             payload["connected"] = json!(false);
-            emit_gamepad_event(&app, payload);
+            emit_gamepad_event(app, payload);
           }
         },
 
@@ -123,7 +144,7 @@ fn run_gamepad_stream<R: Runtime>(
         | Event::ControllerButtonDown { which, .. }
         | Event::ControllerButtonUp { which, .. } => {
           if let Some(controller) = controllers.get(&which) {
-            emit_gamepad_event(&app, gamecontroller_to_json(controller));
+            emit_gamepad_event(app, gamecontroller_to_json(controller));
           }
         },
 
@@ -131,7 +152,7 @@ fn run_gamepad_stream<R: Runtime>(
         | Event::JoyButtonDown { which, .. }
         | Event::JoyButtonUp { which, .. } => {
           if let Some(joystick) = joysticks.get(&which) {
-            emit_gamepad_event(&app, joystick_to_json(joystick));
+            emit_gamepad_event(app, joystick_to_json(joystick));
           }
         },
 
@@ -154,7 +175,7 @@ pub fn handle_gamepad_vibration(index: u32, low_freq: f32, high_freq: f32, durat
   }
 }
 
-pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
+pub fn handle_start_gamepad_stream<R: Runtime>(app: &AppHandle<R>) {
   if GAMEPAD_STREAM_RUNNING.swap(true, Ordering::Relaxed) {
     return;
   }
@@ -162,8 +183,9 @@ pub fn handle_start_gamepad_stream<R: Runtime>(app: AppHandle<R>) {
   let (tx, rx) = mpsc::channel::<VibrateCommand>();
   let _ = VIBRATE_SENDER.set(tx);
 
+  let app = app.clone();
   thread::spawn(move || {
-    if let Err(error) = run_gamepad_stream(app, rx) {
+    if let Err(error) = run_gamepad_stream(&app, &rx) {
       GAMEPAD_STREAM_RUNNING.store(false, Ordering::Relaxed);
       log_error!("Gamepad stream stopped: {error}");
     }

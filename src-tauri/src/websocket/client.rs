@@ -1,13 +1,11 @@
-#![allow(clippy::too_many_lines)]
-
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{Sink, SinkExt, StreamExt};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::mpsc::{self, Receiver};
 use tokio::time::{interval, sleep, timeout};
 use tokio_tungstenite::connect_async;
-use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::tungstenite::{self, Message};
 
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
@@ -42,6 +40,110 @@ fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u12
   }
 }
 
+fn connection_url(config: &Config) -> String {
+  format!("ws://{}:{}", config.ip_address, config.web_socket_port)
+}
+
+fn config_requires_reconnect(next: &Config, current: &Config) -> bool {
+  next.ip_address != current.ip_address || next.web_socket_port != current.web_socket_port
+}
+
+fn current_timestamp_ms() -> u128 {
+  SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis()
+}
+
+async fn send_text_message<S>(
+  write: &mut S,
+  app: &AppHandle,
+  message_text: String,
+  error_label: &str,
+) -> bool
+where
+  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  if let Err(error) = write.send(Message::Text(message_text.into())).await {
+    log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
+    emit_connection_status(app, false, None);
+    return false;
+  }
+
+  true
+}
+
+async fn send_serialized_message<S>(
+  write: &mut S,
+  app: &AppHandle,
+  message: &WebsocketMessage,
+  serialize_label: &str,
+  error_label: &str,
+) -> bool
+where
+  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  let message_text = match serde_json::to_string(message) {
+    Ok(text) => text,
+    Err(error) => {
+      log_warn!("Failed to serialize {}: {}", serialize_label, error);
+      return true;
+    },
+  };
+
+  send_text_message(write, app, message_text, error_label).await
+}
+
+async fn send_ping<S>(write: &mut S, app: &AppHandle) -> bool
+where
+  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  let ping_data = current_timestamp_ms().to_string().into_bytes();
+
+  if let Err(error) = write.send(Message::Ping(ping_data.into())).await {
+    log_warn!("Failed to send ping: {}. Reconnecting...", error);
+    emit_connection_status(app, false, None);
+    return false;
+  }
+
+  true
+}
+
+async fn handle_incoming_message<S>(
+  write: &mut S,
+  app: &AppHandle,
+  message: Result<Message, tungstenite::Error>,
+) -> bool
+where
+  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  match message {
+    Ok(message) if message.is_text() || message.is_binary() => {
+      if let Some(response) = handle_message(app, message).await
+        && let Err(error) = write.send(response).await
+      {
+        log_warn!("Websocket send error: {}. Reconnecting...", error);
+        emit_connection_status(app, false, None);
+        return false;
+      }
+    },
+    Ok(message) if message.is_close() => {
+      log_warn!("Websocket connection closed by peer. Reconnecting...");
+      emit_connection_status(app, false, None);
+      return false;
+    },
+    Ok(message) if message.is_pong() => {
+      if let Ok(timestamp_str) = String::from_utf8(message.into_data().to_vec())
+        && let Ok(sent_timestamp_ms) = timestamp_str.parse::<u128>()
+      {
+        let rtt = current_timestamp_ms().saturating_sub(sent_timestamp_ms);
+        emit_connection_status(app, true, Some(rtt));
+      }
+    },
+    Ok(_) => {},
+    Err(error) => {
+      log_warn!("Websocket read error: {}. Reconnecting...", error);
+      emit_connection_status(app, false, None);
+      return false;
+    },
+  }
+
+  true
+}
+
 pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
@@ -51,7 +153,7 @@ pub async fn start_websocket_client(
   let mut config = get_config_from_file();
 
   loop {
-    let url = format!("ws://{}:{}", config.ip_address, config.web_socket_port);
+    let url = connection_url(&config);
     let connect_timeout = Duration::from_secs(5);
 
     log_info!("Attempting to connect to {}", url);
@@ -87,9 +189,7 @@ pub async fn start_websocket_client(
     loop {
       tokio::select! {
           Some(new_config) = config_rx.recv() => {
-            if new_config.ip_address != config.ip_address
-              || new_config.web_socket_port != config.web_socket_port
-            {
+            if config_requires_reconnect(&new_config, &config) {
               log_info!("WebSocket config updated. Reconnecting websocket.");
               config = new_config;
               emit_connection_status(&app, false, None);
@@ -98,81 +198,30 @@ pub async fn start_websocket_client(
             config = new_config;
           }
           Some(message_to_send) = message_rx.recv() => {
-              let message_text = match serde_json::to_string(&message_to_send) {
-                Ok(text) => text,
-                Err(e) => {
-                  log_warn!("Failed to serialize message: {}", e);
-                  continue;
-                }
-              };
-
-              if let Err(e) = write.send(Message::Text(message_text.into())).await {
-                  log_warn!("Websocket send error: {}. Reconnecting...", e);
-                      emit_connection_status(&app, false, None);
-                  break;
+              if !send_serialized_message(&mut write, &app, &message_to_send, "message", "").await {
+                break;
               }
           }
           Some(direction_vector) = direction_vector_rx.recv() => {
-              let message_text = match serde_json::to_string(&direction_vector) {
-                  Ok(text) => text,
-                  Err(e) => {
-                      log_warn!("Failed to serialize direction vector: {}", e);
-                      continue;
-                  }
-              };
-
-              if let Err(e) = write.send(Message::Text(message_text.into())).await {
-                  log_warn!("Websocket send error (direction vector): {}. Reconnecting...", e);
-                  emit_connection_status(&app, false, None);
-                  break;
+              if !send_serialized_message(
+                &mut write,
+                &app,
+                &direction_vector,
+                "direction vector",
+                " (direction vector)",
+              ).await {
+                break;
               }
           }
           _ = ping_timer.tick() => {
-              let timestamp_ms = SystemTime::now()
-                  .duration_since(UNIX_EPOCH)
-                  .unwrap_or_default()
-                  .as_millis();
-              let ping_data = timestamp_ms.to_string().into_bytes();
-
-              if let Err(e) = write.send(Message::Ping(ping_data.into())).await {
-                  log_warn!("Failed to send ping: {}. Reconnecting...", e);
-                      emit_connection_status(&app, false, None);
-                  break;
+              if !send_ping(&mut write, &app).await {
+                break;
               }
           }
           Some(message) = read.next() => {
-              match message {
-                  Ok(msg) => {
-                      if msg.is_text() || msg.is_binary() {
-                          if let Some(response) = handle_message(&app, msg).await {
-                              if let Err(e) = write.send(response).await {
-                                  log_warn!("Websocket send error: {}. Reconnecting...", e);
-                      emit_connection_status(&app, false, None);
-                                  break;
-                              }
-                          }
-                      } else if msg.is_close() {
-                          log_warn!("Websocket connection closed by peer. Reconnecting...");
-                      emit_connection_status(&app, false, None);
-                          break;
-                      }
-                      else if msg.is_pong() {
-                          if let Ok(timestamp_str) = String::from_utf8(msg.into_data().to_vec()) {
-                               if let Ok(sent_timestamp_ms) = timestamp_str.parse::<u128>() {
-                                   let now_ms = SystemTime::now().duration_since(UNIX_EPOCH)
-                                       .unwrap_or_default().as_millis();
-                                   let rtt = now_ms.saturating_sub(sent_timestamp_ms);
-                                   emit_connection_status(&app, true, Some(rtt));
-                               }
-                           }
-                       }
-                   }
-                   Err(e) => {
-                       log_warn!("Websocket read error: {}. Reconnecting...", e);
-                       emit_connection_status(&app, false, None);
-                       break;
-                   }
-               }
+              if !handle_incoming_message(&mut write, &app, message).await {
+                break;
+              }
           }
       }
     }

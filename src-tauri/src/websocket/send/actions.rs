@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use tauri::State;
 
 use crate::log_error;
@@ -7,6 +5,8 @@ use crate::models::actions::{CustomAction, DirectionVector};
 use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
 use crate::websocket::message::WebsocketMessage;
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_send_direction_vector(
   state: &State<'_, DirectionVectorSendChannelState>,
   payload: DirectionVector,
@@ -19,6 +19,8 @@ pub async fn handle_send_direction_vector(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_send_custom_action(
   state: &State<'_, MessageSendChannelState>,
   payload: CustomAction,
@@ -31,6 +33,8 @@ pub async fn handle_send_custom_action(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_toggle_auto_stabilization(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -42,6 +46,8 @@ pub async fn handle_toggle_auto_stabilization(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_toggle_depth_hold(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {

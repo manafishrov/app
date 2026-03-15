@@ -2,5 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  manafish_lib::run();
+  if let Err(error) = manafish_lib::run() {
+    eprintln!("Failed to start app: {error}");
+    std::process::exit(1);
+  }
 }

@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use std::cmp::Ordering;
 use std::fs;
 use std::path::PathBuf;
@@ -109,6 +107,10 @@ pub fn get_config_from_file() -> Config {
   }
 }
 
+/// # Errors
+/// Returns an error if the config directory cannot be found, the config file
+/// cannot be written, or the updated config cannot be sent to the websocket
+/// client task.
 pub async fn set_config_to_file(
   state: &ConfigSendChannelState,
   mut payload: Config,

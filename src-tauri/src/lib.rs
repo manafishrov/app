@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 mod commands {
   pub mod actions;
   pub mod config;
@@ -63,8 +61,7 @@ use websocket::client::{
 };
 use websocket::message::WebsocketMessage;
 
-#[allow(clippy::unnecessary_wraps)]
-fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_handlers(app: &mut App) {
   let log_handle = app.app_handle().clone();
   log_init(log_handle);
 
@@ -90,12 +87,11 @@ fn setup_handlers(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
   spawn(async move {
     start_websocket_client(websocket_handle, config_rx, message_rx, direction_vector_rx).await;
   });
-
-  Ok(())
 }
 
-#[allow(clippy::expect_used, clippy::missing_panics_doc)]
-pub fn run() {
+/// # Errors
+/// Returns an error if the Tauri application cannot be built.
+pub fn run() -> tauri::Result<()> {
   let builder = Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
@@ -120,10 +116,12 @@ pub fn run() {
       flash_microcontroller_firmware,
       save_recording,
     ])
-    .setup(setup_handlers);
+    .setup(|app| {
+      setup_handlers(app);
+      Ok(())
+    });
 
-  builder
-    .build(tauri::generate_context!())
-    .expect("error while building tauri application")
-    .run(|_app_handle, _event| {});
+  builder.build(tauri::generate_context!())?.run(|_app_handle, _event| {});
+
+  Ok(())
 }

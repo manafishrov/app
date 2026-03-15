@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use tauri::{State, command};
 
 use crate::config::{ConfigSendChannelState, get_config_from_file, set_config_to_file};
@@ -11,6 +9,9 @@ pub fn get_config() -> Config {
 }
 
 #[command]
+/// # Errors
+/// Returns an error if saving the config file fails or notifying the websocket
+/// client task fails.
 pub async fn set_config(
   state: State<'_, ConfigSendChannelState>,
   payload: Config,

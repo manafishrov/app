@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use tauri::{State, command};
 
 use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, ThrusterTest};
@@ -11,11 +9,15 @@ use crate::websocket::send::config::{
 };
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn request_rov_config(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
   handle_request_rov_config(&state).await
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn set_rov_config(
   state: State<'_, MessageSendChannelState>,
   payload: RovConfig,
@@ -24,6 +26,8 @@ pub async fn set_rov_config(
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn start_thruster_test(
   state: State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
@@ -32,6 +36,8 @@ pub async fn start_thruster_test(
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn cancel_thruster_test(
   state: State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
@@ -40,6 +46,8 @@ pub async fn cancel_thruster_test(
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn start_regulator_auto_tuning(
   state: State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -47,6 +55,8 @@ pub async fn start_regulator_auto_tuning(
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn cancel_regulator_auto_tuning(
   state: State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -54,6 +64,8 @@ pub async fn cancel_regulator_auto_tuning(
 }
 
 #[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn flash_microcontroller_firmware(
   state: State<'_, MessageSendChannelState>,
   payload: MicrocontrollerFirmwareVariant,

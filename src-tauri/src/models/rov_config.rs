@@ -1,5 +1,3 @@
-#![allow(clippy::struct_field_names)]
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -55,11 +53,16 @@ pub struct DirectionCoefficients {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Power {
-  pub user_max_power_thrusters: f32,
-  pub user_max_power_actions: f32,
-  pub regulator_max_power: f32,
-  pub battery_min_voltage: f32,
-  pub battery_max_voltage: f32,
+  #[serde(rename = "userMaxPowerThrusters")]
+  pub thrusters_limit: f32,
+  #[serde(rename = "userMaxPowerActions")]
+  pub actions_limit: f32,
+  #[serde(rename = "regulatorMaxPower")]
+  pub regulator_limit: f32,
+  #[serde(rename = "batteryMinVoltage")]
+  pub min_battery_voltage: f32,
+  #[serde(rename = "batteryMaxVoltage")]
+  pub max_battery_voltage: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

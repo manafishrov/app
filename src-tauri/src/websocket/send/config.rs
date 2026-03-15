@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use tauri::State;
 
 use crate::log_error;
@@ -7,6 +5,8 @@ use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, Thrus
 use crate::websocket::client::MessageSendChannelState;
 use crate::websocket::message::WebsocketMessage;
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_request_rov_config(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -18,6 +18,8 @@ pub async fn handle_request_rov_config(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_set_rov_config(
   state: &State<'_, MessageSendChannelState>,
   payload: RovConfig,
@@ -30,6 +32,8 @@ pub async fn handle_set_rov_config(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_start_thruster_test(
   state: &State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
@@ -42,6 +46,8 @@ pub async fn handle_start_thruster_test(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_cancel_thruster_test(
   state: &State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
@@ -54,6 +60,8 @@ pub async fn handle_cancel_thruster_test(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_start_regulator_auto_tuning(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -65,6 +73,8 @@ pub async fn handle_start_regulator_auto_tuning(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_cancel_regulator_auto_tuning(
   state: &State<'_, MessageSendChannelState>,
 ) -> Result<(), String> {
@@ -76,6 +86,8 @@ pub async fn handle_cancel_regulator_auto_tuning(
   Ok(())
 }
 
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_flash_microcontroller_firmware(
   state: &State<'_, MessageSendChannelState>,
   payload: MicrocontrollerFirmwareVariant,
