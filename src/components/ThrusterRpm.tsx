@@ -55,7 +55,7 @@ const ThrusterRpm: Component<{ rpm: number }> = (props): JSXElement => {
 
   return (
     <>
-      {Math.round(local.rpm)}
+      <span class='font-mono'>{Math.round(local.rpm)}</span>
       <span
         ref={(element) => {
           spinnerElement = element;
