@@ -1,4 +1,4 @@
-import type { Component } from 'solid-js';
+import type { Component, ComponentProps } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
@@ -12,13 +12,10 @@ import {
 } from '@/stores/rovConfig';
 import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
 
+import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS } from './AxisFieldset';
 import { AUTO_TUNING_TIMEOUT_MS } from './constants';
-import { DepthFieldset } from './DepthFieldset';
 import { DirectionCoefficientsFieldset } from './DirectionCoefficientsFieldset';
-import { PitchFieldset } from './PitchFieldset';
-import { RollFieldset } from './RollFieldset';
 import { createFormSchema, type FormValues } from './schema';
-import { YawFieldset } from './YawFieldset';
 
 const toAxisConfig = (axis: FormValues['pitch'], fallbackRate: number): AxisConfig => ({
   kp: axis.kp,
@@ -78,9 +75,67 @@ const handleFormSubmit = ({ value }: { value: FormValues }): Promise<void> => {
   });
 };
 
+type AxisFieldsetsProps = {
+  form: ComponentProps<typeof AxisFieldset>['form'];
+  suggestions: ComponentProps<typeof AxisFieldset>['suggestions'];
+  hasSuggestions: ComponentProps<typeof AxisFieldset>['hasSuggestions'];
+};
+
+const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
+  <>
+    <AxisFieldset
+      form={props.form}
+      title={m.regulator_pid_pitch_title()}
+      description={m.regulator_pid_pitch_description()}
+      axisName='pitch'
+      suggestions={props.suggestions}
+      hasSuggestions={props.hasSuggestions}
+      defaultKp={5}
+      defaultKi={0.5}
+      defaultKd={1}
+    />
+    <AxisFieldset
+      form={props.form}
+      title={m.regulator_direction_coefficients_yaw()}
+      description={m.regulator_pid_yaw_description()}
+      axisName='yaw'
+      suggestions={props.suggestions}
+      hasSuggestions={props.hasSuggestions}
+      defaultKp={1.5}
+      defaultKi={0.1}
+      defaultKd={0.4}
+    />
+    <AxisFieldset
+      form={props.form}
+      title={m.regulator_pid_roll_title()}
+      description={m.regulator_pid_roll_description()}
+      axisName='roll'
+      suggestions={props.suggestions}
+      hasSuggestions={props.hasSuggestions}
+      defaultKp={1.5}
+      defaultKi={0.1}
+      defaultKd={0.4}
+    />
+    <AxisFieldset
+      form={props.form}
+      title={m.regulator_pid_depth_title()}
+      description={m.regulator_pid_depth_description()}
+      axisName='depth'
+      suggestions={props.suggestions}
+      hasSuggestions={props.hasSuggestions}
+      defaultKp={0}
+      defaultKi={0.05}
+      defaultKd={0.1}
+    />
+  </>
+);
+
 export const Regulator: Component = () => {
   const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(false);
   const formSchema = createFormSchema();
+  const rawSuggestions = regulatorSuggestions();
+  const suggestions = rawSuggestions ?? EMPTY_REGULATOR_SUGGESTIONS;
+  const hasSuggestions = Boolean(rawSuggestions);
 
   const form = useAppForm(() => ({
     validators: {
@@ -105,10 +160,7 @@ export const Regulator: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <PitchFieldset AppField={form.AppField} suggestions={regulatorSuggestions()} />
-        <YawFieldset AppField={form.AppField} suggestions={regulatorSuggestions()} />
-        <RollFieldset AppField={form.AppField} suggestions={regulatorSuggestions()} />
-        <DepthFieldset AppField={form.AppField} suggestions={regulatorSuggestions()} />
+        <AxisFieldsets form={form} suggestions={suggestions} hasSuggestions={hasSuggestions} />
 
         <div class='mt-6 flex items-center gap-4'>
           <Button variant='outline' onClick={handleAutoTuning} disabled={autoTuningDisabled()}>
@@ -116,7 +168,7 @@ export const Regulator: Component = () => {
           </Button>
         </div>
 
-        <DirectionCoefficientsFieldset AppField={form.AppField} />
+        <DirectionCoefficientsFieldset form={form} />
 
         <form.AutoSubmit debounce={500} />
       </form.Form>
