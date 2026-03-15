@@ -19,7 +19,7 @@
     "@manafishrov/ui": "1.4.6",
     "@tailwindcss/vite": "4.2.1",
     "@tanstack/router-plugin": "1.163.3",
-    "@tanstack/solid-form": "1.28.3",
+    "@tanstack/solid-form": "1.28.5",
     "@tanstack/solid-router": "1.163.3",
     "@tanstack/solid-virtual": "3.13.21",
     "@tauri-apps/api": "2.10.1",
