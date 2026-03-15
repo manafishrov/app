@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "1.2.62",
-    "@inlang/paraglide-js": "2.13.0",
+    "@inlang/paraglide-js": "2.14.0",
     "@tanstack/devtools-vite": "0.5.5",
     "@tanstack/solid-devtools": "0.7.33",
     "@tanstack/solid-router-devtools": "1.162.1",
