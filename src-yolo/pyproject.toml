@@ -2,8 +2,8 @@
 name = "manafish-app"
 version = "1.0.0"
 description = "An app for controlling the Manafish ROV"
-requires-python = ">=3.14,<3.15"
-dependencies = ["ultralytics>=8.3.228"]
+requires-python = "==3.14.2"
+dependencies = ["ultralytics==8.3.228"]
 
 [tool.ruff]
 target-version = "py312"
@@ -14,29 +14,29 @@ show-fixes = true
 unsafe-fixes = true
 format.docstring-code-format = true
 lint.select = [
-    "F",
-    "E",
-    "W",
-    "C90",
-    "I",
-    "N",
-    "UP",
-    "B",
-    "A",
-    "T10",
-    "T20",
-    "EM",
-    "S",
-    "DTZ",
-    "SIM",
-    "C4",
-    "PTH",
-    "PGH",
-    "ARG",
-    "RUF",
-    "PL",
-    "D",
-    "ANN",
+  "F",
+  "E",
+  "W",
+  "C90",
+  "I",
+  "N",
+  "UP",
+  "B",
+  "A",
+  "T10",
+  "T20",
+  "EM",
+  "S",
+  "DTZ",
+  "SIM",
+  "C4",
+  "PTH",
+  "PGH",
+  "ARG",
+  "RUF",
+  "PL",
+  "D",
+  "ANN",
 ]
 lint.ignore = ["E501", "D203", "D213"]
 lint.pydocstyle.convention = "google"
@@ -49,8 +49,8 @@ lint.flake8-annotations.mypy-init-return = true
 lint.flake8-annotations.suppress-dummy-args = false
 lint.flake8-annotations.ignore-fully-untyped = false
 
-[tool.basedpyright]
-reportMissingTypeStubs = false
-reportUnknownVariableType = false
-reportUnusedParameter = false
-reportUnnecessaryTypeIgnoreComment = false
+[tool.ty]
+rules.division-by-zero = "error"
+rules.unresolved-reference = "error"
+rules.unresolved-import = "error"
+rules.possibly-unresolved-reference = "warn"
