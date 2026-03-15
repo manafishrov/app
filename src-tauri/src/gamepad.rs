@@ -35,7 +35,7 @@ fn emit_gamepad_event<R: Runtime>(app: &AppHandle<R>, payload: serde_json::Value
   }
 }
 
-#[allow(clippy::cast_sign_loss)]
+#[allow(clippy::cast_possible_truncation)]
 fn scale_rumble_frequency(value: f32) -> u16 {
   (value.clamp(0.0, 1.0) * RUMBLE_SCALE).round() as u16
 }

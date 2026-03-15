@@ -9,9 +9,13 @@ use tauri_plugin_updater::{Result, UpdaterExt};
 use crate::models::toast::ToastContent;
 use crate::toast::{toast_info, toast_loading};
 
-#[allow(clippy::cast_sign_loss)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
 fn to_progress_percent(downloaded: usize, total: u64) -> u64 {
-  ((downloaded as f64 / total as f64) * 100.0).round() as u64
+  if total == 0 {
+    return 0;
+  }
+  let percent = u64::try_from(downloaded).unwrap_or(u64::MAX).saturating_mul(100);
+  (percent / total).min(100)
 }
 
 pub async fn update_app(app: AppHandle) -> Result<()> {
