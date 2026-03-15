@@ -2,18 +2,14 @@ import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
 
-import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configTypes';
-
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-
-const AttitudeIndicator = {
-  scientific: 'scientific',
-  model3D: 'model3D',
-  classic: 'classic',
-  disabled: 'disabled',
-} as const;
-
+import {
+  AttitudeIndicator,
+  type Config,
+  type GamepadBindings,
+  type KeyboardBindings,
+} from '@/stores/configTypes';
 const createNullValue = (): null => {
   const result = /a/.exec('');
   if (Array.isArray(result)) {
@@ -72,7 +68,7 @@ const createNullGamepadBindings = (): GamepadBindings => ({
 const defaultConfig: Config = {
   appVersion: m.common_not_available(),
   overlayScale: 2,
-  attitudeIndicator: 'scientific',
+  attitudeIndicator: AttitudeIndicator.scientific,
   workIndicator: false,
   thrusterRpmOverlay: false,
   videoDirectory: '~/Movies/Manafish',
@@ -135,4 +131,3 @@ export type {
   GamepadBindings,
   Config,
 } from '@/stores/configTypes';
-export type { AttitudeIndicator as AttitudeIndicatorType } from '@/stores/configTypes';

@@ -1,3 +1,10 @@
+export const AttitudeIndicator = {
+  scientific: 'scientific',
+  model3D: 'model3D',
+  classic: 'classic',
+  disabled: 'disabled',
+} as const;
+
 type KeyboardKey =
   | 'KeyA'
   | 'KeyB'
@@ -164,7 +171,7 @@ type GamepadBindings = {
   record: NullableGamepadInput;
 };
 
-type AttitudeIndicator = 'scientific' | 'model3D' | 'classic' | 'disabled';
+export type AttitudeIndicator = (typeof AttitudeIndicator)[keyof typeof AttitudeIndicator];
 
 type Config = {
   appVersion: string;
@@ -189,6 +196,5 @@ export type {
   GamepadInput,
   KeyboardBindings,
   GamepadBindings,
-  AttitudeIndicator,
   Config,
 };

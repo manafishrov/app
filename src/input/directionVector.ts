@@ -15,23 +15,26 @@ const clamp = (value: number): number => Math.max(MIN_AXIS_VALUE, Math.min(MAX_A
 
 type OptionalInput<InputType> = InputType | null | undefined;
 
-type AxisBindingName =
-  | 'surgeForward'
-  | 'surgeBackward'
-  | 'swayRight'
-  | 'swayLeft'
-  | 'heaveDown'
-  | 'heaveUp'
-  | 'pitchUp'
-  | 'pitchDown'
-  | 'yawRight'
-  | 'yawLeft'
-  | 'rollRight'
-  | 'rollLeft'
-  | 'action1Positive'
-  | 'action1Negative'
-  | 'action2Positive'
-  | 'action2Negative';
+const AxisBindingName = {
+  surgeForward: 'surgeForward',
+  surgeBackward: 'surgeBackward',
+  swayRight: 'swayRight',
+  swayLeft: 'swayLeft',
+  heaveDown: 'heaveDown',
+  heaveUp: 'heaveUp',
+  pitchUp: 'pitchUp',
+  pitchDown: 'pitchDown',
+  yawRight: 'yawRight',
+  yawLeft: 'yawLeft',
+  rollRight: 'rollRight',
+  rollLeft: 'rollLeft',
+  action1Positive: 'action1Positive',
+  action1Negative: 'action1Negative',
+  action2Positive: 'action2Positive',
+  action2Negative: 'action2Negative',
+} as const;
+
+type AxisBindingName = (typeof AxisBindingName)[keyof typeof AxisBindingName];
 
 type AxisDefinition = {
   positive: AxisBindingName;
@@ -39,14 +42,14 @@ type AxisDefinition = {
 };
 
 const AXIS_DEFINITIONS = [
-  { positive: 'surgeForward', negative: 'surgeBackward' },
-  { positive: 'swayRight', negative: 'swayLeft' },
-  { positive: 'heaveDown', negative: 'heaveUp' },
-  { positive: 'pitchUp', negative: 'pitchDown' },
-  { positive: 'yawRight', negative: 'yawLeft' },
-  { positive: 'rollRight', negative: 'rollLeft' },
-  { positive: 'action1Positive', negative: 'action1Negative' },
-  { positive: 'action2Positive', negative: 'action2Negative' },
+  { positive: AxisBindingName.surgeForward, negative: AxisBindingName.surgeBackward },
+  { positive: AxisBindingName.swayRight, negative: AxisBindingName.swayLeft },
+  { positive: AxisBindingName.heaveDown, negative: AxisBindingName.heaveUp },
+  { positive: AxisBindingName.pitchUp, negative: AxisBindingName.pitchDown },
+  { positive: AxisBindingName.yawRight, negative: AxisBindingName.yawLeft },
+  { positive: AxisBindingName.rollRight, negative: AxisBindingName.rollLeft },
+  { positive: AxisBindingName.action1Positive, negative: AxisBindingName.action1Negative },
+  { positive: AxisBindingName.action2Positive, negative: AxisBindingName.action2Negative },
 ] as const satisfies readonly [
   AxisDefinition,
   AxisDefinition,

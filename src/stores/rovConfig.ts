@@ -2,19 +2,20 @@ import { createStore, reconcile } from 'solid-js/store';
 
 import * as m from '@/paraglide/messages';
 
-type MicrocontrollerFirmwareVariant = 'pwm' | 'dshot';
-
 const MicrocontrollerFirmwareVariant = {
   pwm: 'pwm',
   dshot: 'dshot',
 } as const;
 
-type FluidType = 'saltwater' | 'freshwater';
+type MicrocontrollerFirmwareVariant =
+  (typeof MicrocontrollerFirmwareVariant)[keyof typeof MicrocontrollerFirmwareVariant];
 
 const FluidType = {
   saltwater: 'saltwater',
   freshwater: 'freshwater',
 } as const;
+
+type FluidType = (typeof FluidType)[keyof typeof FluidType];
 
 type ThrusterPinSetup = {
   identifiers: [number, number, number, number, number, number, number, number];
@@ -89,8 +90,8 @@ const defaultRow: [number, number, number, number, number, number, number, numbe
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
-  microcontrollerFirmwareVariant: 'pwm',
-  fluidType: 'freshwater',
+  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant.pwm,
+  fluidType: FluidType.freshwater,
   smoothingFactor: 0,
   thrusterPinSetup: {
     identifiers: [0, 0, 0, 0, 0, 0, 0, 0],

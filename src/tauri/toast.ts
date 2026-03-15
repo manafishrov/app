@@ -27,14 +27,32 @@ type ToastContent = {
   descriptionArgs?: ToastKeyArgs;
 };
 
+const ToastPayloadVariant = {
+  success: 'success',
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+  loading: 'loading',
+} as const;
+
+const ToastRenderType = {
+  success: 'success',
+  info: 'info',
+  warning: 'warning',
+  error: 'error',
+  loading: 'loading',
+} as const;
+
+type ToastPayloadVariant = (typeof ToastPayloadVariant)[keyof typeof ToastPayloadVariant];
+
 type ToastPayload = {
   identifier?: string;
-  variant?: 'success' | 'info' | 'warn' | 'error' | 'loading';
+  variant?: ToastPayloadVariant;
   content: ToastContent;
   action?: ToastAction | null;
 };
 
-type ToastRenderType = 'success' | 'info' | 'warning' | 'error' | 'loading';
+type ToastRenderType = (typeof ToastRenderType)[keyof typeof ToastRenderType];
 
 type ToastCreateOptions = {
   id?: string;
@@ -54,12 +72,12 @@ const noopCleanup: CleanupFn = () => Number.NaN;
 const camelToSnake = (str: string): string =>
   str.replaceAll(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-const toastTypeMap: Record<string, ToastRenderType> = {
-  success: 'success',
-  info: 'info',
-  warn: 'warning',
-  error: 'error',
-  loading: 'loading',
+const toastTypeMap: Record<ToastPayloadVariant, ToastRenderType> = {
+  success: ToastRenderType.success,
+  info: ToastRenderType.info,
+  warn: ToastRenderType.warning,
+  error: ToastRenderType.error,
+  loading: ToastRenderType.loading,
 };
 
 const isNonEmptyString = (value: string | undefined): value is string =>
@@ -129,7 +147,7 @@ const showInvokeActionErrorToast = (): void => {
       EMPTY_TOAST_ARGS,
       m.toasts_failed_to_invoke_action(),
     ),
-    type: 'error',
+    type: ToastRenderType.error,
   });
 };
 
@@ -162,7 +180,7 @@ const scheduleLoadingTimeout = (toastId: string): void => {
         EMPTY_TOAST_ARGS,
         m.toasts_operation_timed_out(),
       ),
-      type: 'error',
+      type: ToastRenderType.error,
     });
     activeLoadingToasts.delete(toastId);
   }, LOADING_TOAST_TIMEOUT_MS);
@@ -172,8 +190,8 @@ const scheduleLoadingTimeout = (toastId: string): void => {
 
 const createBaseToastOptions = (payload: ToastPayload): ToastCreateOptions => {
   const toastId = isNonEmptyString(payload.identifier) ? payload.identifier : '';
-  const variant = payload.variant ?? 'info';
-  const type = toastTypeMap[variant] ?? 'info';
+  const variant = payload.variant ?? ToastPayloadVariant.info;
+  const type = toastTypeMap[variant] ?? ToastRenderType.info;
   const title = createToastTitle(payload.content);
   const options: ToastCreateOptions = { title, type };
 
@@ -223,7 +241,7 @@ const handleToastPayload = (payload: ToastPayload): void => {
     clearLoadingTimeout(toastId);
   }
 
-  if (payload.variant === 'loading' && toastId.length > 0) {
+  if (payload.variant === ToastPayloadVariant.loading && toastId.length > 0) {
     scheduleLoadingTimeout(toastId);
   }
 
@@ -237,7 +255,7 @@ const showListenErrorToast = (): void => {
       EMPTY_TOAST_ARGS,
       m.toasts_failed_to_listen_toast_messages(),
     ),
-    type: 'error',
+    type: ToastRenderType.error,
   });
 };
 
