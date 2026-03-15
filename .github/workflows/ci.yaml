@@ -20,10 +20,8 @@ jobs:
           bun-version: latest
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Build Library
-        run: bun run build:lib
-      - name: Build Docs
-        run: bun run build:docs
+      - name: Build
+        run: bun run build
       - name: Run oxlint
         run: bun run lint
       - name: Run formatting check
@@ -36,6 +34,23 @@ jobs:
         working-directory: src-tauri
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libudev-dev \
+            pkg-config \
+            libsdl2-dev \
+            libavcodec-dev \
+            libavdevice-dev \
+            libavfilter-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswresample-dev \
+            libswscale-dev
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -57,3 +72,5 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Check compilation
         run: cargo check --all-targets --all-features
+      - name: Build
+        run: cargo build --all-targets --all-features
