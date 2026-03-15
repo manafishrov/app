@@ -36,7 +36,7 @@
     "@iconify-json/material-symbols": "1.2.62",
     "@inlang/paraglide-js": "2.15.0",
     "@tanstack/devtools-vite": "0.6.0",
-    "@tanstack/solid-devtools": "0.7.33",
+    "@tanstack/solid-devtools": "0.8.0",
     "@tanstack/solid-router-devtools": "1.166.8",
     "@tauri-apps/cli": "2.10.1",
     "@types/bun": "1.3.10",
