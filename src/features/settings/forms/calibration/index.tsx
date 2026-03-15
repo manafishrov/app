@@ -3,7 +3,6 @@ import type { Component, JSXElement } from 'solid-js';
 import { useAppForm } from '@manafishrov/ui/form';
 import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
-import { z } from 'zod';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
@@ -17,6 +16,7 @@ import { setRovConfig } from '@/tauri';
 
 import type { ThrusterPresetRow } from './thrusterPresets';
 
+import { CalibrationFormLayout } from './CalibrationFormLayout';
 import {
   DECIMAL_PRECISION_FACTOR,
   DECIMAL_RADIX,
@@ -24,6 +24,8 @@ import {
   ONE,
   PIN_NUMBERS,
   PRESET_ROW_KEYS,
+  ROW_LABEL_TOOLTIPS,
+  ROW_LABELS,
   THRUSTER_0,
   THRUSTER_1,
   THRUSTER_2,
@@ -32,36 +34,25 @@ import {
   THRUSTER_5,
   THRUSTER_6,
   THRUSTER_7,
+  THRUSTER_COLUMNS,
   THRUSTER_INDICES,
   THRUSTER_TEST_TIMEOUT_MS,
   ZERO,
 } from './constants';
+import { createIdentifierCollection } from './FieldRenderers';
 import {
-  createIdentifierCollection,
+  formSchema,
   identifierSchema,
-  spinDirectionSchema,
+  type FormValues,
   type IdentifierValue,
   type SpinDirectionValue,
-} from './FieldRenderers';
-import { renderCalibrationLayout } from './FormRenderer';
+} from './schema';
 const DEFAULT_IDENTIFIER_VALUE: IdentifierValue = '0';
 type AllocationFieldPath = `thrusterAllocation[${number}][${number}]`;
 const identifierCollection = createIdentifierCollection(THRUSTER_INDICES, ONE);
 
 type ThrusterIndex = (typeof THRUSTER_INDICES)[number];
 type ThrusterTuple<TValue> = [TValue, TValue, TValue, TValue, TValue, TValue, TValue, TValue];
-
-const formSchema = z.object({
-  thrusterPinSetup: z.object({
-    identifiers: z.array(identifierSchema).length(THRUSTER_INDICES.length),
-    spinDirections: z.array(spinDirectionSchema).length(THRUSTER_INDICES.length),
-  }),
-  thrusterAllocation: z
-    .array(z.array(z.number().min(NEGATIVE_ONE).max(ONE)).length(THRUSTER_INDICES.length))
-    .length(THRUSTER_INDICES.length),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 const mapThrusterTuple = <TValue,>(
   mapValue: (index: ThrusterIndex) => TValue,
@@ -232,18 +223,25 @@ export const Calibration: Component = (): JSXElement => {
       submitCalibrationForm(defaultAllocationRows, value),
   }));
 
-  return renderCalibrationLayout({
-    form,
-    identifierCollection,
-    testDisabled,
-    onTestThruster: (index): void => {
-      testThruster(setTestDisabled, index);
-    },
-    onApplyPreset: (presetRows): void => {
-      applyPresetToForm(form, presetRows);
-    },
-    onResetAllocation: (): void => {
-      resetAllocationInForm(form, initialAllocation);
-    },
-  });
+  return (
+    <CalibrationFormLayout
+      form={form}
+      pinNumbers={PIN_NUMBERS}
+      thrusterColumns={THRUSTER_COLUMNS}
+      rowLabels={ROW_LABELS}
+      rowLabelTooltips={ROW_LABEL_TOOLTIPS}
+      identifierCollection={identifierCollection}
+      zeroValue={ZERO}
+      testDisabled={testDisabled}
+      onTestThruster={(index): void => {
+        testThruster(setTestDisabled, index);
+      }}
+      onApplyPreset={(presetRows): void => {
+        applyPresetToForm(form, presetRows);
+      }}
+      onResetAllocation={(): void => {
+        resetAllocationInForm(form, initialAllocation);
+      }}
+    />
+  );
 };

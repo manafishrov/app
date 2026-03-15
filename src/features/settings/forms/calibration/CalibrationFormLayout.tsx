@@ -1,4 +1,4 @@
-import type { Accessor, Component, JSXElement } from 'solid-js';
+import type { Accessor, Component, ComponentProps } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
 import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
@@ -25,6 +25,8 @@ import { ThrusterRpm } from '@/components/ThrusterRpm';
 import * as m from '@/paraglide/messages';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
+import { AllocationTable } from './AllocationTable';
+import { IdentifierField, SpinDirectionField } from './FieldRenderers';
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from './thrusterPresets';
 
 type SharedProps = {
@@ -36,22 +38,16 @@ type PinSetupProps = {
   pinNumbers: readonly number[];
   testDisabled: Accessor<boolean[]>;
   onTestThruster: (index: number) => void;
-  renderIdentifierField: (index: number) => JSXElement;
-  renderSpinDirectionField: (index: number) => JSXElement;
+  form: ComponentProps<typeof IdentifierField>['form'];
+  identifierCollection: ComponentProps<typeof IdentifierField>['identifierCollection'];
   zeroValue: number;
 };
 type AllocationProps = {
   onApplyPreset: (presetRows: ThrusterPresetRow) => void;
   onResetAllocation: () => void;
-  renderAllocationField: (rowIndex: number, columnIndex: number) => JSXElement;
+  form: ComponentProps<typeof IdentifierField>['form'];
 };
-type LayoutProps = SharedProps &
-  PinSetupProps &
-  AllocationProps & {
-    AppForm: Component<{ children: JSXElement }>;
-    Form: Component<{ class?: string; children: JSXElement }>;
-    AutoSubmit: Component;
-  };
+type LayoutProps = SharedProps & PinSetupProps & AllocationProps;
 
 const TooltipHead: Component<{ label: string; tooltip: string; class?: string }> = (props) => (
   <TableHead class={props.class}>
@@ -169,8 +165,17 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
       {(pin, index) => (
         <TableRow>
           <TableCell class='text-center'>GP{pin}</TableCell>
-          <TableCell>{props.renderIdentifierField(index())}</TableCell>
-          <TableCell>{props.renderSpinDirectionField(index())}</TableCell>
+          <TableCell>
+            <IdentifierField
+              form={props.form}
+              index={index()}
+              zeroValue={props.zeroValue}
+              identifierCollection={props.identifierCollection}
+            />
+          </TableCell>
+          <TableCell>
+            <SpinDirectionField form={props.form} index={index()} zeroValue={props.zeroValue} />
+          </TableCell>
           <TableCell>
             <Button
               type='button'
@@ -201,67 +206,16 @@ const PinSetupTable: Component<PinSetupProps> = (props) => (
       pinNumbers={props.pinNumbers}
       testDisabled={props.testDisabled}
       onTestThruster={props.onTestThruster}
-      renderIdentifierField={props.renderIdentifierField}
-      renderSpinDirectionField={props.renderSpinDirectionField}
+      form={props.form}
+      identifierCollection={props.identifierCollection}
       zeroValue={props.zeroValue}
     />
   </Table>
 );
 
-const AllocationTable: Component<SharedProps & AllocationProps> = (props) => (
-  <Table class='border'>
-    <TableHeader>
-      <TableRow>
-        <TooltipHead
-          label={m.calibration_thruster_allocation_identifier()}
-          tooltip={m.calibration_thruster_allocation_identifier_tooltip()}
-        />
-        <For each={props.thrusterColumns}>
-          {(identifier) => (
-            <TableHead
-              class='text-center'
-              aria-label={m.calibration_allocation_thruster_aria({ identifier })}
-            >
-              {identifier}
-            </TableHead>
-          )}
-        </For>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <For each={props.rowLabels}>
-        {(rowLabel, rowIndex) => (
-          <TableRow>
-            <TableCell>
-              <Tooltip>
-                <TooltipTrigger>{rowLabel}</TooltipTrigger>
-                <Portal>
-                  <TooltipPositioner>
-                    <TooltipContent>
-                      <TooltipArrow />
-                      <p>{props.rowLabelTooltips[rowIndex()]}</p>
-                    </TooltipContent>
-                  </TooltipPositioner>
-                </Portal>
-              </Tooltip>
-            </TableCell>
-            <For each={props.thrusterColumns}>
-              {(_, columnIndex) => (
-                <TableCell class='w-20'>
-                  {props.renderAllocationField(rowIndex(), columnIndex())}
-                </TableCell>
-              )}
-            </For>
-          </TableRow>
-        )}
-      </For>
-    </TableBody>
-  </Table>
-);
-
 export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
-  <props.AppForm>
-    <props.Form class='mb-24'>
+  <props.form.AppForm>
+    <props.form.Form class='mb-24'>
       <Fieldset>
         <FieldLegend>{m.calibration_thruster_pin_setup_title()}</FieldLegend>
         <p class='text-muted-foreground mb-4 text-sm'>
@@ -271,8 +225,8 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
           pinNumbers={props.pinNumbers}
           testDisabled={props.testDisabled}
           onTestThruster={props.onTestThruster}
-          renderIdentifierField={props.renderIdentifierField}
-          renderSpinDirectionField={props.renderSpinDirectionField}
+          form={props.form}
+          identifierCollection={props.identifierCollection}
           zeroValue={props.zeroValue}
         />
       </Fieldset>
@@ -289,12 +243,10 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
           thrusterColumns={props.thrusterColumns}
           rowLabels={props.rowLabels}
           rowLabelTooltips={props.rowLabelTooltips}
-          onApplyPreset={props.onApplyPreset}
-          onResetAllocation={props.onResetAllocation}
-          renderAllocationField={props.renderAllocationField}
+          form={props.form}
         />
       </Fieldset>
-      <props.AutoSubmit />
-    </props.Form>
-  </props.AppForm>
+      <props.form.AutoSubmit />
+    </props.form.Form>
+  </props.form.AppForm>
 );
