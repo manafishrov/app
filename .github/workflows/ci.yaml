@@ -52,7 +52,7 @@ jobs:
             libswresample-dev \
             libswscale-dev
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@1.94.0
+        uses: dtolnay/rust-toolchain@1.92.0
         with:
           components: clippy, rustfmt
       - name: Cache cargo registry

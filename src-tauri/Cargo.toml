@@ -5,7 +5,7 @@ version = "1.0.0"
 license = "AGPL-3.0-or-later"
 authors = ["Michael Brusegard"]
 edition = "2024"
-rust-version = "1.94"
+rust-version = "1.92"
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
