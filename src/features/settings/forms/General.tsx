@@ -1,4 +1,4 @@
-import type { Component } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
@@ -52,6 +52,57 @@ const handleFormSubmit = ({
   }).catch(logError);
 };
 
+type GeneralFieldApi = {
+  TextInputField: (props: {
+    label: string;
+    description?: string;
+    readonly?: boolean;
+    trailingAddon?: JSXElement;
+  }) => JSXElement;
+  CheckboxField: (props: { label: string; description?: string }) => JSXElement;
+};
+
+type GeneralFieldName = 'videoDirectory' | 'checkForUpdatesOnStartup';
+
+type GeneralFieldRenderer = (props: {
+  name: GeneralFieldName;
+  children: (field: GeneralFieldApi) => JSXElement;
+}) => JSXElement;
+
+const GeneralFields: Component<{
+  AppField: GeneralFieldRenderer;
+  onSelect: () => void;
+}> = (props) => (
+  <>
+    <props.AppField name='videoDirectory'>
+      {(field) => (
+        <field.TextInputField
+          label={m.general_settings_video_directory_title()}
+          description={m.general_settings_video_directory_description()}
+          readonly
+          trailingAddon={
+            <Button
+              onClick={props.onSelect}
+              aria-label={m.aria_labels_select_video_directory()}
+              variant='outline'
+            >
+              {m.general_settings_video_directory_select_directory()}
+            </Button>
+          }
+        />
+      )}
+    </props.AppField>
+    <props.AppField name='checkForUpdatesOnStartup'>
+      {(field) => (
+        <field.CheckboxField
+          label={m.general_settings_check_for_updates_title()}
+          description={m.general_settings_check_for_updates_description()}
+        />
+      )}
+    </props.AppField>
+  </>
+);
+
 export const General: Component = () => {
   const formSchema = createFormSchema();
 
@@ -76,32 +127,7 @@ export const General: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <form.AppField name='videoDirectory'>
-          {(field) => (
-            <field.TextInputField
-              label={m.general_settings_video_directory_title()}
-              description={m.general_settings_video_directory_description()}
-              readonly
-              trailingAddon={
-                <Button
-                  onClick={handleSelect}
-                  aria-label={m.aria_labels_select_video_directory()}
-                  variant='outline'
-                >
-                  {m.general_settings_video_directory_select_directory()}
-                </Button>
-              }
-            />
-          )}
-        </form.AppField>
-        <form.AppField name='checkForUpdatesOnStartup'>
-          {(field) => (
-            <field.CheckboxField
-              label={m.general_settings_check_for_updates_title()}
-              description={m.general_settings_check_for_updates_description()}
-            />
-          )}
-        </form.AppField>
+        <GeneralFields AppField={form.AppField} onSelect={handleSelect} />
         <form.AutoSubmit />
       </form.Form>
     </form.AppForm>
