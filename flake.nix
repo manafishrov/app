@@ -21,21 +21,18 @@
   in {
     devShells = forAllSystems (system: let
       pkgs = nixpkgs.legacyPackages.${system};
-      rustToolchain = fenix.packages.${system}.latest.withComponents [
+      rustToolchain = fenix.packages.${system}.stable.withComponents [
         "cargo"
         "clippy"
+        "rustfmt"
         "rust-src"
         "rustc"
         "rust-analyzer"
-      ];
-      nightlyRustfmt = fenix.packages.${system}.complete.withComponents [
-        "rustfmt"
       ];
     in {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           rustToolchain
-          nightlyRustfmt
           cmake
           pkg-config
           bun

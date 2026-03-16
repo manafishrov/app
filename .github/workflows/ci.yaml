@@ -51,15 +51,10 @@ jobs:
             libavutil-dev \
             libswresample-dev \
             libswscale-dev
-      - name: Install nightly rustfmt
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rustfmt
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.0
         with:
-          toolchain: stable
-          components: clippy
+          components: clippy, rustfmt
       - name: Cache cargo registry
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         with:
@@ -71,7 +66,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
       - name: Check formatting
-        run: cargo +nightly fmt --check
+        run: cargo fmt --check
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Check compilation
