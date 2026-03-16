@@ -36,7 +36,6 @@ mod config;
 mod gamepad;
 mod log;
 mod toast;
-mod updater;
 
 use commands::actions::{
   append_recording_chunk, save_recording, send_custom_action, send_direction_vector,
@@ -55,7 +54,7 @@ use tauri::async_runtime::spawn;
 use tauri::{App, Builder, Manager, generate_handler};
 use toast::toast_init;
 use tokio::sync::mpsc::channel;
-use updater::update_app;
+
 use websocket::client::{
   DirectionVectorSendChannelState, MessageSendChannelState, start_websocket_client,
 };
@@ -67,13 +66,6 @@ fn setup_handlers(app: &mut App) {
 
   let toast_handle = app.app_handle().clone();
   toast_init(toast_handle);
-
-  let update_handle = app.app_handle().clone();
-  spawn(async move {
-    if let Err(error) = update_app(update_handle).await {
-      log_error!("Failed to update app: {error}");
-    }
-  });
 
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);

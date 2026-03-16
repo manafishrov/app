@@ -184,6 +184,7 @@ type Config = {
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
   webSocketPort: number;
+  checkForUpdatesOnStartup: boolean;
   keyboard: KeyboardBindings;
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;

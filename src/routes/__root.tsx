@@ -8,31 +8,40 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
 import { Header } from '@/features/header';
 import { disableContextMenu } from '@/lib/contextMenu';
+import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
-import { getConfig, recoverTempRecordings, setupAllListeners } from '@/tauri';
+import { configStore } from '@/stores/config';
+import { getConfig, recoverTempRecordings, setupAllListeners, checkForUpdates } from '@/tauri';
+
+const setupAppListeners = (cleanupFns: (() => void)[]): void => {
+  setupAllListeners()
+    .then((tauriCleanup) => {
+      cleanupFns.push(tauriCleanup);
+
+      const contextMenuCleanup = disableContextMenu();
+      if (contextMenuCleanup) {
+        cleanupFns.push(contextMenuCleanup);
+      }
+
+      if (configStore.checkForUpdatesOnStartup) {
+        checkForUpdates().catch(logError);
+      }
+      return recoverTempRecordings();
+    })
+    .catch(() => {
+      const contextMenuCleanup = disableContextMenu();
+      if (contextMenuCleanup) {
+        cleanupFns.push(contextMenuCleanup);
+      }
+    });
+};
 
 const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
 
   onMount(() => {
-    setupAllListeners()
-      .then((tauriCleanup) => {
-        cleanupFns.push(tauriCleanup);
-
-        const contextMenuCleanup = disableContextMenu();
-        if (contextMenuCleanup) {
-          cleanupFns.push(contextMenuCleanup);
-        }
-
-        return recoverTempRecordings();
-      })
-      .catch(() => {
-        const contextMenuCleanup = disableContextMenu();
-        if (contextMenuCleanup) {
-          cleanupFns.push(contextMenuCleanup);
-        }
-      });
+    setupAppListeners(cleanupFns);
   });
 
   onCleanup(() => {

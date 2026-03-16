@@ -16,6 +16,7 @@ export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
 export { sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { vibrateGamepad } from '@/tauri/gamepad';
+export { checkForUpdates } from '@/tauri/updater';
 
 const listeners = [
   setupConnectionListener,

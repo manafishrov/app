@@ -10,17 +10,19 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore, setConfig } from '@/stores/config';
 
-const createFormSchema = (): z.ZodObject<{ videoDirectory: z.ZodString }> =>
+const createFormSchema = (): z.ZodObject<{
+  videoDirectory: z.ZodString;
+  checkForUpdatesOnStartup: z.ZodBoolean;
+}> =>
   z.object({
     videoDirectory: z.string().min(1, m.general_settings_video_directory_required()),
+    checkForUpdatesOnStartup: z.boolean(),
   });
 
-type FormActions = {
-  setFieldValue: (field: 'videoDirectory', value: string) => void;
-  handleSubmit: () => Promise<void>;
-};
-
-const handleSelectVideoDirectory = (actions: FormActions): void => {
+const handleSelectVideoDirectory = (
+  setFieldValue: (value: string) => void,
+  handleSubmit: () => Promise<void>,
+): void => {
   open({
     directory: true,
     multiple: false,
@@ -29,10 +31,8 @@ const handleSelectVideoDirectory = (actions: FormActions): void => {
   })
     .then((result): void => {
       if (typeof result === 'string') {
-        actions.setFieldValue('videoDirectory', result);
-        actions.handleSubmit().catch((error: unknown): void => {
-          logError('Error submitting form:', error);
-        });
+        setFieldValue(result);
+        handleSubmit().catch(logError);
       }
     })
     .catch((error: unknown): void => {
@@ -41,22 +41,37 @@ const handleSelectVideoDirectory = (actions: FormActions): void => {
     });
 };
 
+const handleFormSubmit = ({
+  value,
+}: {
+  value: { videoDirectory: string; checkForUpdatesOnStartup: boolean };
+}): void => {
+  setConfig({
+    videoDirectory: value.videoDirectory,
+    checkForUpdatesOnStartup: value.checkForUpdatesOnStartup,
+  }).catch(logError);
+};
+
 export const General: Component = () => {
   const formSchema = createFormSchema();
 
   const form = useAppForm(() => ({
-    validators: {
-      onSubmit: formSchema,
-    },
+    validators: { onSubmit: formSchema },
     defaultValues: {
       videoDirectory: configStore.videoDirectory,
+      checkForUpdatesOnStartup: configStore.checkForUpdatesOnStartup,
     },
-    onSubmit: ({ value }): void => {
-      setConfig({ videoDirectory: value.videoDirectory }).catch((error: unknown): void => {
-        logError('Error setting config:', error);
-      });
-    },
+    onSubmit: handleFormSubmit,
   }));
+
+  const handleSelect = (): void => {
+    handleSelectVideoDirectory(
+      (value) => {
+        form.setFieldValue('videoDirectory', value);
+      },
+      () => form.handleSubmit(),
+    );
+  };
 
   return (
     <form.AppForm>
@@ -69,20 +84,21 @@ export const General: Component = () => {
               readonly
               trailingAddon={
                 <Button
-                  onClick={(): void => {
-                    handleSelectVideoDirectory({
-                      setFieldValue: (fieldName, value) => {
-                        form.setFieldValue(fieldName, value);
-                      },
-                      handleSubmit: () => form.handleSubmit(),
-                    });
-                  }}
+                  onClick={handleSelect}
                   aria-label={m.aria_labels_select_video_directory()}
                   variant='outline'
                 >
                   {m.general_settings_video_directory_select_directory()}
                 </Button>
               }
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='checkForUpdatesOnStartup'>
+          {(field) => (
+            <field.SwitchField
+              label={m.general_settings_check_for_updates_title()}
+              description={m.general_settings_check_for_updates_description()}
             />
           )}
         </form.AppField>

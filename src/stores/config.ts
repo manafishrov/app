@@ -76,6 +76,7 @@ const defaultConfig: Config = {
   webrtcSignalingApiPort: 1984,
   webrtcSignalingApiPath: '/api/webrtc?src=cam',
   webSocketPort: 9000,
+  checkForUpdatesOnStartup: true,
   keyboard: createNullKeyboardBindings(),
   selectedGamepadId: NULL_VALUE,
   gamepad: {},
