@@ -1,6 +1,7 @@
 import type { JSXElement } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
+import { Kbd, KbdGroup } from '@manafishrov/ui/kbd';
 import {
   Popover,
   PopoverArrow,
@@ -53,12 +54,46 @@ const SystemHealthPopoverContent = (): JSXElement => (
   </PopoverPositioner>
 );
 
-const SystemHealthPopover = (): JSXElement => {
+const SystemHealthTooltipContent = (props: { isMac: boolean }): JSXElement => (
+  <TooltipContent>
+    <div class='flex items-center gap-2'>
+      <span>{m.controls_system_health_title()}</span>
+      <KbdGroup>
+        <Kbd>{props.isMac ? '⌘' : 'Ctrl'}</Kbd>
+        <Kbd>⇧</Kbd>
+        <Kbd>H</Kbd>
+      </KbdGroup>
+    </div>
+    <TooltipArrow />
+  </TooltipContent>
+);
+
+const useSystemHealthKeybind = (
+  setPopoverOpen: (update: (prev: boolean) => boolean) => void,
+): void => {
+  onMount(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
+        event.preventDefault();
+        setPopoverOpen((prev) => !prev);
+      }
+    };
+    globalThis.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => {
+      globalThis.removeEventListener('keydown', handleKeyDown);
+    });
+  });
+};
+
+const SystemHealthPopover = (props: { isMac: boolean }): JSXElement => {
   const [popoverOpen, setPopoverOpen] = createSignal(false);
+
+  useSystemHealthKeybind(setPopoverOpen);
 
   return (
     <Show when={connectionStatusStore.isConnected}>
       <Popover
+        open={popoverOpen()}
         positioning={{ placement: 'bottom' }}
         onOpenChange={(details) => setPopoverOpen(details.open)}
       >
@@ -83,10 +118,7 @@ const SystemHealthPopover = (): JSXElement => {
             )}
           />
           <TooltipPositioner>
-            <TooltipContent>
-              <span>{m.controls_system_health_title()}</span>
-              <TooltipArrow />
-            </TooltipContent>
+            <SystemHealthTooltipContent isMac={props.isMac} />
           </TooltipPositioner>
         </Tooltip>
         <SystemHealthPopoverContent />

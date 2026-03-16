@@ -257,7 +257,7 @@ export const Header: Component = () => {
 
         <div data-tauri-drag-region={false} class='flex items-center gap-1'>
           <RecordingButton />
-          <SystemHealthPopover />
+          <SystemHealthPopover isMac={isMac()} />
           <SettingsLink isMac={isMac()} />
         </div>
       </div>
