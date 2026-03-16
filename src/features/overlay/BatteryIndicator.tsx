@@ -39,7 +39,7 @@ const BatteryIndicator: Component = () => {
   );
 
   return (
-    <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
+    <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
       <Badge
         variant={
           rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'

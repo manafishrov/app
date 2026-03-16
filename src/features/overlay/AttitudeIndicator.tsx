@@ -103,7 +103,7 @@ const AttitudeIndicator: Component = () => {
   });
 
   return (
-    <div class={connectionStatusStore.isConnected ? 'block' : 'hidden'}>
+    <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
       <AttitudeIndicatorContent style={shadowStyle()} />
     </div>
   );
