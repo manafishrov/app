@@ -26,13 +26,16 @@
         "clippy"
         "rust-src"
         "rustc"
-        "rustfmt"
         "rust-analyzer"
+      ];
+      nightlyRustfmt = fenix.packages.${system}.complete.withComponents [
+        "rustfmt"
       ];
     in {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           rustToolchain
+          nightlyRustfmt
           cmake
           pkg-config
           bun
