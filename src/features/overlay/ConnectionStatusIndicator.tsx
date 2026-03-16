@@ -7,7 +7,7 @@ import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 
 const BASE_WIDTH_REM = 7;
-const SCALE_MULTIPLIER = 0.25;
+const SCALE_MULTIPLIER = 1;
 
 const ConnectionStatusIndicator: Component = () => {
   const badgeWidth = createMemo(
