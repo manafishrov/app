@@ -96,7 +96,7 @@ export const General: Component = () => {
         </form.AppField>
         <form.AppField name='checkForUpdatesOnStartup'>
           {(field) => (
-            <field.SwitchField
+            <field.CheckboxField
               label={m.general_settings_check_for_updates_title()}
               description={m.general_settings_check_for_updates_description()}
             />
