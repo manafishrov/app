@@ -25,7 +25,7 @@ import {
 } from '@manafishrov/ui/tooltip';
 import { useNavigate } from '@tanstack/solid-router';
 import { Portal } from 'solid-js/web';
-import SettingsIcon from '~icons/ic/settings';
+import SettingsIcon from '~icons/material-symbols/settings';
 
 import * as m from '@/paraglide/messages';
 import { recordingStore } from '@/stores/recording';
