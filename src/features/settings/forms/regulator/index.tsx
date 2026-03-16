@@ -1,7 +1,6 @@
-import type { Component, ComponentProps } from 'solid-js';
-
 import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
+import type { Component, ComponentProps } from 'solid-js';
 
 import * as m from '@/paraglide/messages';
 import {
@@ -12,7 +11,7 @@ import {
 } from '@/stores/rovConfig';
 import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
 
-import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS } from './AxisFieldset';
+import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS, hasRegulatorSuggestions } from './AxisFieldset';
 import { AUTO_TUNING_TIMEOUT_MS } from './constants';
 import { DirectionCoefficientsFieldset } from './DirectionCoefficientsFieldset';
 import { createFormSchema, type FormValues } from './schema';
@@ -135,7 +134,7 @@ export const Regulator: Component = () => {
   const formSchema = createFormSchema();
   const rawSuggestions = regulatorSuggestions();
   const suggestions = rawSuggestions ?? EMPTY_REGULATOR_SUGGESTIONS;
-  const hasSuggestions = Boolean(rawSuggestions);
+  const hasSuggestions = hasRegulatorSuggestions(rawSuggestions);
 
   const form = useAppForm(() => ({
     validators: {
@@ -168,7 +167,7 @@ export const Regulator: Component = () => {
           </Button>
         </div>
 
-        <DirectionCoefficientsFieldset form={form} />
+        <DirectionCoefficientsFieldset form={form} hasSuggestions={hasSuggestions} />
 
         <form.AutoSubmit debounce={500} />
       </form.Form>

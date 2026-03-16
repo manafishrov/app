@@ -16,6 +16,7 @@ const DirectionField = withForm({
     label: '',
     description: '',
     defaultValue: 0,
+    hasSuggestions: false,
   },
   render: (props) => (
     <props.form.AppField name={props.name}>
@@ -27,11 +28,13 @@ const DirectionField = withForm({
           max={MAX_PID_VALUE}
           step={1}
           trailingAddon={
-            <FieldSuggestionActions
-              defaultValue={props.defaultValue}
-              onChange={field().handleChange}
-              label={`${props.label} ${m.regulator_direction_coefficients_title()}`}
-            />
+            props.hasSuggestions && (
+              <FieldSuggestionActions
+                defaultValue={props.defaultValue}
+                onChange={field().handleChange}
+                label={`${props.label} ${m.regulator_direction_coefficients_title()}`}
+              />
+            )
           }
         />
       )}
@@ -41,6 +44,9 @@ const DirectionField = withForm({
 
 export const DirectionCoefficientsFieldset = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,
+  props: {
+    hasSuggestions: false,
+  },
   render: (props) => (
     <Fieldset>
       <FieldLegend>{m.regulator_direction_coefficients_title()}</FieldLegend>
@@ -54,6 +60,7 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_surge()}
           description={m.calibration_thruster_allocation_surge_tooltip()}
           defaultValue={0.8}
+          hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
           form={props.form}
@@ -61,6 +68,7 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_heave()}
           description={m.calibration_thruster_allocation_heave_tooltip()}
           defaultValue={0.5}
+          hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
           form={props.form}
@@ -68,6 +76,7 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_sway()}
           description={m.calibration_thruster_allocation_sway_tooltip()}
           defaultValue={0.35}
+          hasSuggestions={props.hasSuggestions}
         />
       </div>
     </Fieldset>
