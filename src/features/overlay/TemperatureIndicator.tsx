@@ -11,7 +11,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const BASE_BADGE_WIDTH_REM = 7;
-const BADGE_WIDTH_SCALE_FACTOR = 0.5;
+const BADGE_WIDTH_SCALE_FACTOR = 1;
 
 const TemperatureIndicator: Component = () => {
   const badgeWidth = createMemo(

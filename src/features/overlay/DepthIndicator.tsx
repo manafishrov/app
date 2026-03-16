@@ -9,7 +9,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const BASE_WIDTH_REM = 7;
-const SCALE_MULTIPLIER = 0.5;
+const SCALE_MULTIPLIER = 1;
 
 const DepthIndicator: Component = () => {
   const badgeWidth = createMemo(

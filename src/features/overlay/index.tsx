@@ -18,7 +18,7 @@ type ScaledSectionProps = {
 };
 
 const SCALE_BASE = 0.8;
-const SCALE_INCREMENT = 0.1;
+const SCALE_INCREMENT = 0.2;
 
 const ScaledSection: Component<ScaledSectionProps> = (props) => (
   <div
@@ -32,7 +32,6 @@ const ScaledSection: Component<ScaledSectionProps> = (props) => (
 );
 
 const Overlay: Component = () => {
-  // Smaller increments and smaller max scale: 1 -> 0.9, 5 -> 1.3
   const scaleMultiplier = createMemo(() => SCALE_BASE + configStore.overlayScale * SCALE_INCREMENT);
 
   return (
