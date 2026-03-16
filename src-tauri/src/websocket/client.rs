@@ -59,7 +59,8 @@ async fn send_text_message<S>(
   error_label: &str,
 ) -> bool
 where
-  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  S: Sink<Message, Error = tungstenite::Error> + Unpin,
+{
   if let Err(error) = write.send(Message::Text(message_text.into())).await {
     log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
     emit_connection_status(app, false, None);
@@ -77,7 +78,8 @@ async fn send_serialized_message<S>(
   error_label: &str,
 ) -> bool
 where
-  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  S: Sink<Message, Error = tungstenite::Error> + Unpin,
+{
   let message_text = match serde_json::to_string(message) {
     Ok(text) => text,
     Err(error) => {
@@ -91,7 +93,8 @@ where
 
 async fn send_ping<S>(write: &mut S, app: &AppHandle) -> bool
 where
-  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  S: Sink<Message, Error = tungstenite::Error> + Unpin,
+{
   let ping_data = current_timestamp_ms().to_string().into_bytes();
 
   if let Err(error) = write.send(Message::Ping(ping_data.into())).await {
@@ -109,7 +112,8 @@ async fn handle_incoming_message<S>(
   message: Result<Message, tungstenite::Error>,
 ) -> bool
 where
-  S: Sink<Message, Error = tungstenite::Error> + Unpin, {
+  S: Sink<Message, Error = tungstenite::Error> + Unpin,
+{
   match message {
     Ok(message) if message.is_text() || message.is_binary() => {
       if let Some(response) = handle_message(app, message).await
