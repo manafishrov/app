@@ -10,8 +10,12 @@
     "dev": "bunx vite",
     "fmt": "oxfmt --write src/**/*.ts src/**/*.tsx",
     "fmt:check": "oxfmt --check src/**/*.ts src/**/*.tsx",
+    "fmt:rs": "cargo fmt --manifest-path src-tauri/Cargo.toml",
+    "fmt:rs:check": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --type-aware --type-check --fix",
+    "lint:rs": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -W clippy::all",
+    "lint:rs:fix": "cargo clippy --manifest-path src-tauri/Cargo.toml --fix --allow-dirty -- -W clippy::all",
     "prepare": "lefthook install",
     "tauri": "tauri"
   },
