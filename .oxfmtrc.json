@@ -23,7 +23,7 @@
     ]
   },
   "sortTailwindcss": {
-    "stylesheet": "./packages/lib/src/theme.css",
+    "stylesheet": "./src/styles.css",
     "functions": ["tv", "cn", "cx", "cnMerge"],
     "preserveWhitespace": true
   },
