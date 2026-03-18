@@ -147,7 +147,7 @@
   "regulator_direction_coefficients_sway": "Sway",
   "regulator_direction_coefficients_heave": "Heave",
   "regulator_direction_coefficients_yaw": "Yaw",
-  "regulator_field_buttons_reset_to_default": "Undo",
+  "regulator_field_buttons_reset_to_default": "Reset to default values",
   "regulator_field_buttons_use_suggestion": "Use Suggestion",
 
   "power_page_title": "Power",
