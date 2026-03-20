@@ -12,7 +12,7 @@
   "common_not_available": "N/A",
   "app_connection_disconnected": "Disconnected",
   "rov_connection_settings_page_title": "Connection",
-  "rov_connection_settings_page_description": "Configure the ROV's connection settings.",
+  "rov_connection_settings_page_description": "Configure the ROV's connection settings. Changing these settings can brick your ROV so you have to flash it manually from scratch. It is important that the IP address and port matches what the app expects.",
   "rov_connection_ip_address_label": "IP Address",
   "rov_connection_ip_address_description": "The IP address of the ROV.",
   "rov_connection_websocket_port_label": "WebSocket Port",
