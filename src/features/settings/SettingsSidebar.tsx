@@ -95,6 +95,12 @@ const ROV_ITEMS = [
     to: '/settings/rov/power',
     Icon: SpeedIcon,
   },
+  {
+    label: (): string => m.settings_rov_connection(),
+    ariaLabel: (): string => m.aria_labels_connection_rov_button(),
+    to: '/settings/rov/connection',
+    Icon: SettingsEthernetIcon,
+  },
 ] as const satisfies readonly SidebarItem[];
 
 const SLICE_LAST_CHAR = -1;
