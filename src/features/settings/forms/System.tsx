@@ -49,7 +49,7 @@ const createFluidTypes = (): SelectCollection =>
   });
 
 const formSchema = z.object({
-  rovName: z.string().min(1),
+  rovName: z.string().min(1).max(32),
   microcontrollerFirmwareVariant: z
     .array(z.enum([MicrocontrollerFirmwareVariant.pwm, MicrocontrollerFirmwareVariant.dshot]))
     .length(1),
