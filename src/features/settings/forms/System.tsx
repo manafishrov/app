@@ -48,8 +48,10 @@ const createFluidTypes = (): SelectCollection =>
     ],
   });
 
+const MAX_ROV_NAME_LENGTH = 32;
+
 const formSchema = z.object({
-  rovName: z.string().min(1).max(32),
+  rovName: z.string().min(1).max(MAX_ROV_NAME_LENGTH),
   microcontrollerFirmwareVariant: z
     .array(z.enum([MicrocontrollerFirmwareVariant.pwm, MicrocontrollerFirmwareVariant.dshot]))
     .length(1),
