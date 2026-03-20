@@ -87,10 +87,12 @@ const AllocationPresetMenu: Component<{
                   props.onApplyPreset(preset.rows);
                 }}
               >
-                <div class='flex flex-col'>
+                <div class='flex max-w-[400px] flex-col'>
                   <span>{preset.name}</span>
                   {typeof preset.description === 'string' && preset.description.length > 0 ? (
-                    <span class='text-xs text-muted-foreground'>{preset.description}</span>
+                    <span class='text-xs break-words whitespace-normal text-muted-foreground'>
+                      {preset.description}
+                    </span>
                   ) : (
                     false
                   )}
@@ -218,7 +220,7 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
     <props.form.Form class='mb-24'>
       <Fieldset>
         <FieldLegend>{m.calibration_thruster_pin_setup_title()}</FieldLegend>
-        <p class='text-muted-foreground mb-4 text-sm'>
+        <p class='mb-4 text-sm text-muted-foreground'>
           {m.calibration_thruster_pin_setup_description()}
         </p>
         <PinSetupTable
@@ -232,7 +234,7 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
       </Fieldset>
       <Fieldset>
         <FieldLegend>{m.calibration_thruster_allocation_title()}</FieldLegend>
-        <p class='text-muted-foreground mb-4 text-sm'>
+        <p class='mb-4 text-sm text-muted-foreground'>
           {m.calibration_thruster_allocation_description()}
         </p>
         <div class='flex items-center gap-2'>
