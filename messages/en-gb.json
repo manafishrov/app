@@ -75,6 +75,8 @@
 
   "general_rov_settings_page_title": "General",
   "general_rov_settings_page_description": "Generic settings for the Manafish ROV.",
+  "general_rov_settings_rov_name_title": "ROV name",
+  "general_rov_settings_rov_name_description": "A custom name for this ROV. This name is shown in the sidebar and helps identify the ROV.",
   "general_rov_settings_firmware_version_title": "Firmware version",
   "general_rov_settings_firmware_version_description": "Current version of the Manafish ROV firmware.",
   "general_rov_settings_microcontroller_firmware_title": "Pico firmware",
@@ -187,7 +189,7 @@
   "keyboard_action_2_negative": "Action 2 negative",
   "keyboard_record": "Record",
 
-  "gamepad_page_title": "Gamepad", //I MADE IT HERE
+  "gamepad_page_title": "Gamepad",
   "gamepad_page_description": "Configure your gamepad or FPV controller bindings. How to set up key binds for your controller: \n1. Make sure all joysticks, buttons and switches are in their 'Neutral' position. \n2. Press the 'Set Keybid' button for the input you want to set a key bind for. \n3. Move the joystick/switch/button you want to bind to the position you want it to be in for the input field you are setting to receive a max value, and HOLD IT THERE FOR AT LEAST 1 SECOND. \nIf the key bind has been set correctly, the green bar under the input field should fill and empty based on the joystic/switch/button you binded. The key binds will be saved, so the next time you connect the same controller you do not have to configure them again. \nExample: If we want the Manafish to surge backwards when the left joystick is moved down, we need to do the following: 1. Put the left joystick in a neutral position. 2. Press the 'Set Keybind' button for 'Negative Surge' (because we want to set the key bind that makes the Manafish surge backwards). 3. Push the left joysstick all the way down and hold it there for at least one second.",
   "gamepad_no_gamepad_connected_title": "No Gamepad Connected",
   "gamepad_no_gamepad_connected_description": "Please connect a gamepad to configure the bindings.",

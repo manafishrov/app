@@ -2,7 +2,12 @@ import type { Component, JSXElement, Setter } from 'solid-js';
 
 import { createListCollection } from '@ark-ui/solid/collection';
 import { Button } from '@manafishrov/ui/button';
-import { type SelectFieldProps, type SliderFieldProps, useAppForm } from '@manafishrov/ui/form';
+import {
+  type SelectFieldProps,
+  type SliderFieldProps,
+  type TextInputFieldProps,
+  useAppForm,
+} from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
 import { toast } from '@manafishrov/ui/toaster';
 import { z } from 'zod';
@@ -44,6 +49,7 @@ const createFluidTypes = (): SelectCollection =>
   });
 
 const formSchema = z.object({
+  rovName: z.string().min(1),
   microcontrollerFirmwareVariant: z
     .array(z.enum([MicrocontrollerFirmwareVariant.pwm, MicrocontrollerFirmwareVariant.dshot]))
     .length(1),
@@ -65,12 +71,14 @@ const smoothingFactorMarks = [
 ];
 
 const submitSystemConfig = (value: SystemFormValues): Promise<void> => {
+  const rovName = value.rovName.trim() === '' ? rovConfigStore.rovName : value.rovName;
   const fluidType = value.fluidType[0] ?? rovConfigStore.fluidType;
   const microcontrollerFirmwareVariant =
     value.microcontrollerFirmwareVariant[0] ?? rovConfigStore.microcontrollerFirmwareVariant;
   const smoothingFactor = value.smoothingFactor[0] ?? rovConfigStore.smoothingFactor;
 
   return setRovConfig({
+    rovName,
     fluidType,
     microcontrollerFirmwareVariant,
     smoothingFactor,
@@ -101,12 +109,24 @@ const flashSelectedFirmware = (form: SubmitForm, setIsFlashing: Setter<boolean>)
 type AppFieldContext = {
   SelectField: Component<SelectFieldProps>;
   SliderField: Component<SliderFieldProps>;
+  TextInputField: Component<TextInputFieldProps>;
 };
 
 type AppFieldComponent = Component<{
-  name: 'fluidType' | 'microcontrollerFirmwareVariant' | 'smoothingFactor';
+  name: 'rovName' | 'fluidType' | 'microcontrollerFirmwareVariant' | 'smoothingFactor';
   children: (field: AppFieldContext) => JSXElement;
 }>;
+
+const RovNameField: Component<{ AppField: AppFieldComponent }> = (props) => (
+  <props.AppField name='rovName'>
+    {(field: AppFieldContext): JSXElement => (
+      <field.TextInputField
+        label={m.general_rov_settings_rov_name_title()}
+        description={m.general_rov_settings_rov_name_description()}
+      />
+    )}
+  </props.AppField>
+);
 
 const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: SelectCollection }> = (
   props,
@@ -185,6 +205,7 @@ export const System: Component = () => {
       onSubmit: formSchema,
     },
     defaultValues: {
+      rovName: rovConfigStore.rovName,
       fluidType: [rovConfigStore.fluidType],
       microcontrollerFirmwareVariant: [rovConfigStore.microcontrollerFirmwareVariant],
       smoothingFactor: [rovConfigStore.smoothingFactor],
@@ -198,6 +219,7 @@ export const System: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
+        <RovNameField AppField={form.AppField} />
         <FluidTypeField AppField={form.AppField} fluidTypes={fluidTypes} />
         <FirmwareField
           AppField={form.AppField}
