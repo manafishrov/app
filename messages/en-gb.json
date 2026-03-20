@@ -69,6 +69,8 @@
   "general_settings_appearance_thruster_rpm_overlay_description": "Displays the thruster RPM overlay on the video feed (currently unstable).",
   "general_rov_settings_page_title": "General",
   "general_rov_settings_page_description": "Generic settings for the Manafish ROV.",
+  "general_rov_settings_rov_name_title": "ROV name",
+  "general_rov_settings_rov_name_description": "A custom name for this ROV. This name is shown in the sidebar and helps identify the ROV.",
   "general_rov_settings_firmware_version_title": "Firmware version",
   "general_rov_settings_firmware_version_description": "Current version of the Manafish ROV firmware.",
   "general_rov_settings_microcontroller_firmware_title": "Pico firmware",
@@ -177,6 +179,7 @@
   "keyboard_action_2_positive": "Action 2 positive",
   "keyboard_action_2_negative": "Action 2 negative",
   "keyboard_record": "Record",
+
   "gamepad_page_title": "Gamepad",
   "gamepad_page_description": "Configure your gamepad bindings. To map an input, ensure all controls are in their neutral positions, then select the keybind you want to change and move the control to its maximum position for at least half a second. The bar will fill to confirm the binding, which is saved automatically.",
   "gamepad_no_gamepad_connected_title": "No Gamepad Connected",

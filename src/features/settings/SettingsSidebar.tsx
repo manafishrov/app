@@ -28,6 +28,7 @@ import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovConfigStore } from '@/stores/rovConfig';
 
 type SidebarItem = {
   label: () => string;
@@ -167,7 +168,7 @@ const SettingsSidebarContent: Component<{
 
     <Show when={props.isConnected()}>
       <SidebarGroup>
-        <SidebarGroupLabel>{m.settings_rov_title()}</SidebarGroupLabel>
+        <SidebarGroupLabel>{rovConfigStore.rovName}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {ROV_ITEMS.map((item) => (

@@ -66,6 +66,7 @@ type Power = {
 
 type RovConfig = {
   firmwareVersion: string;
+  rovName: string;
   microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant;
   fluidType: FluidType;
   smoothingFactor: number;
@@ -90,6 +91,7 @@ const defaultRow: [number, number, number, number, number, number, number, numbe
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
+  rovName: 'Manafish Nomad',
   microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant.pwm,
   fluidType: FluidType.freshwater,
   smoothingFactor: 0,
