@@ -87,10 +87,10 @@ const AllocationPresetMenu: Component<{
                   props.onApplyPreset(preset.rows);
                 }}
               >
-                <div class='flex max-w-[400px] flex-col'>
+                <div class='flex max-w-sm flex-col'>
                   <span>{preset.name}</span>
                   {typeof preset.description === 'string' && preset.description.length > 0 ? (
-                    <span class='text-xs break-words whitespace-normal text-muted-foreground'>
+                    <span class='text-xs wrap-break-word whitespace-normal text-muted-foreground'>
                       {preset.description}
                     </span>
                   ) : (
