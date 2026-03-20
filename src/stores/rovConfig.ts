@@ -75,6 +75,8 @@ type RovConfig = {
   regulator: Regulator;
   directionCoefficients: DirectionCoefficients;
   power: Power;
+  ipAddress: string;
+  websocketPort: number;
 };
 
 type RegulatorSuggestions = {
@@ -124,6 +126,8 @@ const defaultRovConfig: RovConfig = {
     minBatteryVoltage: 0,
     maxBatteryVoltage: 0,
   },
+  ipAddress: '10.10.10.10',
+  websocketPort: 9000,
 };
 
 const [rovConfigStore, setRovConfigStoreInternal] = createStore<RovConfig>(defaultRovConfig);

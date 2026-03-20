@@ -73,6 +73,8 @@ pub struct RovConfig {
   pub regulator: Regulator,
   pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
+  pub ip_address: String,
+  pub websocket_port: u16,
 }
 
 pub type ThrusterTest = u8;
