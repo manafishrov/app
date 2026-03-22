@@ -7,3 +7,9 @@ pre-commit:
     fmt:
       glob: '*.{ts,tsx}'
       run: bunx oxfmt {staged_files} && git add {staged_files}
+    lint-rs:
+      glob: '*.rs'
+      run: cargo clippy --manifest-path src-tauri/Cargo.toml --fix --allow-dirty -- -W clippy::all && git add {staged_files}
+    fmt-rs:
+      glob: '*.rs'
+      run: cargo fmt --manifest-path src-tauri/Cargo.toml && git add {staged_files}
