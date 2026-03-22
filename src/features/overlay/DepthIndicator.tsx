@@ -9,7 +9,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const BASE_WIDTH_REM = 7;
-const SCALE_MULTIPLIER = 1;
+const SCALE_MULTIPLIER = 2;
 
 const DepthIndicator: Component = () => {
   const badgeWidth = createMemo(
@@ -20,27 +20,27 @@ const DepthIndicator: Component = () => {
     <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
       <Badge
         variant='secondary'
-        class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-between gap-3 whitespace-nowrap'
-        style={{ width: badgeWidth() }}
+        class='h-auto min-h-5 items-center justify-between gap-3 border-border/50 bg-background/50 py-1 whitespace-nowrap backdrop-blur-sm'
+        style={{ 'min-width': badgeWidth() }}
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
-          <RulerIcon class='size-4 mr-1 rotate-90' />
-          <span class='text-[10px] uppercase tracking-wider'>
+          <RulerIcon class='mr-1 size-[1em] rotate-90' />
+          <span class='text-[10px] tracking-wider uppercase'>
             {m.overlay_depth_current_short()}
           </span>
         </div>
-        <span class='shrink-0 tabular-nums font-mono'>{rovTelemetryStore.depth.toFixed(1)}m</span>
+        <span class='shrink-0 font-mono tabular-nums'>{rovTelemetryStore.depth.toFixed(1)}m</span>
       </Badge>
       <Badge
         variant='secondary'
-        class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-between gap-3 whitespace-nowrap'
-        style={{ width: badgeWidth() }}
+        class='h-auto min-h-5 items-center justify-between gap-3 border-border/50 bg-background/50 py-1 whitespace-nowrap backdrop-blur-sm'
+        style={{ 'min-width': badgeWidth() }}
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
-          <RulerIcon class='size-4 mr-1 rotate-90 opacity-50' />
-          <span class='text-[10px] uppercase tracking-wider'>{m.overlay_depth_target_short()}</span>
+          <RulerIcon class='mr-1 size-[1em] rotate-90 opacity-50' />
+          <span class='text-[10px] tracking-wider uppercase'>{m.overlay_depth_target_short()}</span>
         </div>
-        <span class='shrink-0 tabular-nums font-mono text-muted-foreground'>
+        <span class='shrink-0 font-mono text-muted-foreground tabular-nums'>
           {rovTelemetryStore.desiredDepth.toFixed(1)}m
         </span>
       </Badge>

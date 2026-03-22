@@ -150,15 +150,7 @@ export const DesiredIndicator: Component<DesiredIndicatorProps> = (props) => {
 
   return (
     <g
-      style={{
-        transform: `
-          translate(${center()}px, ${center()}px)
-          translateX(${props.deltaYaw * yawScale()}px)
-          translateY(${-props.desiredPitch * pitchScale()}px)
-          rotate(${props.desiredRoll}deg)
-          translate(${-center()}px, ${-center()}px)
-        `,
-      }}
+      transform={`translate(${center()}, ${center()}) translate(${props.deltaYaw * yawScale()}, ${-props.desiredPitch * pitchScale()}) rotate(${props.desiredRoll}) translate(${-center()}, ${-center()})`}
     >
       <line
         x1={center() - props.size * DESIRED_LINE_OFFSET}
@@ -185,15 +177,7 @@ export const ActualIndicator: Component<ActualIndicatorProps> = (props) => {
 
   return (
     <g
-      style={{
-        transform: `
-          translate(${center()}px, ${center()}px)
-          translateX(${props.deltaYaw * yawScale()}px)
-          translateY(${-props.pitch * pitchScale()}px)
-          rotate(${props.roll}deg)
-          translate(${-center()}px, ${-center()}px)
-        `,
-      }}
+      transform={`translate(${center()}, ${center()}) translate(${props.deltaYaw * yawScale()}, ${-props.pitch * pitchScale()}) rotate(${props.roll}) translate(${-center()}, ${-center()})`}
     >
       <line
         x1={center() - props.size * ACTUAL_LINE_OFFSET_1}

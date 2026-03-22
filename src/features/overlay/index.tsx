@@ -12,22 +12,17 @@ import { TemperatureIndicator } from './TemperatureIndicator';
 import { ThrusterRpmOverlay } from './ThrusterRpmOverlay';
 import { UpdateAlert } from './UpdateAlert';
 
-type ScaledSectionProps = {
-  class: string;
+type ScaledContentProps = {
+  class?: string;
   children: JSXElement;
   scale: number;
 };
 
-const SCALE_BASE = 0.8;
-const SCALE_INCREMENT = 0.2;
+const SCALE_BASE = 0.65;
+const SCALE_INCREMENT = 0.35;
 
-const ScaledSection: Component<ScaledSectionProps> = (props) => (
-  <div
-    class={props.class}
-    style={{
-      zoom: props.scale,
-    }}
-  >
+const ZoomContent: Component<ScaledContentProps> = (props) => (
+  <div class={props.class} style={{ zoom: props.scale }}>
     {props.children}
   </div>
 );
@@ -36,28 +31,38 @@ const Overlay: Component = () => {
   const scaleMultiplier = createMemo(() => SCALE_BASE + configStore.overlayScale * SCALE_INCREMENT);
 
   return (
-    <div class='absolute inset-0 pointer-events-none overflow-hidden'>
-      <ScaledSection class='absolute top-4 left-4 flex flex-col gap-2' scale={scaleMultiplier()}>
-        <ConnectionStatusIndicator />
-        <RecordingIndicator />
-      </ScaledSection>
-      <ScaledSection class='absolute bottom-4 left-4' scale={scaleMultiplier()}>
-        <AttitudeIndicator />
-      </ScaledSection>
-      <ScaledSection class='absolute top-1/2 left-4 -translate-y-1/2' scale={scaleMultiplier()}>
+    <div class='pointer-events-none absolute inset-0 overflow-hidden'>
+      <div class='absolute top-4 left-4'>
+        <ZoomContent class='flex flex-col gap-2' scale={scaleMultiplier()}>
+          <ConnectionStatusIndicator />
+          <RecordingIndicator />
+        </ZoomContent>
+      </div>
+
+      <div class='absolute inset-y-0 left-4 flex items-end pb-4'>
+        <ZoomContent scale={scaleMultiplier()}>
+          <AttitudeIndicator />
+        </ZoomContent>
+      </div>
+
+      <div class='absolute inset-y-0 left-4 flex items-center'>
         <StabilizationIndicator />
-      </ScaledSection>
-      <ScaledSection class='absolute top-1/2 right-4 -translate-y-1/2' scale={scaleMultiplier()}>
-        <ThrusterRpmOverlay />
-      </ScaledSection>
-      <ScaledSection
-        class='absolute right-4 bottom-4 flex flex-row gap-4 items-end'
-        scale={scaleMultiplier()}
-      >
-        <DepthIndicator />
-        <TemperatureIndicator />
-        <BatteryIndicator />
-      </ScaledSection>
+      </div>
+
+      <div class='absolute inset-y-0 right-4 flex items-center justify-end'>
+        <ZoomContent scale={scaleMultiplier()}>
+          <ThrusterRpmOverlay />
+        </ZoomContent>
+      </div>
+
+      <div class='absolute inset-x-0 bottom-4 flex items-end justify-end pr-4'>
+        <ZoomContent class='flex flex-row items-end gap-4' scale={scaleMultiplier()}>
+          <DepthIndicator />
+          <TemperatureIndicator />
+          <BatteryIndicator />
+        </ZoomContent>
+      </div>
+
       <UpdateAlert />
     </div>
   );

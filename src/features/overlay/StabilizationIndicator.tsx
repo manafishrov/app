@@ -1,3 +1,5 @@
+import type { Component, JSXElement } from 'solid-js';
+
 import { Toggle } from '@manafishrov/ui/toggle';
 import {
   Tooltip,
@@ -6,7 +8,7 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@manafishrov/ui/tooltip';
-import type { Component, JSXElement } from 'solid-js';
+import { Portal } from 'solid-js/web';
 
 import { AutoStabilizationIcon } from '@/components/icons/AutoStabilizationIcon';
 import { DepthHoldIcon } from '@/components/icons/DepthHoldIcon';
@@ -16,14 +18,16 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
-const SCALE_BASE = 0.8;
-const SCALE_INCREMENT = 0.2;
+const TOGGLE_BASE_REM = 2.25;
+const TOGGLE_SCALE_REM = 0.3;
+const ICON_BASE_REM = 1.25;
+const ICON_SCALE_REM = 0.18;
 
 type StabilizationToggleProps = {
   active: boolean;
   label: string;
   onToggle: () => void;
-  children: JSXElement;
+  icon: JSXElement;
 };
 
 const handleToggleError = (): void => {
@@ -31,8 +35,11 @@ const handleToggleError = (): void => {
 };
 
 const StabilizationToggle: Component<StabilizationToggleProps> = (props) => {
-  const inverseScale = createMemo(
-    () => 1 / (SCALE_BASE + configStore.overlayScale * SCALE_INCREMENT),
+  const toggleSize = createMemo(
+    () => `${TOGGLE_BASE_REM + (configStore.overlayScale - 1) * TOGGLE_SCALE_REM}rem`,
+  );
+  const iconSize = createMemo(
+    () => `${ICON_BASE_REM + (configStore.overlayScale - 1) * ICON_SCALE_REM}rem`,
   );
 
   return (
@@ -53,26 +60,34 @@ const StabilizationToggle: Component<StabilizationToggleProps> = (props) => {
                 event.currentTarget.blur();
               }
             }}
-            class='size-9 justify-center bg-background/50 p-0 text-muted-foreground backdrop-blur-sm border-border/50 hover:bg-background/60 hover:text-foreground data-pressed:bg-background/80 data-pressed:text-emerald-300 data-pressed:border-emerald-300/30'
+            class='size-9 justify-center border-border/50 bg-background/50 p-0 text-muted-foreground backdrop-blur-sm hover:bg-background/60 hover:text-foreground data-pressed:border-emerald-300/30 data-pressed:bg-background/80 data-pressed:text-emerald-300'
+            style={{ width: toggleSize(), height: toggleSize() }}
             tabindex={-1}
           >
-            {props.children}
+            <span
+              class='inline-flex items-center justify-center'
+              style={{ width: iconSize(), height: iconSize() }}
+            >
+              {props.icon}
+            </span>
           </Toggle>
         )}
       />
-      <TooltipPositioner>
-        <TooltipContent style={{ zoom: inverseScale() }}>
-          <span>{props.label}</span>
-          <TooltipArrow />
-        </TooltipContent>
-      </TooltipPositioner>
+      <Portal>
+        <TooltipPositioner>
+          <TooltipContent>
+            <span>{props.label}</span>
+            <TooltipArrow />
+          </TooltipContent>
+        </TooltipPositioner>
+      </Portal>
     </Tooltip>
   );
 };
 
 const StabilizationIndicator: Component = () => (
   <div
-    class={connectionStatusStore.isConnected ? 'flex flex-col gap-2 pointer-events-auto' : 'hidden'}
+    class={connectionStatusStore.isConnected ? 'pointer-events-auto flex flex-col gap-2' : 'hidden'}
   >
     <StabilizationToggle
       active={rovStatusStore.autoStabilization}
@@ -80,18 +95,16 @@ const StabilizationIndicator: Component = () => (
       onToggle={() => {
         toggleAutoStabilization().catch(handleToggleError);
       }}
-    >
-      <AutoStabilizationIcon class='size-5' />
-    </StabilizationToggle>
+      icon={<AutoStabilizationIcon class='size-full' />}
+    />
     <StabilizationToggle
       active={rovStatusStore.depthHold}
       label={m.controls_stabilization_depth_hold()}
       onToggle={() => {
         toggleDepthHold().catch(handleToggleError);
       }}
-    >
-      <DepthHoldIcon class='size-5' />
-    </StabilizationToggle>
+      icon={<DepthHoldIcon class='size-full' />}
+    />
   </div>
 );
 

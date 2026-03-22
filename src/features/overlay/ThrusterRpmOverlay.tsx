@@ -8,7 +8,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const BASE_WIDTH_REM = 6.5;
-const SCALE_MULTIPLIER = 0.5;
+const SCALE_MULTIPLIER = 2;
 
 const ThrusterRpmOverlay: Component = () => {
   const badgeWidth = createMemo(
@@ -27,13 +27,13 @@ const ThrusterRpmOverlay: Component = () => {
         {(rpm, index) => (
           <Badge
             variant='secondary'
-            class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-end gap-1 whitespace-nowrap'
-            style={{ width: badgeWidth() }}
+            class='h-auto min-h-5 items-center justify-end gap-1 border-border/50 bg-background/50 py-1 whitespace-nowrap backdrop-blur-sm'
+            style={{ 'min-width': badgeWidth() }}
           >
-            <div class='flex shrink-0 items-center gap-1 tabular-nums font-mono'>
+            <div class='flex shrink-0 items-center gap-1 font-mono tabular-nums'>
               <ThrusterRpm rpm={rpm()} />
             </div>
-            <span class='w-4 shrink-0 text-right'>T{index + 1}</span>
+            <span class='min-w-[2.5ch] shrink-0 text-right'>T{index + 1}</span>
           </Badge>
         )}
       </Index>

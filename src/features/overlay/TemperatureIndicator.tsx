@@ -11,7 +11,7 @@ import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 const BASE_BADGE_WIDTH_REM = 7;
-const BADGE_WIDTH_SCALE_FACTOR = 1;
+const BADGE_WIDTH_SCALE_FACTOR = 2;
 
 const TemperatureIndicator: Component = () => {
   const badgeWidth = createMemo(
@@ -22,37 +22,37 @@ const TemperatureIndicator: Component = () => {
     <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
       <Badge
         variant='secondary'
-        class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-between gap-3 whitespace-nowrap'
-        style={{ width: badgeWidth() }}
+        class='h-auto min-h-5 items-center justify-between gap-3 border-border/50 bg-background/50 py-1 whitespace-nowrap backdrop-blur-sm'
+        style={{ 'min-width': badgeWidth() }}
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
-          <div class='relative flex items-center mr-1'>
-            <ThermometerIcon class='size-4 -ml-1' />
-            <WaterIcon class='size-3 -ml-1' />
+          <div class='relative mr-1 flex items-center'>
+            <ThermometerIcon class='-ml-1 size-[1em]' />
+            <WaterIcon class='-ml-1 size-[0.8em]' />
           </div>
-          <span class='text-[10px] uppercase tracking-wider'>
+          <span class='text-[10px] tracking-wider uppercase'>
             {m.overlay_temperature_external_short()}
           </span>
         </div>
-        <span class='shrink-0 tabular-nums font-mono'>
+        <span class='shrink-0 font-mono tabular-nums'>
           {rovTelemetryStore.waterTemperature.toFixed(1)}°C
         </span>
       </Badge>
       <Badge
         variant='secondary'
-        class='bg-background/50 backdrop-blur-sm border-border/50 items-center justify-between gap-3 whitespace-nowrap'
-        style={{ width: badgeWidth() }}
+        class='h-auto min-h-5 items-center justify-between gap-3 border-border/50 bg-background/50 py-1 whitespace-nowrap backdrop-blur-sm'
+        style={{ 'min-width': badgeWidth() }}
       >
         <div class='flex shrink-0 items-center text-muted-foreground'>
-          <div class='relative flex items-center mr-1'>
-            <ThermometerIcon class='size-4 -ml-1' />
-            <CircuitIcon class='size-3 -ml-1' />
+          <div class='relative mr-1 flex items-center'>
+            <ThermometerIcon class='-ml-1 size-[1em]' />
+            <CircuitIcon class='-ml-1 size-[0.8em]' />
           </div>
-          <span class='text-[10px] uppercase tracking-wider'>
+          <span class='text-[10px] tracking-wider uppercase'>
             {m.overlay_temperature_internal_short()}
           </span>
         </div>
-        <span class='shrink-0 tabular-nums font-mono'>
+        <span class='shrink-0 font-mono tabular-nums'>
           {rovTelemetryStore.electronicsTemperature.toFixed(1)}°C
         </span>
       </Badge>

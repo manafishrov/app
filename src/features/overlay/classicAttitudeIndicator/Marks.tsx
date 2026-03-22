@@ -102,13 +102,8 @@ const RollTickMark: Component<
 };
 
 const PitchLadder: Component<SubProps & { pitch: number; roll: number }> = (props) => (
-  <g
-    style={{
-      transform: `rotate(${-props.roll}deg)`,
-      'transform-origin': `${props.center}px ${props.center}px`,
-    }}
-  >
-    <g style={{ transform: `translateY(${props.pitch * getPitchScale(props.size)}px)` }}>
+  <g transform={`rotate(${-props.roll}, ${props.center}, ${props.center})`}>
+    <g transform={`translate(0, ${props.pitch * getPitchScale(props.size)})`}>
       <rect
         x={props.center - props.size * CONST.R_OFF}
         y={props.center - props.size * CONST.R_SIZE}

@@ -37,8 +37,11 @@ const RecordingIndicator: Component = () => {
 
   return (
     <div class={recordingStore.isRecording ? 'flex' : 'hidden'}>
-      <Badge variant='destructive' class='bg-destructive/80 backdrop-blur-sm border-destructive'>
-        <div class='bg-white h-2 w-2 animate-pulse rounded-full mr-1.5' />
+      <Badge
+        variant='destructive'
+        class='h-auto min-h-5 border-destructive bg-destructive/80 py-1 backdrop-blur-sm'
+      >
+        <div class='mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white' />
         {m.overlay_recording_rec()} {formatTime(elapsed())}
       </Badge>
     </div>

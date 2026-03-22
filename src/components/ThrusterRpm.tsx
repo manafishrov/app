@@ -60,7 +60,7 @@ const ThrusterRpm: Component<{ rpm: number }> = (props): JSXElement => {
         ref={(element) => {
           spinnerElement = element;
         }}
-        class='inline-flex size-5 items-center justify-center align-middle'
+        class='inline-flex size-[1.2em] items-center justify-center align-middle'
         style={{
           transition: 'none',
           'transform-origin': 'center',
