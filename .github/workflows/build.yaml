@@ -108,7 +108,7 @@ jobs:
           $VCINSTALLDIR = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
             -latest -property installationPath
           Add-Content $env:GITHUB_ENV "LIBCLANG_PATH=$VCINSTALLDIR\VC\Tools\LLVM\x64\bin`n"
-          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z"
+          $url = "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-full_build-shared.7z"
           Invoke-WebRequest $url -OutFile ffmpeg-release-full-shared.7z
           7z x ffmpeg-release-full-shared.7z
           mkdir ffmpeg
