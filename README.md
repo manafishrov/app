@@ -1,28 +1,44 @@
-# App
+# Manafish App
 
-Make sure to have [Bun](https://bun.sh) and [Rust](https://www.rust-lang.org/tools/install) installed.
+Control application for the Manafish ROV built with [Tauri](https://tauri.app), [SolidJS](https://solidjs.com), and Rust.
 
-Install the dependencies with:
+## Prerequisites
+
+- [Bun](https://bun.sh)
+- [Rust](https://www.rust-lang.org/tools/install)
+
+## Setup
 
 ```bash
 bun install
 ```
 
-## Build
+## Development
 
-To build the app and create an executable file, run:
+```bash
+bun run tauri dev
+```
+
+## Build
 
 ```bash
 bun run tauri build
 ```
 
-## Development Setup
+## Scripts
 
-Start the app in development mode with:
-
-```bash
-bun run tauri dev
-```
+| Script | Description |
+|---|---|
+| `bun run dev` | Start Vite dev server |
+| `bun run build` | Build frontend |
+| `bun run lint` | Lint TypeScript |
+| `bun run lint:fix` | Lint and auto-fix TypeScript |
+| `bun run fmt` | Format TypeScript |
+| `bun run fmt:check` | Check TypeScript formatting |
+| `bun run lint:rs` | Lint Rust |
+| `bun run lint:rs:fix` | Lint and auto-fix Rust |
+| `bun run fmt:rs` | Format Rust |
+| `bun run fmt:rs:check` | Check Rust formatting |
 
 ## License
 
