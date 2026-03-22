@@ -4,6 +4,7 @@ import type { DirectionVector } from '@/stores/directionVector';
 
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
+import { isInputSuppressed } from '@/stores/inputState';
 
 const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
 const MIN_AXIS_VALUE = -1;
@@ -140,7 +141,7 @@ export const createDirectionVectorLoop = (
   };
 
   const loop = (): void => {
-    const vector = computeDirectionVector(config, pressedKeys);
+    const vector = isInputSuppressed() ? EMPTY_INPUT : computeDirectionVector(config, pressedKeys);
     sendVector(vector);
     frame = requestAnimationFrame(loop);
   };

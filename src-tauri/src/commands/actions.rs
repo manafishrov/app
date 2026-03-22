@@ -11,8 +11,8 @@ use crate::models::toast::ToastContent;
 use crate::toast::{toast_error, toast_loading, toast_success};
 use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
 use crate::websocket::send::actions::{
-  handle_send_custom_action, handle_send_direction_vector, handle_toggle_auto_stabilization,
-  handle_toggle_depth_hold,
+  handle_send_custom_action, handle_send_direction_vector, handle_set_desired_depth,
+  handle_toggle_auto_stabilization, handle_toggle_depth_hold,
 };
 use crate::{log_error, log_info};
 
@@ -50,6 +50,16 @@ pub async fn toggle_auto_stabilization(
 /// Returns an error if the websocket send channel is unavailable.
 pub async fn toggle_depth_hold(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
   handle_toggle_depth_hold(&state).await
+}
+
+#[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
+pub async fn set_desired_depth(
+  state: State<'_, MessageSendChannelState>,
+  depth: f32,
+) -> Result<(), String> {
+  handle_set_desired_depth(&state, depth).await
 }
 
 fn recording_toast_identifier(temp_path: &str) -> String {

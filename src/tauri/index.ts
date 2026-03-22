@@ -10,6 +10,7 @@ import { setupToastListener } from '@/tauri/toast';
 
 export { flashMicrocontrollerFirmware } from '@/tauri/microcontrollerFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
+export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';

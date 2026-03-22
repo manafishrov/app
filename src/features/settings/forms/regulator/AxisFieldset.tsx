@@ -21,7 +21,7 @@ type AxisNumberFieldProps = {
   label: string;
   title: string;
   defaultValue: number;
-  suggestionValue?: number;
+  suggestionValue?: number | undefined;
 };
 
 type AxisRateFieldProps = {
@@ -113,14 +113,12 @@ const AxisNumberField = withForm({
           max={MAX_PID_VALUE}
           step={1}
           trailingAddon={
-            typeof props.suggestionValue === 'number' && (
-              <FieldSuggestionActions
-                defaultValue={props.defaultValue}
-                suggestionValue={props.suggestionValue}
-                onChange={field().handleChange}
-                label={`${props.title} ${props.label}`}
-              />
-            )
+            <FieldSuggestionActions
+              defaultValue={props.defaultValue}
+              suggestionValue={props.suggestionValue}
+              onChange={field().handleChange}
+              label={`${props.title} ${props.label}`}
+            />
           }
         />
       )}
@@ -132,32 +130,17 @@ const renderAxisNumberField = (
   props: Pick<ComponentProps<typeof AxisNumberField>, 'form'> &
     Pick<AxisFieldsetProps, 'axisName' | 'title'>,
   config: AxisNumberFieldConfig,
-): JSX.Element => {
-  if (typeof config.suggestionValue === 'number') {
-    return (
-      <AxisNumberField
-        form={props.form}
-        axisName={props.axisName}
-        fieldName={config.fieldName}
-        label={config.label}
-        title={props.title}
-        defaultValue={config.defaultValue}
-        suggestionValue={config.suggestionValue}
-      />
-    );
-  }
-
-  return (
-    <AxisNumberField
-      form={props.form}
-      axisName={props.axisName}
-      fieldName={config.fieldName}
-      label={config.label}
-      title={props.title}
-      defaultValue={config.defaultValue}
-    />
-  );
-};
+): JSX.Element => (
+  <AxisNumberField
+    form={props.form}
+    axisName={props.axisName}
+    fieldName={config.fieldName}
+    label={config.label}
+    title={props.title}
+    defaultValue={config.defaultValue}
+    suggestionValue={config.suggestionValue}
+  />
+);
 
 const AxisRateField = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,

@@ -39,7 +39,7 @@ mod toast;
 
 use commands::actions::{
   append_recording_chunk, save_recording, send_custom_action, send_direction_vector,
-  toggle_auto_stabilization, toggle_depth_hold,
+  set_desired_depth, toggle_auto_stabilization, toggle_depth_hold,
 };
 use commands::config::{get_config, set_config};
 use commands::gamepad::{gamepad_vibrate, start_gamepad_stream};
@@ -103,6 +103,7 @@ pub fn run() -> tauri::Result<()> {
       send_direction_vector,
       send_custom_action,
       toggle_auto_stabilization,
+      set_desired_depth,
       append_recording_chunk,
       toggle_depth_hold,
       flash_microcontroller_firmware,

@@ -146,6 +146,9 @@ type KeyboardBindings = {
   action2Negative: NullableKeyboardInput;
   autoStabilization: NullableKeyboardInput;
   depthHold: NullableKeyboardInput;
+  desiredDepthEntry: NullableKeyboardInput;
+  desiredDepthIncrease: NullableKeyboardInput;
+  desiredDepthDecrease: NullableKeyboardInput;
   record: NullableKeyboardInput;
 };
 
@@ -168,6 +171,9 @@ type GamepadBindings = {
   action2Negative: NullableGamepadInput;
   autoStabilization: NullableGamepadInput;
   depthHold: NullableGamepadInput;
+  desiredDepthEntry: NullableGamepadInput;
+  desiredDepthIncrease: NullableGamepadInput;
+  desiredDepthDecrease: NullableGamepadInput;
   record: NullableGamepadInput;
 };
 

@@ -40,6 +40,9 @@ const createNullKeyboardBindings = (): KeyboardBindings => ({
   action2Negative: NULL_VALUE,
   autoStabilization: NULL_VALUE,
   depthHold: NULL_VALUE,
+  desiredDepthEntry: NULL_VALUE,
+  desiredDepthIncrease: NULL_VALUE,
+  desiredDepthDecrease: NULL_VALUE,
   record: NULL_VALUE,
 });
 
@@ -62,6 +65,9 @@ const createNullGamepadBindings = (): GamepadBindings => ({
   action2Negative: NULL_VALUE,
   autoStabilization: NULL_VALUE,
   depthHold: NULL_VALUE,
+  desiredDepthEntry: NULL_VALUE,
+  desiredDepthIncrease: NULL_VALUE,
+  desiredDepthDecrease: NULL_VALUE,
   record: NULL_VALUE,
 });
 

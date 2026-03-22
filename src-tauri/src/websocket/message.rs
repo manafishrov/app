@@ -29,5 +29,6 @@ pub enum WebsocketMessage {
   CustomAction(CustomAction),
   ToggleAutoStabilization,
   ToggleDepthHold,
+  SetDesiredDepth(f32),
   FlashMicrocontrollerFirmware(MicrocontrollerFirmwareVariant),
 }

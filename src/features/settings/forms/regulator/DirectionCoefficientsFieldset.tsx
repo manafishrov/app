@@ -28,13 +28,11 @@ const DirectionField = withForm({
           max={MAX_PID_VALUE}
           step={1}
           trailingAddon={
-            props.hasSuggestions && (
-              <FieldSuggestionActions
-                defaultValue={props.defaultValue}
-                onChange={field().handleChange}
-                label={`${props.label} ${m.regulator_direction_coefficients_title()}`}
-              />
-            )
+            <FieldSuggestionActions
+              defaultValue={props.defaultValue}
+              onChange={field().handleChange}
+              label={`${props.label} ${m.regulator_direction_coefficients_title()}`}
+            />
           }
         />
       )}

@@ -58,3 +58,17 @@ pub async fn handle_toggle_depth_hold(
   }
   Ok(())
 }
+
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
+pub async fn handle_set_desired_depth(
+  state: &State<'_, MessageSendChannelState>,
+  depth: f32,
+) -> Result<(), String> {
+  let message = WebsocketMessage::SetDesiredDepth(depth);
+  if let Err(e) = state.tx.send(message).await {
+    log_error!("Failed to send SetDesiredDepth: {}", e);
+    return Err(e.to_string());
+  }
+  Ok(())
+}

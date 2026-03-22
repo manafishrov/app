@@ -3,12 +3,21 @@ import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/sto
 
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
+import {
+  adjustDesiredDepthDraft,
+  closeDesiredDepthPopup,
+  desiredDepthPopupStore,
+  openDesiredDepthPopup,
+} from '@/stores/desiredDepthPopup';
+import { isInputSuppressed } from '@/stores/inputState';
 import { setRecordingStore } from '@/stores/recording';
+import { rovTelemetryStore } from '@/stores/rovTelemetry';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
 type ToggleState = {
   autoStabilization: boolean;
   depthHold: boolean;
+  desiredDepthEntry: boolean;
   record: boolean;
 };
 
@@ -20,15 +29,32 @@ type ToggleContext = {
   getIsRecording: () => boolean;
   getWebrtcConnected: () => boolean;
 };
-
+type ToggleLoopArgs = Omit<ToggleContext, 'gamepad'>;
 type ToggleActionArgs = {
   isPressed: boolean;
   state: keyof ToggleState;
   lastState: ToggleState;
   action: () => Promise<void>;
 };
-
+type InputPair = { keyboard: KeyboardInput | null; gamepad: GamepadInput | null };
+type PressedInputArgs = {
+  input: InputPair;
+  pressedKeys: Set<string>;
+  gamepad: Gamepad | null;
+  ignoreKeyboard?: boolean;
+};
+type DesiredDepthAdjustConfig = {
+  state: 'desiredDepthIncrease' | 'desiredDepthDecrease';
+  bindingKey: 'desiredDepthIncrease' | 'desiredDepthDecrease';
+  delta: number;
+};
+type DesiredDepthRepeatState = Record<'desiredDepthIncrease' | 'desiredDepthDecrease', number>;
+type PopupGamepadBindingKey = 'desiredDepthEntry' | 'desiredDepthIncrease' | 'desiredDepthDecrease';
+type ToggleBindingKey = 'autoStabilization' | 'depthHold' | 'record' | PopupGamepadBindingKey;
 const THRESHOLD = 0.5;
+const DESIRED_DEPTH_STEP = 0.1;
+const DESIRED_DEPTH_REPEAT_DELAY_MS = 200;
+const DESIRED_DEPTH_REPEAT_INTERVAL_MS = 40;
 const [undefinedNumber] = [] as (number | undefined)[];
 
 const createNullValue = <ValueType>(): ValueType | null => {
@@ -36,28 +62,24 @@ const createNullValue = <ValueType>(): ValueType | null => {
   if (Array.isArray(result)) {
     throw new TypeError('Expected null match result');
   }
-
   return result;
 };
-
 const getNullValue = <ValueType>(): ValueType | null => createNullValue<ValueType>();
-
-const isInputPressed = (
-  input: { keyboard: KeyboardInput | null; gamepad: GamepadInput | null },
-  pressedKeys: Set<string>,
-  gamepad: Gamepad | null,
-): boolean => {
-  const kbValue = getKeyboardValue(input.keyboard, pressedKeys);
+const isInputPressed = ({
+  input,
+  pressedKeys,
+  gamepad,
+  ignoreKeyboard = false,
+}: PressedInputArgs): boolean => {
+  const kbValue = ignoreKeyboard ? 0 : getKeyboardValue(input.keyboard, pressedKeys);
   const gpValue = input.gamepad && gamepad ? readGamepadInput(input.gamepad, gamepad) : 0;
   return kbValue > THRESHOLD || gpValue > THRESHOLD;
 };
-
 const executeActionSilently = (action: () => Promise<void>): void => {
   action().catch(() => {
     // Intentionally silent - prevents unhandled promise rejection
   });
 };
-
 const handleToggle = ({ isPressed, state, lastState, action }: ToggleActionArgs): void => {
   if (isPressed && !lastState[state]) {
     executeActionSilently(action);
@@ -66,7 +88,6 @@ const handleToggle = ({ isPressed, state, lastState, action }: ToggleActionArgs)
     lastState[state] = false;
   }
 };
-
 const getGamepadBindingsOrNull = (
   gamepad: Gamepad | null,
   config: Config,
@@ -74,69 +95,105 @@ const getGamepadBindingsOrNull = (
   if (!gamepad) {
     return getNullValue<GamepadBindings>();
   }
-
   const bindings = getGamepadBindings(gamepad, config);
   return bindings ?? getNullValue<GamepadBindings>();
 };
-
 const getGamepadInput = (
   bindings: GamepadBindings | null,
-  key: keyof Pick<GamepadBindings, 'autoStabilization' | 'depthHold' | 'record'>,
+  key: ToggleBindingKey,
 ): GamepadInput | null => {
   if (!bindings) {
     return getNullValue<GamepadInput>();
   }
-
   return bindings[key];
 };
-
-const handleAutoStabilizationToggle = (ctx: ToggleContext): void => {
-  const kb = ctx.config.keyboard;
-  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
-
-  const autoStabPressed = isInputPressed(
-    { keyboard: kb.autoStabilization, gamepad: getGamepadInput(gp, 'autoStabilization') },
-    ctx.pressedKeys,
-    ctx.gamepad,
-  );
+const getToggleInput = (ctx: ToggleContext, key: ToggleBindingKey): InputPair => {
+  const bindings = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
+  return {
+    keyboard: ctx.config.keyboard[key],
+    gamepad: getGamepadInput(bindings, key),
+  };
+};
+const handleDesiredDepthEntryToggle = (ctx: ToggleContext): void => {
+  const isPressed = isInputPressed({
+    input: getToggleInput(ctx, 'desiredDepthEntry'),
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+  });
   handleToggle({
-    isPressed: autoStabPressed,
+    isPressed,
+    state: 'desiredDepthEntry',
+    lastState: ctx.lastState,
+    action: () => {
+      if (desiredDepthPopupStore.isOpen) {
+        return closeDesiredDepthPopup();
+      }
+      openDesiredDepthPopup(rovTelemetryStore.desiredDepth);
+      return Promise.resolve();
+    },
+  });
+};
+const handleDesiredDepthAdjust = (
+  ctx: ToggleContext,
+  config: DesiredDepthAdjustConfig,
+  repeatState: DesiredDepthRepeatState,
+): void => {
+  const isPressed = isInputPressed({
+    input: getToggleInput(ctx, config.bindingKey),
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+  });
+  const now = performance.now();
+  if (!isPressed) {
+    repeatState[config.state] = 0;
+    return;
+  }
+
+  if (!desiredDepthPopupStore.isOpen) {
+    return;
+  }
+  if (repeatState[config.state] === 0 || now >= repeatState[config.state]) {
+    adjustDesiredDepthDraft(config.delta);
+    repeatState[config.state] =
+      repeatState[config.state] === 0
+        ? now + DESIRED_DEPTH_REPEAT_DELAY_MS
+        : now + DESIRED_DEPTH_REPEAT_INTERVAL_MS;
+  }
+};
+const handleAutoStabilizationToggle = (ctx: ToggleContext): void => {
+  const isPressed = isInputPressed({
+    input: getToggleInput(ctx, 'autoStabilization'),
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+  });
+  handleToggle({
+    isPressed,
     state: 'autoStabilization',
     lastState: ctx.lastState,
     action: toggleAutoStabilization,
   });
 };
-
 const handleDepthHoldToggle = (ctx: ToggleContext): void => {
-  const kb = ctx.config.keyboard;
-  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
-
-  const depthHoldPressed = isInputPressed(
-    { keyboard: kb.depthHold, gamepad: getGamepadInput(gp, 'depthHold') },
-    ctx.pressedKeys,
-    ctx.gamepad,
-  );
+  const isPressed = isInputPressed({
+    input: getToggleInput(ctx, 'depthHold'),
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+  });
   handleToggle({
-    isPressed: depthHoldPressed,
+    isPressed,
     state: 'depthHold',
     lastState: ctx.lastState,
     action: toggleDepthHold,
   });
 };
-
 const handleRecordingToggle = (ctx: ToggleContext): void => {
-  const kb = ctx.config.keyboard;
-  const gp = getGamepadBindingsOrNull(ctx.gamepad, ctx.config);
-
-  const recordPressed = isInputPressed(
-    { keyboard: kb.record, gamepad: getGamepadInput(gp, 'record') },
-    ctx.pressedKeys,
-    ctx.gamepad,
-  );
-
+  const recordPressed = isInputPressed({
+    input: getToggleInput(ctx, 'record'),
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+  });
   const isRecording = ctx.getIsRecording();
   const webrtcConnected = ctx.getWebrtcConnected();
-
   if (recordPressed && !ctx.lastState.record && webrtcConnected) {
     const startTime = isRecording ? undefinedNumber : Date.now();
     setRecordingStore({
@@ -147,6 +204,45 @@ const handleRecordingToggle = (ctx: ToggleContext): void => {
   } else if (!recordPressed) {
     ctx.lastState.record = false;
   }
+};
+const createToggleContext = ({
+  config,
+  pressedKeys,
+  lastState,
+  getIsRecording,
+  getWebrtcConnected,
+}: ToggleLoopArgs): ToggleContext => ({
+  config,
+  pressedKeys,
+  gamepad: getActiveGamepad(config.selectedGamepadId),
+  lastState,
+  getIsRecording,
+  getWebrtcConnected,
+});
+const handleSuppressedFrame = (ctx: ToggleContext, repeatState: DesiredDepthRepeatState): void => {
+  handleDesiredDepthAdjust(
+    ctx,
+    {
+      state: 'desiredDepthIncrease',
+      bindingKey: 'desiredDepthIncrease',
+      delta: DESIRED_DEPTH_STEP,
+    },
+    repeatState,
+  );
+  handleDesiredDepthAdjust(
+    ctx,
+    {
+      state: 'desiredDepthDecrease',
+      bindingKey: 'desiredDepthDecrease',
+      delta: -DESIRED_DEPTH_STEP,
+    },
+    repeatState,
+  );
+};
+const handleDefaultFrame = (ctx: ToggleContext): void => {
+  handleAutoStabilizationToggle(ctx);
+  handleDepthHoldToggle(ctx);
+  handleRecordingToggle(ctx);
 };
 
 export const createStateToggleLoop = (
@@ -161,30 +257,32 @@ export const createStateToggleLoop = (
   const lastState: ToggleState = {
     autoStabilization: false,
     depthHold: false,
+    desiredDepthEntry: false,
     record: false,
   };
-
+  const desiredDepthRepeatState: DesiredDepthRepeatState = {
+    desiredDepthIncrease: 0,
+    desiredDepthDecrease: 0,
+  };
   const loop = (): void => {
-    const gamepad = getActiveGamepad(config.selectedGamepadId);
-
-    const ctx: ToggleContext = {
+    const ctx = createToggleContext({
       config,
       pressedKeys,
-      gamepad,
       lastState,
       getIsRecording,
       getWebrtcConnected,
-    };
-
-    handleAutoStabilizationToggle(ctx);
-    handleDepthHoldToggle(ctx);
-    handleRecordingToggle(ctx);
-
+    });
+    handleDesiredDepthEntryToggle(ctx);
+    if (isInputSuppressed()) {
+      handleSuppressedFrame(ctx, desiredDepthRepeatState);
+      frame = requestAnimationFrame(loop);
+      return;
+    }
+    handleDefaultFrame(ctx);
     frame = requestAnimationFrame(loop);
   };
-
   loop();
-
+  loop();
   return (): void => {
     if (frame !== null) {
       cancelAnimationFrame(frame);

@@ -132,7 +132,7 @@ pub struct GamepadInput {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct KeyboardBindings {
   pub surge_forward: Option<KeyboardInput>,
   pub surge_backward: Option<KeyboardInput>,
@@ -152,11 +152,14 @@ pub struct KeyboardBindings {
   pub action2_negative: Option<KeyboardInput>,
   pub auto_stabilization: Option<KeyboardInput>,
   pub depth_hold: Option<KeyboardInput>,
+  pub desired_depth_entry: Option<KeyboardInput>,
+  pub desired_depth_increase: Option<KeyboardInput>,
+  pub desired_depth_decrease: Option<KeyboardInput>,
   pub record: Option<KeyboardInput>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct GamepadBindings {
   pub surge_forward: Option<GamepadInput>,
   pub surge_backward: Option<GamepadInput>,
@@ -176,6 +179,9 @@ pub struct GamepadBindings {
   pub action2_negative: Option<GamepadInput>,
   pub auto_stabilization: Option<GamepadInput>,
   pub depth_hold: Option<GamepadInput>,
+  pub desired_depth_entry: Option<GamepadInput>,
+  pub desired_depth_increase: Option<GamepadInput>,
+  pub desired_depth_decrease: Option<GamepadInput>,
   pub record: Option<GamepadInput>,
 }
 
@@ -255,6 +261,9 @@ impl Default for KeyboardBindings {
       action2_negative: Some(default_keyboard_input(KeyboardKey::Digit4)),
       auto_stabilization: Some(default_keyboard_input(KeyboardKey::KeyU)),
       depth_hold: Some(default_keyboard_input(KeyboardKey::KeyO)),
+      desired_depth_entry: Some(default_keyboard_input(KeyboardKey::KeyP)),
+      desired_depth_increase: Some(default_keyboard_input(KeyboardKey::ArrowUp)),
+      desired_depth_decrease: Some(default_keyboard_input(KeyboardKey::ArrowDown)),
       record: Some(default_keyboard_input(KeyboardKey::KeyR)),
     }
   }

@@ -76,6 +76,9 @@ const BINDING_SECTIONS: BindingSection[] = [
     fields: [
       { key: 'autoStabilization', label: () => m.bindings_action_auto_stabilization() },
       { key: 'depthHold', label: () => m.gamepad_depth_hold() },
+      { key: 'desiredDepthEntry', label: () => m.gamepad_desired_depth_entry() },
+      { key: 'desiredDepthIncrease', label: () => m.gamepad_desired_depth_increase() },
+      { key: 'desiredDepthDecrease', label: () => m.gamepad_desired_depth_decrease() },
     ],
   },
   {
@@ -137,6 +140,9 @@ const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => ({
   action2Negative: cloneBinding(bindings.action2Negative),
   autoStabilization: cloneBinding(bindings.autoStabilization),
   depthHold: cloneBinding(bindings.depthHold),
+  desiredDepthEntry: cloneBinding(bindings.desiredDepthEntry),
+  desiredDepthIncrease: cloneBinding(bindings.desiredDepthIncrease),
+  desiredDepthDecrease: cloneBinding(bindings.desiredDepthDecrease),
   record: cloneBinding(bindings.record),
 });
 

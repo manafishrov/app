@@ -78,6 +78,9 @@ const BINDING_SECTIONS: BindingSection[] = [
     fields: [
       { key: 'autoStabilization', label: () => m.bindings_action_auto_stabilization() },
       { key: 'depthHold', label: () => m.keyboard_depth_hold() },
+      { key: 'desiredDepthEntry', label: () => m.keyboard_desired_depth_entry() },
+      { key: 'desiredDepthIncrease', label: () => m.keyboard_desired_depth_increase() },
+      { key: 'desiredDepthDecrease', label: () => m.keyboard_desired_depth_decrease() },
     ],
   },
   {

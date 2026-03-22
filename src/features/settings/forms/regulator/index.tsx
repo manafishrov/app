@@ -1,6 +1,7 @@
+import type { Component, ComponentProps } from 'solid-js';
+
 import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
-import type { Component, ComponentProps } from 'solid-js';
 
 import * as m from '@/paraglide/messages';
 import {
@@ -130,7 +131,8 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
 );
 
 export const Regulator: Component = () => {
-  const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(false);
+  // HACK: Set signal to false when we want to make auto tuning possible to trigger
+  const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(true);
   const formSchema = createFormSchema();
   const rawSuggestions = regulatorSuggestions();
   const suggestions = rawSuggestions ?? EMPTY_REGULATOR_SUGGESTIONS;
