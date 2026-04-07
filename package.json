@@ -37,7 +37,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "1.2.63",
+    "@iconify-json/material-symbols": "1.2.65",
     "@inlang/paraglide-js": "2.15.1",
     "@tanstack/devtools-vite": "0.6.0",
     "@tanstack/solid-devtools": "0.8.0",
