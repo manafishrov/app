@@ -114,10 +114,7 @@ const parseSpinDirection = (value: string, fallback: number): number => {
 
 const EMPTY_ROW: Row = [ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO];
 
-const submitCalibrationForm = (
-  defaultAllocationRows: number[][],
-  value: FormValues,
-): Promise<void> => {
+const submitCalibrationForm = (value: FormValues): Promise<void> => {
   const currentPinSetup = rovConfigStore.thrusterPinSetup;
   const currentAllocation = rovConfigStore.thrusterAllocation;
   const fallbackAllocationRow = currentAllocation[ZERO] ?? EMPTY_ROW;
@@ -135,10 +132,11 @@ const submitCalibrationForm = (
       ),
     ),
   };
+  const currentAllocationRows = transpose(currentAllocation);
   const normalizedDisplayRows: ThrusterTuple<Row> = mapThrusterTuple((index) =>
     toRow(
       value.thrusterAllocation[index],
-      toRow(defaultAllocationRows[index], currentAllocation[index] ?? fallbackAllocationRow),
+      toRow(currentAllocationRows[index], currentAllocation[index] ?? fallbackAllocationRow),
     ),
   );
   const allocationByThruster = transpose(normalizedDisplayRows);
@@ -204,24 +202,24 @@ const resetAllocationInForm = (
 export const Calibration: Component = (): JSXElement => {
   const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
   const [testDisabled, setTestDisabled] = createSignal<boolean[]>(defaultDisabled);
-  const defaultAllocationRows = transpose(rovConfigStore.thrusterAllocation);
-  const initialAllocation = defaultAllocationRows.map((row) => [...row]);
-  const form = useAppForm(() => ({
-    validators: { onSubmit: formSchema },
-    defaultValues: {
-      thrusterPinSetup: {
-        identifiers: rovConfigStore.thrusterPinSetup.identifiers.map((value) =>
-          toIdentifierValue(value),
-        ),
-        spinDirections: rovConfigStore.thrusterPinSetup.spinDirections.map((value) =>
-          toSpinDirectionValue(value),
-        ),
-      },
-      thrusterAllocation: defaultAllocationRows,
-    } satisfies FormValues,
-    onSubmit: ({ value }: { value: FormValues }): Promise<void> =>
-      submitCalibrationForm(defaultAllocationRows, value),
-  }));
+  const form = useAppForm(() => {
+    const allocationRows = transpose(rovConfigStore.thrusterAllocation);
+    return {
+      validators: { onSubmit: formSchema },
+      defaultValues: {
+        thrusterPinSetup: {
+          identifiers: rovConfigStore.thrusterPinSetup.identifiers.map((value) =>
+            toIdentifierValue(value),
+          ),
+          spinDirections: rovConfigStore.thrusterPinSetup.spinDirections.map((value) =>
+            toSpinDirectionValue(value),
+          ),
+        },
+        thrusterAllocation: allocationRows,
+      } satisfies FormValues,
+      onSubmit: ({ value }: { value: FormValues }): Promise<void> => submitCalibrationForm(value),
+    };
+  });
 
   return (
     <CalibrationFormLayout
@@ -240,7 +238,8 @@ export const Calibration: Component = (): JSXElement => {
         applyPresetToForm(form, presetRows);
       }}
       onResetAllocation={(): void => {
-        resetAllocationInForm(form, initialAllocation);
+        const currentAllocation = transpose(rovConfigStore.thrusterAllocation);
+        resetAllocationInForm(form, currentAllocation);
       }}
     />
   );

@@ -134,9 +134,6 @@ export const Regulator: Component = () => {
   // HACK: Set signal to false when we want to make auto tuning possible to trigger
   const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(true);
   const formSchema = createFormSchema();
-  const rawSuggestions = regulatorSuggestions();
-  const suggestions = rawSuggestions ?? EMPTY_REGULATOR_SUGGESTIONS;
-  const hasSuggestions = hasRegulatorSuggestions(rawSuggestions);
 
   const form = useAppForm(() => ({
     validators: {
@@ -161,7 +158,11 @@ export const Regulator: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <AxisFieldsets form={form} suggestions={suggestions} hasSuggestions={hasSuggestions} />
+        <AxisFieldsets
+          form={form}
+          suggestions={regulatorSuggestions() ?? EMPTY_REGULATOR_SUGGESTIONS}
+          hasSuggestions={hasRegulatorSuggestions(regulatorSuggestions())}
+        />
 
         <div class='mt-6 flex items-center gap-4'>
           <Button variant='outline' onClick={handleAutoTuning} disabled={autoTuningDisabled()}>
@@ -169,7 +170,10 @@ export const Regulator: Component = () => {
           </Button>
         </div>
 
-        <DirectionCoefficientsFieldset form={form} hasSuggestions={hasSuggestions} />
+        <DirectionCoefficientsFieldset
+          form={form}
+          hasSuggestions={hasRegulatorSuggestions(regulatorSuggestions())}
+        />
 
         <form.AutoSubmit debounce={500} />
       </form.Form>
