@@ -23,8 +23,8 @@ const WindowButton: Component<{
   <button
     tabIndex={-1}
     onClick={props.onClick}
-    class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full outline-none transition-colors ${
-      props.isFocused ? props.focusedColor : `bg-border group-hover:${props.hoverColor}`
+    class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full transition-colors outline-none ${
+      props.isFocused ? props.focusedColor : `group-hover: bg-border${props.hoverColor}`
     }`}
     aria-label={props.ariaLabel}
   >
@@ -56,7 +56,7 @@ const FullscreenIcon: Component<{ isFullscreen: boolean; isFocused: boolean }> =
       }`}
     ></span>
     <span
-      class={`absolute inset-0 m-auto h-0 w-0 translate-x-[2.25px] translate-y-[2.25px] rounded-[1px] border-r-[4.5px] border-t-[4.5px] border-r-transparent transition-colors ${
+      class={`absolute inset-0 m-auto h-0 w-0 translate-x-[2.25px] translate-y-[2.25px] rounded-[1px] border-t-[4.5px] border-r-[4.5px] border-r-transparent transition-colors ${
         props.isFocused
           ? 'border-t-[#036200]'
           : 'border-t-transparent group-hover:border-t-[#036200]'
@@ -72,7 +72,7 @@ const WindowControls: Component<{
   onMinimize: () => void;
   onFullscreen: () => void;
 }> = (props) => (
-  <div data-tauri-drag-region={false} class='group flex items-center gap-2'>
+  <div class='group flex items-center gap-2'>
     <WindowButton
       onClick={props.onClose}
       isFocused={props.isFocused}
@@ -106,6 +106,19 @@ const WindowControls: Component<{
 
 const ignoreError = (): void => {
   // Ignore
+};
+
+const handleHeaderMouseDown = (event: MouseEvent): void => {
+  if (event.button !== 0) {
+    return;
+  }
+  if (
+    event.target instanceof HTMLElement &&
+    event.target.closest('button, a, input, [role="button"]')
+  ) {
+    return;
+  }
+  getCurrentWindow().startDragging().catch(ignoreError);
 };
 
 const createUpdateFullscreenState =
@@ -232,14 +245,14 @@ export const Header: Component = () => {
 
   return (
     <header
-      data-tauri-drag-region
-      class={`h-8 w-full border-b border-border bg-background select-none fixed z-100 transition-opacity ${
-        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'opacity-100 rounded-t-2xl'
+      onMouseDown={handleHeaderMouseDown}
+      class={`fixed z-100 h-8 w-full border-b border-border bg-background transition-opacity select-none ${
+        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'rounded-t-2xl opacity-100'
       }`}
     >
       <div
         class={cn(
-          'size-full flex items-center justify-between bg-muted/30 px-3',
+          'flex size-full items-center justify-between bg-muted/30 px-3',
           !isFullscreen() && 'rounded-t-2xl',
         )}
       >
@@ -251,11 +264,11 @@ export const Header: Component = () => {
           onFullscreen={handleFullscreen}
         />
 
-        <span class='pointer-events-none absolute left-1/2 -translate-x-1/2 text-sm font-medium text-foreground font-branding'>
+        <span class='pointer-events-none absolute left-1/2 -translate-x-1/2 font-branding text-sm font-medium text-foreground'>
           {m.header_app_name()}
         </span>
 
-        <div data-tauri-drag-region={false} class='flex items-center gap-1'>
+        <div class='flex items-center gap-1'>
           <RecordingButton />
           <SystemHealthPopover isMac={isMac()} />
           <SettingsLink isMac={isMac()} />
