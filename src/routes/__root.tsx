@@ -12,7 +12,13 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
-import { getConfig, recoverTempRecordings, setupAllListeners, checkForUpdates } from '@/tauri';
+import {
+  getConfig,
+  initializeVideoDirectory,
+  recoverTempRecordings,
+  setupAllListeners,
+  checkForUpdates,
+} from '@/tauri';
 
 const setupAppListeners = (cleanupFns: (() => void)[]): void => {
   setupAllListeners()
@@ -27,7 +33,7 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
       if (configStore.checkForUpdatesOnStartup) {
         checkForUpdates().catch(logError);
       }
-      return recoverTempRecordings();
+      return initializeVideoDirectory().then(() => recoverTempRecordings());
     })
     .catch(() => {
       const contextMenuCleanup = disableContextMenu();

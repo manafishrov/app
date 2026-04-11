@@ -27,6 +27,11 @@ const recoverTempFile = (videoDirectory: string, fileName: string): Promise<void
     )
     .then(resolveVoid);
 
+export const initializeVideoDirectory = (): Promise<void> =>
+  mkdir(configStore.videoDirectory, { recursive: true }).catch((error: unknown) => {
+    logError('Failed to initialize video directory:', error);
+  });
+
 export const ensureVideoDirectory = (): Promise<void> =>
   mkdir(configStore.videoDirectory, { recursive: true }).catch((error: unknown) => {
     logError('Failed to create video directory:', error);
