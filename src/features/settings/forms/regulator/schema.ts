@@ -79,10 +79,10 @@ export type FormValues = {
 };
 
 export const REGULATOR_FORM_DEFAULT_VALUES: FormValues = {
-  pitch: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
-  yaw: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
-  roll: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
-  depth: { kp: 0, ki: 0, kd: 0, rate: [MIN_DEPTH_RATE] },
+  pitch: { kp: 3, ki: 2, kd: 0.5, rate: [100] },
+  yaw: { kp: 3, ki: 2, kd: 0.5, rate: [100] },
+  roll: { kp: 3, ki: 2, kd: 0.5, rate: [100] },
+  depth: { kp: 2, ki: 0.5, kd: 0.1, rate: [0.5] },
   surge: 0,
   heave: 0,
   sway: 0,

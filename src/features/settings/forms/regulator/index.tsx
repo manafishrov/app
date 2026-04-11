@@ -90,9 +90,9 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       axisName='pitch'
       suggestions={props.suggestions}
       hasSuggestions={props.hasSuggestions}
-      defaultKp={5}
-      defaultKi={0.5}
-      defaultKd={1}
+      defaultKp={3}
+      defaultKi={2}
+      defaultKd={0.5}
     />
     <AxisFieldset
       form={props.form}
@@ -101,9 +101,9 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       axisName='yaw'
       suggestions={props.suggestions}
       hasSuggestions={props.hasSuggestions}
-      defaultKp={1.5}
-      defaultKi={0.1}
-      defaultKd={0.4}
+      defaultKp={3}
+      defaultKi={2}
+      defaultKd={0.5}
     />
     <AxisFieldset
       form={props.form}
@@ -112,9 +112,9 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       axisName='roll'
       suggestions={props.suggestions}
       hasSuggestions={props.hasSuggestions}
-      defaultKp={1.5}
-      defaultKi={0.1}
-      defaultKd={0.4}
+      defaultKp={3}
+      defaultKi={2}
+      defaultKd={0.5}
     />
     <AxisFieldset
       form={props.form}
@@ -123,8 +123,8 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       axisName='depth'
       suggestions={props.suggestions}
       hasSuggestions={props.hasSuggestions}
-      defaultKp={0}
-      defaultKi={0.05}
+      defaultKp={2}
+      defaultKi={0.5}
       defaultKd={0.1}
     />
   </>
