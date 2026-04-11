@@ -140,15 +140,32 @@ const setupKeyboardListener = (navigate: (opts: { to: string }) => Promise<void>
   };
 };
 
+const setupMouseTracking = (setIsMouseInWindow: (val: boolean) => void): (() => void) => {
+  const onEnter = (): void => {
+    setIsMouseInWindow(true);
+  };
+  const onLeave = (): void => {
+    setIsMouseInWindow(false);
+  };
+  document.documentElement.addEventListener('mouseenter', onEnter);
+  document.documentElement.addEventListener('mouseleave', onLeave);
+  return (): void => {
+    document.documentElement.removeEventListener('mouseenter', onEnter);
+    document.documentElement.removeEventListener('mouseleave', onLeave);
+  };
+};
+
 const useHeaderEffects = (
   setIsFullscreen: (val: boolean) => void,
   setIsFocused: (val: boolean) => void,
   navigate: (opts: { to: string }) => Promise<void>,
-): void => {
+): (() => boolean) => {
   const updateFullscreenState = createUpdateFullscreenState(setIsFullscreen);
+  const [isMouseInWindow, setIsMouseInWindow] = createSignal(true);
   let unlistenFocus: () => void = ignoreError;
   let unlistenResize: () => void = ignoreError;
   let unlistenKeyboard: () => void = ignoreError;
+  let unlistenMouse: () => void = ignoreError;
 
   onMount(() => {
     const win = getCurrentWindow();
@@ -175,13 +192,17 @@ const useHeaderEffects = (
       .catch(ignoreError);
 
     unlistenKeyboard = setupKeyboardListener(navigate);
+    unlistenMouse = setupMouseTracking(setIsMouseInWindow);
   });
 
   onCleanup(() => {
     unlistenFocus();
     unlistenResize();
     unlistenKeyboard();
+    unlistenMouse();
   });
+
+  return isMouseInWindow;
 };
 
 const useWindowActions = (
@@ -238,7 +259,7 @@ export const Header: Component = () => {
   const [isFullscreen, setIsFullscreen] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(true);
 
-  useHeaderEffects(setIsFullscreen, setIsFocused, navigate);
+  const isMouseInWindow = useHeaderEffects(setIsFullscreen, setIsFocused, navigate);
   const { handleClose, handleMinimize, handleFullscreen } = useWindowActions(setIsFullscreen);
 
   const isMac = createMemo(getIsMac);
@@ -246,8 +267,10 @@ export const Header: Component = () => {
   return (
     <header
       onMouseDown={handleHeaderMouseDown}
-      class={`fixed z-100 h-8 w-full border-b border-border bg-background transition-opacity select-none ${
-        isFullscreen() ? 'opacity-0 hover:opacity-100' : 'rounded-t-2xl opacity-100'
+      class={`fixed z-100 h-7 w-full border-b border-border bg-background transition-opacity select-none ${
+        isFullscreen()
+          ? `hover:opacity-100 ${isFocused() && isMouseInWindow() ? 'opacity-0' : 'opacity-100'}`
+          : 'rounded-t-2xl opacity-100'
       }`}
     >
       <div
@@ -257,7 +280,7 @@ export const Header: Component = () => {
         )}
       >
         <WindowControls
-          isFocused={isFocused()}
+          isFocused={isFocused() || isFullscreen()}
           isFullscreen={isFullscreen()}
           onClose={handleClose}
           onMinimize={handleMinimize}
