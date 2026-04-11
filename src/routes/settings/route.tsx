@@ -62,13 +62,13 @@ const SettingsLayout: Component = () => {
 
   return (
     <SidebarProvider defaultOpen>
-      <SidebarLayout class={cn('size-full', !isFullscreen() && 'pt-8')}>
+      <SidebarLayout class={cn('size-full', !isFullscreen() && 'pt-7')}>
         <SettingsSidebar isFullscreen={isFullscreen()} />
         <SidebarInset class={cn(isFullscreen() && 'mt-6')}>
           <ScrollArea class='relative size-full'>
             <ScrollAreaViewport tabIndex={-1}>
               <ScrollAreaContent>
-                <div class='w-full max-w-3xl mx-auto p-4 md:p-8 relative'>
+                <div class='relative mx-auto w-full max-w-3xl p-4 md:p-8'>
                   <Outlet />
                 </div>
               </ScrollAreaContent>
