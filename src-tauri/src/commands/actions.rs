@@ -147,9 +147,7 @@ fn open_input_context(
     Err(error) => {
       log_error!("Failed to open input {temp_path}: {error}");
       show_recording_save_error(toast_identifier);
-      return Err(format!(
-        "Failed to open input {temp_path}: {error}. Check file permissions."
-      ));
+      return Err(format!("Failed to open input {temp_path}: {error}. Check file permissions."));
     },
   };
 
@@ -256,11 +254,7 @@ fn remove_temp_file(temp_path: &str) {
     match fs::remove_file(temp_path) {
       Ok(()) => return,
       Err(error) if attempt + 1 < MAX_RETRIES => {
-        log_info!(
-          "Retrying temp file removal (attempt {}/{}): {error}",
-          attempt + 1,
-          MAX_RETRIES
-        );
+        log_info!("Retrying temp file removal (attempt {}/{}): {error}", attempt + 1, MAX_RETRIES);
         std::thread::sleep(RETRY_DELAY);
       },
       Err(error) => {
@@ -292,8 +286,7 @@ pub async fn save_recording(temp_path: String) -> Result<(), String> {
 
     {
       let mut input_context = open_input_context(&temp_path_clone, &toast_id_clone)?;
-      let mut output_context =
-        create_output_context(&input_context, output_path, &toast_id_clone)?;
+      let mut output_context = create_output_context(&input_context, output_path, &toast_id_clone)?;
       copy_packets(&mut input_context, &mut output_context, &toast_id_clone)?;
       finalize_output(&mut output_context, &toast_id_clone)?;
     }
