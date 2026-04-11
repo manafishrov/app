@@ -5,9 +5,11 @@ import { mkdir, readDir } from '@tauri-apps/plugin-fs';
 import { logError, logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
+import { setRecordingStore } from '@/stores/recording';
 import { invokeCommand } from '@/tauri/core';
 
 const TIMESTAMP_LENGTH = 19;
+const MAX_CONSECUTIVE_CHUNK_FAILURES = 3;
 
 const resolveVoid: () => void = () => 0;
 
@@ -45,8 +47,29 @@ export const appendRecordingChunk = (tempPath: string, chunk: Uint8Array): Promi
   invokeCommand('append_recording_chunk', { tempPath, chunk: [...chunk] })
     .catch((error: unknown) => {
       logError('Failed to append recording chunk:', error);
+      const message = String(error);
+      if (message.includes('Permission denied')) {
+        toast.create({ title: m.toasts_recording_permission_denied(), type: 'error' });
+      }
+      throw error;
     })
     .then(resolveVoid);
+
+export const handleChunkWriteOutcome = (
+  state: { consecutiveChunkFailures: number },
+  failed: boolean,
+): void => {
+  if (!failed) {
+    state.consecutiveChunkFailures = 0;
+    return;
+  }
+  state.consecutiveChunkFailures += 1;
+  if (state.consecutiveChunkFailures < MAX_CONSECUTIVE_CHUNK_FAILURES) {
+    return;
+  }
+  toast.create({ title: m.toasts_recording_stopped_due_to_errors(), type: 'error' });
+  setRecordingStore({ isRecording: false });
+};
 
 export const saveRecording = (tempPath: string): Promise<void> =>
   invokeCommand('save_recording', { tempPath })

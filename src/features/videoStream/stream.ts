@@ -5,6 +5,7 @@ import {
   appendRecordingChunk,
   createRecordingPath,
   ensureVideoDirectory,
+  handleChunkWriteOutcome,
   saveRecording,
 } from '@/tauri/recording';
 
@@ -20,6 +21,7 @@ type WebRTCState = {
   retryTimeout?: ReturnType<typeof setTimeout>;
 };
 type RecordingState = {
+  consecutiveChunkFailures: number;
   mediaRecorder?: MediaRecorder;
   operationId: number;
   pendingInvokes: number;
@@ -173,8 +175,7 @@ const waitForPendingInvokes = (state: RecordingState): Promise<void> =>
   });
 const hasEnabledVideoTracks = (stream: MediaStream): boolean => {
   const videoTracks = stream.getVideoTracks();
-  const enabledStates = videoTracks.map((track: MediaStreamTrack): boolean => track.enabled);
-  logInfo('Video tracks count:', videoTracks.length, 'enabled:', enabledStates);
+  logInfo('Video tracks count:', videoTracks.length, 'enabled:', videoTracks.map((tr) => tr.enabled));
   return videoTracks.some((track: MediaStreamTrack): boolean => track.enabled);
 };
 const trackRecordingChunk = (state: RecordingState, event: BlobEvent): void => {
@@ -187,10 +188,13 @@ const trackRecordingChunk = (state: RecordingState, event: BlobEvent): void => {
   event.data
     .arrayBuffer()
     .then((buffer) => appendRecordingChunk(filePath, new Uint8Array(buffer)))
+    .then(
+      () => { handleChunkWriteOutcome(state, false); },
+      () => { handleChunkWriteOutcome(state, true); },
+    )
     .finally((): void => {
       state.pendingInvokes -= 1;
-    })
-    .catch(ignoreRejection);
+    });
 };
 const beginRecording = (state: RecordingState, stream: MediaStream): Promise<void> => {
   if (!hasEnabledVideoTracks(stream)) {
@@ -286,7 +290,7 @@ export const createWebRTCConnection = (
   return { dispose, setup };
 };
 export const createRecording = (getVideo: () => HTMLVideoElement | undefined): Recording => {
-  const state: RecordingState = { operationId: 0, pendingInvokes: 0 };
+  const state: RecordingState = { consecutiveChunkFailures: 0, operationId: 0, pendingInvokes: 0 };
   const start = (): void => {
     startRecording(state, getVideo);
   };

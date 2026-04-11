@@ -290,6 +290,8 @@
   "toasts_app_config_set_success": "Config set successfully",
   "toasts_recording_converting_to_mp4": "Converting recording to MP4...",
   "toasts_recovering_unfinished_recordings": "Recovering {count} unfinished recordings...",
+  "toasts_recording_permission_denied": "Recording failed: permission denied. On Windows, check Controlled Folder Access settings.",
+  "toasts_recording_stopped_due_to_errors": "Recording stopped due to repeated write errors",
   "toasts_recording_save_failed": "Failed to save recording",
   "toasts_recording_saved_successfully": "Recording saved successfully",
   "toasts_recording_saved_path": "{path}",
