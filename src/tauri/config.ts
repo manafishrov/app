@@ -1,3 +1,5 @@
+import { unwrap } from 'solid-js/store';
+
 import { setConfigStore, configStore, type Config } from '@/stores/config';
 import { invokeCommand } from '@/tauri/core';
 
@@ -9,7 +11,7 @@ export const getConfig = (): Promise<void> =>
   });
 
 export const setConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
-  const currentConfig = { ...configStore };
+  const currentConfig = structuredClone(unwrap(configStore));
   const newConfig = { ...currentConfig, ...newConfigOptions };
 
   setConfigStore(newConfig);

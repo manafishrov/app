@@ -1,7 +1,7 @@
 use tauri::State;
 
 use crate::log_error;
-use crate::models::rov_config::{MicrocontrollerFirmwareVariant, RovConfig, ThrusterTest};
+use crate::models::rov_config::{MicrocontrollerFirmwareVariant, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::MessageSendChannelState;
 use crate::websocket::message::WebsocketMessage;
 
@@ -22,7 +22,7 @@ pub async fn handle_request_rov_config(
 /// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_set_rov_config(
   state: &State<'_, MessageSendChannelState>,
-  payload: RovConfig,
+  payload: PartialRovConfig,
 ) -> Result<(), String> {
   let message = WebsocketMessage::SetConfig(payload);
   if let Err(e) = state.tx.send(message).await {

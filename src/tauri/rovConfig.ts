@@ -1,3 +1,5 @@
+import { unwrap } from 'solid-js/store';
+
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { setRovConfigStore, rovConfigStore, type RovConfig } from '@/stores/rovConfig';
 import { createListener, invokeCommand } from '@/tauri/core';
@@ -17,15 +19,15 @@ export const requestRovConfig = (): Promise<void> | undefined => {
 };
 
 export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void> => {
-  const currentRovConfig = { ...rovConfigStore };
-  const newRovConfig = { ...currentRovConfig, ...newConfigOptions };
+  const previousSnapshot = structuredClone(unwrap(rovConfigStore));
+  const optimisticConfig = { ...previousSnapshot, ...newConfigOptions };
 
-  setRovConfigStore(newRovConfig);
+  setRovConfigStore(optimisticConfig);
 
-  return invokeCommand('set_rov_config', { payload: newRovConfig })
+  return invokeCommand('set_rov_config', { payload: newConfigOptions })
     .then(resolveVoid)
     .catch((error: unknown) => {
-      setRovConfigStore(currentRovConfig);
+      setRovConfigStore(previousSnapshot);
       throw error;
     });
 };

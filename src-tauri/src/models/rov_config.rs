@@ -87,3 +87,32 @@ pub struct RegulatorSuggestions {
   pub yaw: AxisConfig,
   pub depth: AxisConfig,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PartialRovConfig {
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub firmware_version: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub rov_name: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub microcontroller_firmware_variant: Option<MicrocontrollerFirmwareVariant>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub fluid_type: Option<FluidType>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub smoothing_factor: Option<f32>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub thruster_pin_setup: Option<ThrusterPinSetup>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub thruster_allocation: Option<ThrusterAllocation>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub regulator: Option<Regulator>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub direction_coefficients: Option<DirectionCoefficients>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub power: Option<Power>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub ip_address: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub websocket_port: Option<u16>,
+}
