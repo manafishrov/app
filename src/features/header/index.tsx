@@ -24,7 +24,9 @@ const WindowButton: Component<{
     tabIndex={-1}
     onClick={props.onClick}
     class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full transition-colors outline-none ${
-      props.isFocused ? props.focusedColor : `group-hover: bg-border${props.hoverColor}`
+      props.isFocused
+        ? props.focusedColor
+        : ['bg-border', `group-hover:${props.hoverColor}`].join(' ')
     }`}
     aria-label={props.ariaLabel}
   >
@@ -141,17 +143,18 @@ const setupKeyboardListener = (navigate: (opts: { to: string }) => Promise<void>
 };
 
 const setupMouseTracking = (setIsMouseInWindow: (val: boolean) => void): (() => void) => {
-  const onEnter = (): void => {
+  const handleEnter = (): void => {
     setIsMouseInWindow(true);
   };
-  const onLeave = (): void => {
+  const handleLeave = (): void => {
     setIsMouseInWindow(false);
   };
-  document.documentElement.addEventListener('mouseenter', onEnter);
-  document.documentElement.addEventListener('mouseleave', onLeave);
+  const root = document.documentElement;
+  root.addEventListener('mouseenter', handleEnter);
+  root.addEventListener('mouseleave', handleLeave);
   return (): void => {
-    document.documentElement.removeEventListener('mouseenter', onEnter);
-    document.documentElement.removeEventListener('mouseleave', onLeave);
+    root.removeEventListener('mouseenter', handleEnter);
+    root.removeEventListener('mouseleave', handleLeave);
   };
 };
 
