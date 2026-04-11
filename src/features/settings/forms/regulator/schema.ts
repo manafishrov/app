@@ -4,9 +4,15 @@ import type { AxisConfig } from '@/stores/rovConfig';
 
 import * as m from '@/paraglide/messages';
 
-import { MAX_PID_VALUE, MAX_TURN_RATE, MIN_TURN_RATE } from './constants';
+import {
+  MAX_DEPTH_RATE,
+  MAX_PID_VALUE,
+  MAX_TURN_RATE,
+  MIN_DEPTH_RATE,
+  MIN_TURN_RATE,
+} from './constants';
 
-const AXIS_SCHEMA = z.object({
+const PID_FIELDS = {
   kp: z
     .number()
     .min(0, m.validation_must_be_at_least_0())
@@ -19,6 +25,10 @@ const AXIS_SCHEMA = z.object({
     .number()
     .min(0, m.validation_must_be_at_least_0())
     .max(MAX_PID_VALUE, m.validation_must_be_at_most_100()),
+};
+
+const AXIS_SCHEMA = z.object({
+  ...PID_FIELDS,
   rate: z
     .array(z.number().max(MAX_TURN_RATE, m.validation_must_be_at_most_360()))
     .length(1)
@@ -27,11 +37,21 @@ const AXIS_SCHEMA = z.object({
     }),
 });
 
+const DEPTH_AXIS_SCHEMA = z.object({
+  ...PID_FIELDS,
+  rate: z
+    .array(z.number().max(MAX_DEPTH_RATE, m.validation_must_be_at_most_3()))
+    .length(1)
+    .refine(([rate]) => typeof rate !== 'number' || rate >= MIN_DEPTH_RATE, {
+      message: m.validation_depth_rate_at_least_1(),
+    }),
+});
+
 const FORM_SCHEMA = z.object({
   pitch: AXIS_SCHEMA,
   yaw: AXIS_SCHEMA,
   roll: AXIS_SCHEMA,
-  depth: AXIS_SCHEMA,
+  depth: DEPTH_AXIS_SCHEMA,
   surge: z
     .number()
     .min(0, m.validation_must_be_at_least_0())
@@ -62,7 +82,7 @@ export const REGULATOR_FORM_DEFAULT_VALUES: FormValues = {
   pitch: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
   yaw: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
   roll: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
-  depth: { kp: 0, ki: 0, kd: 0, rate: [MIN_TURN_RATE] },
+  depth: { kp: 0, ki: 0, kd: 0, rate: [MIN_DEPTH_RATE] },
   surge: 0,
   heave: 0,
   sway: 0,

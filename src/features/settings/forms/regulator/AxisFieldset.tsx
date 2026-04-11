@@ -7,7 +7,7 @@ import type { RegulatorSuggestions } from '@/stores/rovConfig';
 
 import * as m from '@/paraglide/messages';
 
-import { MAX_PID_VALUE, MAX_TURN_RATE } from './constants';
+import { DEPTH_RATE_STEP, MAX_DEPTH_RATE, MAX_PID_VALUE, MAX_TURN_RATE } from './constants';
 import { FieldSuggestionActions } from './FieldSuggestionActions';
 import { REGULATOR_FORM_DEFAULT_VALUES } from './schema';
 
@@ -86,6 +86,36 @@ const AXIS_NUMBER_FIELD_DEFAULT_PROPS: AxisNumberFieldProps = {
   defaultValue: 0,
 };
 
+const AXIS_RATE_CONFIG: Record<
+  AxisName,
+  { label: () => string; description: () => string; max: number; unit: string }
+> = {
+  pitch: {
+    label: m.regulator_pid_pitch_rate_label,
+    description: m.regulator_pid_pitch_rate_description,
+    max: MAX_TURN_RATE,
+    unit: '°/s',
+  },
+  roll: {
+    label: m.regulator_pid_roll_rate_label,
+    description: m.regulator_pid_roll_rate_description,
+    max: MAX_TURN_RATE,
+    unit: '°/s',
+  },
+  yaw: {
+    label: m.regulator_pid_yaw_rate_label,
+    description: m.regulator_pid_yaw_rate_description,
+    max: MAX_TURN_RATE,
+    unit: '°/s',
+  },
+  depth: {
+    label: m.regulator_pid_depth_rate_label,
+    description: m.regulator_pid_depth_rate_description,
+    max: MAX_DEPTH_RATE,
+    unit: 'm/s',
+  },
+};
+
 const AXIS_RATE_FIELD_DEFAULT_PROPS: AxisRateFieldProps = {
   axisName: 'pitch',
 };
@@ -145,20 +175,23 @@ const renderAxisNumberField = (
 const AxisRateField = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,
   props: AXIS_RATE_FIELD_DEFAULT_PROPS,
-  render: (props) => (
-    <props.form.AppField name={`${props.axisName}.rate`}>
-      {(field) => (
-        <field.SliderField
-          class='[&_[data-scope=slider][data-part=value-text]::after]:content-["°/s"]'
-          label={m.regulator_pid_turn_speed_label()}
-          description={m.regulator_pid_turn_speed_description()}
-          min={0}
-          max={MAX_TURN_RATE}
-          step={1}
-        />
-      )}
-    </props.form.AppField>
-  ),
+  render: (props) => {
+    const config = AXIS_RATE_CONFIG[props.axisName];
+    return (
+      <props.form.AppField name={`${props.axisName}.rate`}>
+        {(field) => (
+          <field.SliderField
+            class={`[&_[data-scope=slider][data-part=value-text]::after]:content-["${config.unit}"]`}
+            label={config.label()}
+            description={config.description()}
+            min={0}
+            max={config.max}
+            step={props.axisName === 'depth' ? DEPTH_RATE_STEP : 1}
+          />
+        )}
+      </props.form.AppField>
+    );
+  },
 });
 
 export const AxisFieldset = withForm({
@@ -173,7 +206,7 @@ export const AxisFieldset = withForm({
     return (
       <Fieldset>
         <FieldLegend>{props.title}</FieldLegend>
-        <p class='text-muted-foreground mb-4 text-sm'>{props.description}</p>
+        <p class='mb-4 text-sm text-muted-foreground'>{props.description}</p>
         <div class='space-y-4'>
           {renderAxisNumberField(props, {
             fieldName: 'kp',
