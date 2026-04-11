@@ -6,6 +6,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import * as m from '@/paraglide/messages';
 
+import { getIsMac } from './getIsMac';
 import { RecordingButton } from './RecordingButton';
 import { SettingsLink } from './SettingsLink';
 import { SystemHealthPopover } from './SystemHealthPopover';
@@ -240,21 +241,6 @@ const useWindowActions = (
   };
 
   return { handleClose, handleMinimize, handleFullscreen };
-};
-
-const getIsMac = (): boolean => {
-  try {
-    const uadDesc = Object.getOwnPropertyDescriptor(navigator, 'userAgentData');
-    if (uadDesc && typeof uadDesc.value === 'object') {
-      const platformDesc = Object.getOwnPropertyDescriptor(uadDesc.value, 'platform');
-      if (platformDesc && typeof platformDesc.value === 'string') {
-        return platformDesc.value.toLowerCase().includes('mac');
-      }
-    }
-  } catch {
-    // Ignore
-  }
-  return /mac/i.test(navigator.userAgent);
 };
 
 export const Header: Component = () => {
