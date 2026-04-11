@@ -1,10 +1,15 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::fs;
 use std::path::Path;
+use std::sync::{LazyLock, Mutex};
 
 use ffmpeg_next as ffmpeg;
 use serde_json::Value;
 use tauri::{State, command};
+
+static RECORDING_FILES: LazyLock<Mutex<HashMap<String, fs::File>>> =
+  LazyLock::new(|| Mutex::new(HashMap::new()));
 
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::models::toast::ToastContent;
@@ -142,7 +147,9 @@ fn open_input_context(
     Err(error) => {
       log_error!("Failed to open input {temp_path}: {error}");
       show_recording_save_error(toast_identifier);
-      return Err(format!("Failed to open input: {error}"));
+      return Err(format!(
+        "Failed to open input {temp_path}: {error}. Check file permissions."
+      ));
     },
   };
 
@@ -168,7 +175,10 @@ fn create_output_context(
     Err(error) => {
       log_error!("Failed to create output {}: {}", output_path.display(), error);
       show_recording_save_error(toast_identifier);
-      return Err(format!("Failed to create output: {error}"));
+      return Err(format!(
+        "Failed to create output {}: {error}. On Windows, check that Controlled Folder Access is not blocking the app.",
+        output_path.display()
+      ));
     },
   };
 
@@ -218,11 +228,9 @@ fn copy_packets(
 }
 
 /// # Errors
-/// Returns an error if FFmpeg cannot finish writing the output file or the temp
-/// file cannot be removed.
-fn finalize_recording(
+/// Returns an error if FFmpeg cannot finish writing the output file.
+fn finalize_output(
   output_context: &mut ffmpeg::format::context::Output,
-  temp_path: &str,
   toast_identifier: &str,
 ) -> Result<(), String> {
   if let Err(error) = output_context.write_trailer() {
@@ -231,13 +239,35 @@ fn finalize_recording(
     return Err(format!("Failed to write trailer: {error}"));
   }
 
-  if let Err(error) = fs::remove_file(temp_path) {
-    log_error!("Failed to remove temp file {temp_path}: {error}");
-    show_recording_save_error(toast_identifier);
-    return Err(format!("Failed to remove temp: {error}"));
-  }
-
   Ok(())
+}
+
+fn close_cached_recording_file(temp_path: &str) {
+  if let Ok(mut files) = RECORDING_FILES.lock() {
+    files.remove(temp_path);
+  }
+}
+
+fn remove_temp_file(temp_path: &str) {
+  const MAX_RETRIES: u32 = 3;
+  const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(100);
+
+  for attempt in 0..MAX_RETRIES {
+    match fs::remove_file(temp_path) {
+      Ok(()) => return,
+      Err(error) if attempt + 1 < MAX_RETRIES => {
+        log_info!(
+          "Retrying temp file removal (attempt {}/{}): {error}",
+          attempt + 1,
+          MAX_RETRIES
+        );
+        std::thread::sleep(RETRY_DELAY);
+      },
+      Err(error) => {
+        log_error!("Failed to remove temp file {temp_path} after {MAX_RETRIES} attempts: {error}");
+      },
+    }
+  }
 }
 
 #[command]
@@ -246,40 +276,78 @@ fn finalize_recording(
 /// MP4 file.
 pub async fn save_recording(temp_path: String) -> Result<(), String> {
   let toast_identifier = recording_toast_identifier(&temp_path);
-  let output_path = output_path_for_recording(&temp_path);
-  let output_path = Path::new(&output_path);
-
-  log_info!("Starting recording conversion for {}", temp_path);
   show_recording_save_started(&toast_identifier);
 
-  initialize_ffmpeg(&toast_identifier)?;
-  let mut input_context = open_input_context(&temp_path, &toast_identifier)?;
-  let mut output_context = create_output_context(&input_context, output_path, &toast_identifier)?;
-  copy_packets(&mut input_context, &mut output_context, &toast_identifier)?;
-  finalize_recording(&mut output_context, &temp_path, &toast_identifier)?;
+  let temp_path_clone = temp_path.clone();
+  let toast_id_clone = toast_identifier.clone();
 
-  log_info!("Recording conversion completed for {}", temp_path);
-  show_recording_save_success(&toast_identifier, output_path);
+  tokio::task::spawn_blocking(move || {
+    log_info!("Starting recording conversion for {}", temp_path_clone);
+    close_cached_recording_file(&temp_path_clone);
 
-  Ok(())
+    let output_path_string = output_path_for_recording(&temp_path_clone);
+    let output_path = Path::new(&output_path_string);
+
+    initialize_ffmpeg(&toast_id_clone)?;
+
+    {
+      let mut input_context = open_input_context(&temp_path_clone, &toast_id_clone)?;
+      let mut output_context =
+        create_output_context(&input_context, output_path, &toast_id_clone)?;
+      copy_packets(&mut input_context, &mut output_context, &toast_id_clone)?;
+      finalize_output(&mut output_context, &toast_id_clone)?;
+    }
+
+    remove_temp_file(&temp_path_clone);
+
+    log_info!("Recording conversion completed for {}", temp_path_clone);
+    show_recording_save_success(&toast_id_clone, output_path);
+
+    Ok(())
+  })
+  .await
+  .map_err(|e| {
+    show_recording_save_error(&toast_identifier);
+    format!("Recording conversion task failed: {e}")
+  })?
 }
 
 #[command]
 /// # Errors
-/// Returns an error if the temporary file cannot be opened, written, or synced.
+/// Returns an error if the temporary file cannot be opened or written.
 pub async fn append_recording_chunk(temp_path: String, chunk: Vec<u8>) -> Result<(), String> {
-  use std::fs::OpenOptions;
-  use std::io::Write;
+  tokio::task::spawn_blocking(move || {
+    use std::io::Write;
 
-  let mut file = OpenOptions::new()
-    .create(true)
-    .append(true)
-    .open(&temp_path)
-    .map_err(|e| format!("Failed to open file: {e}"))?;
+    let mut files = RECORDING_FILES
+      .lock()
+      .map_err(|_| "Recording file cache lock poisoned".to_string())?;
 
-  file.write_all(&chunk).map_err(|e| format!("Failed to write chunk: {e}"))?;
+    let file = match files.entry(temp_path) {
+      Entry::Occupied(entry) => entry.into_mut(),
+      Entry::Vacant(entry) => {
+        let f = fs::OpenOptions::new()
+          .create(true)
+          .append(true)
+          .open(entry.key())
+          .map_err(|e| {
+            if e.kind() == std::io::ErrorKind::PermissionDenied {
+              format!(
+                "Permission denied writing to {}. On Windows, check that Controlled Folder Access is not blocking the app.",
+                entry.key()
+              )
+            } else {
+              format!("Failed to open file: {e}")
+            }
+          })?;
+        entry.insert(f)
+      },
+    };
 
-  file.sync_all().map_err(|e| format!("Failed to sync file: {e}"))?;
-
-  Ok(())
+    file
+      .write_all(&chunk)
+      .map_err(|e| format!("Failed to write chunk: {e}"))
+  })
+  .await
+  .map_err(|e| format!("Recording chunk task failed: {e}"))?
 }
