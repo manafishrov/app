@@ -59,7 +59,14 @@ pub fn get_config_from_file() -> Config {
         },
         None,
       );
-      return Config::default();
+      let default_config = Config::default();
+      if let Some(parent) = config_path.parent() {
+        let _ = fs::create_dir_all(parent);
+      }
+      if let Ok(serialized) = serde_json::to_string(&default_config) {
+        let _ = fs::write(&config_path, &serialized);
+      }
+      return default_config;
     },
   };
 
