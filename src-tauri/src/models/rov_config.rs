@@ -79,8 +79,6 @@ pub struct RovConfig {
 
 pub type ThrusterTest = u8;
 
-pub type FirmwareVersion = String;
-
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RegulatorSuggestions {
