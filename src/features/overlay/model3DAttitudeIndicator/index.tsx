@@ -39,20 +39,23 @@ const AttitudeOverlay: Component<{
   pitch: number;
   roll: number;
   deltaYaw: number;
+  autoStabilization: boolean;
 }> = (props) => (
   <svg
     width={props.size}
     height={props.size}
     viewBox={`-${props.size * SVG_VIEWBOX_OFFSET_RATIO} -${props.size * SVG_VIEWBOX_OFFSET_RATIO} ${props.size * SVG_VIEWBOX_SIZE_RATIO} ${props.size * SVG_VIEWBOX_SIZE_RATIO}`}
-    class='absolute top-0 left-0 pointer-events-none'
+    class='pointer-events-none absolute top-0 left-0'
   >
-    <OverlayText
-      xPosition={props.size * SVG_TEXT_X_DELTA_YAW_RATIO}
-      yPosition={props.size * SVG_TEXT_Y_DELTA_YAW_RATIO}
-      size={props.size}
-      label='ΔYaw'
-      value={props.deltaYaw}
-    />
+    <Show when={props.autoStabilization}>
+      <OverlayText
+        xPosition={props.size * SVG_TEXT_X_DELTA_YAW_RATIO}
+        yPosition={props.size * SVG_TEXT_Y_DELTA_YAW_RATIO}
+        size={props.size}
+        label='ΔYaw'
+        value={props.deltaYaw}
+      />
+    </Show>
     <OverlayText
       xPosition={props.size * SVG_TEXT_X_PITCH_RATIO}
       yPosition={props.size - props.size * SVG_TEXT_Y_OFFSET_RATIO}
@@ -72,7 +75,8 @@ const AttitudeOverlay: Component<{
 
 const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (props) => {
   const [gltf] = createResource(() => '/base.glb', loadModel);
-  const deltaYaw = (): number => calculateDeltaYaw(props.desiredYaw, props.yaw);
+  const deltaYaw = (): number =>
+    props.autoStabilization ? calculateDeltaYaw(props.desiredYaw, props.yaw) : 0;
 
   const refs: { canvas?: HTMLCanvasElement } = {};
 
@@ -80,7 +84,7 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
 
   return (
     <div
-      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75 text-foreground relative overflow-hidden'
+      class='relative overflow-hidden rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <canvas
@@ -96,6 +100,7 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
         pitch={props.pitch}
         roll={props.roll}
         deltaYaw={deltaYaw()}
+        autoStabilization={props.autoStabilization}
       />
     </div>
   );

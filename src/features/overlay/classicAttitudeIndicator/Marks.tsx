@@ -198,20 +198,28 @@ const AircraftSymbol: Component<SubProps> = (props) => (
 );
 
 const TextOverlays: Component<
-  SubProps & { pitch: number; roll: number; yaw: number; desiredYaw: number }
+  SubProps & {
+    pitch: number;
+    roll: number;
+    yaw: number;
+    desiredYaw: number;
+    autoStabilization: boolean;
+  }
 > = (props) => (
   <>
-    <text
-      x={props.size * CONST.TX_L}
-      y={props.size * CONST.TY_T}
-      fill='white'
-      font-size={getTextSize(props.size, CONST.T_LARGE)}
-      text-anchor='start'
-      font-family='monospace'
-      font-variant-numeric='tabular-nums'
-    >
-      ΔYaw: {getDeltaYaw(props.desiredYaw, props.yaw).toFixed(CONST.DEC)}°
-    </text>
+    <Show when={props.autoStabilization}>
+      <text
+        x={props.size * CONST.TX_L}
+        y={props.size * CONST.TY_T}
+        fill='white'
+        font-size={getTextSize(props.size, CONST.T_LARGE)}
+        text-anchor='start'
+        font-family='monospace'
+        font-variant-numeric='tabular-nums'
+      >
+        ΔYaw: {getDeltaYaw(props.desiredYaw, props.yaw).toFixed(CONST.DEC)}°
+      </text>
+    </Show>
     <text
       x={props.size * CONST.TX_L}
       y={props.size - props.size * CONST.TY_B}

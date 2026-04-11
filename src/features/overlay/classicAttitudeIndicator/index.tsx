@@ -8,6 +8,7 @@ type ClassicAttitudeIndicatorProps = {
   desiredPitch: number;
   desiredRoll: number;
   desiredYaw: number;
+  autoStabilization: boolean;
   style?: JSX.CSSProperties;
 };
 
@@ -22,7 +23,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
 
   return (
     <div
-      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75 text-foreground flex flex-col items-center justify-center overflow-hidden'
+      class='flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg width={props.size} height={props.size} viewBox={`0 0 ${props.size} ${props.size}`}>
@@ -52,6 +53,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
           roll={props.roll}
           yaw={props.yaw}
           desiredYaw={props.desiredYaw}
+          autoStabilization={props.autoStabilization}
         />
       </svg>
     </div>

@@ -61,6 +61,7 @@ type InfoTextsProps = SizeProps & {
   pitch: number;
   roll: number;
   deltaYaw: number;
+  autoStabilization: boolean;
 };
 
 export const PitchLines: Component<SizeProps> = (props) => {
@@ -211,14 +212,16 @@ export const InfoTexts: Component<InfoTextsProps> = (props) => {
 
   return (
     <>
-      <text
-        x={props.size * INFO_TEXT_X1}
-        y={props.size * INFO_TEXT_Y1}
-        fill='currentColor'
-        font-size={textSize(INFO_TEXT_SIZE)}
-      >
-        ΔYaw: {props.deltaYaw.toFixed(FRACTION_DIGITS)}°
-      </text>
+      <Show when={props.autoStabilization}>
+        <text
+          x={props.size * INFO_TEXT_X1}
+          y={props.size * INFO_TEXT_Y1}
+          fill='currentColor'
+          font-size={textSize(INFO_TEXT_SIZE)}
+        >
+          ΔYaw: {props.deltaYaw.toFixed(FRACTION_DIGITS)}°
+        </text>
+      </Show>
       <text
         x={props.size * INFO_TEXT_X1}
         y={props.size - props.size * INFO_TEXT_Y2}

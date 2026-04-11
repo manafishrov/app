@@ -2,6 +2,7 @@ import type { Component } from 'solid-js';
 
 import { AttitudeIndicator as AttitudeIndicatorEnum, configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
+import { rovStatusStore } from '@/stores/rovStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { ClassicAttitudeIndicator } from './classicAttitudeIndicator';
@@ -52,7 +53,7 @@ const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (
   <Switch
     fallback={
       <div
-        class='h-4 w-4 rounded-full bg-background/50 backdrop-blur-sm border border-border/50'
+        class='h-4 w-4 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm'
         style={props.style}
       />
     }
@@ -66,6 +67,7 @@ const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (
         desiredPitch={rovTelemetryStore.desiredPitch}
         desiredRoll={rovTelemetryStore.desiredRoll}
         desiredYaw={rovTelemetryStore.desiredYaw}
+        autoStabilization={rovStatusStore.autoStabilization}
         style={props.style}
       />
     </Match>
@@ -76,6 +78,7 @@ const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (
         roll={rovTelemetryStore.roll}
         yaw={rovTelemetryStore.yaw}
         desiredYaw={rovTelemetryStore.desiredYaw}
+        autoStabilization={rovStatusStore.autoStabilization}
         style={props.style}
       />
     </Match>
@@ -88,6 +91,7 @@ const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (
         desiredPitch={rovTelemetryStore.desiredPitch}
         desiredRoll={rovTelemetryStore.desiredRoll}
         desiredYaw={rovTelemetryStore.desiredYaw}
+        autoStabilization={rovStatusStore.autoStabilization}
         style={props.style}
       />
     </Match>

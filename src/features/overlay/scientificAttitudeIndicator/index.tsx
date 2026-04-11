@@ -17,6 +17,7 @@ type ScientificAttitudeIndicatorProps = {
   desiredPitch: number;
   desiredRoll: number;
   desiredYaw: number;
+  autoStabilization: boolean;
   style?: JSX.CSSProperties;
 };
 
@@ -24,11 +25,12 @@ const HALF = 2;
 
 const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> = (props) => {
   const center = (): number => props.size / HALF;
-  const deltaYaw = (): number => computeScientificDeltaYaw(props.desiredYaw, props.yaw);
+  const deltaYaw = (): number =>
+    props.autoStabilization ? computeScientificDeltaYaw(props.desiredYaw, props.yaw) : 0;
 
   return (
     <div
-      class='bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl opacity-75 text-foreground'
+      class='rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg
@@ -59,7 +61,13 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           roll={props.roll}
           deltaYaw={deltaYaw()}
         />
-        <InfoTexts size={props.size} pitch={props.pitch} roll={props.roll} deltaYaw={deltaYaw()} />
+        <InfoTexts
+          size={props.size}
+          pitch={props.pitch}
+          roll={props.roll}
+          deltaYaw={deltaYaw()}
+          autoStabilization={props.autoStabilization}
+        />
       </svg>
     </div>
   );

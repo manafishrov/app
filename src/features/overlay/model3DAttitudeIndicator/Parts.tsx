@@ -28,6 +28,7 @@ export type Model3DAttitudeIndicatorProps = {
   roll: number;
   yaw: number;
   desiredYaw: number;
+  autoStabilization: boolean;
   style?: JSX.CSSProperties;
 };
 
@@ -63,9 +64,12 @@ export const updateModelRotation = (
   modelGroup: THREE.Group,
   props: Model3DAttitudeIndicatorProps,
 ): void => {
+  const yawRotation = props.autoStabilization
+    ? (calculateDeltaYaw(props.desiredYaw, props.yaw) * Math.PI) / DEGREES_HALF_CIRCLE
+    : 0;
   modelGroup.rotation.set(
     (props.pitch * Math.PI) / DEGREES_HALF_CIRCLE,
-    (calculateDeltaYaw(props.desiredYaw, props.yaw) * Math.PI) / DEGREES_HALF_CIRCLE,
+    yawRotation,
     (props.roll * Math.PI) / DEGREES_HALF_CIRCLE,
   );
 };
