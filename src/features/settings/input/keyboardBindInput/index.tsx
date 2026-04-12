@@ -154,7 +154,7 @@ const createCaptureListeners = (context: CaptureSessionContext): CaptureListener
   return { keyDown, keyUp };
 };
 const usePressedKeys = (): Accessor<Set<string>> => {
-  const [pressedKeys, setPressedKeys] = createSignal<Set<string>>(new Set<string>());
+  const [pressedKeys, setPressedKeys] = createSignal(new Set<string>());
   const onKeyDown = (event: KeyboardEvent): void => {
     setPressedKeys((previous): Set<string> => addPressedKey(previous, event.code));
   };
@@ -182,7 +182,7 @@ const useKeyboardCapture = (
   pressedKeys: Accessor<Set<string>>,
   onChange: (next: KeyboardInput | null) => void,
 ): KeyboardCaptureController => {
-  const [isRecording, setIsRecording] = createSignal<boolean>(false);
+  const [isRecording, setIsRecording] = createSignal(false);
   let captureTimeoutId = NO_TIMEOUT_ID;
   let settleTimeoutId = NO_TIMEOUT_ID;
   let listeners = createEmptyCaptureListeners();

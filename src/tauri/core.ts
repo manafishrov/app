@@ -8,7 +8,7 @@ export type CleanupFn = () => void;
 const noop: CleanupFn = () => Number.NaN;
 
 export class DisposableStack {
-  private cleanups: CleanupFn[] = [];
+  private readonly cleanups: CleanupFn[] = [];
 
   add(cleanup: CleanupFn): void {
     this.cleanups.push(cleanup);

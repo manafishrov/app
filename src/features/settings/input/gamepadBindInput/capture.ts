@@ -24,9 +24,9 @@ type GamepadCaptureController = {
 const ZERO = 0;
 
 const useGamepadCapture = (options: GamepadBindCaptureOptions): GamepadCaptureController => {
-  const [isRecording, setIsRecording] = createSignal<boolean>(false);
-  const [progressValue, setProgressValue] = createSignal<number>(ZERO);
-  const [currentValue, setCurrentValue] = createSignal<number>(ZERO);
+  const [isRecording, setIsRecording] = createSignal(false);
+  const [progressValue, setProgressValue] = createSignal(ZERO);
+  const [currentValue, setCurrentValue] = createSignal(ZERO);
   const state = createCaptureState();
 
   const startCapture = (): void => {

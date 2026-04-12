@@ -66,7 +66,7 @@ export const IdentifierField = withForm({
           <Select
             class='w-16'
             collection={props.identifierCollection}
-            value={[String(field().state.value)]}
+            value={[field().state.value]}
             onValueChange={(details): void => {
               const parsed = identifierSchema.safeParse(details.value[props.zeroValue]);
               if (parsed.success) {
@@ -112,7 +112,7 @@ export const SpinDirectionField = withForm({
           <Select
             class='w-28'
             collection={spinDirectionCollection}
-            value={[String(field().state.value)]}
+            value={[field().state.value]}
             onValueChange={(details): void => {
               const parsed = spinDirectionSchema.safeParse(details.value[props.zeroValue]);
               if (parsed.success) {
@@ -156,7 +156,7 @@ export const AllocationField = withForm({
       <props.form.AppField name={`thrusterAllocation[${props.rowIndex}][${props.columnIndex}]`}>
         {(field) => (
           <field.NumberInputField
-            class='text-center px-1'
+            class='px-1 text-center'
             inputMode='decimal'
             showTriggers={false}
             min={props.minimumValue}

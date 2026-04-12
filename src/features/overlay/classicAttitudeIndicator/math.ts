@@ -11,7 +11,7 @@ export const getDeltaYaw = (desiredYaw: number, yaw: number): number =>
 
 export const getPitchLines = (): number[] => {
   const lines: number[] = [];
-  for (let index = Number(CONST.P_MIN); index <= CONST.P_MAX; index += CONST.P_STEP) {
+  for (let index: number = CONST.P_MIN; index <= CONST.P_MAX; index += CONST.P_STEP) {
     if (index !== 0) {
       lines.push(index);
     }

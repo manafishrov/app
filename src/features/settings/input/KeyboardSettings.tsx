@@ -105,12 +105,10 @@ const updateKeyboardBinding = (
 };
 
 const KeyboardSettings: Component = () => {
-  const [initialBindings] = createSignal<KeyboardBindings>(
-    cloneKeyboardBindings(configStore.keyboard),
-  );
+  const [initialBindings] = createSignal(cloneKeyboardBindings(configStore.keyboard));
 
   return (
-    <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
+    <div class='grid grid-cols-1 gap-6 sm:auto-rows-min sm:grid-cols-2'>
       <For each={BINDING_SECTIONS}>
         {(section) => (
           <div class={`space-y-2 ${section.class ?? ''}`.trim()}>
