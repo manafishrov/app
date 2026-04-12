@@ -229,7 +229,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ultralytics", specifier = "==8.4.22" }]
+requires-dist = [{ name = "ultralytics", specifier = "==8.4.37" }]
 
 [[package]]
 name = "markupsafe"
@@ -791,7 +791,7 @@ wheels = [
 
 [[package]]
 name = "ultralytics"
-version = "8.4.22"
+version = "8.4.37"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -807,9 +807,9 @@ dependencies = [
     { name = "torchvision" },
     { name = "ultralytics-thop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/85/17cbfd60c50a3c16f70d0a5499f0fc79c5edb8661d36688d9954f0dda390/ultralytics-8.4.22.tar.gz", hash = "sha256:ea5deaaf46c9867b4316cf77022d345d23c2f6340a03b111e1b62232ab6268ac", size = 1018270, upload-time = "2026-03-14T19:33:59.137Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/87/cd2431b2f073bcc70804b56515b92712bb99e6b014f9565473c8eebb30e2/ultralytics-8.4.37.tar.gz", hash = "sha256:fcf710478f4d6baf60bdcd7677ba3e425ef0bc192ae93dec3ed59e318e5992a9", size = 1034685, upload-time = "2026-04-10T12:15:11.519Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/c2/b72fe20dd2caf8eac93f5bcc23d21078f65bdf1e3fa3efda09928bdbfab7/ultralytics-8.4.22-py3-none-any.whl", hash = "sha256:10babe59ee978dda404084ab36097890a50f8e0c85c0b714c44849f831a618b5", size = 1193663, upload-time = "2026-03-14T19:33:55.276Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/ed/a1f9b2ff3e8e1e6f5472a33e3184c2fde1437d9392f448b851ea58ab8bb7/ultralytics-8.4.37-py3-none-any.whl", hash = "sha256:64df0489bb301f6dbaa7377a07dd289e80247abe322c3431cc308b15dec86cbd", size = 1225775, upload-time = "2026-04-10T12:15:07.723Z" },
 ]
 
 [[package]]
