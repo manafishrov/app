@@ -1,4 +1,4 @@
-import type { Component, JSXElement, Setter } from 'solid-js';
+import type { Component, JSXElement } from 'solid-js';
 
 import { createListCollection } from '@ark-ui/solid/collection';
 import { Button } from '@manafishrov/ui/button';
@@ -9,12 +9,12 @@ import {
   useAppForm,
 } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
-import { toast } from '@manafishrov/ui/toaster';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { FluidType, MicrocontrollerFirmwareVariant, rovConfigStore } from '@/stores/rovConfig';
+import { rovStatusStore } from '@/stores/rovStatus';
 import { flashMicrocontrollerFirmware, setRovConfig } from '@/tauri';
 
 type SelectOption = { value: string; label: string };
@@ -60,9 +60,6 @@ const formSchema = z.object({
 });
 
 type SystemFormValues = z.infer<typeof formSchema>;
-type SubmitForm = {
-  handleSubmit: () => Promise<void>;
-};
 
 const smoothingFactorMarks = [
   { value: 0, label: '0' },
@@ -87,25 +84,12 @@ const submitSystemConfig = (value: SystemFormValues): Promise<void> => {
   });
 };
 
-const flashSelectedFirmware = (form: SubmitForm, setIsFlashing: Setter<boolean>): void => {
-  setIsFlashing(true);
-
-  form
-    .handleSubmit()
-    .then(
-      (): Promise<void> =>
-        flashMicrocontrollerFirmware(rovConfigStore.microcontrollerFirmwareVariant),
-    )
-    .then((): void => {
-      toast.create({ title: m.toasts_firmware_flashing_started(), type: 'success' });
-    })
-    .catch((error: unknown): void => {
+const flashSelectedFirmware = (): void => {
+  flashMicrocontrollerFirmware(rovConfigStore.microcontrollerFirmwareVariant).catch(
+    (error: unknown): void => {
       logError('Failed to flash microcontroller firmware:', error);
-      toast.create({ title: m.toasts_flash_failed(), type: 'error' });
-    })
-    .finally((): void => {
-      setIsFlashing(false);
-    });
+    },
+  );
 };
 
 type AppFieldContext = {
@@ -152,7 +136,6 @@ const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: Selec
 const FirmwareField: Component<{
   AppField: AppFieldComponent;
   firmwareVariants: SelectCollection;
-  isFlashing: () => boolean;
   onFlashFirmware: () => void;
 }> = (props) => (
   <props.AppField name='microcontrollerFirmwareVariant'>
@@ -164,9 +147,10 @@ const FirmwareField: Component<{
         placeholder={m.general_rov_settings_microcontroller_firmware_select_placeholder()}
         trailingAddon={
           <Button
+            class='w-20'
             type='button'
             variant='outline'
-            loading={props.isFlashing()}
+            disabled={!rovStatusStore.health.microcontrollerHealthy}
             onClick={props.onFlashFirmware}
             aria-label={m.general_rov_settings_microcontroller_firmware_title()}
           >
@@ -198,7 +182,6 @@ const SmoothingFactorField: Component<{ AppField: AppFieldComponent }> = (props)
 );
 
 export const System: Component = () => {
-  const [isFlashing, setIsFlashing] = createSignal(false);
   const firmwareVariants = createFirmwareVariants();
   const fluidTypes = createFluidTypes();
   const form = useAppForm(() => ({
@@ -215,7 +198,7 @@ export const System: Component = () => {
     onSubmit: ({ value }: { value: SystemFormValues }): Promise<void> => submitSystemConfig(value),
   }));
   const handleFlashFirmware = (): void => {
-    flashSelectedFirmware(form, setIsFlashing);
+    flashSelectedFirmware();
   };
 
   return (
@@ -226,7 +209,6 @@ export const System: Component = () => {
         <FirmwareField
           AppField={form.AppField}
           firmwareVariants={firmwareVariants}
-          isFlashing={isFlashing}
           onFlashFirmware={handleFlashFirmware}
         />
         <SmoothingFactorField AppField={form.AppField} />
