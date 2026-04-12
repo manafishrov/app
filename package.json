@@ -48,7 +48,7 @@
     "lefthook": "2.1.4",
     "oxfmt": "0.44.0",
     "oxlint": "1.55.0",
-    "oxlint-tsgolint": "0.17.0",
+    "oxlint-tsgolint": "0.20.0",
     "tailwindcss": "4.2.2",
     "typescript": "5.9.3",
     "unplugin-auto-import": "21.0.0",
