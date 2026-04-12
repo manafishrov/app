@@ -8,7 +8,7 @@
         "@manafishrov/ui": "1.5.0",
         "@tailwindcss/vite": "4.2.1",
         "@tanstack/router-plugin": "1.167.12",
-        "@tanstack/solid-form": "1.28.5",
+        "@tanstack/solid-form": "1.28.6",
         "@tanstack/solid-router": "1.168.9",
         "@tanstack/solid-virtual": "3.13.22",
         "@tauri-apps/api": "2.10.1",
@@ -398,7 +398,7 @@
 
     "@tanstack/devtools-vite": ["@tanstack/devtools-vite@0.6.0", "", { "dependencies": { "@babel/core": "^7.28.4", "@babel/generator": "^7.28.3", "@babel/parser": "^7.28.4", "@babel/traverse": "^7.28.4", "@babel/types": "^7.28.4", "@tanstack/devtools-client": "0.0.6", "@tanstack/devtools-event-bus": "0.4.1", "chalk": "^5.6.2", "launch-editor": "^2.11.1", "picomatch": "^4.0.3" }, "peerDependencies": { "vite": "^6.0.0 || ^7.0.0 || ^8.0.0" }, "bin": { "intent": "bin/intent.js" } }, "sha512-h0r0ct7zlrgjkhmn4QW6wRjgUXd4JMs+r7gtx+BXo9f5H9Y+jtUdtvC0rnZcPto6gw/9yMUq7yOmMK5qDWRExg=="],
 
-    "@tanstack/form-core": ["@tanstack/form-core@1.28.5", "", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1", "@tanstack/pacer-lite": "^0.1.1", "@tanstack/store": "^0.9.1" } }, "sha512-8lYnduHHfP6uaXF9+2OLnh3Fo27tH4TdtekWLG2b/Bp26ynbrWG6L4qhBgEb7VcvTpJw/RjvJF/JyFhZkG3pfQ=="],
+    "@tanstack/form-core": ["@tanstack/form-core@1.28.6", "", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1", "@tanstack/pacer-lite": "^0.1.1", "@tanstack/store": "^0.9.1" } }, "sha512-4zroxL6VDj5O+w7l3dYZnUeL/h30KtNSV7UWzKAL7cl+8clMFdISPDlDlluS37As7oqvPVKo8B83VlIBvgmRog=="],
 
     "@tanstack/history": ["@tanstack/history@1.161.6", "", {}, "sha512-NaOGLRrddszbQj9upGat6HG/4TKvXLvu+osAIgfxPYA+eIvYKv8GKDJOrY2D3/U9MRnKfMWD7bU4jeD4xmqyIg=="],
 
@@ -416,7 +416,7 @@
 
     "@tanstack/solid-devtools": ["@tanstack/solid-devtools@0.8.2", "", { "dependencies": { "@tanstack/devtools": "0.11.2" }, "peerDependencies": { "solid-js": ">=1.9.7" } }, "sha512-tzHF9rNPd9mO5vCArBkVABNe3qs+hvocra4LyRi/aFZC/0leLtD/TpXGnYx4IjDixTqkMCv3PLaG0HTwI5sdnw=="],
 
-    "@tanstack/solid-form": ["@tanstack/solid-form@1.28.5", "", { "dependencies": { "@tanstack/form-core": "1.28.5", "@tanstack/solid-store": "^0.9.1" }, "peerDependencies": { "solid-js": ">=1.9.9" } }, "sha512-5C2Bjm9XOiEpOVw6WtZlM5vixffY5SXrggSvFZxrObuEerATi/4J4lWN98XpJHP91xuK/ZmwCMr8ooWMIhNOig=="],
+    "@tanstack/solid-form": ["@tanstack/solid-form@1.28.6", "", { "dependencies": { "@tanstack/form-core": "1.28.6", "@tanstack/solid-store": "^0.9.1" }, "peerDependencies": { "solid-js": ">=1.9.9" } }, "sha512-XsSrlq7F/ySph+A2XyvW4WW92zHMw4CcEc/UeQBXMod1J5tCkZ/zPByLoKSmRNxSupU3o6T1trfs13gBjrfMKg=="],
 
     "@tanstack/solid-router": ["@tanstack/solid-router@1.168.9", "", { "dependencies": { "@solid-devtools/logger": "^0.9.4", "@solid-primitives/refs": "^1.0.8", "@solidjs/meta": "^0.29.4", "@tanstack/history": "1.161.6", "@tanstack/router-core": "1.168.9", "isbot": "^5.1.22" }, "peerDependencies": { "solid-js": "^1.9.10" }, "bin": { "intent": "bin/intent.js" } }, "sha512-ZgfcBS7lVhVlScxMhoh3U37K/LnNltMJV6Lor98ON3mKnE9XkOwZKvzkOVYj1JEi5HiQsYnC1lmZR5Ww0tc2og=="],
 
