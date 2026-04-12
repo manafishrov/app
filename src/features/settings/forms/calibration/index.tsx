@@ -201,7 +201,7 @@ const resetAllocationInForm = (
 
 export const Calibration: Component = (): JSXElement => {
   const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
-  const [testDisabled, setTestDisabled] = createSignal<boolean[]>(defaultDisabled);
+  const [testDisabled, setTestDisabled] = createSignal(defaultDisabled);
   const form = useAppForm(() => {
     const allocationRows = transpose(rovConfigStore.thrusterAllocation);
     return {

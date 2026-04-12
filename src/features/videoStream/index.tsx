@@ -39,12 +39,11 @@ const useRecordingEffects = (
     on(
       () => recordingStore.isRecording,
       (current, prev) => {
-        const currentBool = Boolean(current);
         const prevBool = Boolean(prev);
-        logInfo('Recording state changed to:', currentBool, 'prev:', prevBool);
-        if (currentBool && !prevBool) {
+        logInfo('Recording state changed to:', current, 'prev:', prevBool);
+        if (current && !prevBool) {
           recording.start();
-        } else if (!currentBool && prevBool) {
+        } else if (!current && prevBool) {
           recording.stop().catch((error: unknown) => {
             logInfo('Failed to stop recording', error);
           });

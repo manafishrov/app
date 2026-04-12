@@ -2,7 +2,6 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import autoImport from 'unplugin-auto-import/vite';
 import icons from 'unplugin-icons/vite';
 import { defineConfig } from 'vite';
@@ -15,7 +14,6 @@ declare const process: {
 };
 
 const host = process.env.TAURI_DEV_HOST;
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -41,7 +39,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
     },
     dedupe: ['solid-js', '@tanstack/solid-router', '@tanstack/solid-form', 'tailwindcss'],
   },

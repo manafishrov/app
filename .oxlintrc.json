@@ -60,7 +60,7 @@
         "allowArrowFunctions": true
       }
     ],
-    "unicorn/prefer-arrow-functions": "error",
+    "typescript/consistent-return": "off",
     "typescript/promise-function-async": "off",
     "no-useless-return": "off"
   },
