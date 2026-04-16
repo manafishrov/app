@@ -126,7 +126,9 @@ const createEmptyAllocationRows = (): ThrusterAllocation => [
 
 const createCalibrationFormValues = (): FormValues => ({
   thrusterPinSetup: {
-    identifiers: rovConfigStore.thrusterPinSetup.identifiers.map((value) => toIdentifierValue(value)),
+    identifiers: rovConfigStore.thrusterPinSetup.identifiers.map((value) =>
+      toIdentifierValue(value),
+    ),
     spinDirections: rovConfigStore.thrusterPinSetup.spinDirections.map((value) =>
       toSpinDirectionValue(value),
     ),
@@ -219,27 +221,6 @@ const resetAllocationInForm = (
   }
 };
 
-const syncCalibrationFormWithStore = (
-  form: { reset: (values: FormValues) => void },
-  isDirty: () => boolean,
-): void => {
-  createEffect(
-    on(
-      () => [
-        ...rovConfigStore.thrusterPinSetup.identifiers,
-        ...rovConfigStore.thrusterPinSetup.spinDirections,
-        JSON.stringify(rovConfigStore.thrusterAllocation),
-      ],
-      () => {
-        if (!isDirty()) {
-          form.reset(createCalibrationFormValues());
-        }
-      },
-      { defer: true },
-    ),
-  );
-};
-
 export const Calibration: Component = (): JSXElement => {
   const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
   const [testDisabled, setTestDisabled] = createSignal(defaultDisabled);
@@ -250,9 +231,7 @@ export const Calibration: Component = (): JSXElement => {
       submitCalibrationForm(value).then(() => {
         form.reset(value);
       }),
-    }));
-  const isDirty = form.useStore((state) => state.isDirty);
-  syncCalibrationFormWithStore(form, isDirty);
+  }));
 
   return (
     <CalibrationFormLayout

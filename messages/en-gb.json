@@ -372,8 +372,6 @@
   "thruster_preset_speedy_w_actions_description": "Designed for the 'Speedy' setup with motorized attachments on identifiers 7 and 8. Requires matching your pin and spin directions to the assembly guide chart.",
   "thruster_preset_silly_shuffle_name": "Silly Shuffle",
   "thruster_preset_silly_shuffle_description": "A chaotic preset that makes the Manafish perform unpredictable and nonsensical movements. Use at your own risk!",
-  "thruster_preset_clear_all_name": "Clear All",
-  "thruster_preset_clear_all_description": "Clears the matrix by setting all values to 0.",
   "regulator_field_buttons_reset_to_default_for": "Reset {label} to default",
   "regulator_field_buttons_use_suggestion_for": "Use suggested value for {label}",
   "regulator_field_buttons_use_suggestion_with_value": "Use Suggestion ({value})",
