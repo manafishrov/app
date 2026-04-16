@@ -1,8 +1,6 @@
 import type { Component } from 'solid-js';
 
 import { H3 } from '@manafishrov/ui/typography';
-import { unwrap } from 'solid-js/store';
-
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
@@ -89,9 +87,6 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
 ];
 
-const cloneKeyboardBindings = (bindings: KeyboardBindings): KeyboardBindings =>
-  structuredClone(unwrap(bindings));
-
 const updateKeyboardBinding = (
   bindingKey: keyof KeyboardBindings,
   value: KeyboardInput | null,
@@ -104,32 +99,27 @@ const updateKeyboardBinding = (
   setConfig({ keyboard: updatedBindings }).catch(logError);
 };
 
-const KeyboardSettings: Component = () => {
-  const [initialBindings] = createSignal(cloneKeyboardBindings(configStore.keyboard));
-
-  return (
-    <div class='grid grid-cols-1 gap-6 sm:auto-rows-min sm:grid-cols-2'>
-      <For each={BINDING_SECTIONS}>
-        {(section) => (
-          <div class={`space-y-2 ${section.class ?? ''}`.trim()}>
-            <H3>{section.title()}</H3>
-            <For each={section.fields}>
-              {(field) => (
-                <KeyboardBindInput
-                  label={field.label()}
-                  value={configStore.keyboard[field.key]}
-                  resetValue={initialBindings()[field.key]}
-                  onChange={(next) => {
-                    updateKeyboardBinding(field.key, next);
-                  }}
-                />
-              )}
-            </For>
-          </div>
-        )}
-      </For>
-    </div>
-  );
-};
+const KeyboardSettings: Component = () => (
+  <div class='grid grid-cols-1 gap-6 sm:auto-rows-min sm:grid-cols-2'>
+    <For each={BINDING_SECTIONS}>
+      {(section) => (
+        <div class={`space-y-2 ${section.class ?? ''}`.trim()}>
+          <H3>{section.title()}</H3>
+          <For each={section.fields}>
+            {(field) => (
+              <KeyboardBindInput
+                label={field.label()}
+                value={configStore.keyboard[field.key]}
+                onChange={(next) => {
+                  updateKeyboardBinding(field.key, next);
+                }}
+              />
+            )}
+          </For>
+        </div>
+      )}
+    </For>
+  </div>
+);
 
 export { KeyboardSettings };

@@ -35,7 +35,6 @@ import {
 import {
   NULL_VALUE,
   POLL_INTERVAL_MS,
-  cloneGamepadMap,
   getSelectedGamepadIdFromDetails,
   hasSelectedGamepadId,
   ignoreSetConfigResult,
@@ -165,7 +164,6 @@ const GamepadSelector: Component<{
 const GamepadBindingsEditor: Component<{
   selectedGamepadId: Accessor<string | null>;
   selectedBindings: Accessor<GamepadBindings | null>;
-  selectedResetBindings: Accessor<GamepadBindings | null>;
   selectedGamepadConnected: Accessor<boolean>;
   onBindChange: (bindingKey: keyof GamepadBindings, value: GamepadInput | null) => void;
 }> = (props) => (
@@ -174,22 +172,15 @@ const GamepadBindingsEditor: Component<{
     fallback={<p class='text-sm text-muted-foreground'>{m.gamepad_select_to_edit_bindings()}</p>}
   >
     {(bindings) => (
-      <Show when={props.selectedResetBindings()} fallback={NULL_VALUE}>
-        {(resetBindings) => (
-          <Show
-            when={props.selectedGamepadConnected()}
-            fallback={
-              <p class='text-sm text-muted-foreground'>{m.gamepad_selected_not_connected()}</p>
-            }
-          >
-            <SettingsGrid
-              selectedGamepadId={props.selectedGamepadId()}
-              bindings={bindings()}
-              resetBindings={resetBindings()}
-              onBindChange={props.onBindChange}
-            />
-          </Show>
-        )}
+      <Show
+        when={props.selectedGamepadConnected()}
+        fallback={<p class='text-sm text-muted-foreground'>{m.gamepad_selected_not_connected()}</p>}
+      >
+        <SettingsGrid
+          selectedGamepadId={props.selectedGamepadId()}
+          bindings={bindings()}
+          onBindChange={props.onBindChange}
+        />
       </Show>
     )}
   </Show>
@@ -201,7 +192,6 @@ const GamepadSettingsContent: Component<{
   gamepadOptions: Accessor<SelectItemOption[]>;
   selectedGamepadValue: Accessor<string[]>;
   selectedBindings: Accessor<GamepadBindings | null>;
-  selectedResetBindings: Accessor<GamepadBindings | null>;
   selectedGamepadConnected: Accessor<boolean>;
 }> = (props) => (
   <div class='space-y-6'>
@@ -232,7 +222,6 @@ const GamepadSettingsContent: Component<{
       <GamepadBindingsEditor
         selectedGamepadId={props.selectedGamepadId}
         selectedBindings={props.selectedBindings}
-        selectedResetBindings={props.selectedResetBindings}
         selectedGamepadConnected={props.selectedGamepadConnected}
         onBindChange={(bindingKey, value): void => {
           updateGamepadBinding(props.selectedGamepadId(), bindingKey, value)
@@ -247,18 +236,11 @@ const GamepadSettingsContent: Component<{
 const GamepadSettings: Component = () => {
   const connectedGamepads = useConnectedGamepads();
   const selectedGamepadId = useSelectedGamepadId();
-  const initialGamepadBindings = cloneGamepadMap(configStore.gamepad);
   const gamepadOptions = createMemo(() => toGamepadOptions(connectedGamepads()));
   const selectedBindings = createMemo<GamepadBindings | null>(() => {
     const selectedId = selectedGamepadId();
     return hasSelectedGamepadId(selectedId)
       ? (configStore.gamepad[selectedId] ?? createNullGamepadBindings())
-      : NULL_VALUE;
-  });
-  const selectedResetBindings = createMemo<GamepadBindings | null>(() => {
-    const selectedId = selectedGamepadId();
-    return hasSelectedGamepadId(selectedId)
-      ? (initialGamepadBindings[selectedId] ?? createNullGamepadBindings())
       : NULL_VALUE;
   });
   const selectedGamepadValue = createMemo<string[]>(() => {
@@ -279,7 +261,6 @@ const GamepadSettings: Component = () => {
       gamepadOptions={gamepadOptions}
       selectedGamepadValue={selectedGamepadValue}
       selectedBindings={selectedBindings}
-      selectedResetBindings={selectedResetBindings}
       selectedGamepadConnected={selectedGamepadConnected}
     />
   );

@@ -1,4 +1,4 @@
-import type { GamepadBindings, GamepadInput } from '@/stores/config';
+import type { GamepadBindings } from '@/stores/config';
 
 import * as m from '@/paraglide/messages';
 
@@ -118,42 +118,6 @@ const getSelectedGamepadIdFromDetails = (details: unknown): string | null => {
   return typeof firstValue === 'string' ? firstValue : NULL_VALUE;
 };
 
-const cloneBinding = (binding: GamepadInput | null): GamepadInput | null =>
-  binding ? { ...binding, input: { ...binding.input } } : NULL_VALUE;
-
-const cloneGamepadBindings = (bindings: GamepadBindings): GamepadBindings => ({
-  surgeForward: cloneBinding(bindings.surgeForward),
-  surgeBackward: cloneBinding(bindings.surgeBackward),
-  swayRight: cloneBinding(bindings.swayRight),
-  swayLeft: cloneBinding(bindings.swayLeft),
-  heaveUp: cloneBinding(bindings.heaveUp),
-  heaveDown: cloneBinding(bindings.heaveDown),
-  pitchUp: cloneBinding(bindings.pitchUp),
-  pitchDown: cloneBinding(bindings.pitchDown),
-  yawRight: cloneBinding(bindings.yawRight),
-  yawLeft: cloneBinding(bindings.yawLeft),
-  rollLeft: cloneBinding(bindings.rollLeft),
-  rollRight: cloneBinding(bindings.rollRight),
-  action1Positive: cloneBinding(bindings.action1Positive),
-  action1Negative: cloneBinding(bindings.action1Negative),
-  action2Positive: cloneBinding(bindings.action2Positive),
-  action2Negative: cloneBinding(bindings.action2Negative),
-  autoStabilization: cloneBinding(bindings.autoStabilization),
-  depthHold: cloneBinding(bindings.depthHold),
-  desiredDepthEntry: cloneBinding(bindings.desiredDepthEntry),
-  desiredDepthIncrease: cloneBinding(bindings.desiredDepthIncrease),
-  desiredDepthDecrease: cloneBinding(bindings.desiredDepthDecrease),
-  record: cloneBinding(bindings.record),
-});
-
-const cloneGamepadMap = (map: Record<string, GamepadBindings>): Record<string, GamepadBindings> => {
-  const clonedMap: Record<string, GamepadBindings> = {};
-  for (const [id, bindings] of Object.entries(map)) {
-    clonedMap[id] = cloneGamepadBindings(bindings);
-  }
-  return clonedMap;
-};
-
 const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
   const totalsById = new Map<string, number>();
   const seenById = new Map<string, number>();
@@ -178,7 +142,6 @@ export {
   BINDING_SECTIONS,
   NULL_VALUE,
   POLL_INTERVAL_MS,
-  cloneGamepadMap,
   getSelectedGamepadIdFromDetails,
   hasSelectedGamepadId,
   ignoreSetConfigResult,

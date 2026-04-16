@@ -57,7 +57,7 @@ export const DirectionCoefficientsFieldset = withForm({
           name='surge'
           label={m.regulator_direction_coefficients_surge()}
           description={m.calibration_thruster_allocation_surge_tooltip()}
-          defaultValue={0.8}
+          defaultValue={REGULATOR_FORM_DEFAULT_VALUES.surge}
           hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
@@ -65,7 +65,7 @@ export const DirectionCoefficientsFieldset = withForm({
           name='heave'
           label={m.regulator_direction_coefficients_heave()}
           description={m.calibration_thruster_allocation_heave_tooltip()}
-          defaultValue={0.5}
+          defaultValue={REGULATOR_FORM_DEFAULT_VALUES.heave}
           hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
@@ -73,7 +73,7 @@ export const DirectionCoefficientsFieldset = withForm({
           name='sway'
           label={m.regulator_direction_coefficients_sway()}
           description={m.calibration_thruster_allocation_sway_tooltip()}
-          defaultValue={0.35}
+          defaultValue={REGULATOR_FORM_DEFAULT_VALUES.sway}
           hasSuggestions={props.hasSuggestions}
         />
       </div>

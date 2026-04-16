@@ -10,7 +10,6 @@ import { GamepadBindActionRow, GamepadBindStats, ONE, ZERO } from './Parts';
 type GamepadBindInputProps = {
   label: string;
   value: GamepadInput | null;
-  resetValue: GamepadInput | null;
   selectedGamepadId: string | null;
   onChange: (next: GamepadInput | null) => void;
 };
@@ -21,7 +20,6 @@ const PROGRESS_MAX_VALUE = ONE;
 const GamepadBindInput = (props: GamepadBindInputProps): JSXElement => {
   const captureController = useGamepadCapture({
     value: () => props.value,
-    resetValue: () => props.resetValue,
     selectedGamepadId: () => props.selectedGamepadId,
     onChange: props.onChange,
   });
