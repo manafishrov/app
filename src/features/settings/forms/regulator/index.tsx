@@ -49,6 +49,7 @@ const getFormDefaultValues = (): FormValues => ({
     kd: rovConfigStore.regulator.depth.kd,
     rate: [rovConfigStore.regulator.depth.rate],
   },
+  fpvMode: rovConfigStore.regulator.fpvMode,
   surge: rovConfigStore.directionCoefficients.surge,
   heave: rovConfigStore.directionCoefficients.heave,
   sway: rovConfigStore.directionCoefficients.sway,
@@ -60,7 +61,7 @@ const handleFormSubmit = ({ value }: { value: FormValues }): Promise<void> => {
     yaw: toAxisConfig(value.yaw, rovConfigStore.regulator.yaw.rate),
     roll: toAxisConfig(value.roll, rovConfigStore.regulator.roll.rate),
     depth: toAxisConfig(value.depth, rovConfigStore.regulator.depth.rate),
-    fpvMode: rovConfigStore.regulator.fpvMode,
+    fpvMode: value.fpvMode,
   };
 
   const directionCoefficients: DirectionCoefficients = {
@@ -174,6 +175,15 @@ export const Regulator: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
+        <form.AppField name='fpvMode'>
+          {(field) => (
+            <field.SwitchField
+              label={m.regulator_fpv_mode_title()}
+              description={m.regulator_fpv_mode_description()}
+            />
+          )}
+        </form.AppField>
+
         <AxisFieldsets
           form={form}
           suggestions={regulatorSuggestions() ?? EMPTY_REGULATOR_SUGGESTIONS}

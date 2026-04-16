@@ -149,6 +149,8 @@
   "regulator_pid_kp": "Kp",
   "regulator_pid_ki": "Ki",
   "regulator_pid_kd": "Kd",
+  "regulator_fpv_mode_title": "FPV Mode",
+  "regulator_fpv_mode_description": "In FPV mode the pitch regulator follows the pilot's view instead of stabilizing to a fixed angle.",
   "regulator_pid_run_auto_tuning": "Run Auto Tuning (DOES NOT WORK YET)",
   "regulator_direction_coefficients_title": "Direction Coefficients",
   "regulator_direction_coefficients_description": "These coefficients describe the ROV's movement speed in different directions. The ratios between them determine how much each thruster activates during depth hold to prevent drift.",
