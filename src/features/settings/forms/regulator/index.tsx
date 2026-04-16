@@ -15,7 +15,7 @@ import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/
 import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS, hasRegulatorSuggestions } from './AxisFieldset';
 import { AUTO_TUNING_TIMEOUT_MS } from './constants';
 import { DirectionCoefficientsFieldset } from './DirectionCoefficientsFieldset';
-import { createFormSchema, type FormValues } from './schema';
+import { REGULATOR_FORM_DEFAULT_VALUES, createFormSchema, type FormValues } from './schema';
 
 const toAxisConfig = (axis: FormValues['pitch'], fallbackRate: number): AxisConfig => ({
   kp: axis.kp,
@@ -74,13 +74,131 @@ const handleFormSubmit = ({ value }: { value: FormValues }): Promise<void> => {
     directionCoefficients,
   });
 };
+type RegulatorFieldPath =
+  | 'pitch.kp'
+  | 'pitch.ki'
+  | 'pitch.kd'
+  | 'pitch.rate'
+  | 'yaw.kp'
+  | 'yaw.ki'
+  | 'yaw.kd'
+  | 'yaw.rate'
+  | 'roll.kp'
+  | 'roll.ki'
+  | 'roll.kd'
+  | 'roll.rate'
+  | 'depth.kp'
+  | 'depth.ki'
+  | 'depth.kd'
+  | 'depth.rate'
+  | 'surge'
+  | 'heave'
+  | 'sway';
 
+type RegulatorFieldValue = number | number[];
+
+type RegulatorFormController = {
+  reset: (values: FormValues) => void;
+  setFieldValue: (field: RegulatorFieldPath, value: RegulatorFieldValue) => void;
+};
+const REGULATOR_RESET_FIELDS: readonly [RegulatorFieldPath, RegulatorFieldValue][] = [
+  ['pitch.kp', REGULATOR_FORM_DEFAULT_VALUES.pitch.kp],
+  ['pitch.ki', REGULATOR_FORM_DEFAULT_VALUES.pitch.ki],
+  ['pitch.kd', REGULATOR_FORM_DEFAULT_VALUES.pitch.kd],
+  ['pitch.rate', REGULATOR_FORM_DEFAULT_VALUES.pitch.rate],
+  ['yaw.kp', REGULATOR_FORM_DEFAULT_VALUES.yaw.kp],
+  ['yaw.ki', REGULATOR_FORM_DEFAULT_VALUES.yaw.ki],
+  ['yaw.kd', REGULATOR_FORM_DEFAULT_VALUES.yaw.kd],
+  ['yaw.rate', REGULATOR_FORM_DEFAULT_VALUES.yaw.rate],
+  ['roll.kp', REGULATOR_FORM_DEFAULT_VALUES.roll.kp],
+  ['roll.ki', REGULATOR_FORM_DEFAULT_VALUES.roll.ki],
+  ['roll.kd', REGULATOR_FORM_DEFAULT_VALUES.roll.kd],
+  ['roll.rate', REGULATOR_FORM_DEFAULT_VALUES.roll.rate],
+  ['depth.kp', REGULATOR_FORM_DEFAULT_VALUES.depth.kp],
+  ['depth.ki', REGULATOR_FORM_DEFAULT_VALUES.depth.ki],
+  ['depth.kd', REGULATOR_FORM_DEFAULT_VALUES.depth.kd],
+  ['depth.rate', REGULATOR_FORM_DEFAULT_VALUES.depth.rate],
+  ['surge', REGULATOR_FORM_DEFAULT_VALUES.surge],
+  ['heave', REGULATOR_FORM_DEFAULT_VALUES.heave],
+  ['sway', REGULATOR_FORM_DEFAULT_VALUES.sway],
+];
+const syncRegulatorFormWithStore = (
+  form: RegulatorFormController,
+  isDirty: () => boolean,
+): void => {
+  createEffect(
+    on(
+      () => [
+        rovConfigStore.regulator.pitch.kp,
+        rovConfigStore.regulator.pitch.ki,
+        rovConfigStore.regulator.pitch.kd,
+        rovConfigStore.regulator.pitch.rate,
+        rovConfigStore.regulator.yaw.kp,
+        rovConfigStore.regulator.yaw.ki,
+        rovConfigStore.regulator.yaw.kd,
+        rovConfigStore.regulator.yaw.rate,
+        rovConfigStore.regulator.roll.kp,
+        rovConfigStore.regulator.roll.ki,
+        rovConfigStore.regulator.roll.kd,
+        rovConfigStore.regulator.roll.rate,
+        rovConfigStore.regulator.depth.kp,
+        rovConfigStore.regulator.depth.ki,
+        rovConfigStore.regulator.depth.kd,
+        rovConfigStore.regulator.depth.rate,
+        rovConfigStore.directionCoefficients.surge,
+        rovConfigStore.directionCoefficients.heave,
+        rovConfigStore.directionCoefficients.sway,
+      ],
+      () => {
+        if (!isDirty()) {
+          form.reset(getFormDefaultValues());
+        }
+      },
+      { defer: true },
+    ),
+  );
+};
+const resetRegulatorForm = (form: RegulatorFormController): void => {
+  for (const [field, value] of REGULATOR_RESET_FIELDS) {
+    form.setFieldValue(field, value);
+  }
+};
+const createAutoTuningHandler = (
+  setAutoTuningDisabled: (value: boolean) => void,
+): (() => void) =>
+  (): void => {
+    setAutoTuningDisabled(true);
+    startRegulatorAutoTuning()
+      .then(() => {
+        setTimeout(() => {
+          setAutoTuningDisabled(false);
+        }, AUTO_TUNING_TIMEOUT_MS);
+      })
+      .catch(() => {
+        setTimeout(() => {
+          setAutoTuningDisabled(false);
+        }, AUTO_TUNING_TIMEOUT_MS);
+      });
+  };
+const RegulatorActions: Component<{
+  autoTuningDisabled: boolean;
+  onAutoTuning: () => void;
+  onReset: () => void;
+}> = (props) => (
+  <div class='mt-6 flex items-center gap-4'>
+    <Button variant='outline' onClick={props.onAutoTuning} disabled={props.autoTuningDisabled}>
+      {m.regulator_pid_run_auto_tuning()}
+    </Button>
+    <Button variant='ghost' onClick={props.onReset}>
+      {m.regulator_field_buttons_reset_to_default()}
+    </Button>
+  </div>
+);
 type AxisFieldsetsProps = {
   form: ComponentProps<typeof AxisFieldset>['form'];
   suggestions: ComponentProps<typeof AxisFieldset>['suggestions'];
   hasSuggestions: ComponentProps<typeof AxisFieldset>['hasSuggestions'];
 };
-
 const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
   <>
     <AxisFieldset
@@ -129,31 +247,24 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
     />
   </>
 );
-
 export const Regulator: Component = () => {
-  // HACK: Set signal to false when we want to make auto tuning possible to trigger
   const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(true);
   const formSchema = createFormSchema();
-
   const form = useAppForm(() => ({
     validators: {
       onChange: formSchema,
       onSubmit: formSchema,
     },
     defaultValues: getFormDefaultValues(),
-    onSubmit: handleFormSubmit,
+    onSubmit: ({ value }: { value: FormValues }): Promise<void> =>
+      handleFormSubmit({ value }).then(() => {
+        form.reset(value);
+      }),
   }));
+  const isDirty = form.useStore((state) => state.isDirty);
+  const handleAutoTuning = createAutoTuningHandler(setAutoTuningDisabled);
 
-  const handleAutoTuning = (): void => {
-    setAutoTuningDisabled(true);
-    startRegulatorAutoTuning()
-      .then(() => {
-        setTimeout(() => setAutoTuningDisabled(false), AUTO_TUNING_TIMEOUT_MS);
-      })
-      .catch(() => {
-        setTimeout(() => setAutoTuningDisabled(false), AUTO_TUNING_TIMEOUT_MS);
-      });
-  };
+  syncRegulatorFormWithStore(form, isDirty);
 
   return (
     <form.AppForm>
@@ -164,11 +275,13 @@ export const Regulator: Component = () => {
           hasSuggestions={hasRegulatorSuggestions(regulatorSuggestions())}
         />
 
-        <div class='mt-6 flex items-center gap-4'>
-          <Button variant='outline' onClick={handleAutoTuning} disabled={autoTuningDisabled()}>
-            {m.regulator_pid_run_auto_tuning()}
-          </Button>
-        </div>
+        <RegulatorActions
+          autoTuningDisabled={autoTuningDisabled()}
+          onAutoTuning={handleAutoTuning}
+          onReset={() => {
+            resetRegulatorForm(form);
+          }}
+        />
 
         <DirectionCoefficientsFieldset
           form={form}

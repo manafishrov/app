@@ -13,7 +13,6 @@ import {
 } from '@/input';
 type GamepadBindCaptureOptions = {
   value: Accessor<GamepadInput | null>;
-  resetValue: Accessor<GamepadInput | null>;
   selectedGamepadId: Accessor<string | null>;
   onChange: (next: GamepadInput | null) => void;
 };
@@ -239,13 +238,11 @@ const updateProgressTick = (context: ProgressTickContext): void => {
 };
 
 const attachEscapeListener = (
-  options: GamepadBindCaptureOptions,
   state: CaptureState,
   setIsRecording: (next: boolean) => void,
 ): void => {
   state.escapeListener = (event: KeyboardEvent): void => {
     if (event.code === 'Escape') {
-      options.onChange(getUnboundGamepadInput());
       stopRecording(state, setIsRecording);
     }
   };
@@ -270,22 +267,13 @@ const startCaptureSession = (context: StartCaptureContext): void => {
   if (!gamepad) {
     return;
   }
-  attachEscapeListener(context.options, context.state, context.setIsRecording);
+  attachEscapeListener(context.state, context.setIsRecording);
   setCaptureSnapshot(context, gamepad);
   context.setIsRecording(true);
   scheduleCaptureTimeout(context);
 };
 const resetToDefaultBinding = (context: ResetContext): void => {
   stopRecording(context.state, context.setIsRecording);
-  const resetValue = context.options.resetValue();
-  if (resetValue) {
-    context.options.onChange({
-      input: resetValue.input,
-      minValue: roundToBindIncrement(resetValue.minValue),
-      maxValue: roundToBindIncrement(resetValue.maxValue),
-    });
-    return;
-  }
   context.options.onChange(getUnboundGamepadInput());
 };
 export {

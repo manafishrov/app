@@ -91,18 +91,4 @@ export const THRUSTER_PRESETS: ThrusterPreset[] = [
       action2: [-0.042, 0.531, -0.999, 0, -0.314, 0.222, -0.888, 0.456],
     },
   },
-  {
-    name: m.thruster_preset_clear_all_name(),
-    description: m.thruster_preset_clear_all_description(),
-    rows: {
-      surge: [0, 0, 0, 0, 0, 0, 0, 0],
-      sway: [0, 0, 0, 0, 0, 0, 0, 0],
-      heave: [0, 0, 0, 0, 0, 0, 0, 0],
-      pitch: [0, 0, 0, 0, 0, 0, 0, 0],
-      yaw: [0, 0, 0, 0, 0, 0, 0, 0],
-      roll: [0, 0, 0, 0, 0, 0, 0, 0],
-      action1: [0, 0, 0, 0, 0, 0, 0, 0],
-      action2: [0, 0, 0, 0, 0, 0, 0, 0],
-    },
-  },
 ];

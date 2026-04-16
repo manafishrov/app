@@ -10,7 +10,6 @@ import { BINDING_SECTIONS } from './gamepadSettingsData';
 const SettingsGrid: Component<{
   selectedGamepadId: string | null;
   bindings: GamepadBindings;
-  resetBindings: GamepadBindings;
   onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput | null) => void;
 }> = (props) => (
   <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
@@ -23,7 +22,6 @@ const SettingsGrid: Component<{
               <GamepadBindInput
                 label={field.label()}
                 value={props.bindings[field.key]}
-                resetValue={props.resetBindings[field.key]}
                 selectedGamepadId={props.selectedGamepadId}
                 onChange={(next): void => {
                   props.onBindChange(field.key, next);

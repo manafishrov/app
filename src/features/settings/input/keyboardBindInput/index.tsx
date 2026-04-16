@@ -15,7 +15,6 @@ import { KeyboardBindActionRow, KeyboardBindStats } from './Parts';
 type KeyboardBindInputProps = {
   label: string;
   value: KeyboardInput | null;
-  resetValue: KeyboardInput | null;
   onChange: (next: KeyboardInput | null) => void;
 };
 type KeyboardListener = (event: KeyboardEvent) => void;
@@ -135,7 +134,6 @@ const createCaptureListeners = (context: CaptureSessionContext): CaptureListener
   const keyDown: KeyboardListener = (event: KeyboardEvent): void => {
     event.preventDefault();
     if (event.code === ESCAPE_KEY_CODE) {
-      context.onChange(getUnboundKeyboardInput());
       context.stopRecording();
       return;
     }
@@ -215,14 +213,6 @@ const useKeyboardCapture = (
 };
 const resetToDefaultBinding = (props: KeyboardBindInputProps, stopRecording: () => void): void => {
   stopRecording();
-  if (props.resetValue) {
-    props.onChange({
-      key: props.resetValue.key,
-      minValue: props.resetValue.minValue,
-      maxValue: props.resetValue.maxValue,
-    });
-    return;
-  }
   props.onChange(getUnboundKeyboardInput());
 };
 const getProgressValue = (

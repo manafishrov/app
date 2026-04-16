@@ -86,49 +86,51 @@ type RegulatorSuggestions = {
   depth: AxisConfig;
 };
 
-const defaultAxisConfig: AxisConfig = { kp: 0, ki: 0, kd: 0, rate: 5 };
-const defaultRow: [number, number, number, number, number, number, number, number] = [
-  0, 0, 0, 0, 0, 0, 0, 0,
+/* oxlint-disable no-magic-numbers */
+const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({ kp: 3, ki: 2, kd: 0.5, rate: 100 });
+const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 2, ki: 0.5, kd: 0.1, rate: 0.5 });
+
+const defaultThrusterAllocation: ThrusterAllocation = [
+  [1, 1, 0, 0, -1, 0, 0, 0],
+  [1, -1, 0, 0, 1, 0, 0, 0],
+  [0, 0, 1, 1, 0, 1, 0, 0],
+  [0, 0, 1, 1, 0, -1, 0, 0],
+  [0, 0, 1, -1, 0, 1, 0, 0],
+  [0, 0, 1, -1, 0, -1, 0, 0],
+  [-1, -1, 0, 0, 1, 0, 0, 0],
+  [-1, 1, 0, 0, -1, 0, 0, 0],
 ];
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
   rovName: 'Manafish Nomad',
-  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant.pwm,
-  fluidType: FluidType.freshwater,
+  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant.dshot,
+  fluidType: FluidType.saltwater,
   smoothingFactor: 0,
   thrusterPinSetup: {
-    identifiers: [0, 0, 0, 0, 0, 0, 0, 0],
-    spinDirections: [0, 0, 0, 0, 0, 0, 0, 0],
+    identifiers: [0, 1, 2, 3, 4, 5, 6, 7],
+    spinDirections: [1, 1, 1, 1, 1, 1, 1, 1],
   },
-  thrusterAllocation: [
-    defaultRow,
-    defaultRow,
-    defaultRow,
-    defaultRow,
-    defaultRow,
-    defaultRow,
-    defaultRow,
-    defaultRow,
-  ],
+  thrusterAllocation: defaultThrusterAllocation,
   regulator: {
-    pitch: defaultAxisConfig,
-    roll: defaultAxisConfig,
-    yaw: defaultAxisConfig,
-    depth: defaultAxisConfig,
+    pitch: createDefaultPitchRollYawAxisConfig(),
+    roll: createDefaultPitchRollYawAxisConfig(),
+    yaw: createDefaultPitchRollYawAxisConfig(),
+    depth: createDefaultDepthAxisConfig(),
     fpvMode: false,
   },
-  directionCoefficients: { surge: 0, sway: 0, heave: 0 },
+  directionCoefficients: { surge: 1, sway: 1, heave: 1 },
   power: {
-    thrustersLimit: 0,
-    actionsLimit: 0,
-    regulatorLimit: 0,
-    minBatteryVoltage: 0,
-    maxBatteryVoltage: 0,
+    thrustersLimit: 30,
+    actionsLimit: 30,
+    regulatorLimit: 30,
+    minBatteryVoltage: 14,
+    maxBatteryVoltage: 21.5,
   },
   ipAddress: '10.10.10.10',
   websocketPort: 9000,
 };
+/* oxlint-enable no-magic-numbers */
 
 const [rovConfigStore, setRovConfigStoreInternal] = createStore<RovConfig>(defaultRovConfig);
 
