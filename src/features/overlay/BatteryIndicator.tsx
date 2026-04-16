@@ -6,12 +6,8 @@ import BatteryLowIcon from '~icons/material-symbols/battery-2-bar';
 import BatteryMediumIcon from '~icons/material-symbols/battery-5-bar';
 import BatteryFullIcon from '~icons/material-symbols/battery-full';
 
-import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
-
-const BASE_WIDTH_REM = 4.75;
-const SCALE_MULTIPLIER = 1.05;
 
 const BATTERY_HIGH_THRESHOLD = 70;
 const BATTERY_MEDIUM_THRESHOLD = 40;
@@ -55,25 +51,18 @@ const getBatteryIcon = (percentage: number): JSXElement => {
   );
 };
 
-const BatteryIndicator: Component = () => {
-  const badgeWidth = createMemo(
-    () => `${BASE_WIDTH_REM + (configStore.overlayScale - 1) * SCALE_MULTIPLIER}rem`,
-  );
-
-  return (
-    <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
-      <Badge
-        variant={
-          rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
-        }
-        class='h-auto min-h-5 justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
-        style={{ 'min-width': badgeWidth() }}
-      >
-        {getBatteryIcon(rovStatusStore.batteryPercentage)}
-        {rovStatusStore.batteryPercentage.toFixed(0)}%
-      </Badge>
-    </div>
-  );
-};
+const BatteryIndicator: Component = () => (
+  <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
+    <Badge
+      variant={
+        rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
+      }
+      class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
+    >
+      {getBatteryIcon(rovStatusStore.batteryPercentage)}
+      {rovStatusStore.batteryPercentage.toFixed(0)}%
+    </Badge>
+  </div>
+);
 
 export { BatteryIndicator };
