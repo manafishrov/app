@@ -1,5 +1,6 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
+import { devtools } from '@tanstack/devtools-vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import path from 'node:path';
 import autoImport from 'unplugin-auto-import/vite';
@@ -17,6 +18,7 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   plugins: [
+    devtools(),
     tailwindcss(),
     paraglideVitePlugin({
       project: './i18n.inlang',
