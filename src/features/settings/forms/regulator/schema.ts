@@ -52,6 +52,7 @@ const FORM_SCHEMA = z.object({
   yaw: AXIS_SCHEMA,
   roll: AXIS_SCHEMA,
   depth: DEPTH_AXIS_SCHEMA,
+  fpvMode: z.boolean(),
   surge: z
     .number()
     .min(0, m.validation_must_be_at_least_0())
@@ -73,6 +74,7 @@ export type FormValues = {
   yaw: Omit<AxisConfig, 'rate'> & { rate: number[] };
   roll: Omit<AxisConfig, 'rate'> & { rate: number[] };
   depth: Omit<AxisConfig, 'rate'> & { rate: number[] };
+  fpvMode: boolean;
   surge: number;
   heave: number;
   sway: number;
@@ -83,6 +85,7 @@ export const REGULATOR_FORM_DEFAULT_VALUES: FormValues = {
   yaw: { kp: 3, ki: 2, kd: 0.5, rate: [100] },
   roll: { kp: 3, ki: 2, kd: 0.5, rate: [100] },
   depth: { kp: 2, ki: 0.5, kd: 0.1, rate: [0.5] },
+  fpvMode: false,
   surge: 0,
   heave: 0,
   sway: 0,
