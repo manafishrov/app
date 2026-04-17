@@ -87,7 +87,12 @@ type RegulatorSuggestions = {
 };
 
 /* oxlint-disable no-magic-numbers */
-const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({ kp: 3, ki: 2, kd: 0.5, rate: 100 });
+const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({
+  kp: 3,
+  ki: 2,
+  kd: 0.5,
+  rate: 100,
+});
 const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 2, ki: 0.5, kd: 0.1, rate: 0.5 });
 
 const defaultThrusterAllocation: ThrusterAllocation = [

@@ -18,6 +18,7 @@ export { sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { vibrateGamepad } from '@/tauri/gamepad';
 export { checkForUpdates } from '@/tauri/updater';
+export { closeSplashscreen } from '@/tauri/window';
 
 const listeners = [
   setupConnectionListener,

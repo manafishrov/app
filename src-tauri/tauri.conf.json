@@ -13,13 +13,27 @@
     "macOSPrivateApi": true,
     "windows": [
       {
+        "label": "main",
         "title": "Manafish",
         "decorations": false,
         "shadow": false,
         "transparent": true,
         "center": true,
         "width": 1200,
-        "height": 675
+        "height": 675,
+        "visible": false
+      },
+      {
+        "label": "splashscreen",
+        "title": "Manafish",
+        "url": "splashscreen.html",
+        "decorations": false,
+        "shadow": false,
+        "transparent": true,
+        "resizable": false,
+        "center": true,
+        "width": 300,
+        "height": 168
       }
     ],
     "security": {
@@ -41,9 +55,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3OEFGMzdGMEVFNTU3RjYKUldUMlYrVU9mL09LeDBJbktpRy91ZU9oL1RKMElNWjN6Y3B1RzhkaldsVGo3VjcwRjlubHhMUDkK",
-      "endpoints": [
-        "https://github.com/manafishrov/app/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/manafishrov/app/releases/latest/download/latest.json"]
     }
   }
 }
