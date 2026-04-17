@@ -14,5 +14,6 @@ pub struct RovTelemetry {
   pub water_temperature: f32,
   pub electronics_temperature: f32,
   pub thruster_rpms: [f32; 8],
+  pub thruster_signal_qualities: [f32; 8],
   pub work_indicator_percentage: u8,
 }

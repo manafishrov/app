@@ -157,6 +157,11 @@ const PinSetupHeader: Component = () => (
         label={m.calibration_thruster_pin_setup_rpm_label()}
         tooltip={m.calibration_thruster_pin_setup_rpm_tooltip()}
       />
+      <TooltipHead
+        class='text-right'
+        label={m.calibration_thruster_pin_setup_signal_quality_label()}
+        tooltip={m.calibration_thruster_pin_setup_signal_quality_tooltip()}
+      />
     </TableRow>
   </TableHeader>
 );
@@ -194,6 +199,11 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
             <div class='flex items-center justify-end gap-2'>
               <ThrusterRpm rpm={rovTelemetryStore.thrusterRpms[index()] ?? props.zeroValue} />
             </div>
+          </TableCell>
+          <TableCell class='w-20 text-right'>
+            <span class='font-mono'>
+              {(rovTelemetryStore.thrusterSignalQualities[index()] ?? 0).toFixed(1)}%
+            </span>
           </TableCell>
         </TableRow>
       )}
