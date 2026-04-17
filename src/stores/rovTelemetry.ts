@@ -12,6 +12,7 @@ type RovTelemetry = {
   waterTemperature: number;
   electronicsTemperature: number;
   thrusterRpms: [number, number, number, number, number, number, number, number];
+  thrusterSignalQualities: [number, number, number, number, number, number, number, number];
   workIndicatorPercentage: number;
 };
 
@@ -27,6 +28,7 @@ const [rovTelemetryStore, setRovTelemetryStoreInternal] = createStore<RovTelemet
   waterTemperature: 0,
   electronicsTemperature: 0,
   thrusterRpms: [0, 0, 0, 0, 0, 0, 0, 0],
+  thrusterSignalQualities: [0, 0, 0, 0, 0, 0, 0, 0],
   workIndicatorPercentage: 0,
 });
 
