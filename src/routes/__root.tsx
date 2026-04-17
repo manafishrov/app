@@ -13,6 +13,7 @@ import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
 import {
+  closeSplashscreen,
   getConfig,
   initializeVideoDirectory,
   recoverTempRecordings,
@@ -47,6 +48,7 @@ const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
 
   onMount(() => {
+    closeSplashscreen();
     setupAppListeners(cleanupFns);
   });
 

@@ -3,6 +3,7 @@ mod commands {
   pub mod config;
   pub mod gamepad;
   pub mod rov_config;
+  pub mod window;
 }
 
 mod models {
@@ -47,6 +48,7 @@ use commands::rov_config::{
   cancel_regulator_auto_tuning, cancel_thruster_test, flash_microcontroller_firmware,
   request_rov_config, set_rov_config, start_regulator_auto_tuning, start_thruster_test,
 };
+use commands::window::close_splashscreen;
 use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;
@@ -90,6 +92,7 @@ pub fn run() -> tauri::Result<()> {
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .invoke_handler(generate_handler![
+      close_splashscreen,
       start_gamepad_stream,
       gamepad_vibrate,
       get_config,

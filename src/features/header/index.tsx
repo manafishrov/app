@@ -4,6 +4,7 @@ import { cn } from '@manafishrov/ui';
 import { useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
+import { ManafishLogo } from '@/components/icons/ManafishLogo';
 import * as m from '@/paraglide/messages';
 
 import { getIsMac } from './getIsMac';
@@ -276,7 +277,8 @@ export const Header: Component = () => {
           onFullscreen={handleFullscreen}
         />
 
-        <span class='pointer-events-none absolute left-1/2 -translate-x-1/2 font-branding text-sm font-medium text-foreground'>
+        <span class='pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center gap-1.5 font-branding text-sm font-medium text-foreground'>
+          <ManafishLogo class='size-3.5' />
           {m.header_app_name()}
         </span>
 
