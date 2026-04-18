@@ -10,6 +10,7 @@ const LogOrigin = {
   frontend: 'frontend',
   backend: 'backend',
   firmware: 'firmware',
+  microcontroller: 'microcontroller',
 } as const;
 
 type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
