@@ -245,6 +245,7 @@
   "debug_source_frontend": "Frontend",
   "debug_source_backend": "Backend",
   "debug_source_firmware": "Firmware",
+  "debug_source_microcontroller": "Microcontroller",
   "debug_level_info": "Info",
   "debug_level_warn": "Warn",
   "debug_level_error": "Error",
