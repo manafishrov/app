@@ -110,7 +110,7 @@
   "calibration_thruster_pin_setup_rpm_label": "RPM",
   "calibration_thruster_pin_setup_rpm_tooltip": "The revolutions per minute of the thruster.",
   "calibration_thruster_pin_setup_signal_quality_label": "Signal",
-  "calibration_thruster_pin_setup_signal_quality_tooltip": "DShot telemetry signal quality. Shows the percentage of invalid packets over a 600ms window. 0% is perfect.",
+  "calibration_thruster_pin_setup_signal_quality_tooltip": "DShot telemetry signal quality. Shows the percentage of valid packets over a 600ms window. 100% is perfect.",
   "calibration_thruster_allocation_title": "Thruster allocation",
   "calibration_thruster_allocation_description": "Configure how each thruster responds to movement inputs. Each row represents a movement direction. Assign values to indicate which thrusters should activate: positive values produce forward thrust, negative values produce reverse thrust, and 0 disables the thruster.",
   "calibration_thruster_allocation_identifier": "Identifier",
