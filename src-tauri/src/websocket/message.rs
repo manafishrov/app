@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::models::log::LogEntry;
 use crate::models::rov_config::{
-  MicrocontrollerFirmwareVariant, PartialRovConfig, RegulatorSuggestions, RovConfig, ThrusterTest,
+  McuBoard, PartialRovConfig, RegulatorSuggestions, RovConfig, ThrusterTest,
 };
 use crate::models::rov_status::RovStatus;
 use crate::models::rov_telemetry::RovTelemetry;
@@ -29,5 +29,5 @@ pub enum WebsocketMessage {
   ToggleAutoStabilization,
   ToggleDepthHold,
   SetDesiredDepth(f32),
-  FlashMicrocontrollerFirmware(MicrocontrollerFirmwareVariant),
+  FlashMcuFirmware(McuBoard),
 }

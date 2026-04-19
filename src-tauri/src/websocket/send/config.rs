@@ -1,7 +1,7 @@
 use tauri::State;
 
 use crate::log_error;
-use crate::models::rov_config::{MicrocontrollerFirmwareVariant, PartialRovConfig, ThrusterTest};
+use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::MessageSendChannelState;
 use crate::websocket::message::WebsocketMessage;
 
@@ -88,13 +88,13 @@ pub async fn handle_cancel_regulator_auto_tuning(
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_flash_microcontroller_firmware(
+pub async fn handle_flash_mcu_firmware(
   state: &State<'_, MessageSendChannelState>,
-  payload: MicrocontrollerFirmwareVariant,
+  payload: McuBoard,
 ) -> Result<(), String> {
-  let message = WebsocketMessage::FlashMicrocontrollerFirmware(payload);
+  let message = WebsocketMessage::FlashMcuFirmware(payload);
   if let Err(e) = state.tx.send(message).await {
-    log_error!("Failed to flash MicrocontrollerFirmware: {}", e);
+    log_error!("Failed to flash MCU firmware: {}", e);
     return Err(e.to_string());
   }
   Ok(())
