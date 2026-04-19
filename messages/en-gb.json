@@ -326,6 +326,7 @@
   "toasts_failed_to_toggle_depth_hold": "Failed to toggle depth hold",
   "toasts_failed_to_start_regulator_auto_tuning": "Failed to start regulator auto tuning",
   "toasts_rov_config_set_successfully": "ROV config set successfully",
+  "toasts_rov_ip_address_changing": "IP address changing, you may need to reconnect.",
   "toasts_example_action_triggered": "Example action triggered",
   "toasts_example_action_description": "This is a sample custom action",
   "toasts_mcu_init_failed": "MCU init failed",
