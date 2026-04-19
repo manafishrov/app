@@ -8,7 +8,7 @@ import { setupRovStatusListener } from '@/tauri/rovStatus';
 import { setupRovTelemetryListener } from '@/tauri/rovTelemetry';
 import { setupToastListener } from '@/tauri/toast';
 
-export { flashMicrocontrollerFirmware } from '@/tauri/microcontrollerFirmware';
+export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
