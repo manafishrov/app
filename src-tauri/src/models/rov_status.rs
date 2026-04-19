@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct SystemHealth {
   pub imu_healthy: bool,
   pub pressure_sensor_healthy: bool,
-  pub microcontroller_healthy: bool,
+  pub mcu_healthy: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

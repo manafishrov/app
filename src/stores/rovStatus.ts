@@ -3,7 +3,7 @@ import { createStore, reconcile } from 'solid-js/store';
 type SystemHealth = {
   imuHealthy: boolean;
   pressureSensorHealthy: boolean;
-  microcontrollerHealthy: boolean;
+  mcuHealthy: boolean;
 };
 
 type RovStatus = {
@@ -20,7 +20,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   health: {
     imuHealthy: false,
     pressureSensorHealthy: false,
-    microcontrollerHealthy: false,
+    mcuHealthy: false,
   },
 });
 

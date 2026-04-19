@@ -45,8 +45,8 @@ const SystemHealthPopoverContent = (): JSXElement => (
             healthy={rovStatusStore.health.pressureSensorHealthy}
           />
           <HealthItem
-            label={m.controls_system_health_microcontroller()}
-            healthy={rovStatusStore.health.microcontrollerHealthy}
+            label={m.controls_system_health_mcu()}
+            healthy={rovStatusStore.health.mcuHealthy}
           />
         </div>
       </div>
