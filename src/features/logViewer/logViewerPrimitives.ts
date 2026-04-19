@@ -40,7 +40,7 @@ export const createViewerSignals = (): ViewerSignals => {
     frontend: true,
     backend: true,
     firmware: true,
-    microcontroller: true,
+    mcu: true,
   });
   const [levelFilters, setLevelFilters] = createSignal<Record<LogLevel, boolean>>({
     info: true,
@@ -211,7 +211,7 @@ const isLogRecord = (value: unknown): value is LogRecord => {
     (value.origin === 'frontend' ||
       value.origin === 'backend' ||
       value.origin === 'firmware' ||
-      value.origin === 'microcontroller') &&
+      value.origin === 'mcu') &&
     'level' in value &&
     (value.level === 'info' || value.level === 'warn' || value.level === 'error') &&
     'message' in value &&

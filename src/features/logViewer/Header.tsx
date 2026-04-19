@@ -53,12 +53,12 @@ const SourceFilters: Component<LogViewerHeaderProps> = (props) => (
     <Toggle
       size='sm'
       variant='outline'
-      pressed={props.signals.sourceFilters().microcontroller}
+      pressed={props.signals.sourceFilters().mcu}
       onPressedChange={(): void => {
-        props.actions.toggleSourceFilter(LogOrigin.microcontroller);
+        props.actions.toggleSourceFilter(LogOrigin.mcu);
       }}
     >
-      {m.debug_source_microcontroller()}
+      {m.debug_source_mcu()}
     </Toggle>
   </div>
 );

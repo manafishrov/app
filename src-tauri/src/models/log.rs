@@ -14,7 +14,7 @@ pub enum LogOrigin {
   Firmware,
   Backend,
   Frontend,
-  Microcontroller,
+  Mcu,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
