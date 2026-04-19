@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines */
 import type { Component, JSXElement } from 'solid-js';
 
 import { createListCollection } from '@ark-ui/solid/collection';
@@ -13,23 +14,72 @@ import { z } from 'zod';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { FluidType, MicrocontrollerFirmwareVariant, rovConfigStore } from '@/stores/rovConfig';
+import {
+  CurrentSensingMode,
+  DshotSpeed,
+  FluidType,
+  McuBoard,
+  ThrusterProtocol,
+  rovConfigStore,
+} from '@/stores/rovConfig';
 import { rovStatusStore } from '@/stores/rovStatus';
-import { flashMicrocontrollerFirmware, setRovConfig } from '@/tauri';
+import { flashMcuFirmware, setRovConfig } from '@/tauri';
 
-type SelectOption = { value: string; label: string };
+type SelectOption = { value: string; label: string; disabled?: boolean };
 type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
 
-const createFirmwareVariants = (): SelectCollection =>
+const createMcuBoards = (): SelectCollection =>
   createListCollection<SelectOption>({
     items: [
       {
-        value: MicrocontrollerFirmwareVariant.pwm as string,
-        label: m.general_rov_settings_microcontroller_firmware_pwm(),
+        value: McuBoard.pico as string,
+        label: m.general_rov_settings_mcu_board_pico(),
       },
       {
-        value: MicrocontrollerFirmwareVariant.dshot as string,
-        label: m.general_rov_settings_microcontroller_firmware_dshot(),
+        value: McuBoard.pico2 as string,
+        label: m.general_rov_settings_mcu_board_pico2(),
+      },
+    ],
+  });
+
+const createThrusterProtocols = (): SelectCollection =>
+  createListCollection<SelectOption>({
+    items: [
+      {
+        value: ThrusterProtocol.pwm as string,
+        label: m.general_rov_settings_thruster_protocol_pwm(),
+      },
+      {
+        value: ThrusterProtocol.dshot as string,
+        label: m.general_rov_settings_thruster_protocol_dshot(),
+      },
+    ],
+  });
+
+const createDshotSpeeds = (board: (typeof McuBoard)[keyof typeof McuBoard]): SelectCollection =>
+  createListCollection<SelectOption>({
+    items: [
+      { value: String(DshotSpeed.dshot150), label: '150' },
+      { value: String(DshotSpeed.dshot300), label: '300' },
+      { value: String(DshotSpeed.dshot600), label: '600' },
+      {
+        value: String(DshotSpeed.dshot1200),
+        label: '1200',
+        disabled: board === McuBoard.pico,
+      },
+    ],
+  });
+
+const createCurrentSensingModes = (): SelectCollection =>
+  createListCollection<SelectOption>({
+    items: [
+      {
+        value: CurrentSensingMode.sharedBus as string,
+        label: m.general_rov_settings_current_sensing_mode_shared_bus(),
+      },
+      {
+        value: CurrentSensingMode.perMotor as string,
+        label: m.general_rov_settings_current_sensing_mode_per_motor(),
       },
     ],
   });
@@ -52,8 +102,11 @@ const MAX_ROV_NAME_LENGTH = 32;
 
 const formSchema = z.object({
   rovName: z.string().min(1).max(MAX_ROV_NAME_LENGTH),
-  microcontrollerFirmwareVariant: z
-    .array(z.enum([MicrocontrollerFirmwareVariant.pwm, MicrocontrollerFirmwareVariant.dshot]))
+  mcuBoard: z.array(z.enum([McuBoard.pico, McuBoard.pico2])).length(1),
+  thrusterProtocol: z.array(z.enum([ThrusterProtocol.pwm, ThrusterProtocol.dshot])).length(1),
+  dshotSpeed: z.array(z.enum(['150', '300', '600', '1200'])).length(1),
+  currentSensingMode: z
+    .array(z.enum([CurrentSensingMode.perMotor, CurrentSensingMode.sharedBus]))
     .length(1),
   fluidType: z.array(z.enum([FluidType.freshwater, FluidType.saltwater])).length(1),
   smoothingFactor: z.array(z.number().min(0).max(1)).length(1),
@@ -69,27 +122,74 @@ const smoothingFactorMarks = [
   { value: 1, label: '1' },
 ];
 
-const submitSystemConfig = (value: SystemFormValues): Promise<void> => {
-  const rovName = value.rovName.trim() === '' ? rovConfigStore.rovName : value.rovName;
-  const fluidType = value.fluidType[0] ?? rovConfigStore.fluidType;
-  const microcontrollerFirmwareVariant =
-    value.microcontrollerFirmwareVariant[0] ?? rovConfigStore.microcontrollerFirmwareVariant;
-  const smoothingFactor = value.smoothingFactor[0] ?? rovConfigStore.smoothingFactor;
-
-  return setRovConfig({
-    rovName,
-    fluidType,
-    microcontrollerFirmwareVariant,
-    smoothingFactor,
-  });
+const parseDshotSpeed = (
+  value: string | undefined,
+  fallback: (typeof DshotSpeed)[keyof typeof DshotSpeed],
+): (typeof DshotSpeed)[keyof typeof DshotSpeed] => {
+  switch (value ?? '') {
+    case '150': {
+      return DshotSpeed.dshot150;
+    }
+    case '300': {
+      return DshotSpeed.dshot300;
+    }
+    case '600': {
+      return DshotSpeed.dshot600;
+    }
+    case '1200': {
+      return DshotSpeed.dshot1200;
+    }
+    default: {
+      return fallback;
+    }
+  }
 };
 
-const flashSelectedFirmware = (): void => {
-  flashMicrocontrollerFirmware(rovConfigStore.microcontrollerFirmwareVariant).catch(
-    (error: unknown): void => {
-      logError('Failed to flash microcontroller firmware:', error);
-    },
-  );
+const getDshotSpeedFormValue = (
+  value: (typeof DshotSpeed)[keyof typeof DshotSpeed],
+): SystemFormValues['dshotSpeed'][number] => {
+  switch (value) {
+    case DshotSpeed.dshot150: {
+      return '150';
+    }
+    case DshotSpeed.dshot300: {
+      return '300';
+    }
+    case DshotSpeed.dshot600: {
+      return '600';
+    }
+    case DshotSpeed.dshot1200: {
+      return '1200';
+    }
+    default: {
+      return '300';
+    }
+  }
+};
+
+/* oxlint-disable @typescript-eslint/explicit-function-return-type */
+const resolveFormValues = (value: SystemFormValues) => ({
+  rovName: value.rovName.trim() === '' ? rovConfigStore.rovName : value.rovName,
+  fluidType: value.fluidType[0] ?? rovConfigStore.fluidType,
+  mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
+  thrusterProtocol: value.thrusterProtocol[0] ?? rovConfigStore.thrusterProtocol,
+  dshotSpeed: parseDshotSpeed(value.dshotSpeed[0], rovConfigStore.dshotSpeed),
+  currentSensingMode: value.currentSensingMode[0] ?? rovConfigStore.currentSensingMode,
+  smoothingFactor: value.smoothingFactor[0] ?? rovConfigStore.smoothingFactor,
+});
+
+const submitSystemConfig = (value: SystemFormValues): Promise<void> => {
+  const resolved = resolveFormValues(value);
+  const boardChanged = resolved.mcuBoard !== rovConfigStore.mcuBoard;
+  const result = setRovConfig(resolved);
+
+  if (boardChanged) {
+    flashMcuFirmware(resolved.mcuBoard).catch((error: unknown): void => {
+      logError('Failed to flash MCU firmware:', error);
+    });
+  }
+
+  return result;
 };
 
 type AppFieldContext = {
@@ -99,7 +199,14 @@ type AppFieldContext = {
 };
 
 type AppFieldComponent = Component<{
-  name: 'rovName' | 'fluidType' | 'microcontrollerFirmwareVariant' | 'smoothingFactor';
+  name:
+    | 'rovName'
+    | 'fluidType'
+    | 'mcuBoard'
+    | 'thrusterProtocol'
+    | 'dshotSpeed'
+    | 'currentSensingMode'
+    | 'smoothingFactor';
   children: (field: AppFieldContext) => JSXElement;
 }>;
 
@@ -133,32 +240,94 @@ const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: Selec
   </props.AppField>
 );
 
-const FirmwareField: Component<{
+const McuBoardField: Component<{
   AppField: AppFieldComponent;
-  firmwareVariants: SelectCollection;
+  boards: SelectCollection;
   onFlashFirmware: () => void;
 }> = (props) => (
-  <props.AppField name='microcontrollerFirmwareVariant'>
+  <props.AppField name='mcuBoard'>
     {(field: AppFieldContext): JSXElement => (
       <field.SelectField
-        label={m.general_rov_settings_microcontroller_firmware_title()}
-        description={m.general_rov_settings_microcontroller_firmware_description()}
-        collection={props.firmwareVariants}
-        placeholder={m.general_rov_settings_microcontroller_firmware_select_placeholder()}
+        label={m.general_rov_settings_mcu_board_title()}
+        description={m.general_rov_settings_mcu_board_description()}
+        collection={props.boards}
+        placeholder={m.general_rov_settings_mcu_board_select_placeholder()}
         trailingAddon={
           <Button
             class='w-20'
             type='button'
             variant='outline'
-            disabled={!rovStatusStore.health.microcontrollerHealthy}
+            disabled={!rovStatusStore.health.mcuHealthy}
             onClick={props.onFlashFirmware}
-            aria-label={m.general_rov_settings_microcontroller_firmware_title()}
+            aria-label={m.general_rov_settings_mcu_board_title()}
           >
             {m.common_flash()}
           </Button>
         }
       >
-        <For each={props.firmwareVariants.items}>
+        <For each={props.boards.items}>
+          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
+        </For>
+      </field.SelectField>
+    )}
+  </props.AppField>
+);
+
+const ThrusterProtocolField: Component<{
+  AppField: AppFieldComponent;
+  protocols: SelectCollection;
+}> = (props) => (
+  <props.AppField name='thrusterProtocol'>
+    {(field: AppFieldContext): JSXElement => (
+      <field.SelectField
+        label={m.general_rov_settings_thruster_protocol_title()}
+        description={m.general_rov_settings_thruster_protocol_description()}
+        collection={props.protocols}
+        placeholder={m.general_rov_settings_thruster_protocol_select_placeholder()}
+      >
+        <For each={props.protocols.items}>
+          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
+        </For>
+      </field.SelectField>
+    )}
+  </props.AppField>
+);
+
+const DshotSpeedField: Component<{
+  AppField: AppFieldComponent;
+  speeds: SelectCollection;
+  disabled: boolean;
+}> = (props) => (
+  <props.AppField name='dshotSpeed'>
+    {(field: AppFieldContext): JSXElement => (
+      <field.SelectField
+        label={m.general_rov_settings_dshot_speed_title()}
+        description={m.general_rov_settings_dshot_speed_description()}
+        collection={props.speeds}
+        placeholder={m.general_rov_settings_dshot_speed_select_placeholder()}
+        disabled={props.disabled}
+      >
+        <For each={props.speeds.items}>
+          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
+        </For>
+      </field.SelectField>
+    )}
+  </props.AppField>
+);
+
+const CurrentSensingModeField: Component<{
+  AppField: AppFieldComponent;
+  modes: SelectCollection;
+}> = (props) => (
+  <props.AppField name='currentSensingMode'>
+    {(field: AppFieldContext): JSXElement => (
+      <field.SelectField
+        label={m.general_rov_settings_current_sensing_mode_title()}
+        description={m.general_rov_settings_current_sensing_mode_description()}
+        collection={props.modes}
+        placeholder={m.general_rov_settings_current_sensing_mode_select_placeholder()}
+      >
+        <For each={props.modes.items}>
           {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
         </For>
       </field.SelectField>
@@ -181,36 +350,51 @@ const SmoothingFactorField: Component<{ AppField: AppFieldComponent }> = (props)
   </props.AppField>
 );
 
+const getDefaultFormValues = (): SystemFormValues => ({
+  rovName: rovConfigStore.rovName,
+  mcuBoard: [rovConfigStore.mcuBoard],
+  thrusterProtocol: [rovConfigStore.thrusterProtocol],
+  dshotSpeed: [getDshotSpeedFormValue(rovConfigStore.dshotSpeed)],
+  currentSensingMode: [rovConfigStore.currentSensingMode],
+  fluidType: [rovConfigStore.fluidType],
+  smoothingFactor: [rovConfigStore.smoothingFactor],
+});
+
+const handleFlashFirmware = (): void => {
+  flashMcuFirmware(rovConfigStore.mcuBoard).catch((error: unknown): void => {
+    logError('Failed to flash MCU firmware:', error);
+  });
+};
+
 export const System: Component = () => {
-  const firmwareVariants = createFirmwareVariants();
+  const boards = createMcuBoards();
+  const protocols = createThrusterProtocols();
+  const dshotSpeeds = createDshotSpeeds(rovConfigStore.mcuBoard);
+  const currentSensingModes = createCurrentSensingModes();
   const fluidTypes = createFluidTypes();
   const form = useAppForm(() => ({
-    validators: {
-      onChange: formSchema,
-      onSubmit: formSchema,
-    },
-    defaultValues: {
-      rovName: rovConfigStore.rovName,
-      fluidType: [rovConfigStore.fluidType],
-      microcontrollerFirmwareVariant: [rovConfigStore.microcontrollerFirmwareVariant],
-      smoothingFactor: [rovConfigStore.smoothingFactor],
-    },
+    validators: { onChange: formSchema, onSubmit: formSchema },
+    defaultValues: getDefaultFormValues(),
     onSubmit: ({ value }: { value: SystemFormValues }): Promise<void> => submitSystemConfig(value),
   }));
-  const handleFlashFirmware = (): void => {
-    flashSelectedFirmware();
-  };
 
   return (
     <form.AppForm>
       <form.Form>
         <RovNameField AppField={form.AppField} />
         <FluidTypeField AppField={form.AppField} fluidTypes={fluidTypes} />
-        <FirmwareField
+        <McuBoardField
           AppField={form.AppField}
-          firmwareVariants={firmwareVariants}
+          boards={boards}
           onFlashFirmware={handleFlashFirmware}
         />
+        <ThrusterProtocolField AppField={form.AppField} protocols={protocols} />
+        <DshotSpeedField
+          AppField={form.AppField}
+          speeds={dshotSpeeds}
+          disabled={rovConfigStore.thrusterProtocol !== ThrusterProtocol.dshot}
+        />
+        <CurrentSensingModeField AppField={form.AppField} modes={currentSensingModes} />
         <SmoothingFactorField AppField={form.AppField} />
         <form.AutoSubmit debounce={500} />
       </form.Form>

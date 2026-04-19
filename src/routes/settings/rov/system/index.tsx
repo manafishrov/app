@@ -23,6 +23,17 @@ const SystemRovSettingsPage: Component = () => (
         v{rovConfigStore.firmwareVersion}
       </Badge>
     </div>
+    <div class='my-8'>
+      <H4>{m.general_rov_settings_mcu_firmware_version_title()}</H4>
+      <p class='text-muted-foreground text-sm'>
+        {m.general_rov_settings_mcu_firmware_version_description()}
+      </p>
+      <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
+        {rovConfigStore.mcuFirmwareVersion === ''
+          ? m.common_not_available()
+          : `v${rovConfigStore.mcuFirmwareVersion}`}
+      </Badge>
+    </div>
     <System />
   </>
 );
