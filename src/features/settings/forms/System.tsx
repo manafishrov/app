@@ -21,6 +21,7 @@ import {
   McuBoard,
   ThrusterProtocol,
   rovConfigStore,
+  type RovConfig,
 } from '@/stores/rovConfig';
 import { rovStatusStore } from '@/stores/rovStatus';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
@@ -167,8 +168,18 @@ const getDshotSpeedFormValue = (
   }
 };
 
-/* oxlint-disable @typescript-eslint/explicit-function-return-type */
-const resolveFormValues = (value: SystemFormValues) => ({
+type ResolvedSystemConfig = Pick<
+  RovConfig,
+  | 'rovName'
+  | 'fluidType'
+  | 'mcuBoard'
+  | 'thrusterProtocol'
+  | 'dshotSpeed'
+  | 'currentSensingMode'
+  | 'smoothingFactor'
+>;
+
+const resolveFormValues = (value: SystemFormValues): ResolvedSystemConfig => ({
   rovName: value.rovName.trim() === '' ? rovConfigStore.rovName : value.rovName,
   fluidType: value.fluidType[0] ?? rovConfigStore.fluidType,
   mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
