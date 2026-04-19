@@ -2,9 +2,23 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum MicrocontrollerFirmwareVariant {
+pub enum McuBoard {
+  Pico,
+  Pico2,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum ThrusterProtocol {
   Pwm,
   Dshot,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum CurrentSensingMode {
+  PerMotor,
+  SharedBus,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -64,8 +78,12 @@ pub struct Power {
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
   pub firmware_version: String,
+  pub mcu_firmware_version: String,
   pub rov_name: String,
-  pub microcontroller_firmware_variant: MicrocontrollerFirmwareVariant,
+  pub mcu_board: McuBoard,
+  pub thruster_protocol: ThrusterProtocol,
+  pub dshot_speed: u16,
+  pub current_sensing_mode: CurrentSensingMode,
   pub fluid_type: FluidType,
   pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
@@ -94,9 +112,17 @@ pub struct PartialRovConfig {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub firmware_version: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
+  pub mcu_firmware_version: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub rov_name: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub microcontroller_firmware_variant: Option<MicrocontrollerFirmwareVariant>,
+  pub mcu_board: Option<McuBoard>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub thruster_protocol: Option<ThrusterProtocol>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub dshot_speed: Option<u16>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub current_sensing_mode: Option<CurrentSensingMode>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub fluid_type: Option<FluidType>,
   #[serde(skip_serializing_if = "Option::is_none")]

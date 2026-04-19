@@ -2,13 +2,37 @@ import { createStore, reconcile } from 'solid-js/store';
 
 import * as m from '@/paraglide/messages';
 
-const MicrocontrollerFirmwareVariant = {
+const McuBoard = {
+  pico: 'pico',
+  pico2: 'pico2',
+} as const;
+
+type McuBoard = (typeof McuBoard)[keyof typeof McuBoard];
+
+const ThrusterProtocol = {
   pwm: 'pwm',
   dshot: 'dshot',
 } as const;
 
-type MicrocontrollerFirmwareVariant =
-  (typeof MicrocontrollerFirmwareVariant)[keyof typeof MicrocontrollerFirmwareVariant];
+type ThrusterProtocol = (typeof ThrusterProtocol)[keyof typeof ThrusterProtocol];
+
+/* oxlint-disable no-magic-numbers */
+const DshotSpeed = {
+  dshot150: 150,
+  dshot300: 300,
+  dshot600: 600,
+  dshot1200: 1200,
+} as const;
+
+type DshotSpeed = (typeof DshotSpeed)[keyof typeof DshotSpeed];
+/* oxlint-enable no-magic-numbers */
+
+const CurrentSensingMode = {
+  perMotor: 'perMotor',
+  sharedBus: 'sharedBus',
+} as const;
+
+type CurrentSensingMode = (typeof CurrentSensingMode)[keyof typeof CurrentSensingMode];
 
 const FluidType = {
   saltwater: 'saltwater',
@@ -66,8 +90,12 @@ type Power = {
 
 type RovConfig = {
   firmwareVersion: string;
+  mcuFirmwareVersion: string;
   rovName: string;
-  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant;
+  mcuBoard: McuBoard;
+  thrusterProtocol: ThrusterProtocol;
+  dshotSpeed: DshotSpeed;
+  currentSensingMode: CurrentSensingMode;
   fluidType: FluidType;
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
@@ -108,8 +136,12 @@ const defaultThrusterAllocation: ThrusterAllocation = [
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
+  mcuFirmwareVersion: m.common_not_available(),
   rovName: 'Manafish Nomad',
-  microcontrollerFirmwareVariant: MicrocontrollerFirmwareVariant.dshot,
+  mcuBoard: McuBoard.pico,
+  thrusterProtocol: ThrusterProtocol.dshot,
+  dshotSpeed: DshotSpeed.dshot300,
+  currentSensingMode: CurrentSensingMode.sharedBus,
   fluidType: FluidType.saltwater,
   smoothingFactor: 0,
   thrusterPinSetup: {
@@ -147,7 +179,10 @@ export {
   rovConfigStore,
   setRovConfigStore,
   FluidType,
-  MicrocontrollerFirmwareVariant,
+  CurrentSensingMode,
+  DshotSpeed,
+  McuBoard,
+  ThrusterProtocol,
   defaultRovConfig,
   type AxisConfig,
   type Regulator,
