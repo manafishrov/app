@@ -45,8 +45,8 @@ use commands::actions::{
 use commands::config::{get_config, set_config};
 use commands::gamepad::{gamepad_vibrate, start_gamepad_stream};
 use commands::rov_config::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, flash_mcu_firmware,
-  request_rov_config, set_rov_config, start_regulator_auto_tuning, start_thruster_test,
+  cancel_regulator_auto_tuning, cancel_thruster_test, flash_mcu_firmware, request_rov_config,
+  set_rov_config, start_regulator_auto_tuning, start_thruster_test,
 };
 use commands::window::close_splashscreen;
 use config::ConfigSendChannelState;
