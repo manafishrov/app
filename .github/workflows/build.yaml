@@ -63,8 +63,9 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           brew install ffmpeg
-          cp -P $(brew --prefix ffmpeg)/lib/*.dylib src-tauri/
-          for dylib in src-tauri/*.dylib; do
+          FFMPEG_LIB=$(brew --prefix ffmpeg)/lib
+          for dylib in $FFMPEG_LIB/*.dylib; do
+            [ -L "$dylib" ] && continue
             name=$(basename "$dylib")
             install_name_tool -id "@rpath/$name" "$dylib"
             for dep in $(otool -L "$dylib" | grep /opt/homebrew | awk '{print $1}'); do
@@ -72,6 +73,7 @@ jobs:
               install_name_tool -change "$dep" "@rpath/$dep_name" "$dylib"
             done
           done
+          cp -P $FFMPEG_LIB/*.dylib src-tauri/
           DYLIBS_JSON=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
           bun -e "console.log(JSON.stringify({bundle: {macOS: {frameworks: [$DYLIBS_JSON]}}}))" > src-tauri/tauri.macos.conf.json
 
