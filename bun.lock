@@ -22,7 +22,7 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@iconify-json/material-symbols": "1.2.65",
+        "@iconify-json/material-symbols": "1.2.67",
         "@inlang/paraglide-js": "2.15.3",
         "@tanstack/devtools-vite": "0.6.0",
         "@tanstack/solid-devtools": "0.8.2",
@@ -160,7 +160,7 @@
 
     "@fontsource/rajdhani": ["@fontsource/rajdhani@5.2.7", "", {}, "sha512-7Gy10U688fCdeFfYKebUF2TZotdgH/ghKyMsseXPmB60lpaUHC8aoCSJl5/OpZ+KHKSU2TqBfKfteVkcIXxTAQ=="],
 
-    "@iconify-json/material-symbols": ["@iconify-json/material-symbols@1.2.65", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-0kGO7z+yuWjn4de2gAz1hrOpDHN1rvnb1Lr3YnkmZr/pJ9bfLSv2bRXQo/nKx6oODXKcoYuFLcLvg2xPxMq5Pg=="],
+    "@iconify-json/material-symbols": ["@iconify-json/material-symbols@1.2.67", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-9cKkCiHfShI795yoX+f7EqchoOcPWgyl2pMcXkyylX66AJ+B5mYEOEFxYpU7toOoquOEY2OYrgU89neik0N02w=="],
 
     "@iconify/types": ["@iconify/types@2.0.0", "", {}, "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="],
 
