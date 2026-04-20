@@ -53,6 +53,7 @@ use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;
 use tauri::async_runtime::spawn;
+use tauri::webview::PageLoadEvent;
 use tauri::{App, Builder, Manager, generate_handler};
 use toast::toast_init;
 use tokio::sync::mpsc::channel;
@@ -91,6 +92,11 @@ pub fn run() -> tauri::Result<()> {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
+    .on_page_load(|webview, payload| {
+      if webview.label() == "splashscreen" && payload.event() == PageLoadEvent::Finished {
+        let _ = webview.window().show();
+      }
+    })
     .invoke_handler(generate_handler![
       close_splashscreen,
       start_gamepad_stream,
