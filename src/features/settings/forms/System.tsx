@@ -23,7 +23,6 @@ import {
   rovConfigStore,
   type RovConfig,
 } from '@/stores/rovConfig';
-import { rovStatusStore } from '@/stores/rovStatus';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
 
 type SelectOption = { value: string; label: string; disabled?: boolean };
@@ -268,7 +267,6 @@ const McuBoardField: Component<{
             class='w-20'
             type='button'
             variant='outline'
-            disabled={!rovStatusStore.health.mcuHealthy}
             onClick={props.onFlashFirmware}
             aria-label={m.general_rov_settings_mcu_board_title()}
           >

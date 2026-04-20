@@ -25,14 +25,17 @@ const WindowButton: Component<{
   <button
     tabIndex={-1}
     onClick={props.onClick}
-    class={`relative flex h-3 w-3 cursor-pointer items-center justify-center rounded-full transition-colors outline-none ${
-      props.isFocused
-        ? props.focusedColor
-        : ['bg-border', `group-hover:${props.hoverColor}`].join(' ')
+    disabled={!props.isFocused}
+    class={`relative flex h-3 w-3 items-center justify-center rounded-full transition-colors outline-none ${
+      props.isFocused ? `cursor-pointer ${props.focusedColor}` : 'bg-border'
     }`}
     aria-label={props.ariaLabel}
   >
-    <div class='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'>
+    <div
+      class={`absolute inset-0 transition-opacity ${
+        props.isFocused ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
+      }`}
+    >
       {props.children}
     </div>
   </button>
@@ -46,7 +49,7 @@ const FullscreenIcon: Component<{ isFullscreen: boolean; isFocused: boolean }> =
         <span class='absolute inset-0 m-auto h-[6px] w-[6px] rounded-[1px] bg-[#036200]'></span>
         <span
           class={`absolute inset-0 m-auto h-[2px] w-[10px] -rotate-45 rounded-[1px] transition-colors ${
-            props.isFocused ? 'bg-[#28c840]' : 'bg-border group-hover:bg-[#28c840]'
+            props.isFocused ? 'bg-[#28c840]' : 'bg-border'
           }`}
         ></span>
       </>
@@ -54,16 +57,12 @@ const FullscreenIcon: Component<{ isFullscreen: boolean; isFocused: boolean }> =
   >
     <span
       class={`absolute inset-0 m-auto h-0 w-0 -translate-x-[2.25px] -translate-y-[2.25px] rounded-[1px] border-b-[4.5px] border-l-[4.5px] border-l-transparent transition-colors ${
-        props.isFocused
-          ? 'border-b-[#036200]'
-          : 'border-b-transparent group-hover:border-b-[#036200]'
+        props.isFocused ? 'border-b-[#036200]' : 'border-b-transparent'
       }`}
     ></span>
     <span
       class={`absolute inset-0 m-auto h-0 w-0 translate-x-[2.25px] translate-y-[2.25px] rounded-[1px] border-t-[4.5px] border-r-[4.5px] border-r-transparent transition-colors ${
-        props.isFocused
-          ? 'border-t-[#036200]'
-          : 'border-t-transparent group-hover:border-t-[#036200]'
+        props.isFocused ? 'border-t-[#036200]' : 'border-t-transparent'
       }`}
     ></span>
   </Show>
