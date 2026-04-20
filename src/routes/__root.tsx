@@ -48,11 +48,7 @@ const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
 
   onMount(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        closeSplashscreen();
-      });
-    });
+    setTimeout(closeSplashscreen, 0);
     setupAppListeners(cleanupFns);
   });
 
