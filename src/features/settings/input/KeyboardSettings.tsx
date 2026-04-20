@@ -1,6 +1,7 @@
 import type { Component } from 'solid-js';
 
 import { H3 } from '@manafishrov/ui/typography';
+
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';

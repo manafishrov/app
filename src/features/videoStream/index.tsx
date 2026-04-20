@@ -7,7 +7,8 @@ import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
-import { createWebRTCConnection, createRecording } from './stream';
+import { createRecording } from './recording';
+import { createWebRTCConnection } from './stream';
 
 const [undef] = [] as undefined[];
 
