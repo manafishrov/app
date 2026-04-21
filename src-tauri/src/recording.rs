@@ -137,6 +137,9 @@ fn create_output_context(
         },
       };
     output_stream.set_parameters(stream.parameters());
+    unsafe {
+      (*output_stream.parameters().as_mut_ptr()).codec_tag = 0;
+    }
     output_stream.set_time_base(stream.time_base());
   }
 
@@ -156,6 +159,8 @@ fn copy_packets(
   output_context: &mut ffmpeg::format::context::Output,
   toast_id: &str,
 ) -> Result<(), String> {
+  let mut last_dts = HashMap::<usize, i64>::new();
+
   for (stream, mut packet) in input_context.packets() {
     let Some(output_stream) = output_context.stream(stream.index()) else {
       show_save_error(toast_id);
@@ -163,6 +168,25 @@ fn copy_packets(
     };
 
     packet.rescale_ts(stream.time_base(), output_stream.time_base());
+    packet.set_position(-1);
+    packet.set_stream(stream.index());
+    if packet.duration() > i64::from(i32::MAX) {
+      packet.set_duration(0);
+    }
+
+    if let Some(dts) = packet.dts() {
+      let idx = stream.index();
+      let prev = last_dts.get(&idx).copied().unwrap_or(i64::MIN);
+      if dts <= prev {
+        let offset = prev + 1 - dts;
+        packet.set_dts(Some(prev + 1));
+        if let Some(pts) = packet.pts() {
+          packet.set_pts(Some(pts + offset));
+        }
+      }
+      last_dts.insert(idx, packet.dts().unwrap_or(dts));
+    }
+
     if let Err(error) = packet.write_interleaved(output_context) {
       show_save_error(toast_id);
       return Err(format!("Failed to write packet: {error}"));
