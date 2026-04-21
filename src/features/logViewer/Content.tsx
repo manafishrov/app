@@ -74,7 +74,7 @@ const LogList: Component<LogViewerContentProps> = (props) => (
 );
 
 const LogViewerContent: Component<LogViewerContentProps> = (props) => (
-  <ScrollArea class='w-full min-h-0 flex-1 rounded-md border bg-background/50'>
+  <ScrollArea class='min-h-0 w-full flex-1 rounded-md border bg-background/50'>
     <ScrollAreaViewport
       ref={props.actions.setViewportRefWhenReady}
       onScroll={props.actions.handleViewportScroll}

@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -9,6 +10,7 @@
 
   outputs = {
     nixpkgs,
+    nixpkgs-unstable,
     fenix,
     ...
   }: let
@@ -21,6 +23,7 @@
   in {
     devShells = forAllSystems (system: let
       pkgs = nixpkgs.legacyPackages.${system};
+      unstable = nixpkgs-unstable.legacyPackages.${system};
       rustToolchain = fenix.packages.${system}.stable.withComponents [
         "cargo"
         "clippy"
@@ -35,7 +38,7 @@
           rustToolchain
           cmake
           pkg-config
-          bun
+          unstable.bun
           ffmpeg
         ];
         CMAKE_POLICY_VERSION_MINIMUM = "3.5";

@@ -27,18 +27,18 @@ bun run tauri build
 
 ## Scripts
 
-| Script | Description |
-|---|---|
-| `bun run dev` | Start Vite dev server |
-| `bun run build` | Build frontend |
-| `bun run lint` | Lint TypeScript |
-| `bun run lint:fix` | Lint and auto-fix TypeScript |
-| `bun run fmt` | Format TypeScript |
-| `bun run fmt:check` | Check TypeScript formatting |
-| `bun run lint:rs` | Lint Rust |
-| `bun run lint:rs:fix` | Lint and auto-fix Rust |
-| `bun run fmt:rs` | Format Rust |
-| `bun run fmt:rs:check` | Check Rust formatting |
+| Script                 | Description                  |
+| ---------------------- | ---------------------------- |
+| `bun run dev`          | Start Vite dev server        |
+| `bun run build`        | Build frontend               |
+| `bun run lint`         | Lint TypeScript              |
+| `bun run lint:fix`     | Lint and auto-fix TypeScript |
+| `bun run fmt`          | Format TypeScript            |
+| `bun run fmt:check`    | Check TypeScript formatting  |
+| `bun run lint:rs`      | Lint Rust                    |
+| `bun run lint:rs:fix`  | Lint and auto-fix Rust       |
+| `bun run fmt:rs`       | Format Rust                  |
+| `bun run fmt:rs:check` | Check Rust formatting        |
 
 ## License
 

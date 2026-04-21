@@ -7,12 +7,15 @@ assignees: ''
 ---
 
 ## Summary
+
 <!-- Brief description of the feature -->
 
 ## Problem/Motivation
+
 <!-- What problem does this solve? Why is it needed? -->
 
 ## Proposed Solution
+
 <!-- How should this work? Include UI/UX mockups if applicable -->
 
 ## Firmware Compatibility
@@ -22,4 +25,5 @@ assignees: ''
 - [ ] Requires new firmware feature
 
 ## Additional Context
+
 <!-- Screenshots, mockups, or references -->

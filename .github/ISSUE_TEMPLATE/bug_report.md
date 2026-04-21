@@ -7,6 +7,7 @@ assignees: ''
 ---
 
 ## Bug Description
+
 <!-- What went wrong? Be specific. -->
 
 ## Environment
@@ -27,6 +28,7 @@ assignees: ''
 - **Actual:**
 
 ## Logs / Error Messages
+
 <!-- If applicable, paste error messages or logs from the terminal/console -->
 
 ```
@@ -34,7 +36,9 @@ assignees: ''
 ```
 
 ## Screenshots / Recordings
+
 <!-- If UI-related, attach screenshots or screen recordings -->
 
 ## Additional Context
+
 <!-- Any other relevant information -->
