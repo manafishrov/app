@@ -289,3 +289,214 @@ impl Default for Config {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// # Panics
+  /// Panics if the two floating-point values are not equal within epsilon.
+  fn assert_f32_eq(actual: f32, expected: f32) {
+    assert!((actual - expected).abs() <= f32::EPSILON);
+  }
+
+  /// # Panics
+  /// Panics if the binding is missing, has an unexpected key, or has
+  /// unexpected range values.
+  fn assert_keyboard_binding(
+    binding: Option<&KeyboardInput>,
+    matches_key: impl Fn(&KeyboardKey) -> bool,
+  ) {
+    assert!(binding.is_some());
+
+    let Some(input) = binding else {
+      return;
+    };
+
+    assert!(matches_key(&input.key));
+    assert_f32_eq(input.min_value, 0.0);
+    assert_f32_eq(input.max_value, 1.0);
+  }
+
+  /// # Panics
+  /// Panics if any default config value differs from the expected defaults.
+  #[test]
+  fn config_default_has_expected_values() {
+    let config = Config::default();
+
+    assert_eq!(config.app_version, env!("CARGO_PKG_VERSION"));
+    assert_eq!(config.overlay_scale, 2);
+    assert!(matches!(config.attitude_indicator, AttitudeIndicator::Scientific));
+    assert!(!config.work_indicator);
+    assert!(!config.thruster_rpm_overlay);
+    assert_eq!(config.ip_address, "10.10.10.10");
+    assert_eq!(config.webrtc_signaling_api_port, 1984);
+    assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
+    assert_eq!(config.web_socket_port, 9000);
+    assert!(config.check_for_updates_on_startup);
+    assert!(config.selected_gamepad_id.is_none());
+    assert!(config.gamepad.is_empty());
+
+    if cfg!(target_os = "windows") {
+      assert!(config.video_directory.contains("Videos"));
+      assert!(config.video_directory.contains("Manafish"));
+    } else if cfg!(target_os = "macos") {
+      assert!(config.video_directory.contains("/Movies/Manafish"));
+    } else {
+      assert!(config.video_directory.contains("/Videos/Manafish"));
+    }
+
+    assert_keyboard_binding(config.keyboard.surge_forward.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyW)
+    });
+    assert_keyboard_binding(config.keyboard.surge_backward.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyS)
+    });
+    assert_keyboard_binding(config.keyboard.sway_right.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyD)
+    });
+    assert_keyboard_binding(config.keyboard.sway_left.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyA)
+    });
+    assert_keyboard_binding(config.keyboard.heave_up.as_ref(), |key| {
+      matches!(key, KeyboardKey::Space)
+    });
+    assert_keyboard_binding(config.keyboard.heave_down.as_ref(), |key| {
+      matches!(key, KeyboardKey::ShiftLeft)
+    });
+    assert_keyboard_binding(config.keyboard.pitch_up.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyI)
+    });
+    assert_keyboard_binding(config.keyboard.pitch_down.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyK)
+    });
+    assert_keyboard_binding(config.keyboard.yaw_right.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyL)
+    });
+    assert_keyboard_binding(config.keyboard.yaw_left.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyJ)
+    });
+    assert_keyboard_binding(config.keyboard.roll_left.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyQ)
+    });
+    assert_keyboard_binding(config.keyboard.roll_right.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyE)
+    });
+    assert_keyboard_binding(config.keyboard.action1_positive.as_ref(), |key| {
+      matches!(key, KeyboardKey::Digit1)
+    });
+    assert_keyboard_binding(config.keyboard.action1_negative.as_ref(), |key| {
+      matches!(key, KeyboardKey::Digit2)
+    });
+    assert_keyboard_binding(config.keyboard.action2_positive.as_ref(), |key| {
+      matches!(key, KeyboardKey::Digit3)
+    });
+    assert_keyboard_binding(config.keyboard.action2_negative.as_ref(), |key| {
+      matches!(key, KeyboardKey::Digit4)
+    });
+    assert_keyboard_binding(config.keyboard.auto_stabilization.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyU)
+    });
+    assert_keyboard_binding(config.keyboard.depth_hold.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyO)
+    });
+    assert_keyboard_binding(config.keyboard.desired_depth_entry.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyP)
+    });
+    assert_keyboard_binding(config.keyboard.desired_depth_increase.as_ref(), |key| {
+      matches!(key, KeyboardKey::ArrowUp)
+    });
+    assert_keyboard_binding(config.keyboard.desired_depth_decrease.as_ref(), |key| {
+      matches!(key, KeyboardKey::ArrowDown)
+    });
+    assert_keyboard_binding(config.keyboard.record.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyR)
+    });
+  }
+
+  /// # Panics
+  /// Panics if any default gamepad binding is set.
+  #[test]
+  fn gamepad_bindings_default_has_all_fields_unset() {
+    let bindings = GamepadBindings::default();
+
+    assert!(bindings.surge_forward.is_none());
+    assert!(bindings.surge_backward.is_none());
+    assert!(bindings.sway_right.is_none());
+    assert!(bindings.sway_left.is_none());
+    assert!(bindings.heave_up.is_none());
+    assert!(bindings.heave_down.is_none());
+    assert!(bindings.pitch_up.is_none());
+    assert!(bindings.pitch_down.is_none());
+    assert!(bindings.yaw_right.is_none());
+    assert!(bindings.yaw_left.is_none());
+    assert!(bindings.roll_left.is_none());
+    assert!(bindings.roll_right.is_none());
+    assert!(bindings.action1_positive.is_none());
+    assert!(bindings.action1_negative.is_none());
+    assert!(bindings.action2_positive.is_none());
+    assert!(bindings.action2_negative.is_none());
+    assert!(bindings.auto_stabilization.is_none());
+    assert!(bindings.depth_hold.is_none());
+    assert!(bindings.desired_depth_entry.is_none());
+    assert!(bindings.desired_depth_increase.is_none());
+    assert!(bindings.desired_depth_decrease.is_none());
+    assert!(bindings.record.is_none());
+  }
+
+  /// # Panics
+  /// Panics if serialization or deserialization fails, or if JSON field names
+  /// do not match the expected serde output.
+  #[test]
+  fn config_serialization_round_trip_preserves_fields() {
+    let config = Config::default();
+
+    let serialized = serde_json::to_value(&config);
+    assert!(serialized.is_ok(), "Config serialization failed: {serialized:?}");
+    let Ok(serialized) = serialized else {
+      return;
+    };
+
+    assert!(serialized.get("appVersion").is_some());
+    assert!(serialized.get("overlayScale").is_some());
+    assert!(serialized.get("videoDirectory").is_some());
+    assert!(serialized.get("app_version").is_none());
+    assert!(serialized.get("overlay_scale").is_none());
+    assert!(serialized.get("video_directory").is_none());
+
+    let deserialized = serde_json::from_value::<Config>(serialized.clone());
+    assert!(deserialized.is_ok());
+    let Ok(deserialized) = deserialized else {
+      return;
+    };
+
+    let reserialized = serde_json::to_value(&deserialized);
+    assert!(reserialized.is_ok(), "Config reserialization failed: {reserialized:?}");
+    let Ok(reserialized) = reserialized else {
+      return;
+    };
+
+    assert_eq!(serialized, reserialized);
+  }
+
+  /// # Panics
+  /// Panics if unknown config fields are accepted during deserialization.
+  #[test]
+  fn config_deserialization_rejects_unknown_fields() {
+    let serialized = serde_json::to_value(Config::default());
+    assert!(serialized.is_ok(), "Config serialization failed: {serialized:?}");
+    let Ok(mut serialized) = serialized else {
+      return;
+    };
+
+    let object = serialized.as_object_mut();
+    assert!(object.is_some());
+    let Some(object) = object else {
+      return;
+    };
+    let _ = object.insert("unexpectedField".to_string(), serde_json::json!(true));
+
+    let deserialized = serde_json::from_value::<Config>(serialized);
+    assert!(deserialized.is_err());
+  }
+}

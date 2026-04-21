@@ -289,3 +289,34 @@ pub async fn append_chunk(temp_path: String, chunk: Vec<u8>) -> Result<(), Strin
   .await
   .map_err(|error| format!("Recording chunk task failed: {error}"))?
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// # Panics
+  /// Panics if the temp recording suffix is not converted into an MP4 path.
+  #[test]
+  fn output_path_for_replaces_temp_suffix_with_mp4() {
+    assert_eq!(output_path_for("video_temp.webm"), "video.mp4");
+    assert_eq!(output_path_for("/path/to/recording_temp.webm"), "/path/to/recording.mp4");
+    assert_eq!(output_path_for("test_temp.webm"), "test.mp4");
+  }
+
+  /// # Panics
+  /// Panics if non-matching or edge-case recording paths change unexpectedly.
+  #[test]
+  fn output_path_for_handles_non_matching_and_edge_case_inputs() {
+    assert_eq!(output_path_for("video.webm"), "video.webm");
+    assert_eq!(output_path_for("first_temp.webm/second_temp.webm"), "first.mp4/second.mp4");
+    assert_eq!(output_path_for(""), "");
+  }
+
+  /// # Panics
+  /// Panics if path separators are not normalized in toast identifiers.
+  #[test]
+  fn toast_identifier_normalizes_path_separators() {
+    assert_eq!(toast_identifier("/path/to/file.webm"), "save_recording__path_to_file.webm");
+    assert_eq!(toast_identifier(r"C:\Users\video.webm"), "save_recording_C:_Users_video.webm");
+  }
+}
