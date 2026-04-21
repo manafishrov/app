@@ -189,6 +189,8 @@
   "power_min_battery_voltage_description": "The voltage of the battery when it is fully depleted. This will show as 0% battery in the app. Leave at default value unless you change to another type of battery.",
   "power_max_battery_voltage_label": "Battery Maximum Voltage",
   "power_max_battery_voltage_description": "The voltage of the battery when it is fully charged. This will show as 100% battery in the app. Leave at default value unless you change to another type of battery.",
+  "power_internal_resistance_label": "Battery Internal Resistance (Ω)",
+  "power_internal_resistance_description": "The internal resistance of the battery in ohms. Used to compensate for voltage sag under load, improving battery percentage accuracy. Set to 0 to disable.",
   "keyboard_page_title": "Keyboard",
   "keyboard_page_description": "Configure your keyboard controls. To assign a new key, first ensure no keys are pressed, then select the keybind you want to change and press and hold the new key for at least half a second. The bar will fill to confirm the binding.",
   "keyboard_heave": "Heave",

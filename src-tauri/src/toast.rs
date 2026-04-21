@@ -1,10 +1,10 @@
-use once_cell::sync::OnceCell;
+use std::sync::OnceLock;
 use tauri::{AppHandle, Emitter};
 
 use crate::log_error;
 use crate::models::toast::{Toast, ToastAction, ToastContent, ToastVariant};
 
-static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
+static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
 fn emit_toast(handle: &AppHandle, toast: Toast) {
   if let Err(error) = handle.emit("show_toast", toast) {

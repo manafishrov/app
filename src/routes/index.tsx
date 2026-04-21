@@ -80,13 +80,13 @@ const HomePage = (): JSXElement => {
   return (
     <main
       class={cn(
-        'flex flex-1 items-center justify-center overflow-hidden p-1 @container-[size]',
+        '@container-[size] flex flex-1 items-center justify-center overflow-hidden p-1',
         !isFullscreen() && 'mt-8',
       )}
     >
       <AspectRatio
         ratio={ASPECT_RATIO}
-        class='bg-muted relative rounded-lg w-[min(100cqw,calc(100cqh*4/3))] h-[min(100cqh,calc(100cqw*3/4))]'
+        class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-lg bg-muted'
       >
         <VideoStream />
         <Overlay />
