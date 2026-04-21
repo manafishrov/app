@@ -1,7 +1,9 @@
 ## Summary
+
 <!-- Simple summary of what was changed. -->
 
 ## Platform Testing
+
 <!-- Which platforms have you tested this on? Check all that apply -->
 
 - [ ] macOS

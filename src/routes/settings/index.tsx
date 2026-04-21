@@ -16,8 +16,8 @@ const GeneralSettingsPage: Component = () => (
     </div>
     <div class='my-8'>
       <H4>{m.general_settings_app_version_title()}</H4>
-      <p class='text-muted-foreground text-sm'>{m.general_settings_app_version_description()}</p>
-      <Badge class='bg-primary/10 text-primary mt-2 px-3 py-1 text-sm font-medium'>
+      <p class='text-sm text-muted-foreground'>{m.general_settings_app_version_description()}</p>
+      <Badge class='mt-2 bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
         v{configStore.appVersion}
       </Badge>
     </div>

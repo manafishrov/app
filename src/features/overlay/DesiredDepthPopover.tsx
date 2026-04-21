@@ -93,8 +93,8 @@ const DesiredDepthPopoverContent = (): JSXElement => {
   };
 
   return (
-    <div class='absolute right-0 bottom-full z-50 mb-2 w-48 rounded-md border bg-popover p-3 text-popover-foreground shadow-md pointer-events-auto'>
-      <div class='absolute right-4 top-full h-3 w-3 -translate-y-1/2 rotate-45 border-r border-b bg-popover' />
+    <div class='pointer-events-auto absolute right-0 bottom-full z-50 mb-2 w-48 rounded-md border bg-popover p-3 text-popover-foreground shadow-md'>
+      <div class='absolute top-full right-4 h-3 w-3 -translate-y-1/2 rotate-45 border-r border-b bg-popover' />
       <DesiredDepthInput
         draftDepth={desiredDepthPopupStore.draftDepth}
         setDraftDepth={setDesiredDepthDraft}
@@ -129,7 +129,7 @@ export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement
   });
 
   return (
-    <div ref={setContainerRef} class='relative inline-flex pointer-events-auto'>
+    <div ref={setContainerRef} class='pointer-events-auto relative inline-flex'>
       <div
         class='cursor-pointer'
         onClick={() => {

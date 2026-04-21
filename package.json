@@ -8,8 +8,8 @@
   "scripts": {
     "build": "bunx vite build",
     "dev": "bunx vite",
-    "fmt": "oxfmt --write src/**/*.ts src/**/*.tsx",
-    "fmt:check": "oxfmt --check src/**/*.ts src/**/*.tsx",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "fmt:rs": "cargo fmt --manifest-path src-tauri/Cargo.toml",
     "fmt:rs:check": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
     "lint": "oxlint --type-aware --type-check",
@@ -17,7 +17,8 @@
     "lint:rs": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -W clippy::all",
     "lint:rs:fix": "cargo clippy --manifest-path src-tauri/Cargo.toml --fix --allow-dirty -- -W clippy::all",
     "prepare": "lefthook install",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "bunx vitest run"
   },
   "dependencies": {
     "@manafishrov/ui": "1.5.2",
@@ -54,6 +55,7 @@
     "unplugin-auto-import": "21.0.0",
     "unplugin-icons": "23.0.1",
     "vite": "8.0.8",
-    "vite-plugin-solid": "2.11.12"
+    "vite-plugin-solid": "2.11.12",
+    "vitest": "4.1.5"
   }
 }

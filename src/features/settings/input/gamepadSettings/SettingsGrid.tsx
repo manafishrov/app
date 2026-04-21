@@ -12,7 +12,7 @@ const SettingsGrid: Component<{
   bindings: GamepadBindings;
   onBindChange: (bindingKey: keyof GamepadBindings, next: GamepadInput | null) => void;
 }> = (props) => (
-  <div class='grid grid-cols-1 gap-6 sm:grid-cols-2 sm:auto-rows-min'>
+  <div class='grid grid-cols-1 gap-6 sm:auto-rows-min sm:grid-cols-2'>
     <For each={BINDING_SECTIONS}>
       {(section) => (
         <div class={`space-y-2 ${section.class ?? ''}`.trim()}>

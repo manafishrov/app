@@ -2,10 +2,11 @@
 <html lang="en" class="size-full overflow-hidden rounded-2xl">
   <head>
     <script>
-      (function() {
+      (function () {
         try {
           var theme = localStorage.getItem('theme') || 'system';
-          var isDark = theme === 'dark' ||
+          var isDark =
+            theme === 'dark' ||
             (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) document.documentElement.classList.add('dark');
         } catch (e) {}
@@ -14,7 +15,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
-  <body class="size-full bg-background text-foreground font-sans select-none antialiased">
+  <body class="size-full bg-background font-sans text-foreground antialiased select-none">
     <div id="root" class="flex size-full flex-col"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

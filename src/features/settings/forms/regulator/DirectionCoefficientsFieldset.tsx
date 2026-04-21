@@ -48,7 +48,7 @@ export const DirectionCoefficientsFieldset = withForm({
   render: (props) => (
     <Fieldset>
       <FieldLegend>{m.regulator_direction_coefficients_title()}</FieldLegend>
-      <p class='text-muted-foreground mb-4 text-sm'>
+      <p class='mb-4 text-sm text-muted-foreground'>
         {m.regulator_direction_coefficients_description()}
       </p>
       <div class='space-y-4'>
