@@ -39,6 +39,40 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
   raw
 }
 
+fn show_config_parse_failed_toast() {
+  toast_warn(
+    None,
+    ToastContent {
+      message_key: "toasts_app_config_parse_failed_using_default".to_string(),
+      message_args: None,
+      description_key: None,
+      description_args: None,
+    },
+    None,
+  );
+}
+
+fn persist_default_config(config_path: &PathBuf, config: &Config) {
+  if let Some(parent) = config_path.parent() {
+    let _ = fs::create_dir_all(parent);
+  }
+
+  if let Ok(serialized) = serde_json::to_string(config) {
+    let _ = fs::write(config_path, serialized);
+  }
+}
+
+fn fallback_to_default_config(config_path: &PathBuf, remove_existing: bool) -> Config {
+  if remove_existing {
+    let _ = fs::remove_file(config_path);
+  }
+
+  show_config_parse_failed_toast();
+  let default_config = Config::default();
+  persist_default_config(config_path, &default_config);
+  default_config
+}
+
 pub fn get_config_from_file() -> Config {
   let Some(config_path) = get_config_path() else {
     log_warn!("Failed to get config directory. Using default config.");
@@ -49,47 +83,15 @@ pub fn get_config_from_file() -> Config {
     Ok(c) => c,
     Err(e) => {
       log_warn!("Failed to read config: {}. Using default config.", e);
-      toast_warn(
-        None,
-        ToastContent {
-          message_key: "toasts_app_config_parse_failed_using_default".to_string(),
-          message_args: None,
-          description_key: None,
-          description_args: None,
-        },
-        None,
-      );
-      let default_config = Config::default();
-      if let Some(parent) = config_path.parent() {
-        let _ = fs::create_dir_all(parent);
-      }
-      if let Ok(serialized) = serde_json::to_string(&default_config) {
-        let _ = fs::write(&config_path, &serialized);
-      }
-      return default_config;
+      return fallback_to_default_config(&config_path, false);
     },
   };
 
   let mut raw: serde_json::Value = match serde_json::from_str(&content) {
     Ok(v) => v,
     Err(e) => {
-      let _ = fs::remove_file(&config_path);
       log_warn!("Failed to parse config: {}. Using default config.", e);
-      toast_warn(
-        None,
-        ToastContent {
-          message_key: "toasts_app_config_parse_failed_using_default".to_string(),
-          message_args: None,
-          description_key: None,
-          description_args: None,
-        },
-        None,
-      );
-      let default_config = Config::default();
-      if let Ok(serialized) = serde_json::to_string(&default_config) {
-        let _ = fs::write(&config_path, &serialized);
-      }
-      return default_config;
+      return fallback_to_default_config(&config_path, true);
     },
   };
 

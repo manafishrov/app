@@ -1,10 +1,4 @@
-mod commands {
-  pub mod actions;
-  pub mod config;
-  pub mod gamepad;
-  pub mod rov_config;
-  pub mod window;
-}
+mod commands;
 
 mod models {
   pub mod actions;
@@ -16,39 +10,21 @@ mod models {
   pub mod toast;
 }
 
-mod websocket {
-  pub mod client;
-  pub mod handler;
-  pub mod message;
-  pub mod receive {
-    pub mod config;
-    pub mod log;
-    pub mod status;
-    pub mod telemetry;
-    pub mod toast;
-  }
-  pub mod send {
-    pub mod actions;
-    pub mod config;
-  }
-}
+mod recording;
+mod websocket;
 
 mod config;
 mod gamepad;
 mod log;
 mod toast;
 
-use commands::actions::{
-  append_recording_chunk, save_recording, send_custom_action, send_direction_vector,
-  set_desired_depth, toggle_auto_stabilization, toggle_depth_hold,
+use commands::{
+  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
+  flash_mcu_firmware, gamepad_vibrate, get_config, request_rov_config, save_recording,
+  send_custom_action, send_direction_vector, set_config, set_desired_depth, set_rov_config,
+  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  toggle_auto_stabilization, toggle_depth_hold,
 };
-use commands::config::{get_config, set_config};
-use commands::gamepad::{gamepad_vibrate, start_gamepad_stream};
-use commands::rov_config::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, flash_mcu_firmware, request_rov_config,
-  set_rov_config, start_regulator_auto_tuning, start_thruster_test,
-};
-use commands::window::close_splashscreen;
 use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;

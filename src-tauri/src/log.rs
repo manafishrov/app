@@ -1,9 +1,9 @@
-use once_cell::sync::OnceCell;
+use std::sync::OnceLock;
 use tauri::{AppHandle, Emitter};
 
 use crate::models::log::{LogEntry, LogLevel, LogOrigin};
 
-static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
+static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
 fn emit_log(level: LogLevel, message: &str) {
   if let Some(handle) = APP_HANDLE.get() {

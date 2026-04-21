@@ -86,6 +86,7 @@ type Power = {
   regulatorLimit: number;
   minBatteryVoltage: number;
   maxBatteryVoltage: number;
+  internalResistance: number;
 };
 
 type RovConfig = {
@@ -163,6 +164,7 @@ const defaultRovConfig: RovConfig = {
     regulatorLimit: 30,
     minBatteryVoltage: 14,
     maxBatteryVoltage: 21.5,
+    internalResistance: 0.1,
   },
   ipAddress: '10.10.10.10',
   websocketPort: 9000,

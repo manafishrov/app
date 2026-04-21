@@ -72,6 +72,7 @@ pub struct Power {
   pub regulator_limit: f32,
   pub min_battery_voltage: f32,
   pub max_battery_voltage: f32,
+  pub internal_resistance: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

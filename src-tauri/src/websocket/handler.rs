@@ -2,11 +2,10 @@ use tauri::AppHandle;
 use tokio_tungstenite::tungstenite::Message;
 
 use super::message::WebsocketMessage;
-use super::receive::config::{handle_config, handle_regulator_suggestions};
-use super::receive::log::handle_log_message;
-use super::receive::status::handle_status_update;
-use super::receive::telemetry::handle_telemetry;
-use super::receive::toast::handle_show_toast;
+use super::receive::{
+  handle_config, handle_log_message, handle_regulator_suggestions, handle_show_toast,
+  handle_status_update, handle_telemetry,
+};
 use crate::log_warn;
 
 pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<Message> {
