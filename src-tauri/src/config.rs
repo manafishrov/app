@@ -153,3 +153,78 @@ pub async fn set_config_to_file(
 
   Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use serde_json::json;
+
+  fn sample_raw_config() -> serde_json::Value {
+    json!({
+      "appVersion": "99.0.0",
+      "overlayScale": 5,
+      "attitudeIndicator": "scientific",
+      "workIndicator": true,
+      "thrusterRpmOverlay": false,
+      "videoDirectory": "/tmp/manafish",
+      "ipAddress": "10.10.10.10",
+      "webrtcSignalingApiPort": 1984,
+      "webrtcSignalingApiPath": "/api/webrtc?src=cam",
+      "webSocketPort": 9000,
+      "checkForUpdatesOnStartup": true,
+      "keyboard": {},
+      "selectedGamepadId": null,
+      "gamepad": {}
+    })
+  }
+
+  /// # Panics
+  /// Panics if any semantic version input does not parse into the expected
+  /// tuple.
+  #[test]
+  fn parse_semver_handles_expected_inputs() {
+    let cases = [
+      ("1.2.3", (1, 2, 3)),
+      ("0.0.0", (0, 0, 0)),
+      ("10.20.30", (10, 20, 30)),
+      ("1.0", (1, 0, 0)),
+      ("1", (1, 0, 0)),
+      ("", (0, 0, 0)),
+      ("abc.def.ghi", (0, 0, 0)),
+    ];
+
+    for (input, expected) in cases {
+      assert_eq!(parse_semver(input), expected);
+    }
+  }
+
+  /// # Panics
+  /// Panics if semantic version comparisons do not return the expected
+  /// ordering.
+  #[test]
+  fn compare_semver_orders_versions() {
+    let cases = [
+      (("1.0.0", "1.0.0"), Ordering::Equal),
+      (("1.0.0", "2.0.0"), Ordering::Less),
+      (("2.0.0", "1.0.0"), Ordering::Greater),
+      (("1.1.0", "1.0.0"), Ordering::Greater),
+      (("1.0.1", "1.0.0"), Ordering::Greater),
+      (("0.9.9", "1.0.0"), Ordering::Less),
+    ];
+
+    for ((left, right), expected) in cases {
+      assert_eq!(compare_semver(left, right), expected);
+    }
+  }
+
+  /// # Panics
+  /// Panics if migrations mutate input when no migrations apply.
+  #[test]
+  fn apply_migrations_preserves_input_when_no_migrations_apply() {
+    let raw = sample_raw_config();
+
+    let result = apply_migrations(raw.clone());
+
+    assert_eq!(raw, result);
+  }
+}
