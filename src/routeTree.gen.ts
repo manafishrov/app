@@ -20,6 +20,7 @@ import { Route as SettingsAppConnectionIndexRouteImport } from './routes/setting
 import { Route as SettingsRovSystemIndexRouteImport } from './routes/settings/rov/system/index'
 import { Route as SettingsRovRegulatorIndexRouteImport } from './routes/settings/rov/regulator/index'
 import { Route as SettingsRovPowerIndexRouteImport } from './routes/settings/rov/power/index'
+import { Route as SettingsRovMcuIndexRouteImport } from './routes/settings/rov/mcu/index'
 import { Route as SettingsRovConnectionIndexRouteImport } from './routes/settings/rov/connection/index'
 import { Route as SettingsRovCalibrationIndexRouteImport } from './routes/settings/rov/calibration/index'
 
@@ -80,6 +81,11 @@ const SettingsRovPowerIndexRoute = SettingsRovPowerIndexRouteImport.update({
   path: '/rov/power/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsRovMcuIndexRoute = SettingsRovMcuIndexRouteImport.update({
+  id: '/rov/mcu/',
+  path: '/rov/mcu/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsRovConnectionIndexRoute =
   SettingsRovConnectionIndexRouteImport.update({
     id: '/rov/connection/',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
   '/settings/rov/calibration': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/mcu': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system': typeof SettingsRovSystemIndexRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/settings/keyboard/'
     | '/settings/rov/calibration/'
     | '/settings/rov/connection/'
+    | '/settings/rov/mcu/'
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
     | '/settings/rov/system/'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/settings/keyboard'
     | '/settings/rov/calibration'
     | '/settings/rov/connection'
+    | '/settings/rov/mcu'
     | '/settings/rov/power'
     | '/settings/rov/regulator'
     | '/settings/rov/system'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/settings/keyboard/'
     | '/settings/rov/calibration/'
     | '/settings/rov/connection/'
+    | '/settings/rov/mcu/'
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
     | '/settings/rov/system/'
@@ -269,6 +281,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsRovPowerIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/rov/mcu/': {
+      id: '/settings/rov/mcu/'
+      path: '/rov/mcu'
+      fullPath: '/settings/rov/mcu/'
+      preLoaderRoute: typeof SettingsRovMcuIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/rov/connection/': {
       id: '/settings/rov/connection/'
       path: '/rov/connection'
@@ -295,6 +314,7 @@ interface SettingsRouteRouteChildren {
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
   SettingsRovCalibrationIndexRoute: typeof SettingsRovCalibrationIndexRoute
   SettingsRovConnectionIndexRoute: typeof SettingsRovConnectionIndexRoute
+  SettingsRovMcuIndexRoute: typeof SettingsRovMcuIndexRoute
   SettingsRovPowerIndexRoute: typeof SettingsRovPowerIndexRoute
   SettingsRovRegulatorIndexRoute: typeof SettingsRovRegulatorIndexRoute
   SettingsRovSystemIndexRoute: typeof SettingsRovSystemIndexRoute
@@ -309,6 +329,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
   SettingsRovCalibrationIndexRoute: SettingsRovCalibrationIndexRoute,
   SettingsRovConnectionIndexRoute: SettingsRovConnectionIndexRoute,
+  SettingsRovMcuIndexRoute: SettingsRovMcuIndexRoute,
   SettingsRovPowerIndexRoute: SettingsRovPowerIndexRoute,
   SettingsRovRegulatorIndexRoute: SettingsRovRegulatorIndexRoute,
   SettingsRovSystemIndexRoute: SettingsRovSystemIndexRoute,

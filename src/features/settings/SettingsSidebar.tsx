@@ -20,6 +20,7 @@ import BuildIcon from '~icons/material-symbols/build';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
+import MemoryIcon from '~icons/material-symbols/memory';
 import PaletteIcon from '~icons/material-symbols/palette';
 import SettingsIcon from '~icons/material-symbols/settings';
 import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
@@ -76,6 +77,12 @@ const ROV_ITEMS = [
     ariaLabel: (): string => m.aria_labels_system_rov_button(),
     to: '/settings/rov/system',
     Icon: Drone2Icon,
+  },
+  {
+    label: (): string => m.settings_rov_mcu(),
+    ariaLabel: (): string => m.aria_labels_mcu_button(),
+    to: '/settings/rov/mcu',
+    Icon: MemoryIcon,
   },
   {
     label: (): string => m.settings_rov_calibration(),
