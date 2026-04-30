@@ -11,13 +11,18 @@ import { setupToastListener } from '@/tauri/toast';
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
+export {
+  checkForFirmwareUpdates,
+  downloadFirmwareUpdate,
+  refreshFirmwareUpdateStatus,
+} from '@/tauri/firmwareUpdater';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
 export { sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { vibrateGamepad } from '@/tauri/gamepad';
-export { checkForUpdates } from '@/tauri/updater';
+export { checkForAppUpdates, installAppUpdate } from '@/tauri/updater';
 export { closeSplashscreen } from '@/tauri/window';
 
 const listeners = [
