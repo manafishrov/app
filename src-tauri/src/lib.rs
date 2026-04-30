@@ -19,11 +19,12 @@ mod log;
 mod toast;
 
 use commands::{
-  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
-  flash_mcu_firmware, gamepad_vibrate, get_config, request_rov_config, save_recording,
-  send_custom_action, send_direction_vector, set_config, set_desired_depth, set_rov_config,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
-  toggle_auto_stabilization, toggle_depth_hold,
+  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test,
+  check_firmware_update, close_splashscreen, download_firmware_update, flash_mcu_firmware,
+  gamepad_vibrate, get_config, request_rov_config, save_recording, send_custom_action,
+  send_direction_vector, set_config, set_desired_depth, set_rov_config, start_gamepad_stream,
+  start_regulator_auto_tuning, start_thruster_test, toggle_auto_stabilization, toggle_depth_hold,
+  upload_firmware_update,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -92,6 +93,9 @@ pub fn run() -> tauri::Result<()> {
       append_recording_chunk,
       toggle_depth_hold,
       flash_mcu_firmware,
+      check_firmware_update,
+      download_firmware_update,
+      upload_firmware_update,
       save_recording,
     ])
     .setup(|app| {
