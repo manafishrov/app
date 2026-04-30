@@ -12,11 +12,13 @@ import { configStore, setConfig } from '@/stores/config';
 
 const createFormSchema = (): z.ZodObject<{
   videoDirectory: z.ZodString;
-  checkForUpdatesOnStartup: z.ZodBoolean;
+  checkForAppUpdatesOnStartup: z.ZodBoolean;
+  checkForFirmwareUpdatesOnConnect: z.ZodBoolean;
 }> =>
   z.object({
     videoDirectory: z.string().min(1, m.general_settings_video_directory_required()),
-    checkForUpdatesOnStartup: z.boolean(),
+    checkForAppUpdatesOnStartup: z.boolean(),
+    checkForFirmwareUpdatesOnConnect: z.boolean(),
   });
 
 const handleSelectVideoDirectory = (
@@ -44,11 +46,16 @@ const handleSelectVideoDirectory = (
 const handleFormSubmit = ({
   value,
 }: {
-  value: { videoDirectory: string; checkForUpdatesOnStartup: boolean };
+  value: {
+    videoDirectory: string;
+    checkForAppUpdatesOnStartup: boolean;
+    checkForFirmwareUpdatesOnConnect: boolean;
+  };
 }): void => {
   setConfig({
     videoDirectory: value.videoDirectory,
-    checkForUpdatesOnStartup: value.checkForUpdatesOnStartup,
+    checkForAppUpdatesOnStartup: value.checkForAppUpdatesOnStartup,
+    checkForFirmwareUpdatesOnConnect: value.checkForFirmwareUpdatesOnConnect,
   }).catch(logError);
 };
 
@@ -62,7 +69,10 @@ type GeneralFieldApi = {
   SwitchField: (props: { label: string; description?: string }) => JSXElement;
 };
 
-type GeneralFieldName = 'videoDirectory' | 'checkForUpdatesOnStartup';
+type GeneralFieldName =
+  | 'videoDirectory'
+  | 'checkForAppUpdatesOnStartup'
+  | 'checkForFirmwareUpdatesOnConnect';
 
 type GeneralFieldRenderer = (props: {
   name: GeneralFieldName;
@@ -92,11 +102,19 @@ const GeneralFields: Component<{
         />
       )}
     </props.AppField>
-    <props.AppField name='checkForUpdatesOnStartup'>
+    <props.AppField name='checkForAppUpdatesOnStartup'>
       {(field) => (
         <field.SwitchField
-          label={m.general_settings_check_for_updates_title()}
-          description={m.general_settings_check_for_updates_description()}
+          label={m.general_settings_check_for_app_updates_title()}
+          description={m.general_settings_check_for_app_updates_description()}
+        />
+      )}
+    </props.AppField>
+    <props.AppField name='checkForFirmwareUpdatesOnConnect'>
+      {(field) => (
+        <field.SwitchField
+          label={m.general_settings_check_for_firmware_updates_title()}
+          description={m.general_settings_check_for_firmware_updates_description()}
         />
       )}
     </props.AppField>
@@ -110,7 +128,8 @@ export const General: Component = () => {
     validators: { onSubmit: formSchema },
     defaultValues: {
       videoDirectory: configStore.videoDirectory,
-      checkForUpdatesOnStartup: configStore.checkForUpdatesOnStartup,
+      checkForAppUpdatesOnStartup: configStore.checkForAppUpdatesOnStartup,
+      checkForFirmwareUpdatesOnConnect: configStore.checkForFirmwareUpdatesOnConnect,
     },
     onSubmit: handleFormSubmit,
   }));

@@ -34,9 +34,8 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
         cleanupFns.push(contextMenuCleanup);
       }
 
-      if (configStore.checkForUpdatesOnStartup) {
+      if (configStore.checkForAppUpdatesOnStartup) {
         checkForAppUpdates(true).catch(logError);
-        checkForFirmwareUpdates(true).catch(logError);
       }
       return initializeVideoDirectory().then(() => recoverTempRecordings());
     })
@@ -48,13 +47,8 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
     });
 };
 
-const RootLayout: Component = () => {
-  const cleanupFns: (() => void)[] = [];
-
-  onMount(() => {
-    setTimeout(closeSplashscreen, 0);
-    setupAppListeners(cleanupFns);
-  });
+const FirmwareUpdateStatusSync: Component = () => {
+  let lastFirmwareUpdateCheckVersion = '';
 
   createEffect(() => {
     const { firmwareVersion } = rovConfigStore;
@@ -63,6 +57,24 @@ const RootLayout: Component = () => {
     }
 
     refreshFirmwareUpdateStatus();
+    if (
+      configStore.checkForFirmwareUpdatesOnConnect &&
+      lastFirmwareUpdateCheckVersion !== firmwareVersion
+    ) {
+      lastFirmwareUpdateCheckVersion = firmwareVersion;
+      checkForFirmwareUpdates(true).catch(logError);
+    }
+  });
+
+  return <></>;
+};
+
+const RootLayout: Component = () => {
+  const cleanupFns: (() => void)[] = [];
+
+  onMount(() => {
+    setTimeout(closeSplashscreen, 0);
+    setupAppListeners(cleanupFns);
   });
 
   onCleanup(() => {
@@ -79,6 +91,7 @@ const RootLayout: Component = () => {
           <Header />
           <Outlet />
           <Toaster />
+          <FirmwareUpdateStatusSync />
         </LocaleProvider>
       </ThemeProvider>
       <TanStackDevtools

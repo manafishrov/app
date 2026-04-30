@@ -36,6 +36,13 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
 
   let _ = stored_version;
 
+  let mut raw = raw;
+  if let Some(object) = raw.as_object_mut()
+    && let Some(value) = object.remove("checkForUpdatesOnStartup") {
+      object.insert("checkForAppUpdatesOnStartup".to_string(), value.clone());
+      object.insert("checkForFirmwareUpdatesOnConnect".to_string(), value);
+    }
+
   raw
 }
 
@@ -218,13 +225,15 @@ mod tests {
   }
 
   /// # Panics
-  /// Panics if migrations do not preserve update toggle as expected.
+  /// Panics if migrations split the legacy update toggle incorrectly.
   #[test]
-  fn apply_migrations_preserves_update_toggle() {
+  fn apply_migrations_splits_legacy_update_toggle() {
     let raw = sample_raw_config();
 
     let result = apply_migrations(raw);
 
-    assert_eq!(result.get("checkForUpdatesOnStartup"), Some(&json!(true)));
+    assert!(result.get("checkForUpdatesOnStartup").is_none());
+    assert_eq!(result.get("checkForAppUpdatesOnStartup"), Some(&json!(true)));
+    assert_eq!(result.get("checkForFirmwareUpdatesOnConnect"), Some(&json!(true)));
   }
 }
