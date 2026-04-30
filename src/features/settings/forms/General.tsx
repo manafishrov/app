@@ -59,7 +59,7 @@ type GeneralFieldApi = {
     readonly?: boolean;
     trailingAddon?: JSXElement;
   }) => JSXElement;
-  CheckboxField: (props: { label: string; description?: string }) => JSXElement;
+  SwitchField: (props: { label: string; description?: string }) => JSXElement;
 };
 
 type GeneralFieldName = 'videoDirectory' | 'checkForUpdatesOnStartup';
@@ -94,7 +94,7 @@ const GeneralFields: Component<{
     </props.AppField>
     <props.AppField name='checkForUpdatesOnStartup'>
       {(field) => (
-        <field.CheckboxField
+        <field.SwitchField
           label={m.general_settings_check_for_updates_title()}
           description={m.general_settings_check_for_updates_description()}
         />
