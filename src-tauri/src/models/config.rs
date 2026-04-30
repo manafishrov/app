@@ -196,15 +196,29 @@ pub enum AttitudeIndicator {
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DisplayConfig {
+  pub work_indicator: bool,
+  pub thruster_rpm_overlay: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct UpdateCheckConfig {
+  pub check_for_app_updates_on_startup: bool,
+  pub check_for_firmware_updates_on_connect: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
   pub app_version: String,
   pub overlay_scale: i8,
   pub attitude_indicator: AttitudeIndicator,
-  pub work_indicator: bool,
-  pub thruster_rpm_overlay: bool,
+  #[serde(flatten)]
+  pub display: DisplayConfig,
   pub video_directory: String,
-  pub check_for_app_updates_on_startup: bool,
-  pub check_for_firmware_updates_on_connect: bool,
+  #[serde(flatten)]
+  pub update_checks: UpdateCheckConfig,
   pub ip_address: String,
   pub webrtc_signaling_api_port: u16,
   pub webrtc_signaling_api_path: String,
@@ -276,11 +290,15 @@ impl Default for Config {
       app_version: env!("CARGO_PKG_VERSION").to_string(),
       overlay_scale: 2,
       attitude_indicator: AttitudeIndicator::Scientific,
-      work_indicator: false,
-      thruster_rpm_overlay: false,
+      display: DisplayConfig {
+        work_indicator: false,
+        thruster_rpm_overlay: false,
+      },
       video_directory: default_video_directory(),
-      check_for_app_updates_on_startup: true,
-      check_for_firmware_updates_on_connect: true,
+      update_checks: UpdateCheckConfig {
+        check_for_app_updates_on_startup: true,
+        check_for_firmware_updates_on_connect: true,
+      },
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
@@ -329,8 +347,10 @@ mod tests {
     assert_eq!(config.app_version, env!("CARGO_PKG_VERSION"));
     assert_eq!(config.overlay_scale, 2);
     assert!(matches!(config.attitude_indicator, AttitudeIndicator::Scientific));
-    assert!(!config.work_indicator);
-    assert!(!config.thruster_rpm_overlay);
+    assert!(!config.display.work_indicator);
+    assert!(!config.display.thruster_rpm_overlay);
+    assert!(config.update_checks.check_for_app_updates_on_startup);
+    assert!(config.update_checks.check_for_firmware_updates_on_connect);
     assert_eq!(config.ip_address, "10.10.10.10");
     assert_eq!(config.webrtc_signaling_api_port, 1984);
     assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
