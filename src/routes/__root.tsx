@@ -12,13 +12,16 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
+import { rovConfigStore } from '@/stores/rovConfig';
 import {
+  checkForAppUpdates,
+  checkForFirmwareUpdates,
   closeSplashscreen,
   getConfig,
   initializeVideoDirectory,
+  refreshFirmwareUpdateStatus,
   recoverTempRecordings,
   setupAllListeners,
-  checkForUpdates,
 } from '@/tauri';
 
 const setupAppListeners = (cleanupFns: (() => void)[]): void => {
@@ -32,7 +35,8 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
       }
 
       if (configStore.checkForUpdatesOnStartup) {
-        checkForUpdates().catch(logError);
+        checkForAppUpdates(true).catch(logError);
+        checkForFirmwareUpdates(true).catch(logError);
       }
       return initializeVideoDirectory().then(() => recoverTempRecordings());
     })
@@ -50,6 +54,15 @@ const RootLayout: Component = () => {
   onMount(() => {
     setTimeout(closeSplashscreen, 0);
     setupAppListeners(cleanupFns);
+  });
+
+  createEffect(() => {
+    const { firmwareVersion } = rovConfigStore;
+    if (firmwareVersion.trim() === '' || firmwareVersion.toUpperCase() === 'N/A') {
+      return;
+    }
+
+    refreshFirmwareUpdateStatus();
   });
 
   onCleanup(() => {
