@@ -3,30 +3,63 @@ import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updat
 
 import { logError, logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { NULL_VALUE, setUpdaterStore } from '@/stores/updater';
+import { setAppUpdateState, updatesStore } from '@/stores/updates';
 
 const PERCENT_MULTIPLIER = 100;
 const MAX_PERCENT = 100;
 
-export const checkForUpdates = (): Promise<void> =>
-  check()
+const showAppUpdateAvailableToast = (version: string): void => {
+  toast.create({
+    title: m.toasts_update_available(),
+    description: m.toasts_app_update_available_description({ version }),
+    type: 'info',
+  });
+};
+
+export const checkForAppUpdates = (showAvailableToast = false): Promise<void> => {
+  setAppUpdateState({
+    error: null,
+    status: 'checking',
+  });
+
+  return check()
     .then((update) => {
       if (!update) {
-        logInfo('No updates available.');
+        logInfo('No app updates available.');
+        setAppUpdateState({
+          availableUpdate: null,
+          error: null,
+          latestVersion: null,
+          status: 'upToDate',
+        });
         return;
       }
 
-      logInfo(`Update available: ${update.version}`);
-      setUpdaterStore({ updateAvailable: update });
+      logInfo(`App update available: ${update.version}`);
+      setAppUpdateState({
+        availableUpdate: update,
+        error: null,
+        latestVersion: update.version,
+        status: 'available',
+      });
+      if (showAvailableToast) {
+        showAppUpdateAvailableToast(update.version);
+      }
     })
     .catch((error: unknown) => {
-      logError('Error checking for updates:', error);
+      logError('Error checking for app updates:', error);
+      setAppUpdateState({
+        error: m.general_settings_app_update_check_failed(),
+        status: 'error',
+      });
     });
+};
 
 const toProgressPercent = (downloaded: number, total: number): number => {
   if (total === 0) {
     return 0;
   }
+
   const percent = downloaded * PERCENT_MULTIPLIER;
   return Math.min(Math.floor(percent / total), MAX_PERCENT);
 };
@@ -100,28 +133,46 @@ const createDownloadEventHandler = (toastId: string) => {
   };
 };
 
-export const startUpdate = (update: Update): void => {
-  setUpdaterStore({ updateAvailable: NULL_VALUE });
+export const installAppUpdate = (): Promise<void> => {
+  const update: Update | null = updatesStore.app.availableUpdate;
+  if (!update) {
+    return Promise.resolve();
+  }
+
+  setAppUpdateState({
+    error: null,
+    status: 'installing',
+  });
 
   const toastId = toast.create({
     title: m.toasts_update_downloading(),
     type: 'loading',
   });
 
-  update
+  return update
     .downloadAndInstall(createDownloadEventHandler(toastId))
     .then(() => {
+      setAppUpdateState({
+        availableUpdate: null,
+        error: null,
+        latestVersion: update.version,
+        status: 'readyToRestart',
+      });
       toast.update(toastId, {
         title: m.toasts_update_ready(),
         description: m.toasts_update_restart_to_apply(),
         type: 'success',
       });
-      logInfo('Update installed. Ready to restart.');
+      logInfo('App update installed. Ready to restart.');
     })
     .catch((error: unknown) => {
-      logError('Error installing update:', error);
+      logError('Error installing app update:', error);
+      setAppUpdateState({
+        error: m.general_settings_app_update_install_failed(),
+        status: 'available',
+      });
       toast.update(toastId, {
-        title: 'Error installing update',
+        title: m.general_settings_app_update_install_failed(),
         type: 'error',
       });
     });
