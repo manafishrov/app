@@ -10,7 +10,6 @@ import { RecordingIndicator } from './RecordingIndicator';
 import { StabilizationIndicator } from './StabilizationIndicator';
 import { TemperatureIndicator } from './TemperatureIndicator';
 import { ThrusterRpmOverlay } from './ThrusterRpmOverlay';
-import { UpdateAlert } from './UpdateAlert';
 
 type ScaledContentProps = {
   class?: string;
@@ -62,8 +61,6 @@ const Overlay: Component = () => {
           <BatteryIndicator />
         </ZoomContent>
       </div>
-
-      <UpdateAlert />
     </div>
   );
 };
