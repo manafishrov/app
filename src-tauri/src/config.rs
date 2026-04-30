@@ -38,10 +38,11 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
 
   let mut raw = raw;
   if let Some(object) = raw.as_object_mut()
-    && let Some(value) = object.remove("checkForUpdatesOnStartup") {
-      object.insert("checkForAppUpdatesOnStartup".to_string(), value.clone());
-      object.insert("checkForFirmwareUpdatesOnConnect".to_string(), value);
-    }
+    && let Some(value) = object.remove("checkForUpdatesOnStartup")
+  {
+    object.insert("checkForAppUpdatesOnStartup".to_string(), value.clone());
+    object.insert("checkForFirmwareUpdatesOnConnect".to_string(), value);
+  }
 
   raw
 }
