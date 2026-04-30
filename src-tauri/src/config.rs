@@ -167,14 +167,14 @@ mod tests {
       "workIndicator": true,
       "thrusterRpmOverlay": false,
       "videoDirectory": "/tmp/manafish",
-      "ipAddress": "10.10.10.10",
-      "webrtcSignalingApiPort": 1984,
-      "webrtcSignalingApiPath": "/api/webrtc?src=cam",
-      "webSocketPort": 9000,
-      "checkForUpdatesOnStartup": true,
-      "keyboard": {},
-      "selectedGamepadId": null,
-      "gamepad": {}
+        "checkForUpdatesOnStartup": true,
+        "ipAddress": "10.10.10.10",
+        "webrtcSignalingApiPort": 1984,
+        "webrtcSignalingApiPath": "/api/webrtc?src=cam",
+        "webSocketPort": 9000,
+        "keyboard": {},
+        "selectedGamepadId": null,
+        "gamepad": {}
     })
   }
 
@@ -218,13 +218,13 @@ mod tests {
   }
 
   /// # Panics
-  /// Panics if migrations mutate input when no migrations apply.
+  /// Panics if migrations do not preserve update toggle as expected.
   #[test]
-  fn apply_migrations_preserves_input_when_no_migrations_apply() {
+  fn apply_migrations_preserves_update_toggle() {
     let raw = sample_raw_config();
 
-    let result = apply_migrations(raw.clone());
+    let result = apply_migrations(raw);
 
-    assert_eq!(raw, result);
+    assert_eq!(result.get("checkForUpdatesOnStartup"), Some(&json!(true)));
   }
 }

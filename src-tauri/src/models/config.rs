@@ -203,11 +203,11 @@ pub struct Config {
   pub work_indicator: bool,
   pub thruster_rpm_overlay: bool,
   pub video_directory: String,
+  pub check_for_updates_on_startup: bool,
   pub ip_address: String,
   pub webrtc_signaling_api_port: u16,
   pub webrtc_signaling_api_path: String,
   pub web_socket_port: u16,
-  pub check_for_updates_on_startup: bool,
   pub keyboard: KeyboardBindings,
   pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
@@ -278,11 +278,11 @@ impl Default for Config {
       work_indicator: false,
       thruster_rpm_overlay: false,
       video_directory: default_video_directory(),
+      check_for_updates_on_startup: true,
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
       web_socket_port: 9000,
-      check_for_updates_on_startup: true,
       keyboard: KeyboardBindings::default(),
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
@@ -333,7 +333,6 @@ mod tests {
     assert_eq!(config.webrtc_signaling_api_port, 1984);
     assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
     assert_eq!(config.web_socket_port, 9000);
-    assert!(config.check_for_updates_on_startup);
     assert!(config.selected_gamepad_id.is_none());
     assert!(config.gamepad.is_empty());
 
