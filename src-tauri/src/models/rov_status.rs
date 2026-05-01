@@ -14,5 +14,6 @@ pub struct RovStatus {
   pub auto_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
+  pub current_draw: i32,
   pub health: SystemHealth,
 }

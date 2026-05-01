@@ -10,6 +10,7 @@ type RovStatus = {
   autoStabilization: boolean;
   depthHold: boolean;
   batteryPercentage: number;
+  currentDraw: number;
   health: SystemHealth;
 };
 
@@ -17,6 +18,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
+  currentDraw: 0,
   health: {
     imuHealthy: false,
     pressureSensorHealthy: false,
