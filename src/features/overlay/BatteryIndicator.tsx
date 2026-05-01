@@ -5,6 +5,7 @@ import BatteryEmptyIcon from '~icons/material-symbols/battery-0-bar';
 import BatteryLowIcon from '~icons/material-symbols/battery-2-bar';
 import BatteryMediumIcon from '~icons/material-symbols/battery-5-bar';
 import BatteryFullIcon from '~icons/material-symbols/battery-full';
+import BoltIcon from '~icons/material-symbols/bolt';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
@@ -52,7 +53,16 @@ const getBatteryIcon = (percentage: number): JSXElement => {
 };
 
 const BatteryIndicator: Component = () => (
-  <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
+  <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
+    <Badge
+      variant='secondary'
+      class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
+    >
+      <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
+        <BoltIcon class='size-full' />
+      </span>
+      {rovStatusStore.currentDraw.toFixed(0)}A
+    </Badge>
     <Badge
       variant={
         rovStatusStore.batteryPercentage < BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
