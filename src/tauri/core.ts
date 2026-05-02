@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type Event, type UnlistenFn } from '@tauri-apps/api/event';
 
 import { logError, logWarn } from '@/lib/log';
+import * as m from '@/paraglide/messages';
 
 export type CleanupFn = () => void;
 const noop: CleanupFn = () => Number.NaN;
@@ -42,7 +43,7 @@ export const createListener = <Payload>(
         logWarn(errorMsg, error);
       } else {
         logError(errorMsg, error);
-        toast.create({ title: errorMsg, type: 'error' });
+        toast.create({ title: m.toasts_listener_error({ event: eventName }), type: 'error' });
       }
     }
   }).catch((error: unknown) => {
@@ -51,7 +52,7 @@ export const createListener = <Payload>(
       logWarn(errorMsg, error);
     } else {
       logError(errorMsg, error);
-      toast.create({ title: errorMsg, type: 'error' });
+      toast.create({ title: m.toasts_listener_setup_failed({ event: eventName }), type: 'error' });
     }
     return noop;
   });
@@ -67,7 +68,7 @@ export const invokeCommand = <Response>(
       logWarn(errorMsg, error);
     } else {
       logError(errorMsg, error);
-      toast.create({ title: errorMsg, type: 'error' });
+      toast.create({ title: m.toasts_invoke_failed({ command }), type: 'error' });
     }
     throw error;
   });
