@@ -75,7 +75,9 @@ const FirmwareVersionSection: Component = () => (
             checkForFirmwareUpdates().catch(logError);
           }}
         >
-          {m.common_check_for_updates()}
+          {updatesStore.firmware.status === 'checking'
+            ? m.general_rov_settings_firmware_update_status_checking()
+            : m.common_check_for_updates()}
         </Button>
         <ConfirmUpdateButton
           buttonLabel={m.general_rov_settings_firmware_update_button()}
@@ -95,6 +97,7 @@ const FirmwareVersionSection: Component = () => (
               <p>{m.alerts_firmware_update_scripts_warning()}</p>
             </div>
           }
+          pendingDescription={m.toasts_firmware_update_wait_for_completion()}
           onConfirm={() => downloadFirmwareUpdate()}
         />
       </CardAction>

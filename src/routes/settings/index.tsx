@@ -68,7 +68,9 @@ const GeneralSettingsPage: Component = () => (
               checkForAppUpdates().catch(logError);
             }}
           >
-            {m.common_check_for_updates()}
+            {updatesStore.app.status === 'checking'
+              ? m.general_settings_app_update_status_checking()
+              : m.common_check_for_updates()}
           </Button>
           <ConfirmUpdateButton
             buttonLabel={m.general_settings_app_update_button()}
