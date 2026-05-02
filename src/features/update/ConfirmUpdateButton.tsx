@@ -50,6 +50,19 @@ type ConfirmUpdateDialogProps = Omit<ConfirmUpdateButtonProps, 'onConfirm'> & {
   onConfirm: () => void;
 };
 
+const ConfirmUpdateFooter: Component<{
+  confirmLabel: string;
+  isPending: boolean;
+  onConfirm: () => void;
+}> = (props) => (
+  <AlertDialogFooter>
+    <AlertDialogCancel disabled={props.isPending}>{m.common_cancel()}</AlertDialogCancel>
+    <AlertDialogAction disabled={props.isPending} onClick={props.onConfirm}>
+      {props.confirmLabel}
+    </AlertDialogAction>
+  </AlertDialogFooter>
+);
+
 const ConfirmUpdateDialog: Component<ConfirmUpdateDialogProps> = (props) => (
   <AlertDialog
     open={props.open}
@@ -78,19 +91,6 @@ const ConfirmUpdateDialog: Component<ConfirmUpdateDialogProps> = (props) => (
       </AlertDialogPositioner>
     </Portal>
   </AlertDialog>
-);
-
-const ConfirmUpdateFooter: Component<{
-  confirmLabel: string;
-  isPending: boolean;
-  onConfirm: () => void;
-}> = (props) => (
-  <AlertDialogFooter>
-    <AlertDialogCancel disabled={props.isPending}>{m.common_cancel()}</AlertDialogCancel>
-    <AlertDialogAction disabled={props.isPending} onClick={props.onConfirm}>
-      {props.confirmLabel}
-    </AlertDialogAction>
-  </AlertDialogFooter>
 );
 
 export const ConfirmUpdateButton: Component<ConfirmUpdateButtonProps> = (props) => {
