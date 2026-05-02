@@ -1,17 +1,18 @@
 use std::io::Read;
 use std::path::Path;
 
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryStreamExt};
 use minisign_verify::{PublicKey, Signature};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use tauri::command;
+use tauri::{AppHandle, Emitter, command};
 use tokio::io::AsyncWriteExt;
 use tokio_util::io::ReaderStream;
 
 const FIRMWARE_MINISIGN_PUBLIC_KEY: &str =
   "RWQ79VrKeNgtcTOSQWqd8vI9zVSZbrzXzuUNUzht6ZpHwRLLnUZPSl8s";
+const FIRMWARE_UPDATE_PROGRESS_EVENT: &str = "firmware_update_progress";
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -82,6 +83,32 @@ pub struct FirmwareUploadRequest {
   pub upload_url: String,
   pub file_name: String,
   pub system_path: String,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FirmwareUpdateProgress {
+  phase: String,
+  percent: u8,
+}
+
+fn emit_progress(app: &AppHandle, phase: &str, percent: u8) {
+  let _ = app.emit(
+    FIRMWARE_UPDATE_PROGRESS_EVENT,
+    FirmwareUpdateProgress {
+      phase: phase.to_string(),
+      percent,
+    },
+  );
+}
+
+fn progress_percent(done: u64, total: u64) -> u8 {
+  if total == 0 {
+    return 0;
+  }
+
+  let percent = done.saturating_mul(100) / total;
+  u8::try_from(percent.min(100)).unwrap_or(100)
 }
 
 /// # Errors
@@ -184,6 +211,7 @@ fn reject_existing_symlink(target_path: &std::path::Path) -> Result<(), String> 
 /// # Errors
 /// Returns an error if the artifact download fails or the checksum does not match.
 async fn download_file(
+  app: &AppHandle,
   url: &str,
   signature_url: &str,
   target_path: &std::path::Path,
@@ -191,6 +219,7 @@ async fn download_file(
   expected_size: u64,
 ) -> Result<(), String> {
   reject_existing_symlink(target_path)?;
+  emit_progress(app, "downloading", 0);
   let signature_bytes = fetch_bytes(signature_url).await?;
 
   let response = Client::new().get(url).send().await.map_err(|e| e.to_string())?;
@@ -206,12 +235,18 @@ async fn download_file(
   let mut stream = response.bytes_stream();
   let mut hasher = Sha256::new();
   let mut bytes_written = 0_u64;
+  let mut last_percent = 0_u8;
 
   while let Some(chunk) = stream.next().await {
     let chunk = chunk.map_err(|e| e.to_string())?;
     hasher.update(&chunk);
     bytes_written += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
     file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+    let percent = progress_percent(bytes_written, expected_size);
+    if percent != last_percent {
+      last_percent = percent;
+      emit_progress(app, "downloading", percent);
+    }
   }
 
   file.flush().await.map_err(|e| e.to_string())?;
@@ -227,6 +262,8 @@ async fn download_file(
     let _ = std::fs::remove_file(&partial_path);
     return Err("Firmware size verification failed".to_string());
   }
+
+  emit_progress(app, "verifying", 100);
 
   let signature = signature_bytes.to_vec();
   let verify_path = partial_path.clone();
@@ -256,10 +293,14 @@ pub async fn check_firmware_update(
 #[command]
 /// # Errors
 /// Returns an error if the firmware artifact cannot be fetched or written.
-pub async fn download_firmware_update(payload: FirmwareDownloadRequest) -> Result<String, String> {
+pub async fn download_firmware_update(
+  app: AppHandle,
+  payload: FirmwareDownloadRequest,
+) -> Result<String, String> {
   let file_name = sanitize_file_name(&payload.file_name)?;
   let target_path = resolve_download_path(&file_name)?;
   download_file(
+    &app,
     &payload.artifact_url,
     &payload.signature_url,
     &target_path,
@@ -273,7 +314,10 @@ pub async fn download_firmware_update(payload: FirmwareDownloadRequest) -> Resul
 #[command]
 /// # Errors
 /// Returns an error if the firmware closure cannot be uploaded to the ROV.
-pub async fn upload_firmware_update(payload: FirmwareUploadRequest) -> Result<(), String> {
+pub async fn upload_firmware_update(
+  app: AppHandle,
+  payload: FirmwareUploadRequest,
+) -> Result<(), String> {
   let file_name = sanitize_file_name(&payload.file_name)?;
   let file_path = std::path::PathBuf::from(payload.file_path);
   let signature_text = tokio::fs::read_to_string(minisig_path_for(&file_path))
@@ -281,7 +325,19 @@ pub async fn upload_firmware_update(payload: FirmwareUploadRequest) -> Result<()
     .map_err(|e| e.to_string())?;
   let metadata = tokio::fs::metadata(&file_path).await.map_err(|e| e.to_string())?;
   let file = tokio::fs::File::open(&file_path).await.map_err(|e| e.to_string())?;
-  let stream = ReaderStream::new(file);
+  let total_size = metadata.len();
+  let mut uploaded = 0_u64;
+  let mut last_percent = 0_u8;
+  emit_progress(&app, "uploading", 0);
+  let upload_progress_app = app.clone();
+  let stream = ReaderStream::new(file).inspect_ok(move |chunk| {
+    uploaded += u64::try_from(chunk.len()).unwrap_or(0);
+    let percent = progress_percent(uploaded, total_size);
+    if percent != last_percent {
+      last_percent = percent;
+      emit_progress(&upload_progress_app, "uploading", percent);
+    }
+  });
 
   let response = Client::new()
     .post(payload.upload_url)
@@ -299,7 +355,8 @@ pub async fn upload_firmware_update(payload: FirmwareUploadRequest) -> Result<()
 
   let status = response.status();
   if !status.is_success() {
-    return Err(format!("Firmware upload failed with status {status}"));
+    let body = response.text().await.unwrap_or_else(|_| status.to_string());
+    return Err(format!("Firmware upload failed: {body}"));
   }
 
   tokio::fs::remove_file(&file_path).await.map_err(|e| e.to_string())?;
