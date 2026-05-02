@@ -15,7 +15,7 @@ import {
   FIRMWARE_UPDATE_MANIFEST_URL,
   FIRMWARE_UPDATE_TOAST_ID,
 } from '@/tauri/constants';
-import { invokeCommand } from '@/tauri/core';
+import { createListener, invokeCommand, type CleanupFn } from '@/tauri/core';
 
 type FirmwareManifestRequest = {
   manifestUrl: string;
@@ -36,10 +36,47 @@ type FirmwareUploadRequest = {
   systemPath: string;
 };
 
+type FirmwareUpdateProgress = {
+  phase: 'downloading' | 'verifying' | 'uploading';
+  percent: number;
+};
+
+const FIRMWARE_UPDATE_PROGRESS_EVENT = 'firmware_update_progress';
+
 const firmwareUpdateSavedTo = (path: string): string =>
   m.toasts_firmware_update_downloaded_path({ path });
 const createFirmwareUploadUrl = (): string =>
   `http://${rovConfigStore.ipAddress}:${FIRMWARE_UPDATE_HTTP_PORT}/firmware/update`;
+
+const createFirmwareProgressTitle = (payload: FirmwareUpdateProgress): string => {
+  switch (payload.phase) {
+    case 'downloading': {
+      return m.toasts_firmware_update_downloading_progress({ percent: payload.percent });
+    }
+    case 'verifying': {
+      return m.toasts_firmware_update_verifying_progress({ percent: payload.percent });
+    }
+    case 'uploading': {
+      return m.toasts_firmware_update_uploading({ percent: payload.percent });
+    }
+    default: {
+      return m.toasts_firmware_update_installing({ percent: payload.percent });
+    }
+  }
+};
+
+const handleFirmwareUpdateProgress = (payload: FirmwareUpdateProgress): void => {
+  toast.update(FIRMWARE_UPDATE_TOAST_ID, {
+    title: createFirmwareProgressTitle(payload),
+    type: 'loading',
+  });
+};
+
+export const setupFirmwareUpdateProgressListener = (): Promise<CleanupFn> =>
+  createListener<FirmwareUpdateProgress>(
+    FIRMWARE_UPDATE_PROGRESS_EVENT,
+    handleFirmwareUpdateProgress,
+  );
 
 const resolveFirmwareStatus = (
   latestVersion: string,
@@ -110,7 +147,7 @@ const handleFirmwareUploadAccepted = (downloadedPath: string): void => {
     status: 'installing',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
-    title: m.toasts_firmware_update_installing(),
+    title: m.toasts_firmware_update_installing({ percent: 0 }),
     description: m.toasts_firmware_update_accepted_description(),
     type: 'loading',
   });
@@ -140,7 +177,7 @@ const handleFirmwareDownloadComplete = (
     status: 'uploading',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
-    title: m.general_rov_settings_firmware_update_status_uploading(),
+    title: m.toasts_firmware_update_uploading({ percent: 0 }),
     description: firmwareUpdateSavedTo(downloadedPath),
     type: 'loading',
   });
@@ -200,7 +237,7 @@ export const downloadFirmwareUpdate = (): Promise<void> => {
 
   toast.create({
     id: FIRMWARE_UPDATE_TOAST_ID,
-    title: m.toasts_firmware_update_downloading(),
+    title: m.toasts_firmware_update_downloading_progress({ percent: 0 }),
     type: 'loading',
   });
 
