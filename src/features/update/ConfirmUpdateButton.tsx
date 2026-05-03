@@ -23,23 +23,15 @@ type ConfirmUpdateButtonProps = {
   confirmLabel: string;
   title: string;
   description: JSXElement;
-  pendingDescription?: string | undefined;
   disabled?: boolean;
   onConfirm: () => Promise<void> | void;
 };
 
 const ConfirmUpdateDescription: Component<{
   description: JSXElement;
-  isPending: boolean;
-  pendingDescription?: string | undefined;
 }> = (props) => (
   <AlertDialogDescription>
-    <div class='space-y-2'>
-      {props.description}
-      <Show when={props.isPending && props.pendingDescription}>
-        {(description) => <p>{description()}</p>}
-      </Show>
-    </div>
+    <div class='space-y-2'>{props.description}</div>
   </AlertDialogDescription>
 );
 
@@ -76,11 +68,7 @@ const ConfirmUpdateDialog: Component<ConfirmUpdateDialogProps> = (props) => (
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{props.title}</AlertDialogTitle>
-            <ConfirmUpdateDescription
-              description={props.description}
-              isPending={props.isPending}
-              pendingDescription={props.pendingDescription}
-            />
+            <ConfirmUpdateDescription description={props.description} />
           </AlertDialogHeader>
           <ConfirmUpdateFooter
             confirmLabel={props.confirmLabel}
