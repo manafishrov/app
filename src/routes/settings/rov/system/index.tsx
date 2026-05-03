@@ -95,9 +95,9 @@ const FirmwareVersionSection: Component = () => (
             <div class='space-y-2'>
               <p>{m.alerts_firmware_update_description()}</p>
               <p>{m.alerts_firmware_update_scripts_warning()}</p>
+              <p>{m.alerts_firmware_update_wait_for_completion()}</p>
             </div>
           }
-          pendingDescription={m.toasts_firmware_update_wait_for_completion()}
           onConfirm={() => downloadFirmwareUpdate()}
         />
       </CardAction>
