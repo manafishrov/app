@@ -6,6 +6,8 @@ import type { CleanupFn } from '@/tauri/core';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import { setFirmwareUpdateState, updatesStore } from '@/stores/updates';
+import { FIRMWARE_UPDATE_TOAST_ID } from '@/tauri/constants';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
@@ -193,7 +195,7 @@ const createBaseToastOptions = (payload: ToastPayload): ToastCreateOptions => {
   const variant = payload.variant ?? ToastPayloadVariant.info;
   const type = toastTypeMap[variant] ?? ToastRenderType.info;
   const title = createToastTitle(payload.content);
-  const options: ToastCreateOptions = { title, type };
+  const options: ToastCreateOptions = { title, type, description: '' };
 
   if (toastId.length > 0) {
     options.id = toastId;
@@ -243,6 +245,17 @@ const handleToastPayload = (payload: ToastPayload): void => {
 
   if (payload.variant === ToastPayloadVariant.loading && toastId.length > 0) {
     scheduleLoadingTimeout(toastId);
+  }
+
+  if (toastId === FIRMWARE_UPDATE_TOAST_ID && payload.variant === ToastPayloadVariant.success) {
+    setFirmwareUpdateState({ error: null, status: 'upToDate' });
+  }
+
+  if (toastId === FIRMWARE_UPDATE_TOAST_ID && payload.variant === ToastPayloadVariant.error) {
+    setFirmwareUpdateState({
+      error: createToastTitle(payload.content),
+      status: updatesStore.firmware.manifest ? 'available' : 'error',
+    });
   }
 
   toast.create(createToastOptions(payload));
