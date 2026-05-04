@@ -27,7 +27,7 @@ const getLatestFirmwareVersion = (): string => {
 };
 
 const staticFirmwareUpdateStatusMessages: Record<string, () => string> = {
-  idle: m.general_rov_settings_firmware_update_status_checking,
+  idle: m.general_rov_settings_firmware_update_status_idle,
   checking: m.general_rov_settings_firmware_update_status_checking,
   downloading: m.general_rov_settings_firmware_update_status_downloading,
   uploading: m.general_rov_settings_firmware_update_status_uploading,
@@ -72,7 +72,7 @@ const FirmwareVersionSection: Component = () => (
           variant='outline'
           disabled={updatesStore.firmware.status === 'checking'}
           onClick={(): void => {
-            checkForFirmwareUpdates().catch(logError);
+            checkForFirmwareUpdates(false, true).catch(logError);
           }}
         >
           {updatesStore.firmware.status === 'checking'
