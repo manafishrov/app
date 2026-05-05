@@ -5,6 +5,7 @@ import { isNewerVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import {
+  clearUpdateField,
   setFirmwareUpdateState,
   updatesStore,
   type FirmwareArtifact,
@@ -33,7 +34,6 @@ type FirmwareUploadRequest = {
   filePath: string;
   uploadUrl: string;
   fileName: string;
-  systemPath: string;
 };
 
 const FIRMWARE_CHECK_TOAST_ID = 'firmware-update-check';
@@ -63,12 +63,14 @@ const resolveFirmwareStatus = (
   return 'upToDate';
 };
 
-const getClosureArtifact = (manifest: FirmwareReleaseManifest | null): FirmwareArtifact | null => {
+const getRaucBundleArtifact = (
+  manifest: FirmwareReleaseManifest | undefined,
+): FirmwareArtifact | undefined => {
   if (!manifest) {
-    return null;
+    return;
   }
 
-  return manifest.artifacts.find((artifact) => artifact.kind === 'system-closure') ?? null;
+  return manifest.artifacts.find((artifact) => artifact.kind === 'rauc-bundle');
 };
 
 const createDownloadPayload = (artifact: FirmwareArtifact): FirmwareDownloadRequest => ({
@@ -81,13 +83,11 @@ const createDownloadPayload = (artifact: FirmwareArtifact): FirmwareDownloadRequ
 
 const createUploadPayload = (
   artifact: FirmwareArtifact,
-  manifest: FirmwareReleaseManifest,
   downloadedPath: string,
 ): FirmwareUploadRequest => ({
   filePath: downloadedPath,
   uploadUrl: createFirmwareUploadUrl(),
   fileName: artifact.name,
-  systemPath: manifest.offlineInstall.systemPath,
 });
 
 export const refreshFirmwareUpdateStatus = (): void => {
@@ -148,7 +148,7 @@ const updateFirmwareCheckToast = (
 const handleFirmwareUploadAccepted = (downloadedPath: string): void => {
   setFirmwareUpdateState({
     downloadedPath,
-    error: null,
+    error: clearUpdateField(),
     status: 'installing',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
@@ -173,12 +173,11 @@ const handleFirmwareUpdateFailure = (error: unknown): void => {
 
 const handleFirmwareDownloadComplete = (
   artifact: FirmwareArtifact,
-  manifest: FirmwareReleaseManifest,
   downloadedPath: string,
 ): Promise<string> => {
   setFirmwareUpdateState({
     downloadedPath,
-    error: null,
+    error: clearUpdateField(),
     status: 'uploading',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
@@ -187,7 +186,7 @@ const handleFirmwareDownloadComplete = (
   });
 
   return invokeCommand<unknown>('upload_firmware_update', {
-    payload: createUploadPayload(artifact, manifest, downloadedPath),
+    payload: createUploadPayload(artifact, downloadedPath),
   }).then(() => downloadedPath);
 };
 
@@ -198,7 +197,7 @@ const handleFirmwareCheckSuccess = (
 ): void => {
   const status = resolveFirmwareStatus(manifest.version, rovConfigStore.firmwareVersion);
   setFirmwareUpdateState({
-    error: null,
+    error: clearUpdateField(),
     manifest,
     status,
   });
@@ -236,8 +235,8 @@ export const checkForFirmwareUpdates = (
   }
 
   setFirmwareUpdateState({
-    downloadedPath: null,
-    error: null,
+    downloadedPath: clearUpdateField(),
+    error: clearUpdateField(),
     status: 'checking',
   });
 
@@ -258,7 +257,7 @@ export const checkForFirmwareUpdates = (
 
 export const downloadFirmwareUpdate = (): Promise<void> => {
   const { manifest } = updatesStore.firmware;
-  const artifact = getClosureArtifact(manifest);
+  const artifact = getRaucBundleArtifact(manifest);
   if (!manifest || !artifact || !artifact.signature || artifact.signature.format !== 'minisign') {
     setFirmwareUpdateState({
       error: m.general_rov_settings_firmware_update_not_available(),
@@ -268,8 +267,8 @@ export const downloadFirmwareUpdate = (): Promise<void> => {
   }
 
   setFirmwareUpdateState({
-    downloadedPath: null,
-    error: null,
+    downloadedPath: clearUpdateField(),
+    error: clearUpdateField(),
     status: 'downloading',
   });
 
@@ -282,11 +281,11 @@ export const downloadFirmwareUpdate = (): Promise<void> => {
   return invokeCommand<string>('download_firmware_update', {
     payload: createDownloadPayload(artifact),
   })
-    .then((downloadedPath) => handleFirmwareDownloadComplete(artifact, manifest, downloadedPath))
+    .then((downloadedPath) => handleFirmwareDownloadComplete(artifact, downloadedPath))
     .then((downloadedPath) => {
       setFirmwareUpdateState({
         downloadedPath,
-        error: null,
+        error: clearUpdateField(),
         status: 'installing',
       });
       handleFirmwareUploadAccepted(downloadedPath);

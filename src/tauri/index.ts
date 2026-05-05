@@ -12,6 +12,7 @@ import { setupToastListener } from '@/tauri/toast';
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
+export { manualRollbackFirmware } from '@/tauri/firmwareRollback';
 export {
   checkForFirmwareUpdates,
   downloadFirmwareUpdate,
