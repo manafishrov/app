@@ -6,7 +6,7 @@ import type { CleanupFn } from '@/tauri/core';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { setFirmwareUpdateState, updatesStore } from '@/stores/updates';
+import { clearUpdateField, setFirmwareUpdateState, updatesStore } from '@/stores/updates';
 import { FIRMWARE_UPDATE_TOAST_ID } from '@/tauri/constants';
 
 const EVENT = 'show_toast';
@@ -248,7 +248,7 @@ const handleToastPayload = (payload: ToastPayload): void => {
   }
 
   if (toastId === FIRMWARE_UPDATE_TOAST_ID && payload.variant === ToastPayloadVariant.success) {
-    setFirmwareUpdateState({ error: null, status: 'upToDate' });
+    setFirmwareUpdateState({ error: clearUpdateField(), status: 'upToDate' });
   }
 
   if (toastId === FIRMWARE_UPDATE_TOAST_ID && payload.variant === ToastPayloadVariant.error) {
