@@ -69,10 +69,9 @@ const beginRecording = (state: RecordingState, stream: MediaStream): Promise<voi
     logError('No active video tracks available for recording');
     return Promise.resolve();
   }
-  const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-    ? { mimeType: 'video/webm;codecs=vp9,opus' }
-    : undefined;
-  state.mediaRecorder = new MediaRecorder(stream, options);
+  state.mediaRecorder = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ? new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' })
+    : new MediaRecorder(stream);
   return createRecordingPath().then((tempFilePath) => {
     state.tempFilePath = tempFilePath;
     if (!state.mediaRecorder) {
