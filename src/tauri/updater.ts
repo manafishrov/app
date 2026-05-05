@@ -1,9 +1,9 @@
 import { toast } from '@manafishrov/ui/toaster';
-import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater';
+import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 
 import { logError, logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { setAppUpdateState, updatesStore } from '@/stores/updates';
+import { clearUpdateField, setAppUpdateState, updatesStore } from '@/stores/updates';
 
 const PERCENT_MULTIPLIER = 100;
 const MAX_PERCENT = 100;
@@ -18,7 +18,7 @@ const showAppUpdateAvailableToast = (version: string): void => {
 
 export const checkForAppUpdates = (showAvailableToast = false): Promise<void> => {
   setAppUpdateState({
-    error: null,
+    error: clearUpdateField(),
     status: 'checking',
   });
 
@@ -27,9 +27,9 @@ export const checkForAppUpdates = (showAvailableToast = false): Promise<void> =>
       if (!update) {
         logInfo('No app updates available.');
         setAppUpdateState({
-          availableUpdate: null,
-          error: null,
-          latestVersion: null,
+          availableUpdate: clearUpdateField(),
+          error: clearUpdateField(),
+          latestVersion: clearUpdateField(),
           status: 'upToDate',
         });
         return;
@@ -38,7 +38,7 @@ export const checkForAppUpdates = (showAvailableToast = false): Promise<void> =>
       logInfo(`App update available: ${update.version}`);
       setAppUpdateState({
         availableUpdate: update,
-        error: null,
+        error: clearUpdateField(),
         latestVersion: update.version,
         status: 'available',
       });
@@ -134,13 +134,13 @@ const createDownloadEventHandler = (toastId: string) => {
 };
 
 export const installAppUpdate = (): Promise<void> => {
-  const update: Update | null = updatesStore.app.availableUpdate;
+  const update = updatesStore.app.availableUpdate;
   if (!update) {
     return Promise.resolve();
   }
 
   setAppUpdateState({
-    error: null,
+    error: clearUpdateField(),
     status: 'installing',
   });
 
@@ -153,8 +153,8 @@ export const installAppUpdate = (): Promise<void> => {
     .downloadAndInstall(createDownloadEventHandler(toastId))
     .then(() => {
       setAppUpdateState({
-        availableUpdate: null,
-        error: null,
+        availableUpdate: clearUpdateField(),
+        error: clearUpdateField(),
         latestVersion: update.version,
         status: 'readyToRestart',
       });
