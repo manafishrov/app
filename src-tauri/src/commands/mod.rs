@@ -16,6 +16,4 @@ pub use rov::{
   cancel_regulator_auto_tuning, cancel_thruster_test, flash_mcu_firmware, request_rov_config,
   set_rov_config, start_regulator_auto_tuning, start_thruster_test,
 };
-pub use update::{
-  check_firmware_update, download_firmware_update, manual_rollback_firmware, upload_firmware_update,
-};
+pub use update::{check_firmware_update, download_firmware_update, upload_firmware_update};

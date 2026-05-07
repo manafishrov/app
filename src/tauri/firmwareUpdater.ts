@@ -5,7 +5,6 @@ import { isNewerVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import {
-  clearUpdateField,
   setFirmwareUpdateState,
   updatesStore,
   type FirmwareArtifact,
@@ -16,7 +15,7 @@ import {
   FIRMWARE_UPDATE_MANIFEST_URL,
   FIRMWARE_UPDATE_TOAST_ID,
 } from '@/tauri/constants';
-import { invokeCommand } from '@/tauri/core';
+import { createListener, invokeCommand, type CleanupFn } from '@/tauri/core';
 
 type FirmwareManifestRequest = {
   manifestUrl: string;
@@ -34,18 +33,50 @@ type FirmwareUploadRequest = {
   filePath: string;
   uploadUrl: string;
   fileName: string;
+  systemPath: string;
 };
 
-const FIRMWARE_CHECK_TOAST_ID = 'firmware-update-check';
-const FIRMWARE_CHECK_MIN_VISIBLE_MS = 600;
+type FirmwareUpdateProgress = {
+  phase: 'downloading' | 'verifying' | 'uploading';
+  percent: number;
+};
 
-const delay = (milliseconds: number): Promise<void> =>
-  new Promise((resolve) => {
-    globalThis.setTimeout(resolve, milliseconds);
-  });
+const FIRMWARE_UPDATE_PROGRESS_EVENT = 'firmware_update_progress';
 
+const firmwareUpdateSavedTo = (path: string): string =>
+  m.toasts_firmware_update_downloaded_path({ path });
 const createFirmwareUploadUrl = (): string =>
   `http://${rovConfigStore.ipAddress}:${FIRMWARE_UPDATE_HTTP_PORT}/firmware/update`;
+
+const createFirmwareProgressTitle = (payload: FirmwareUpdateProgress): string => {
+  switch (payload.phase) {
+    case 'downloading': {
+      return m.toasts_firmware_update_downloading_progress({ percent: payload.percent });
+    }
+    case 'verifying': {
+      return m.toasts_firmware_update_verifying_progress({ percent: payload.percent });
+    }
+    case 'uploading': {
+      return m.toasts_firmware_update_uploading({ percent: payload.percent });
+    }
+    default: {
+      return m.toasts_firmware_update_installing({ percent: payload.percent });
+    }
+  }
+};
+
+const handleFirmwareUpdateProgress = (payload: FirmwareUpdateProgress): void => {
+  toast.update(FIRMWARE_UPDATE_TOAST_ID, {
+    title: createFirmwareProgressTitle(payload),
+    type: 'loading',
+  });
+};
+
+export const setupFirmwareUpdateProgressListener = (): Promise<CleanupFn> =>
+  createListener<FirmwareUpdateProgress>(
+    FIRMWARE_UPDATE_PROGRESS_EVENT,
+    handleFirmwareUpdateProgress,
+  );
 
 const resolveFirmwareStatus = (
   latestVersion: string,
@@ -63,14 +94,12 @@ const resolveFirmwareStatus = (
   return 'upToDate';
 };
 
-const getRaucBundleArtifact = (
-  manifest: FirmwareReleaseManifest | undefined,
-): FirmwareArtifact | undefined => {
+const getClosureArtifact = (manifest: FirmwareReleaseManifest | null): FirmwareArtifact | null => {
   if (!manifest) {
-    return;
+    return null;
   }
 
-  return manifest.artifacts.find((artifact) => artifact.kind === 'rauc-bundle');
+  return manifest.artifacts.find((artifact) => artifact.kind === 'system-closure') ?? null;
 };
 
 const createDownloadPayload = (artifact: FirmwareArtifact): FirmwareDownloadRequest => ({
@@ -83,11 +112,13 @@ const createDownloadPayload = (artifact: FirmwareArtifact): FirmwareDownloadRequ
 
 const createUploadPayload = (
   artifact: FirmwareArtifact,
+  manifest: FirmwareReleaseManifest,
   downloadedPath: string,
 ): FirmwareUploadRequest => ({
   filePath: downloadedPath,
   uploadUrl: createFirmwareUploadUrl(),
   fileName: artifact.name,
+  systemPath: manifest.offlineInstall.systemPath,
 });
 
 export const refreshFirmwareUpdateStatus = (): void => {
@@ -109,46 +140,10 @@ const showFirmwareUpdateAvailableToast = (version: string): void => {
   });
 };
 
-const showFirmwareCheckToast = (): void => {
-  toast.create({
-    id: FIRMWARE_CHECK_TOAST_ID,
-    title: m.general_rov_settings_firmware_update_status_checking(),
-    type: 'loading',
-  });
-};
-
-const updateFirmwareCheckToast = (
-  status: ReturnType<typeof resolveFirmwareStatus>,
-  latestVersion: string,
-): void => {
-  if (status === 'available') {
-    toast.update(FIRMWARE_CHECK_TOAST_ID, {
-      title: m.toasts_update_available(),
-      type: 'success',
-    });
-    return;
-  }
-
-  if (status === 'upToDate') {
-    toast.update(FIRMWARE_CHECK_TOAST_ID, {
-      title: m.general_rov_settings_firmware_update_status_up_to_date(),
-      type: 'success',
-    });
-    return;
-  }
-
-  toast.update(FIRMWARE_CHECK_TOAST_ID, {
-    title: m.general_rov_settings_firmware_update_status_latest_available({
-      version: latestVersion,
-    }),
-    type: 'success',
-  });
-};
-
 const handleFirmwareUploadAccepted = (downloadedPath: string): void => {
   setFirmwareUpdateState({
     downloadedPath,
-    error: clearUpdateField(),
+    error: null,
     status: 'installing',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
@@ -173,91 +168,59 @@ const handleFirmwareUpdateFailure = (error: unknown): void => {
 
 const handleFirmwareDownloadComplete = (
   artifact: FirmwareArtifact,
+  manifest: FirmwareReleaseManifest,
   downloadedPath: string,
 ): Promise<string> => {
   setFirmwareUpdateState({
     downloadedPath,
-    error: clearUpdateField(),
+    error: null,
     status: 'uploading',
   });
   toast.update(FIRMWARE_UPDATE_TOAST_ID, {
     title: m.toasts_firmware_update_uploading({ percent: 0 }),
+    description: firmwareUpdateSavedTo(downloadedPath),
     type: 'loading',
   });
 
   return invokeCommand<unknown>('upload_firmware_update', {
-    payload: createUploadPayload(artifact, downloadedPath),
+    payload: createUploadPayload(artifact, manifest, downloadedPath),
   }).then(() => downloadedPath);
 };
 
-const handleFirmwareCheckSuccess = (
-  manifest: FirmwareReleaseManifest,
-  showAvailableToast: boolean,
-  showCheckingToast: boolean,
-): void => {
-  const status = resolveFirmwareStatus(manifest.version, rovConfigStore.firmwareVersion);
+export const checkForFirmwareUpdates = (showAvailableToast = false): Promise<void> => {
   setFirmwareUpdateState({
-    error: clearUpdateField(),
-    manifest,
-    status,
-  });
-  if (showAvailableToast && status === 'available') {
-    showFirmwareUpdateAvailableToast(manifest.version);
-  }
-  if (showCheckingToast) {
-    updateFirmwareCheckToast(status, manifest.version);
-  }
-  logInfo('Firmware manifest checked:', manifest.version);
-};
-
-const handleFirmwareCheckFailure = (error: unknown, showCheckingToast: boolean): void => {
-  logError('Failed to check for firmware updates:', error);
-  setFirmwareUpdateState({
-    error: m.general_rov_settings_firmware_update_check_failed(),
-    status: 'error',
-  });
-  if (showCheckingToast) {
-    toast.update(FIRMWARE_CHECK_TOAST_ID, {
-      title: m.general_rov_settings_firmware_update_check_failed(),
-      type: 'error',
-    });
-  }
-};
-
-export const checkForFirmwareUpdates = (
-  showAvailableToast = false,
-  showCheckingToast = false,
-): Promise<void> => {
-  const visibleDelay = delay(FIRMWARE_CHECK_MIN_VISIBLE_MS);
-
-  if (showCheckingToast) {
-    showFirmwareCheckToast();
-  }
-
-  setFirmwareUpdateState({
-    downloadedPath: clearUpdateField(),
-    error: clearUpdateField(),
+    downloadedPath: null,
+    error: null,
     status: 'checking',
   });
 
   return invokeCommand<FirmwareReleaseManifest>('check_firmware_update', {
     payload: { manifestUrl: FIRMWARE_UPDATE_MANIFEST_URL } satisfies FirmwareManifestRequest,
   })
-    .then((manifest) =>
-      visibleDelay.then(() => {
-        handleFirmwareCheckSuccess(manifest, showAvailableToast, showCheckingToast);
-      }),
-    )
-    .catch((error: unknown) =>
-      visibleDelay.then(() => {
-        handleFirmwareCheckFailure(error, showCheckingToast);
-      }),
-    );
+    .then((manifest) => {
+      const status = resolveFirmwareStatus(manifest.version, rovConfigStore.firmwareVersion);
+      setFirmwareUpdateState({
+        error: null,
+        manifest,
+        status,
+      });
+      if (showAvailableToast && status === 'available') {
+        showFirmwareUpdateAvailableToast(manifest.version);
+      }
+      logInfo('Firmware manifest checked:', manifest.version);
+    })
+    .catch((error: unknown) => {
+      logError('Failed to check for firmware updates:', error);
+      setFirmwareUpdateState({
+        error: m.general_rov_settings_firmware_update_check_failed(),
+        status: 'error',
+      });
+    });
 };
 
 export const downloadFirmwareUpdate = (): Promise<void> => {
   const { manifest } = updatesStore.firmware;
-  const artifact = getRaucBundleArtifact(manifest);
+  const artifact = getClosureArtifact(manifest);
   if (!manifest || !artifact || !artifact.signature || artifact.signature.format !== 'minisign') {
     setFirmwareUpdateState({
       error: m.general_rov_settings_firmware_update_not_available(),
@@ -267,8 +230,8 @@ export const downloadFirmwareUpdate = (): Promise<void> => {
   }
 
   setFirmwareUpdateState({
-    downloadedPath: clearUpdateField(),
-    error: clearUpdateField(),
+    downloadedPath: null,
+    error: null,
     status: 'downloading',
   });
 
@@ -281,11 +244,11 @@ export const downloadFirmwareUpdate = (): Promise<void> => {
   return invokeCommand<string>('download_firmware_update', {
     payload: createDownloadPayload(artifact),
   })
-    .then((downloadedPath) => handleFirmwareDownloadComplete(artifact, downloadedPath))
+    .then((downloadedPath) => handleFirmwareDownloadComplete(artifact, manifest, downloadedPath))
     .then((downloadedPath) => {
       setFirmwareUpdateState({
         downloadedPath,
-        error: clearUpdateField(),
+        error: null,
         status: 'installing',
       });
       handleFirmwareUploadAccepted(downloadedPath);
