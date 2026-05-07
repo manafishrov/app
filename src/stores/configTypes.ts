@@ -187,7 +187,6 @@ type Config = {
   thrusterRpmOverlay: boolean;
   videoDirectory: string;
   checkForAppUpdatesOnStartup: boolean;
-  checkForFirmwareUpdatesOnConnect: boolean;
   ipAddress: string;
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
