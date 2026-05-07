@@ -1,7 +1,7 @@
 [package]
 name = "manafish-app"
 description = "An app for controlling the Manafish ROV"
-version = "1.0.3"
+version = "1.0.6"
 license = "AGPL-3.0-or-later"
 authors = ["Michael Brusegard"]
 edition = "2024"
