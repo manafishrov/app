@@ -1,6 +1,6 @@
 import { setupConnectionListener } from '@/tauri/connection';
 import { DisposableStack, type CleanupFn } from '@/tauri/core';
-import { setupFirmwareUpdateProgressListener } from '@/tauri/firmwareUpdateProgress';
+import { setupFirmwareUpdateProgressListener } from '@/tauri/firmwareUpdater';
 import { setupGamepadListener } from '@/tauri/gamepad';
 import { setupLogsListener } from '@/tauri/logs';
 import { setupRegulatorListener } from '@/tauri/regulator';
@@ -12,13 +12,12 @@ import { setupToastListener } from '@/tauri/toast';
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
-export { manualRollbackFirmware } from '@/tauri/firmwareRollback';
 export {
   checkForFirmwareUpdates,
   downloadFirmwareUpdate,
   refreshFirmwareUpdateStatus,
+  setupFirmwareUpdateProgressListener,
 } from '@/tauri/firmwareUpdater';
-export { setupFirmwareUpdateProgressListener } from '@/tauri/firmwareUpdateProgress';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';

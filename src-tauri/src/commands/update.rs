@@ -82,12 +82,7 @@ pub struct FirmwareUploadRequest {
   pub file_path: String,
   pub upload_url: String,
   pub file_name: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FirmwareRollbackRequest {
-  pub rollback_url: String,
+  pub system_path: String,
 }
 
 #[derive(Clone, Serialize)]
@@ -318,13 +313,16 @@ pub async fn download_firmware_update(
 
 #[command]
 /// # Errors
-/// Returns an error if the firmware bundle cannot be uploaded to the ROV.
+/// Returns an error if the firmware closure cannot be uploaded to the ROV.
 pub async fn upload_firmware_update(
   app: AppHandle,
   payload: FirmwareUploadRequest,
 ) -> Result<(), String> {
   let file_name = sanitize_file_name(&payload.file_name)?;
   let file_path = std::path::PathBuf::from(payload.file_path);
+  let signature_text = tokio::fs::read_to_string(minisig_path_for(&file_path))
+    .await
+    .map_err(|e| e.to_string())?;
   let metadata = tokio::fs::metadata(&file_path).await.map_err(|e| e.to_string())?;
   let file = tokio::fs::File::open(&file_path).await.map_err(|e| e.to_string())?;
   let total_size = metadata.len();
@@ -345,6 +343,11 @@ pub async fn upload_firmware_update(
     .post(payload.upload_url)
     .header(reqwest::header::CONTENT_LENGTH, metadata.len())
     .header("x-firmware-file-name", header_value(&file_name, "file name")?)
+    .header("x-firmware-system-path", header_value(&payload.system_path, "system path")?)
+    .header(
+      "x-firmware-signature",
+      header_value(&signature_text.replace('\n', "\\n"), "signature")?,
+    )
     .body(reqwest::Body::wrap_stream(stream))
     .send()
     .await
@@ -357,29 +360,9 @@ pub async fn upload_firmware_update(
   }
 
   tokio::fs::remove_file(&file_path).await.map_err(|e| e.to_string())?;
-  let minisig = minisig_path_for(&file_path);
-  if minisig.exists() {
-    tokio::fs::remove_file(&minisig).await.map_err(|e| e.to_string())?;
-  }
-
-  Ok(())
-}
-
-#[command]
-/// # Errors
-/// Returns an error if the rollback request to the ROV fails.
-pub async fn manual_rollback_firmware(payload: FirmwareRollbackRequest) -> Result<(), String> {
-  let response = Client::new()
-    .post(&payload.rollback_url)
-    .send()
+  tokio::fs::remove_file(minisig_path_for(&file_path))
     .await
     .map_err(|e| e.to_string())?;
-
-  let status = response.status();
-  if !status.is_success() {
-    let body = response.text().await.unwrap_or_else(|_| status.to_string());
-    return Err(format!("Firmware rollback request failed: {body}"));
-  }
 
   Ok(())
 }

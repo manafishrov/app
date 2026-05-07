@@ -19,7 +19,7 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { updatesStore } from '@/stores/updates';
-import { checkForFirmwareUpdates, downloadFirmwareUpdate, manualRollbackFirmware } from '@/tauri';
+import { checkForFirmwareUpdates, downloadFirmwareUpdate } from '@/tauri';
 
 const getLatestFirmwareVersion = (): string => {
   const { manifest } = updatesStore.firmware;
@@ -27,14 +27,11 @@ const getLatestFirmwareVersion = (): string => {
 };
 
 const staticFirmwareUpdateStatusMessages: Record<string, () => string> = {
-  idle: m.general_rov_settings_firmware_update_status_idle,
+  idle: m.general_rov_settings_firmware_update_status_checking,
   checking: m.general_rov_settings_firmware_update_status_checking,
   downloading: m.general_rov_settings_firmware_update_status_downloading,
   uploading: m.general_rov_settings_firmware_update_status_uploading,
   installing: m.general_rov_settings_firmware_update_status_installing,
-  rebooting: m.general_rov_settings_firmware_update_status_rebooting,
-  awaitingMarkGood: m.general_rov_settings_firmware_update_status_awaiting_mark_good,
-  rollingBack: m.general_rov_settings_firmware_update_status_rolling_back,
   upToDate: m.general_rov_settings_firmware_update_status_up_to_date,
 };
 
@@ -65,67 +62,45 @@ const createFirmwareUpdateStatusMessage = (): string => {
   return updatesStore.firmware.error ?? m.general_rov_settings_firmware_update_check_failed();
 };
 
-const isFirmwareBusy = (): boolean => {
-  const { status } = updatesStore.firmware;
-  return (
-    status === 'checking' ||
-    status === 'downloading' ||
-    status === 'uploading' ||
-    status === 'installing' ||
-    status === 'rebooting' ||
-    status === 'awaitingMarkGood' ||
-    status === 'rollingBack'
-  );
-};
-
-const FirmwareVersionActions: Component = () => (
-  <CardAction class='flex flex-wrap gap-2'>
-    <Button
-      variant='outline'
-      disabled={updatesStore.firmware.status === 'checking'}
-      onClick={(): void => {
-        checkForFirmwareUpdates(false, true).catch(logError);
-      }}
-    >
-      {updatesStore.firmware.status === 'checking'
-        ? m.general_rov_settings_firmware_update_status_checking()
-        : m.common_check_for_updates()}
-    </Button>
-    <ConfirmUpdateButton
-      buttonLabel={m.general_rov_settings_firmware_update_button()}
-      confirmLabel={m.general_rov_settings_firmware_update_button()}
-      disabled={
-        isFirmwareBusy() ||
-        updatesStore.firmware.manifest === null ||
-        updatesStore.firmware.status === 'upToDate'
-      }
-      title={m.alerts_firmware_update_title()}
-      description={
-        <div class='space-y-2'>
-          <p>{m.alerts_firmware_update_description()}</p>
-          <p>{m.alerts_firmware_update_scripts_warning()}</p>
-          <p>{m.alerts_firmware_update_wait_for_completion()}</p>
-        </div>
-      }
-      onConfirm={() => downloadFirmwareUpdate()}
-    />
-    <ConfirmUpdateButton
-      buttonLabel={m.general_rov_settings_firmware_rollback_button()}
-      confirmLabel={m.general_rov_settings_firmware_rollback_button()}
-      disabled={isFirmwareBusy()}
-      title={m.alerts_firmware_rollback_title()}
-      description={<p>{m.alerts_firmware_rollback_description()}</p>}
-      onConfirm={() => manualRollbackFirmware()}
-    />
-  </CardAction>
-);
-
 const FirmwareVersionSection: Component = () => (
   <Card class='my-8'>
     <CardHeader>
       <CardTitle>{m.general_rov_settings_firmware_version_title()}</CardTitle>
       <CardDescription>{m.general_rov_settings_firmware_version_description()}</CardDescription>
-      <FirmwareVersionActions />
+      <CardAction class='flex flex-wrap gap-2'>
+        <Button
+          variant='outline'
+          disabled={updatesStore.firmware.status === 'checking'}
+          onClick={(): void => {
+            checkForFirmwareUpdates().catch(logError);
+          }}
+        >
+          {updatesStore.firmware.status === 'checking'
+            ? m.general_rov_settings_firmware_update_status_checking()
+            : m.common_check_for_updates()}
+        </Button>
+        <ConfirmUpdateButton
+          buttonLabel={m.general_rov_settings_firmware_update_button()}
+          confirmLabel={m.general_rov_settings_firmware_update_button()}
+          disabled={
+            updatesStore.firmware.status === 'checking' ||
+            updatesStore.firmware.status === 'downloading' ||
+            updatesStore.firmware.status === 'uploading' ||
+            updatesStore.firmware.status === 'installing' ||
+            updatesStore.firmware.manifest === null ||
+            updatesStore.firmware.status === 'upToDate'
+          }
+          title={m.alerts_firmware_update_title()}
+          description={
+            <div class='space-y-2'>
+              <p>{m.alerts_firmware_update_description()}</p>
+              <p>{m.alerts_firmware_update_scripts_warning()}</p>
+            </div>
+          }
+          pendingDescription={m.toasts_firmware_update_wait_for_completion()}
+          onConfirm={() => downloadFirmwareUpdate()}
+        />
+      </CardAction>
     </CardHeader>
     <CardContent>
       <div class='flex flex-wrap items-center gap-3'>
