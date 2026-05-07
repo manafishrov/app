@@ -12,14 +12,11 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
-import { rovConfigStore } from '@/stores/rovConfig';
 import {
   checkForAppUpdates,
-  checkForFirmwareUpdates,
   closeSplashscreen,
   getConfig,
   initializeVideoDirectory,
-  refreshFirmwareUpdateStatus,
   recoverTempRecordings,
   setupAllListeners,
 } from '@/tauri';
@@ -47,28 +44,6 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
     });
 };
 
-const FirmwareUpdateStatusSync: Component = () => {
-  let lastFirmwareUpdateCheckVersion = '';
-
-  createEffect(() => {
-    const { firmwareVersion } = rovConfigStore;
-    if (firmwareVersion.trim() === '' || firmwareVersion.toUpperCase() === 'N/A') {
-      return;
-    }
-
-    refreshFirmwareUpdateStatus();
-    if (
-      configStore.checkForFirmwareUpdatesOnConnect &&
-      lastFirmwareUpdateCheckVersion !== firmwareVersion
-    ) {
-      lastFirmwareUpdateCheckVersion = firmwareVersion;
-      checkForFirmwareUpdates(true).catch(logError);
-    }
-  });
-
-  return <></>;
-};
-
 const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
 
@@ -91,7 +66,6 @@ const RootLayout: Component = () => {
           <Header />
           <Outlet />
           <Toaster />
-          <FirmwareUpdateStatusSync />
         </LocaleProvider>
       </ThemeProvider>
       <TanStackDevtools

@@ -13,12 +13,10 @@ import { configStore, setConfig } from '@/stores/config';
 const createFormSchema = (): z.ZodObject<{
   videoDirectory: z.ZodString;
   checkForAppUpdatesOnStartup: z.ZodBoolean;
-  checkForFirmwareUpdatesOnConnect: z.ZodBoolean;
 }> =>
   z.object({
     videoDirectory: z.string().min(1, m.general_settings_video_directory_required()),
     checkForAppUpdatesOnStartup: z.boolean(),
-    checkForFirmwareUpdatesOnConnect: z.boolean(),
   });
 
 const handleSelectVideoDirectory = (
@@ -49,13 +47,11 @@ const handleFormSubmit = ({
   value: {
     videoDirectory: string;
     checkForAppUpdatesOnStartup: boolean;
-    checkForFirmwareUpdatesOnConnect: boolean;
   };
 }): void => {
   setConfig({
     videoDirectory: value.videoDirectory,
     checkForAppUpdatesOnStartup: value.checkForAppUpdatesOnStartup,
-    checkForFirmwareUpdatesOnConnect: value.checkForFirmwareUpdatesOnConnect,
   }).catch(logError);
 };
 
@@ -69,10 +65,7 @@ type GeneralFieldApi = {
   SwitchField: (props: { label: string; description?: string }) => JSXElement;
 };
 
-type GeneralFieldName =
-  | 'videoDirectory'
-  | 'checkForAppUpdatesOnStartup'
-  | 'checkForFirmwareUpdatesOnConnect';
+type GeneralFieldName = 'videoDirectory' | 'checkForAppUpdatesOnStartup';
 
 type GeneralFieldRenderer = (props: {
   name: GeneralFieldName;
@@ -110,14 +103,6 @@ const GeneralFields: Component<{
         />
       )}
     </props.AppField>
-    <props.AppField name='checkForFirmwareUpdatesOnConnect'>
-      {(field) => (
-        <field.SwitchField
-          label={m.general_settings_check_for_firmware_updates_title()}
-          description={m.general_settings_check_for_firmware_updates_description()}
-        />
-      )}
-    </props.AppField>
   </>
 );
 
@@ -129,7 +114,6 @@ export const General: Component = () => {
     defaultValues: {
       videoDirectory: configStore.videoDirectory,
       checkForAppUpdatesOnStartup: configStore.checkForAppUpdatesOnStartup,
-      checkForFirmwareUpdatesOnConnect: configStore.checkForFirmwareUpdatesOnConnect,
     },
     onSubmit: handleFormSubmit,
   }));

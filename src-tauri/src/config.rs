@@ -40,8 +40,11 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
   if let Some(object) = raw.as_object_mut()
     && let Some(value) = object.remove("checkForUpdatesOnStartup")
   {
-    object.insert("checkForAppUpdatesOnStartup".to_string(), value.clone());
-    object.insert("checkForFirmwareUpdatesOnConnect".to_string(), value);
+    object.insert("checkForAppUpdatesOnStartup".to_string(), value);
+  }
+
+  if let Some(object) = raw.as_object_mut() {
+    object.remove("checkForFirmwareUpdatesOnConnect");
   }
 
   raw
@@ -235,6 +238,6 @@ mod tests {
 
     assert!(result.get("checkForUpdatesOnStartup").is_none());
     assert_eq!(result.get("checkForAppUpdatesOnStartup"), Some(&json!(true)));
-    assert_eq!(result.get("checkForFirmwareUpdatesOnConnect"), Some(&json!(true)));
+    assert_eq!(result.get("checkForFirmwareUpdatesOnConnect"), None);
   }
 }

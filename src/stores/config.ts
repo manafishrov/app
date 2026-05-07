@@ -79,7 +79,6 @@ const defaultConfig: Config = {
   thrusterRpmOverlay: false,
   videoDirectory: '~/Movies/Manafish',
   checkForAppUpdatesOnStartup: true,
-  checkForFirmwareUpdatesOnConnect: true,
   ipAddress: '10.10.10.10',
   webrtcSignalingApiPort: 1984,
   webrtcSignalingApiPath: '/api/webrtc?src=cam',

@@ -205,7 +205,6 @@ pub struct DisplayConfig {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct UpdateCheckConfig {
   pub check_for_app_updates_on_startup: bool,
-  pub check_for_firmware_updates_on_connect: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -297,7 +296,6 @@ impl Default for Config {
       video_directory: default_video_directory(),
       update_checks: UpdateCheckConfig {
         check_for_app_updates_on_startup: true,
-        check_for_firmware_updates_on_connect: true,
       },
       ip_address: "10.10.10.10".to_string(),
       webrtc_signaling_api_port: 1984,
@@ -350,7 +348,6 @@ mod tests {
     assert!(!config.display.work_indicator);
     assert!(!config.display.thruster_rpm_overlay);
     assert!(config.update_checks.check_for_app_updates_on_startup);
-    assert!(config.update_checks.check_for_firmware_updates_on_connect);
     assert_eq!(config.ip_address, "10.10.10.10");
     assert_eq!(config.webrtc_signaling_api_port, 1984);
     assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
