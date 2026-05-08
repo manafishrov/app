@@ -2,10 +2,79 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:best-practices",
-    "schedule:earlyMondays",
     ":separateMultipleMajorReleases",
+    "abandonments:recommended",
+    "security:minimumReleaseAgeNpm",
+    ":maintainLockFilesWeekly",
     ":semanticCommits",
-    ":enablePreCommit",
     ":dependencyDashboard"
+  ],
+  "timezone": "Europe/Oslo",
+  "schedule": ["before 09:00 on monday"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 10,
+  "labels": ["dependencies"],
+  "commitMessagePrefix": "chore(deps): ",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"]
+  },
+  "nix": {
+    "enabled": true
+  },
+  "cargo": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 09:00 on monday"]
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "groupName": "container & action digests",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "groupName": "all patch dependencies",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "groupName": "all minor dependencies"
+    },
+    {
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "groupName": "lock file maintenance",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["nix"],
+      "groupName": "nix flake updates",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "cargo dependencies",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchPackageNames": ["@manafishrov/ui"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
   ]
 }
