@@ -8,8 +8,8 @@
   "scripts": {
     "build": "bunx vite build",
     "dev": "bunx vite",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check",
+    "fmt": "oxfmt --write '**/*.{ts,tsx,js,mjs,cjs,jsx,json,jsonc,css,html}'",
+    "fmt:check": "oxfmt --check '**/*.{ts,tsx,js,mjs,cjs,jsx,json,jsonc,css,html}'",
     "fmt:rs": "cargo fmt --manifest-path src-tauri/Cargo.toml",
     "fmt:rs:check": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
     "lint": "oxlint --type-aware --type-check",
