@@ -1,0 +1,322 @@
+use std::fs::OpenOptions;
+use std::io::{Seek, SeekFrom, Write};
+use std::path::Path;
+use std::time::Instant;
+
+use serde::Deserialize;
+
+use super::decompress::{ChunkSink, stream_plain, stream_zstd};
+use super::status::{FlashStatus, StatusWriter};
+
+const PROGRESS_THROTTLE_MS: u128 = 200;
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FlashArgs {
+  pub image: String,
+  pub device: String,
+  pub status_file: String,
+  pub image_size: u64,
+  pub verify: bool,
+}
+
+pub struct DeviceHandle {
+  pub file: std::fs::File,
+  #[cfg(target_os = "windows")]
+  pub _volume_handles: Vec<windows::Win32::Foundation::HANDLE>,
+}
+
+impl Drop for DeviceHandle {
+  fn drop(&mut self) {
+    #[cfg(target_os = "windows")]
+    {
+      use windows::Win32::Foundation::CloseHandle;
+      for handle in std::mem::take(&mut self._volume_handles) {
+        unsafe {
+          let _ = CloseHandle(handle);
+        }
+      }
+    }
+  }
+}
+
+#[cfg(target_os = "macos")]
+fn open_device(device: &str) -> Result<DeviceHandle, String> {
+  use std::process::Command;
+
+  let unmount = Command::new("/usr/sbin/diskutil")
+    .args(["unmountDisk", "force", device])
+    .output()
+    .map_err(|e| format!("diskutil unmountDisk failed to spawn: {e}"))?;
+  if !unmount.status.success() {
+    return Err(format!(
+      "diskutil unmountDisk failed: {}",
+      String::from_utf8_lossy(&unmount.stderr)
+    ));
+  }
+
+  let raw_path = device.replace("/dev/disk", "/dev/rdisk");
+  let file = OpenOptions::new()
+    .read(true)
+    .write(true)
+    .open(&raw_path)
+    .map_err(|e| format!("Failed to open raw device {raw_path}: {e}"))?;
+  Ok(DeviceHandle { file })
+}
+
+#[cfg(target_os = "linux")]
+fn open_device(device: &str) -> Result<DeviceHandle, String> {
+  use std::ffi::CString;
+  use std::fs::read_to_string;
+  use std::os::unix::fs::OpenOptionsExt;
+
+  let mounts = read_to_string("/proc/mounts").map_err(|e| e.to_string())?;
+  let mut targets: Vec<String> = Vec::new();
+  for line in mounts.lines() {
+    let mut parts = line.split_whitespace();
+    if let (Some(source), Some(target)) = (parts.next(), parts.next()) {
+      if source == device || source.starts_with(&format!("{device}p")) || source.starts_with(device)
+      {
+        targets.push(target.to_string());
+      }
+    }
+  }
+
+  for target in &targets {
+    let target_c = CString::new(target.as_str()).map_err(|e| e.to_string())?;
+    let attempts = [
+      libc::MNT_EXPIRE,
+      libc::MNT_EXPIRE,
+      libc::MNT_DETACH,
+      libc::MNT_FORCE,
+    ];
+    let mut last_errno = 0;
+    let mut ok = false;
+    for flag in attempts {
+      let rc = unsafe { libc::umount2(target_c.as_ptr(), flag) };
+      if rc == 0 {
+        ok = true;
+        break;
+      }
+      last_errno = unsafe { *libc::__errno_location() };
+    }
+    if !ok {
+      return Err(format!("Failed to unmount {target} (errno {last_errno})"));
+    }
+  }
+
+  let file = OpenOptions::new()
+    .read(true)
+    .write(true)
+    .custom_flags(libc::O_DIRECT | libc::O_EXCL)
+    .open(device)
+    .map_err(|e| format!("Failed to open block device {device}: {e}"))?;
+  Ok(DeviceHandle { file })
+}
+
+#[cfg(target_os = "windows")]
+fn open_device(device: &str) -> Result<DeviceHandle, String> {
+  use std::os::windows::fs::OpenOptionsExt;
+  use std::os::windows::io::FromRawHandle;
+
+  use windows::Win32::Foundation::{CloseHandle, GENERIC_READ, GENERIC_WRITE, HANDLE};
+  use windows::Win32::Storage::FileSystem::{
+    CreateFileW, FILE_FLAG_NO_BUFFERING, FILE_SHARE_NONE, OPEN_EXISTING,
+  };
+  use windows::Win32::System::IO::DeviceIoControl;
+  use windows::Win32::System::Ioctl::{FSCTL_DISMOUNT_VOLUME, FSCTL_LOCK_VOLUME};
+  use windows::core::HSTRING;
+
+  let drive_number = device
+    .strip_prefix("\\\\.\\PhysicalDrive")
+    .and_then(|n| n.parse::<u32>().ok())
+    .ok_or_else(|| format!("Unsupported Windows device path {device}"))?;
+
+  let volumes = enumerate_volumes_for_drive(drive_number)?;
+  let mut volume_handles: Vec<HANDLE> = Vec::new();
+  for letter in volumes {
+    let path = HSTRING::from(format!("\\\\.\\{letter}:"));
+    let volume_handle = unsafe {
+      CreateFileW(
+        &path,
+        (GENERIC_READ | GENERIC_WRITE).0,
+        windows::Win32::Storage::FileSystem::FILE_SHARE_MODE(
+          windows::Win32::Storage::FileSystem::FILE_SHARE_READ.0
+            | windows::Win32::Storage::FileSystem::FILE_SHARE_WRITE.0,
+        ),
+        None,
+        OPEN_EXISTING,
+        windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES(0),
+        None,
+      )
+    }
+    .map_err(|e| format!("CreateFile {letter}: failed: {e}"))?;
+    let lock_ok =
+      unsafe { DeviceIoControl(volume_handle, FSCTL_LOCK_VOLUME, None, 0, None, 0, None, None) };
+    if lock_ok.is_err() {
+      let _ = unsafe { CloseHandle(volume_handle) };
+      return Err(format!("FSCTL_LOCK_VOLUME failed for {letter}:"));
+    }
+    let dismount_ok = unsafe {
+      DeviceIoControl(volume_handle, FSCTL_DISMOUNT_VOLUME, None, 0, None, 0, None, None)
+    };
+    if dismount_ok.is_err() {
+      let _ = unsafe { CloseHandle(volume_handle) };
+      return Err(format!("FSCTL_DISMOUNT_VOLUME failed for {letter}:"));
+    }
+    volume_handles.push(volume_handle);
+  }
+
+  let path = HSTRING::from(device);
+  let drive_handle = unsafe {
+    CreateFileW(
+      &path,
+      (GENERIC_READ | GENERIC_WRITE).0,
+      FILE_SHARE_NONE,
+      None,
+      OPEN_EXISTING,
+      FILE_FLAG_NO_BUFFERING,
+      None,
+    )
+  }
+  .map_err(|e| format!("CreateFile {device}: failed: {e}"))?;
+
+  let raw = drive_handle.0;
+  let file = unsafe { std::fs::File::from_raw_handle(raw as _) };
+  Ok(DeviceHandle {
+    file,
+    _volume_handles: volume_handles,
+  })
+}
+
+#[cfg(target_os = "windows")]
+fn enumerate_volumes_for_drive(drive_number: u32) -> Result<Vec<char>, String> {
+  use std::process::Command;
+
+  let script = format!(
+    "Get-Partition -DiskNumber {drive_number} | Where-Object {{ $_.DriveLetter }} | ForEach-Object {{ [string]$_.DriveLetter }}"
+  );
+  let output = Command::new("powershell")
+    .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+    .output()
+    .map_err(|e| format!("powershell failed to spawn: {e}"))?;
+  if !output.status.success() {
+    return Err(format!("powershell failed: {}", String::from_utf8_lossy(&output.stderr)));
+  }
+  Ok(
+    String::from_utf8_lossy(&output.stdout)
+      .lines()
+      .filter_map(|line| line.trim().chars().next())
+      .filter(char::is_ascii_alphabetic)
+      .collect(),
+  )
+}
+
+struct DeviceSink<'a> {
+  device: &'a mut DeviceHandle,
+  status: &'a mut StatusWriter,
+  position: u64,
+  bytes_written: u64,
+  total_size: u64,
+  first_buffer: Option<Vec<u8>>,
+  delay_first: bool,
+  started_at: Instant,
+  last_progress: Instant,
+  cancelled: bool,
+}
+
+impl ChunkSink for DeviceSink<'_> {
+  fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), String> {
+    if self.cancelled {
+      return Err("Cancelled".to_string());
+    }
+    if self.delay_first && self.first_buffer.is_none() {
+      self.first_buffer = Some(chunk.to_vec());
+      self.position += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
+      return Ok(());
+    }
+    self
+      .device
+      .file
+      .write_all(chunk)
+      .map_err(|e| format!("Device write failed at position {}: {e}", self.position))?;
+    self.position += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
+    self.bytes_written += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
+    Ok(())
+  }
+
+  fn on_progress(&mut self, _bytes_read: u64, _total_bytes: u64) {
+    let now = Instant::now();
+    if now.duration_since(self.last_progress).as_millis() < PROGRESS_THROTTLE_MS {
+      return;
+    }
+    self.last_progress = now;
+    let elapsed = now.duration_since(self.started_at).as_secs_f64();
+    let speed = if elapsed > 0.0 {
+      (self.bytes_written as f64 / elapsed) as u64
+    } else {
+      0
+    };
+    let _ = self.status.write(&FlashStatus::Flashing {
+      bytes_written: self.bytes_written,
+      total_bytes: self.total_size,
+      bytes_per_second: speed,
+    });
+  }
+
+  fn cancelled(&self) -> bool {
+    self.cancelled
+  }
+}
+
+fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
+  if let Some(first_buffer) = sink.first_buffer.take() {
+    sink
+      .device
+      .file
+      .seek(SeekFrom::Start(0))
+      .map_err(|e| format!("Failed to seek to start: {e}"))?;
+    sink
+      .device
+      .file
+      .write_all(&first_buffer)
+      .map_err(|e| format!("Failed to write delayed first buffer: {e}"))?;
+    sink.bytes_written += u64::try_from(first_buffer.len()).map_err(|e| e.to_string())?;
+  }
+  sink.device.file.flush().map_err(|e| format!("Final flush failed: {e}"))?;
+  Ok(())
+}
+
+/// # Errors
+/// Returns an error if any phase of the flash fails: unmount, device open,
+/// decompression, write, or finalise.
+pub fn run(args: FlashArgs) -> Result<(), String> {
+  let mut status = StatusWriter::new(Path::new(&args.status_file))?;
+  status.write(&FlashStatus::Starting)?;
+  let mut device = open_device(&args.device)?;
+
+  let mut sink = DeviceSink {
+    device: &mut device,
+    status: &mut status,
+    position: 0,
+    bytes_written: 0,
+    total_size: args.image_size,
+    first_buffer: None,
+    delay_first: cfg!(target_os = "windows"),
+    started_at: Instant::now(),
+    last_progress: Instant::now(),
+    cancelled: false,
+  };
+
+  let is_zstd = args.image.to_lowercase().ends_with(".zst");
+  let total_decompressed = if is_zstd {
+    stream_zstd(&args.image, args.image_size, &mut sink)?
+  } else {
+    stream_plain(&args.image, args.image_size, &mut sink)?
+  };
+
+  finalise_device_writes(&mut sink)?;
+  let _ = total_decompressed;
+  let _ = args.verify;
+  status.write(&FlashStatus::Completed)
+}

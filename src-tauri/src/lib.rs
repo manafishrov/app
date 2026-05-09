@@ -1,4 +1,5 @@
 mod commands;
+mod firmware;
 
 mod models {
   pub mod actions;
@@ -18,11 +19,15 @@ mod gamepad;
 mod log;
 mod toast;
 
+use std::sync::Arc;
+
+use commands::firmware::FlashControl;
 use commands::{
-  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
-  flash_mcu_firmware, gamepad_vibrate, get_config, request_rov_config, save_recording,
+  append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
+  check_firmware_update, close_splashscreen, download_firmware_update, flash_mcu_firmware,
+  gamepad_vibrate, get_config, list_flash_drives, request_rov_config, save_recording,
   send_custom_action, send_direction_vector, set_config, set_desired_depth, set_rov_config,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  start_flash, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
   toggle_auto_stabilization, toggle_depth_hold,
 };
 use config::ConfigSendChannelState;
@@ -46,6 +51,8 @@ fn setup_handlers(app: &mut App) {
   let toast_handle = app.app_handle().clone();
   toast_init(toast_handle);
 
+  app.manage(Arc::new(FlashControl::default()));
+
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
   app.manage(ConfigSendChannelState { tx: config_tx });
@@ -60,9 +67,62 @@ fn setup_handlers(app: &mut App) {
   });
 }
 
+fn parse_flag(prefix: &str, args: &[String]) -> Option<String> {
+  for arg in args {
+    if let Some(value) = arg.strip_prefix(prefix) {
+      return Some(value.to_string());
+    }
+  }
+  None
+}
+
+fn run_flasher_cli(args: &[String]) -> i32 {
+  let Some(image) = parse_flag("--image=", args) else {
+    eprintln!("flasher: --image=PATH is required");
+    return 2;
+  };
+  let Some(device) = parse_flag("--device=", args) else {
+    eprintln!("flasher: --device=DEVICE is required");
+    return 2;
+  };
+  let Some(status_file) = parse_flag("--status-file=", args) else {
+    eprintln!("flasher: --status-file=PATH is required");
+    return 2;
+  };
+  let image_size = parse_flag("--image-size=", args)
+    .and_then(|raw| raw.parse::<u64>().ok())
+    .unwrap_or(0);
+  let verify = parse_flag("--verify=", args).is_none_or(|raw| raw != "false");
+
+  let result = firmware::run_flash(firmware::FlashArgs {
+    image,
+    device,
+    status_file: status_file.clone(),
+    image_size,
+    verify,
+  });
+
+  if let Err(error) = result {
+    if let Ok(mut status) = firmware::status::StatusWriter::new(std::path::Path::new(&status_file))
+    {
+      let _ = status.write(&firmware::FlashStatus::Error {
+        message: error.clone(),
+      });
+    }
+    eprintln!("flasher: {error}");
+    return 1;
+  }
+  0
+}
+
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
+  let raw_args: Vec<String> = std::env::args().collect();
+  if raw_args.iter().any(|arg| arg == "--flash") {
+    let exit_code = run_flasher_cli(&raw_args);
+    std::process::exit(exit_code);
+  }
   let builder = Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
@@ -92,6 +152,11 @@ pub fn run() -> tauri::Result<()> {
       append_recording_chunk,
       toggle_depth_hold,
       flash_mcu_firmware,
+      check_firmware_update,
+      download_firmware_update,
+      list_flash_drives,
+      start_flash,
+      cancel_flash,
       save_recording,
     ])
     .setup(|app| {

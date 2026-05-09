@@ -40,6 +40,8 @@
           pkg-config
           unstable.bun
           ffmpeg
+          nodejs_22
+          python3
         ];
         CMAKE_POLICY_VERSION_MINIMUM = "3.5";
       };
