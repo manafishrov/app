@@ -5,6 +5,7 @@ import {
   type TextInputFieldProps,
   useAppForm,
 } from '@manafishrov/ui/form';
+import { revalidateLogic } from '@tanstack/solid-form';
 import { z } from 'zod';
 
 import * as m from '@/paraglide/messages';
@@ -68,10 +69,8 @@ const WebsocketPortField: Component<{ AppField: AppFieldComponent }> = (props) =
 
 export const RovConnection: Component = () => {
   const form = useAppForm(() => ({
-    validators: {
-      onChange: formSchema,
-      onSubmit: formSchema,
-    },
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: formSchema },
     defaultValues: {
       ipAddress: rovConfigStore.ipAddress,
       websocketPort: rovConfigStore.websocketPort,
@@ -85,7 +84,7 @@ export const RovConnection: Component = () => {
       <form.Form>
         <IpAddressField AppField={form.AppField} />
         <WebsocketPortField AppField={form.AppField} />
-        <form.AutoSubmit debounce={500} />
+        <form.SubmitButton>{m.common_save()}</form.SubmitButton>
       </form.Form>
     </form.AppForm>
   );
