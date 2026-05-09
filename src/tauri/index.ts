@@ -1,5 +1,6 @@
 import { setupConnectionListener } from '@/tauri/connection';
 import { DisposableStack, type CleanupFn } from '@/tauri/core';
+import { setupFirmwareDownloadListener, setupFirmwareFlashListener } from '@/tauri/firmwareUpdater';
 import { setupGamepadListener } from '@/tauri/gamepad';
 import { setupLogsListener } from '@/tauri/logs';
 import { setupRegulatorListener } from '@/tauri/regulator';
@@ -11,6 +12,15 @@ import { setupToastListener } from '@/tauri/toast';
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
+export {
+  cancelFirmwareFlash,
+  checkForFirmwareUpdates,
+  downloadFirmwareUpdate,
+  refreshFlashDrives,
+  revealDownloadedFirmware,
+  selectFlashDrive,
+  startFirmwareFlash,
+} from '@/tauri/firmwareUpdater';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
 export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
@@ -22,6 +32,8 @@ export { closeSplashscreen } from '@/tauri/window';
 
 const listeners = [
   setupConnectionListener,
+  setupFirmwareDownloadListener,
+  setupFirmwareFlashListener,
   setupGamepadListener,
   setupLogsListener,
   setupRegulatorListener,
