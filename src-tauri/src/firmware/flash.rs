@@ -82,11 +82,12 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
   let mut targets: Vec<String> = Vec::new();
   for line in mounts.lines() {
     let mut parts = line.split_whitespace();
-    if let (Some(source), Some(target)) = (parts.next(), parts.next()) {
-      if source == device || source.starts_with(&format!("{device}p")) || source.starts_with(device)
-      {
-        targets.push(target.to_string());
-      }
+    if let (Some(source), Some(target)) = (parts.next(), parts.next())
+      && (source == device
+        || source.starts_with(&format!("{device}p"))
+        || source.starts_with(device))
+    {
+      targets.push(target.to_string());
     }
   }
 

@@ -62,13 +62,14 @@ fn collect_mountpoints(device: &LsblkDevice) -> Vec<FlashDriveMountpoint> {
   let mut mounts = Vec::new();
   if let Some(children) = &device.children {
     for child in children {
-      if let Some(ref single) = child.mountpoint {
-        if !single.is_empty() && single != "[SWAP]" {
-          mounts.push(FlashDriveMountpoint {
-            path: single.clone(),
-            label: child.label.clone().or_else(|| child.partlabel.clone()),
-          });
-        }
+      if let Some(ref single) = child.mountpoint
+        && !single.is_empty()
+        && single != "[SWAP]"
+      {
+        mounts.push(FlashDriveMountpoint {
+          path: single.clone(),
+          label: child.label.clone().or_else(|| child.partlabel.clone()),
+        });
       }
       if let Some(ref many) = child.mountpoints {
         for entry in many.iter().flatten() {
@@ -107,7 +108,7 @@ fn build_drive(device: &LsblkDevice) -> Option<FlashDrive> {
   let is_system = !is_removable && !is_virtual;
 
   let device_path = name.to_string();
-  let size = device.size.as_ref().map(parse_size).unwrap_or(0);
+  let size = device.size.as_ref().map_or(0, parse_size);
   let block_size = device.phy_sec.unwrap_or(0);
 
   Some(FlashDrive {
@@ -125,6 +126,8 @@ fn build_drive(device: &LsblkDevice) -> Option<FlashDrive> {
   })
 }
 
+/// # Errors
+/// Returns an error if `lsblk` cannot be run or its JSON output cannot be parsed.
 pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
   let output = Command::new("lsblk")
     .args(["--bytes", "--all", "--json", "--paths", "--output-all"])
