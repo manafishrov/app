@@ -1,5 +1,7 @@
 import { createStore, produce, reconcile } from 'solid-js/store';
 
+const [UNSET]: undefined[] = [];
+
 export type FirmwareArtifactSignature = {
   url: string;
   format: string;
@@ -78,35 +80,35 @@ export type VersionEntryState = {
 
 type SdFlashState = {
   versionsStatus: VersionsStatus;
-  versionsError: string | null;
+  versionsError: string | undefined;
   versions: VersionEntryState[];
   drives: FlashDrive[];
-  selectedDevice: string | null;
+  selectedDevice: string | undefined;
   flash: {
     status: PipelineStatus;
-    activeVersion: string | null;
+    activeVersion: string | undefined;
     downloadPercent: number;
     bytesWritten: number;
     totalBytes: number;
     bytesPerSecond: number;
-    error: string | null;
+    error: string | undefined;
   };
 };
 
 const defaultSdFlashState: SdFlashState = {
   versionsStatus: VersionsStatus.idle,
-  versionsError: null,
+  versionsError: UNSET,
   versions: [],
   drives: [],
-  selectedDevice: null,
+  selectedDevice: UNSET,
   flash: {
     status: PipelineStatus.idle,
-    activeVersion: null,
+    activeVersion: UNSET,
     downloadPercent: 0,
     bytesWritten: 0,
     totalBytes: 0,
     bytesPerSecond: 0,
-    error: null,
+    error: UNSET,
   },
 };
 

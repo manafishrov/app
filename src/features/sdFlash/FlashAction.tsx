@@ -1,5 +1,3 @@
-import type { Component } from 'solid-js';
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +17,14 @@ import {
   ProgressTrack,
   ProgressValue,
 } from '@manafishrov/ui/progress';
-import { Show, createEffect, createMemo, createSignal } from 'solid-js';
+import {
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  type Accessor,
+  type Component,
+} from 'solid-js';
 import { Portal } from 'solid-js/web';
 
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
@@ -47,27 +52,39 @@ const isIndeterminate = (): boolean =>
   sdFlashStore.flash.status === PipelineStatus.verifying ||
   sdFlashStore.flash.status === PipelineStatus.flashingVerifying;
 
-const pipelineLabel = (): string => {
-  const { status, activeVersion } = sdFlashStore.flash;
-  const version = activeVersion ?? '';
+const staticPipelineLabel = (status: string): string | undefined => {
   if (status === PipelineStatus.preparing) {
     return m.sd_flash_preparing();
   }
-  if (status === PipelineStatus.downloading) {
-    return m.sd_flash_downloading_version({ version });
-  }
+
   if (status === PipelineStatus.verifying) {
     return m.sd_flash_verifying_signature();
   }
+
   if (status === PipelineStatus.flashingVerifying) {
     return m.firmware_update_status_flashing_verifying();
+  }
+
+  return;
+};
+
+const pipelineLabel = (): string => {
+  const { status, activeVersion } = sdFlashStore.flash;
+  const staticLabel = staticPipelineLabel(status);
+  if (typeof staticLabel === 'string') {
+    return staticLabel;
+  }
+
+  const version = activeVersion ?? '';
+  if (status === PipelineStatus.downloading) {
+    return m.sd_flash_downloading_version({ version });
   }
   return m.sd_flash_flashing_version({ version });
 };
 
 const pipelinePercent = (): number | undefined => {
   if (isIndeterminate()) {
-    return undefined;
+    return;
   }
   return sdFlashStore.flash.downloadPercent ?? 0;
 };
@@ -132,38 +149,42 @@ const FlashSuccessDialog: Component<{
   </AlertDialog>
 );
 
-const getButtonText = (entry: VersionEntryState | null): string => {
+const getButtonText = (entry?: VersionEntryState): string => {
   if (isPipelineRunning()) {
     return m.sd_flash_action_flashing();
   }
-  if (entry === null) {
+  if (!entry) {
     return m.sd_flash_action_select_firmware_first();
   }
-  if (sdFlashStore.selectedDevice === null) {
+  if (typeof sdFlashStore.selectedDevice !== 'string') {
     return m.sd_flash_action_select_sd_card_first();
   }
   return m.sd_flash_action_ready();
 };
 
-const useFlashState = (getVersion: () => string | null) => {
-  const selectedEntry = createMemo(() => {
+const useFlashState = (
+  getVersion: () => string | undefined,
+): { buttonText: Accessor<string>; canFlash: Accessor<boolean> } => {
+  const selectedEntry = createMemo<VersionEntryState | undefined>(() => {
     const version = getVersion();
-    if (version === null) {
-      return null;
+    if (typeof version !== 'string') {
+      return;
     }
-    return sdFlashStore.versions.find((entry) => entry.version === version) ?? null;
+    return sdFlashStore.versions.find((entry) => entry.version === version);
   });
 
   const canFlash = createMemo(() => {
     const entry = selectedEntry();
-    return entry !== null && sdFlashStore.selectedDevice !== null && !isPipelineRunning();
+    return (
+      Boolean(entry) && typeof sdFlashStore.selectedDevice === 'string' && !isPipelineRunning()
+    );
   });
 
   return { canFlash, buttonText: createMemo(() => getButtonText(selectedEntry())) };
 };
 
 export const FlashAction: Component<{
-  selectedVersion: string | null;
+  selectedVersion: string | undefined;
 }> = (props) => {
   const { canFlash, buttonText } = useFlashState(() => props.selectedVersion);
   const [showSuccess, setShowSuccess] = createSignal(false);
@@ -194,7 +215,7 @@ export const FlashAction: Component<{
           }
           onConfirm={() => {
             const version = props.selectedVersion;
-            if (version === null) {
+            if (typeof version !== 'string') {
               return;
             }
             return startFirmwareFlash(version);

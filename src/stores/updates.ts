@@ -2,6 +2,8 @@ import type { Update } from '@tauri-apps/plugin-updater';
 
 import { createStore, reconcile } from 'solid-js/store';
 
+const [UNSET]: undefined[] = [];
+
 type AppUpdateStatus =
   | 'idle'
   | 'checking'
@@ -12,10 +14,10 @@ type AppUpdateStatus =
   | 'error';
 
 type AppUpdateState = {
-  availableUpdate: Update | null;
-  latestVersion: string | null;
+  availableUpdate: Update | undefined;
+  latestVersion: string | undefined;
   status: AppUpdateStatus;
-  error: string | null;
+  error: string | undefined;
 };
 
 type UpdatesState = {
@@ -24,10 +26,10 @@ type UpdatesState = {
 
 const defaultUpdatesState: UpdatesState = {
   app: {
-    availableUpdate: null,
-    latestVersion: null,
+    availableUpdate: UNSET,
+    latestVersion: UNSET,
     status: 'idle',
-    error: null,
+    error: UNSET,
   },
 };
 
