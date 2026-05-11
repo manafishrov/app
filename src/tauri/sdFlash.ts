@@ -119,7 +119,12 @@ export const setupFirmwareFlashListener = (): Promise<UnlistenFn> =>
         totalBytes: payload.totalBytes,
       });
     } else if (payload.phase === 'completed') {
-      setSdFlashFlashState({ status: PipelineStatus.flashed });
+      const { totalBytes } = sdFlashStore.flash;
+      setSdFlashFlashState({
+        status: PipelineStatus.flashed,
+        bytesWritten: totalBytes,
+        bytesPerSecond: 0,
+      });
     } else if (payload.phase === 'error' && typeof payload.message === 'string') {
       setSdFlashFlashState({ status: PipelineStatus.error, error: payload.message });
       toast.create({ title: payload.message, type: 'error' });
