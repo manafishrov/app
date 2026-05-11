@@ -28,6 +28,12 @@ pub fn stream_zstd<P: AsRef<Path>>(
   let buffered = BufReader::with_capacity(READ_BUFFER_SIZE, file);
   let mut decoder =
     StreamingDecoder::new(buffered).map_err(|e: FrameDecoderError| e.to_string())?;
+  let content_size = decoder.decoder.content_size();
+  let progress_total = if content_size == 0 {
+    expected_size
+  } else {
+    content_size
+  };
   let mut buffer = vec![0_u8; READ_BUFFER_SIZE];
   let mut bytes_total: u64 = 0;
   loop {
@@ -40,7 +46,7 @@ pub fn stream_zstd<P: AsRef<Path>>(
     }
     sink.write_chunk(&buffer[..read])?;
     bytes_total += u64::try_from(read).map_err(|e: std::num::TryFromIntError| e.to_string())?;
-    sink.on_progress(bytes_total, expected_size);
+    sink.on_progress(bytes_total, progress_total);
   }
   Ok(bytes_total)
 }
