@@ -59,6 +59,10 @@ fn signature_path_for(image_path: &Path) -> PathBuf {
   PathBuf::from(buffer)
 }
 
+/// # Errors
+///
+/// Returns an error if the path metadata cannot be read or the path resolves to
+/// a symbolic link.
 fn reject_existing_symlink_path(path: &Path, subject: &str) -> Result<(), String> {
   if !path.exists() {
     return Ok(());
@@ -70,6 +74,10 @@ fn reject_existing_symlink_path(path: &Path, subject: &str) -> Result<(), String
   Ok(())
 }
 
+/// # Errors
+///
+/// Returns an error if the provided path does not contain a valid UTF-8 file
+/// name component.
 fn sanitize_file_name(file_name: &str) -> Result<String, String> {
   Path::new(file_name)
     .file_name()
@@ -78,6 +86,10 @@ fn sanitize_file_name(file_name: &str) -> Result<String, String> {
     .ok_or_else(|| "Invalid firmware file name".to_string())
 }
 
+/// # Errors
+///
+/// Returns an error if a writable cache directory cannot be resolved, created,
+/// or validated as non-symlinked.
 fn resolve_firmware_cache_dir() -> Result<PathBuf, String> {
   let base_dir = dirs::cache_dir()
     .or_else(dirs::home_dir)
@@ -92,6 +104,9 @@ fn resolve_firmware_cache_dir() -> Result<PathBuf, String> {
   Ok(target_dir)
 }
 
+/// # Errors
+///
+/// Returns an error if the firmware cache directory cannot be prepared.
 fn resolve_download_path(file_name: &str) -> Result<PathBuf, String> {
   let target_dir = resolve_firmware_cache_dir()?;
   Ok(target_dir.join(file_name))
@@ -136,6 +151,10 @@ pub fn cleanup_cache(keep_file_name: Option<String>) -> Result<(), String> {
   Ok(())
 }
 
+/// # Errors
+///
+/// Returns an error if the signing key or signature is invalid, the firmware
+/// file cannot be read, or minisign verification fails.
 fn verify_minisign_file(path: &Path, signature_bytes: &[u8]) -> Result<(), String> {
   let public_key = PublicKey::from_base64(SIGNING_PUBLIC_KEY).map_err(|e| e.to_string())?;
   let signature_text = std::str::from_utf8(signature_bytes).map_err(|e| e.to_string())?;
@@ -153,6 +172,10 @@ fn verify_minisign_file(path: &Path, signature_bytes: &[u8]) -> Result<(), Strin
   verifier.finalize().map_err(|e| e.to_string())
 }
 
+/// # Errors
+///
+/// Returns an error if the artifact signature URL is missing, the request
+/// fails, or the response body cannot be read.
 async fn fetch_signature(client: &Client, signature_url: Option<&str>) -> Result<Vec<u8>, String> {
   let Some(url) = signature_url else {
     return Err("Manifest is missing a signature url for the firmware artifact".to_string());

@@ -53,7 +53,7 @@ pub struct CleanupFirmwareCacheRequest {
 
 #[command]
 /// # Errors
-/// Returns an error if the GitHub releases cannot be fetched or parsed.
+/// Returns an error if the `GitHub` releases cannot be fetched or parsed.
 pub async fn list_firmware_releases(
   payload: FirmwareReleasesRequest,
 ) -> Result<Vec<FirmwareRelease>, String> {
@@ -160,17 +160,20 @@ impl From<&FlashStatus> for FlashProgressEvent {
   }
 }
 
+/// # Errors
+///
+/// Returns an error if the current application binary path cannot be resolved.
 fn current_binary_path() -> Result<std::path::PathBuf, String> {
   std::env::current_exe().map_err(|e| format!("Could not resolve current binary: {e}"))
 }
 
-fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
+fn watch_status_file(app: &AppHandle, status_path: &std::path::Path) {
   use std::io::{BufRead, BufReader, Seek, SeekFrom};
 
   log_info!("Flash status watcher started for {}", status_path.display());
   let mut offset: u64 = 0;
   loop {
-    let Ok(mut file) = std::fs::OpenOptions::new().read(true).open(&status_path) else {
+    let Ok(mut file) = std::fs::OpenOptions::new().read(true).open(status_path) else {
       std::thread::sleep(Duration::from_millis(200));
       continue;
     };
@@ -184,7 +187,7 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
     loop {
       buffer.clear();
       match reader.read_line(&mut buffer) {
-        Ok(0) => break,
+        Ok(0) | Err(_) => break,
         Ok(_) => {
           if let Some(status) = parse_status_line(&buffer) {
             let event = FlashProgressEvent::from(&status);
@@ -197,7 +200,6 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
             }
           }
         },
-        Err(_) => break,
       }
     }
     let position = file.stream_position().unwrap_or(offset);
@@ -240,7 +242,7 @@ pub async fn prepare_flash(
   let watcher_app = app.clone();
   let watcher_status = status_file.clone();
   tauri::async_runtime::spawn(async move {
-    spawn_blocking(move || watch_status_file(watcher_app, watcher_status))
+    spawn_blocking(move || watch_status_file(&watcher_app, &watcher_status))
       .await
       .ok();
   });
@@ -270,6 +272,10 @@ pub async fn prepare_flash(
   wait_for_status(&status_file).await
 }
 
+/// # Errors
+///
+/// Returns an error if the flasher never reports readiness, reports a flash
+/// error, or the blocking task cannot be joined.
 async fn wait_for_status(status_file: &std::path::Path) -> Result<(), String> {
   let path = status_file.to_path_buf();
   spawn_blocking(move || {
@@ -297,6 +303,7 @@ async fn wait_for_status(status_file: &std::path::Path) -> Result<(), String> {
 #[command]
 /// # Errors
 /// Returns an error if the signal file cannot be written.
+#[allow(clippy::needless_pass_by_value)] // Tauri command state extractors are passed by value.
 pub fn signal_flash_image(
   state: State<'_, Arc<FlashControl>>,
   payload: SignalFlashImageRequest,
@@ -318,6 +325,7 @@ pub fn signal_flash_image(
 #[command]
 /// # Errors
 /// Returns an error if the cancel sentinel file cannot be written.
+#[allow(clippy::needless_pass_by_value)] // Tauri command state extractors are passed by value.
 pub fn cancel_flash(state: State<'_, Arc<FlashControl>>) -> Result<(), String> {
   let path = state.cancel_flag_path.lock().map_err(|e| e.to_string())?.clone();
   if let Some(path) = path {

@@ -16,6 +16,7 @@ pub struct FlashDriveMountpoint {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(clippy::struct_excessive_bools)] // Serialized shape is frontend-facing and must stay stable.
 pub struct FlashDrive {
   pub device: String,
   pub raw_device: String,
