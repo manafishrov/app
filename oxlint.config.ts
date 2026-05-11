@@ -35,6 +35,7 @@ export default defineConfig({
     'typescript/no-non-null-assertion': 'error',
     'typescript/consistent-type-imports': 'error',
     'typescript/consistent-type-definitions': ['error', 'type'],
+    'typescript/prefer-readonly-parameter-types': 'off',
     'id-length': ['error', { exceptions: ['_', 'm'] }],
     'no-unused-vars': [
       'error',
