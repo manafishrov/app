@@ -111,6 +111,7 @@
   "sd_flash_versions_unavailable_title": "No firmware versions found",
   "sd_flash_versions_unavailable_description": "Could not load the list of available firmware versions. Check your internet connection and try again.",
   "sd_flash_badge_latest": "Latest",
+  "sd_flash_badge_prerelease": "Pre-release",
   "sd_flash_published_at": "Published {date}",
   "sd_flash_preparing": "Requesting permission…",
   "sd_flash_downloading_version": "Downloading {version}…",

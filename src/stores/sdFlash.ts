@@ -29,6 +29,7 @@ export type FirmwareReleaseManifest = {
 export type FirmwareRelease = {
   version: string;
   publishedAt: string;
+  prerelease: boolean;
 };
 
 export type FlashDriveMountpoint = {
@@ -76,6 +77,7 @@ type PipelineStatus = (typeof PipelineStatus)[keyof typeof PipelineStatus];
 export type VersionEntryState = {
   version: string;
   publishedAt: string;
+  prerelease: boolean;
 };
 
 type SdFlashState = {
