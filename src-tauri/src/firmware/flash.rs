@@ -132,17 +132,17 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
   use std::os::windows::io::FromRawHandle;
 
   use windows::Win32::Foundation::{CloseHandle, GENERIC_READ, GENERIC_WRITE, HANDLE};
-  use windows::Win32::Storage::FileSystem::{
-    CreateFileW, FILE_FLAG_NO_BUFFERING, FILE_SHARE_NONE, OPEN_EXISTING,
-  };
+  use windows::Win32::Storage::FileSystem::{CreateFileW, OPEN_EXISTING};
   use windows::Win32::System::IO::DeviceIoControl;
-  use windows::Win32::System::Ioctl::{FSCTL_DISMOUNT_VOLUME, FSCTL_LOCK_VOLUME};
+  use windows::Win32::System::Ioctl::FSCTL_DISMOUNT_VOLUME;
   use windows::core::HSTRING;
 
   let drive_number = device
     .strip_prefix("\\\\.\\PhysicalDrive")
     .and_then(|n| n.parse::<u32>().ok())
     .ok_or_else(|| format!("Unsupported Windows device path {device}"))?;
+
+  ensure_windows_disk_is_flash_target(drive_number)?;
 
   let volumes = enumerate_volumes_for_drive(drive_number)?;
   let mut volume_handles: Vec<HANDLE> = Vec::new();
@@ -162,36 +162,32 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
         None,
       )
     }
-    .map_err(|e| format!("CreateFile {letter}: failed: {e}"))?;
-    let lock_ok =
-      unsafe { DeviceIoControl(volume_handle, FSCTL_LOCK_VOLUME, None, 0, None, 0, None, None) };
-    if lock_ok.is_err() {
+    .map_err(|e| format!("CreateFile {letter}: failed before forced mount-point removal: {e}"));
+    let Ok(volume_handle) = volume_handle else {
+      remove_windows_volume_mountpoints(letter)?;
+      continue;
+    };
+    if let Err(message) = lock_volume_with_retries(volume_handle, letter) {
       let _ = unsafe { CloseHandle(volume_handle) };
-      return Err(format!("FSCTL_LOCK_VOLUME failed for {letter}:"));
+      remove_windows_volume_mountpoints(letter).map_err(|remove_error| {
+        format!("{message}. Forced mount-point removal also failed: {remove_error}")
+      })?;
+      continue;
     }
     let dismount_ok = unsafe {
       DeviceIoControl(volume_handle, FSCTL_DISMOUNT_VOLUME, None, 0, None, 0, None, None)
     };
     if dismount_ok.is_err() {
       let _ = unsafe { CloseHandle(volume_handle) };
-      return Err(format!("FSCTL_DISMOUNT_VOLUME failed for {letter}:"));
+      remove_windows_volume_mountpoints(letter)?;
+      continue;
     }
     volume_handles.push(volume_handle);
   }
 
-  let path = HSTRING::from(device);
-  let drive_handle = unsafe {
-    CreateFileW(
-      &path,
-      (GENERIC_READ | GENERIC_WRITE).0,
-      FILE_SHARE_NONE,
-      None,
-      OPEN_EXISTING,
-      FILE_FLAG_NO_BUFFERING,
-      None,
-    )
-  }
-  .map_err(|e| format!("CreateFile {device}: failed: {e}"))?;
+  close_windows_volume_handles(&mut volume_handles);
+  clean_windows_disk(drive_number)?;
+  let drive_handle = open_physical_drive_with_retries(device)?;
 
   let raw = drive_handle.0;
   let file = unsafe { std::fs::File::from_raw_handle(raw as _) };
@@ -199,6 +195,172 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
     file,
     _volume_handles: volume_handles,
   })
+}
+
+#[cfg(target_os = "windows")]
+fn close_windows_volume_handles(handles: &mut Vec<windows::Win32::Foundation::HANDLE>) {
+  use windows::Win32::Foundation::CloseHandle;
+
+  for handle in std::mem::take(handles) {
+    unsafe {
+      let _ = CloseHandle(handle);
+    }
+  }
+}
+
+#[cfg(target_os = "windows")]
+fn ensure_windows_disk_is_flash_target(drive_number: u32) -> Result<(), String> {
+  use std::process::Command;
+
+  let script = format!(
+    "$ErrorActionPreference = 'Stop'; $disk = Get-Disk -Number {drive_number}; if ($disk.IsBoot -or $disk.IsSystem) {{ Write-Error 'Refusing to flash a boot/system disk'; exit 10 }}; $bus = [string]$disk.BusType; if (@('USB', 'SD', 'MMC', 'Removable') -notcontains $bus) {{ Write-Error \"Refusing to flash non-removable disk with bus type $bus\"; exit 11 }}"
+  );
+  let output = Command::new("powershell")
+    .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+    .output()
+    .map_err(|e| format!("Failed to validate selected Windows disk: {e}"))?;
+  if output.status.success() {
+    return Ok(());
+  }
+
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  let stderr = String::from_utf8_lossy(&output.stderr);
+  Err(format!(
+    "Windows rejected the selected flash target before erasing. PowerShell stdout: {stdout}. PowerShell stderr: {stderr}"
+  ))
+}
+
+#[cfg(target_os = "windows")]
+fn remove_windows_volume_mountpoints(letter: char) -> Result<(), String> {
+  use std::io::Write as _;
+  use std::process::Command;
+
+  let mut script = tempfile::NamedTempFile::new()
+    .map_err(|e| format!("Failed to create diskpart remove script: {e}"))?;
+  writeln!(script, "select volume {letter}").map_err(|e| e.to_string())?;
+  writeln!(script, "remove all dismount").map_err(|e| e.to_string())?;
+  writeln!(script, "exit").map_err(|e| e.to_string())?;
+  script
+    .flush()
+    .map_err(|e| format!("Failed to write diskpart remove script: {e}"))?;
+
+  let output = Command::new("diskpart")
+    .arg("/s")
+    .arg(script.path())
+    .output()
+    .map_err(|e| format!("Failed to run diskpart remove for {letter}: {e}"))?;
+  if output.status.success() {
+    return Ok(());
+  }
+
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  let stderr = String::from_utf8_lossy(&output.stderr);
+  Err(format!(
+    "Windows could not remove mount points for {letter}: before flashing. Diskpart stdout: {stdout}. Diskpart stderr: {stderr}"
+  ))
+}
+
+#[cfg(target_os = "windows")]
+fn clean_windows_disk(drive_number: u32) -> Result<(), String> {
+  use std::io::Write as _;
+  use std::process::Command;
+
+  let mut script =
+    tempfile::NamedTempFile::new().map_err(|e| format!("Failed to create diskpart script: {e}"))?;
+  writeln!(script, "select disk {drive_number}").map_err(|e| e.to_string())?;
+  writeln!(script, "attributes disk clear readonly noerr").map_err(|e| e.to_string())?;
+  writeln!(script, "online disk noerr").map_err(|e| e.to_string())?;
+  writeln!(script, "clean").map_err(|e| e.to_string())?;
+  writeln!(script, "exit").map_err(|e| e.to_string())?;
+  script.flush().map_err(|e| format!("Failed to write diskpart script: {e}"))?;
+
+  let output = Command::new("diskpart")
+    .arg("/s")
+    .arg(script.path())
+    .output()
+    .map_err(|e| format!("Failed to run diskpart: {e}"))?;
+  if output.status.success() {
+    return Ok(());
+  }
+
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  let stderr = String::from_utf8_lossy(&output.stderr);
+  Err(format!(
+    "Windows could not clear the selected disk before flashing. Diskpart stdout: {stdout}. Diskpart stderr: {stderr}"
+  ))
+}
+
+#[cfg(target_os = "windows")]
+fn open_physical_drive_with_retries(
+  device: &str,
+) -> Result<windows::Win32::Foundation::HANDLE, String> {
+  use windows::Win32::Foundation::{GENERIC_READ, GENERIC_WRITE};
+  use windows::Win32::Storage::FileSystem::{
+    CreateFileW, FILE_FLAG_NO_BUFFERING, FILE_SHARE_NONE, OPEN_EXISTING,
+  };
+  use windows::core::HSTRING;
+
+  const OPEN_RETRY_ATTEMPTS: u32 = 20;
+  const OPEN_RETRY_DELAY: Duration = Duration::from_millis(250);
+
+  let path = HSTRING::from(device);
+  let mut last_error = String::new();
+  for attempt in 1..=OPEN_RETRY_ATTEMPTS {
+    let result = unsafe {
+      CreateFileW(
+        &path,
+        (GENERIC_READ | GENERIC_WRITE).0,
+        FILE_SHARE_NONE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_NO_BUFFERING,
+        None,
+      )
+    };
+    match result {
+      Ok(handle) => return Ok(handle),
+      Err(error) => {
+        last_error = error.to_string();
+        if attempt < OPEN_RETRY_ATTEMPTS {
+          std::thread::sleep(OPEN_RETRY_DELAY);
+        }
+      },
+    }
+  }
+
+  Err(format!(
+    "Windows cleared the selected disk, but {device} could not be opened for exclusive flashing. Unplug and reinsert the drive, then try again. Windows error: {last_error}"
+  ))
+}
+
+#[cfg(target_os = "windows")]
+fn lock_volume_with_retries(
+  volume_handle: windows::Win32::Foundation::HANDLE,
+  letter: char,
+) -> Result<(), String> {
+  use windows::Win32::System::IO::DeviceIoControl;
+  use windows::Win32::System::Ioctl::FSCTL_LOCK_VOLUME;
+
+  const LOCK_RETRY_ATTEMPTS: u32 = 20;
+  const LOCK_RETRY_DELAY: Duration = Duration::from_millis(250);
+
+  let mut last_error = String::new();
+  for attempt in 1..=LOCK_RETRY_ATTEMPTS {
+    match unsafe { DeviceIoControl(volume_handle, FSCTL_LOCK_VOLUME, None, 0, None, 0, None, None) }
+    {
+      Ok(()) => return Ok(()),
+      Err(error) => {
+        last_error = error.to_string();
+        if attempt < LOCK_RETRY_ATTEMPTS {
+          std::thread::sleep(LOCK_RETRY_DELAY);
+        }
+      },
+    }
+  }
+
+  Err(format!(
+    "Drive {letter}: is still in use and could not be locked for flashing. Close File Explorer windows, terminals, sync/backup tools, and antivirus scans using that drive, then try again. Windows error: {last_error}"
+  ))
 }
 
 #[cfg(target_os = "windows")]
