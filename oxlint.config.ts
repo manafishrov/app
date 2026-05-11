@@ -36,6 +36,11 @@ export default defineConfig({
     'typescript/consistent-type-imports': 'error',
     'typescript/consistent-type-definitions': ['error', 'type'],
     'typescript/prefer-readonly-parameter-types': 'off',
+    'require-unicode-regexp': 'off',
+    'typescript/strict-void-return': 'off',
+    'typescript/no-unnecessary-type-parameters': 'off',
+    'typescript/explicit-member-accessibility': 'off',
+    'func-name-matching': 'off',
     'id-length': ['error', { exceptions: ['_', 'm'] }],
     'no-unused-vars': [
       'error',
