@@ -8,13 +8,11 @@ import { Show, createMemo, onMount, type Component } from 'solid-js';
 import { ConfigBackup } from '@/features/settings/forms/ConfigBackup';
 import { System } from '@/features/settings/forms/System';
 import { logError } from '@/lib/log';
+import { isNewerVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { VersionsStatus, sdFlashStore } from '@/stores/sdFlash';
 import { loadFirmwareVersions } from '@/tauri';
-
-const stripVersionPrefix = (value: string): string =>
-  value.startsWith('v') ? value.slice(1) : value;
 
 const newerVersionAvailable = (): string | undefined => {
   const installed = rovConfigStore.firmwareVersion;
@@ -22,17 +20,16 @@ const newerVersionAvailable = (): string | undefined => {
     return;
   }
 
-  const [latestEntry] = sdFlashStore.versions;
-  if (!latestEntry) {
+  const latestStable = sdFlashStore.versions.find((entry) => !entry.prerelease);
+  if (!latestStable) {
     return;
   }
 
-  const { version: latest } = latestEntry;
-  if (stripVersionPrefix(latest) === stripVersionPrefix(installed)) {
+  if (!isNewerVersion(latestStable.version, installed)) {
     return;
   }
 
-  return latest;
+  return latestStable.version;
 };
 
 const FirmwareVersionCard: Component = () => {
