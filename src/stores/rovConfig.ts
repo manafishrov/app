@@ -117,12 +117,12 @@ type RegulatorSuggestions = {
 
 /* oxlint-disable no-magic-numbers */
 const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({
-  kp: 3,
-  ki: 2,
-  kd: 0.5,
-  rate: 100,
+  kp: 1,
+  ki: 0.5,
+  kd: 0.1,
+  rate: 120,
 });
-const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 2, ki: 0.5, kd: 0.1, rate: 0.5 });
+const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 0.6, ki: 0, kd: 0.1, rate: 0.5 });
 
 const defaultThrusterAllocation: ThrusterAllocation = [
   [1, 1, 0, 0, -1, 0, 0, 0],
@@ -160,10 +160,10 @@ const defaultRovConfig: RovConfig = {
   directionCoefficients: { surge: 1, sway: 1, heave: 1 },
   power: {
     thrustersLimit: 30,
-    actionsLimit: 30,
+    actionsLimit: 50,
     regulatorLimit: 30,
-    minBatteryVoltage: 14,
-    maxBatteryVoltage: 21.5,
+    minBatteryVoltage: 16,
+    maxBatteryVoltage: 20.5,
     internalResistance: 0.1,
   },
   ipAddress: '10.10.10.10',

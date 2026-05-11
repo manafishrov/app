@@ -27,7 +27,7 @@ const PID_FIELDS = {
     .max(MAX_PID_VALUE, m.validation_must_be_at_most_100()),
 };
 
-const DEFAULT_TURN_RATE = 100;
+const DEFAULT_TURN_RATE = 120;
 const DEFAULT_DEPTH_RATE = 0.5;
 
 const AXIS_SCHEMA = z.object({
@@ -84,10 +84,10 @@ export type FormValues = {
 };
 
 export const REGULATOR_FORM_DEFAULT_VALUES: FormValues = {
-  pitch: { kp: 3, ki: 2, kd: 0.5, rate: [DEFAULT_TURN_RATE] },
-  yaw: { kp: 3, ki: 2, kd: 0.5, rate: [DEFAULT_TURN_RATE] },
-  roll: { kp: 3, ki: 2, kd: 0.5, rate: [DEFAULT_TURN_RATE] },
-  depth: { kp: 2, ki: 0.5, kd: 0.1, rate: [DEFAULT_DEPTH_RATE] },
+  pitch: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
+  yaw: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
+  roll: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
+  depth: { kp: 0.6, ki: 0, kd: 0.1, rate: [DEFAULT_DEPTH_RATE] },
   fpvMode: false,
   surge: 0,
   heave: 0,
