@@ -2,7 +2,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use ruzstd::StreamingDecoder;
+use ruzstd::decoding::StreamingDecoder;
+use ruzstd::decoding::errors::FrameDecoderError;
 
 use super::constants::READ_BUFFER_SIZE;
 
@@ -25,8 +26,8 @@ pub fn stream_zstd<P: AsRef<Path>>(
 ) -> Result<u64, String> {
   let file = File::open(source.as_ref()).map_err(|e| e.to_string())?;
   let buffered = BufReader::with_capacity(READ_BUFFER_SIZE, file);
-  let mut decoder = StreamingDecoder::new(buffered)
-    .map_err(|e: ruzstd::frame_decoder::FrameDecoderError| e.to_string())?;
+  let mut decoder =
+    StreamingDecoder::new(buffered).map_err(|e: FrameDecoderError| e.to_string())?;
   let mut buffer = vec![0_u8; READ_BUFFER_SIZE];
   let mut bytes_total: u64 = 0;
   loop {
