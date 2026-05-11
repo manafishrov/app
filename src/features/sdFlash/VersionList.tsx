@@ -8,7 +8,9 @@ import * as m from '@/paraglide/messages';
 import { VersionsStatus, sdFlashStore, type VersionEntryState } from '@/stores/sdFlash';
 import { loadFirmwareVersions } from '@/tauri';
 
-const SKELETON_COUNT = 3;
+const [UNSET]: undefined[] = [];
+
+const SKELETON_COUNT = 4;
 
 const VersionRowSkeleton: Component = () => (
   <div class='flex w-full flex-col gap-1.5 rounded-lg border border-border p-3'>
@@ -77,6 +79,11 @@ const VersionRow: Component<{
             {m.sd_flash_badge_latest()}
           </Badge>
         </Show>
+        <Show when={props.entry.prerelease}>
+          <Badge class='bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400'>
+            {m.sd_flash_badge_prerelease()}
+          </Badge>
+        </Show>
       </div>
     </div>
 
@@ -94,6 +101,10 @@ export const VersionList: Component<{
   onSelectVersion: (version: string) => void;
 }> = (props) => {
   const status = createMemo(() => sdFlashStore.versionsStatus);
+  const latestStableVersion = createMemo(() => {
+    const stable = sdFlashStore.versions.find((entry) => !entry.prerelease);
+    return stable ? stable.version : UNSET;
+  });
 
   return (
     <Show
@@ -109,10 +120,10 @@ export const VersionList: Component<{
     >
       <div class='flex flex-col gap-2'>
         <For each={sdFlashStore.versions}>
-          {(entry, index) => (
+          {(entry) => (
             <VersionRow
               entry={entry}
-              isLatest={index() === 0}
+              isLatest={entry.version === latestStableVersion()}
               selected={props.selectedVersion === entry.version}
               disabled={props.disabled}
               onSelect={(): void => {

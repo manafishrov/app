@@ -16,6 +16,7 @@ struct GitHubRelease {
 pub struct FirmwareRelease {
   pub version: String,
   pub published_at: String,
+  pub prerelease: bool,
 }
 
 #[derive(Deserialize)]
@@ -55,12 +56,14 @@ pub async fn fetch_releases(repo_url: &str) -> Result<Vec<FirmwareRelease>, Stri
   let all: Vec<GitHubRelease> = response.json().await.map_err(|e| e.to_string())?;
   let releases: Vec<FirmwareRelease> = all
     .into_iter()
-    .filter(|release| !release.draft && !release.prerelease)
+    .filter(|release| !release.draft)
     .take(MAX_RELEASES)
     .filter_map(|release| {
+      let prerelease = release.prerelease;
       release.published_at.map(|published_at| FirmwareRelease {
         version: release.tag_name,
         published_at,
+        prerelease,
       })
     })
     .collect();
