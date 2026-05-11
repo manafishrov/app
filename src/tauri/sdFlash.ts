@@ -25,6 +25,7 @@ const FIRMWARE_S3_BASE = 'https://s3.manafishrov.com/manafishrov-firmware/releas
 const ARTIFACT_PREFIX = 'pi3-imx477';
 const DOWNLOAD_PROGRESS_EVENT = 'firmware_download_progress';
 const FLASH_PROGRESS_EVENT = 'firmware_flash_progress';
+const [UNSET]: undefined[] = [];
 
 const manifestUrlForVersion = (version: string): string =>
   `${FIRMWARE_S3_BASE}/${version}/${ARTIFACT_PREFIX}-${version}.json`;
@@ -56,22 +57,23 @@ const isTerminalStatus = (status: string): boolean =>
   status === PipelineStatus.cancelled ||
   status === PipelineStatus.error;
 
-export const loadFirmwareVersions = async (): Promise<void> => {
-  setSdFlashState({ versionsStatus: VersionsStatus.loading, versionsError: null });
-  try {
-    const releases = await invoke<FirmwareRelease[]>('list_firmware_releases', {
-      payload: { repoUrl: FIRMWARE_REPO_URL },
+export const loadFirmwareVersions = (): Promise<void> => {
+  setSdFlashState({ versionsStatus: VersionsStatus.loading, versionsError: UNSET });
+  return invoke<FirmwareRelease[]>('list_firmware_releases', {
+    payload: { repoUrl: FIRMWARE_REPO_URL },
+  })
+    .then((releases) => {
+      const entries = releases.map((release) => ({
+        version: release.version,
+        publishedAt: release.publishedAt,
+      }));
+      setVersions(entries);
+      setSdFlashState({ versionsStatus: VersionsStatus.ready });
+    })
+    .catch((error: unknown) => {
+      logError('Failed to load firmware versions:', error);
+      setSdFlashState({ versionsStatus: VersionsStatus.error, versionsError: errorMessage(error) });
     });
-    const entries = releases.map((release) => ({
-      version: release.version,
-      publishedAt: release.publishedAt,
-    }));
-    setVersions(entries);
-    setSdFlashState({ versionsStatus: VersionsStatus.ready });
-  } catch (error: unknown) {
-    logError('Failed to load firmware versions:', error);
-    setSdFlashState({ versionsStatus: VersionsStatus.error, versionsError: errorMessage(error) });
-  }
 };
 
 const fetchManifest = (version: string): Promise<FirmwareReleaseManifest> =>
@@ -117,7 +119,7 @@ export const setupFirmwareFlashListener = (): Promise<UnlistenFn> =>
       });
     } else if (payload.phase === 'completed') {
       setSdFlashFlashState({ status: PipelineStatus.flashed });
-    } else if (payload.phase === 'error' && payload.message !== null) {
+    } else if (payload.phase === 'error' && typeof payload.message === 'string') {
       setSdFlashFlashState({ status: PipelineStatus.error, error: payload.message });
       toast.create({ title: payload.message, type: 'error' });
     } else if (payload.phase === 'decompressing' || payload.phase === 'starting') {
@@ -125,30 +127,29 @@ export const setupFirmwareFlashListener = (): Promise<UnlistenFn> =>
     }
   });
 
-export const refreshFlashDrives = async (): Promise<void> => {
-  try {
-    const drives = await invoke<FlashDrive[]>('list_flash_drives');
-    setSdFlashState({ drives });
-  } catch (error: unknown) {
-    logError('Failed to list flash drives:', error);
-    setSdFlashState({ drives: [], versionsError: errorMessage(error) });
-  }
-};
+export const refreshFlashDrives = (): Promise<void> =>
+  invoke<FlashDrive[]>('list_flash_drives')
+    .then((drives) => {
+      setSdFlashState({ drives });
+    })
+    .catch((error: unknown) => {
+      logError('Failed to list flash drives:', error);
+      setSdFlashState({ drives: [], versionsError: errorMessage(error) });
+    });
 
-export const selectFlashDrive = (device: string | null): void => {
+export const selectFlashDrive = (device?: string): void => {
   setSdFlashState({ selectedDevice: device });
 };
 
-const requestElevation = async (device: string): Promise<void> => {
-  await invoke<void>('prepare_flash', { payload: { device } });
-};
+const requestElevation = (device: string): Promise<undefined> =>
+  invoke<undefined>('prepare_flash', { payload: { device } });
 
 const downloadArtifact = (version: string, artifact: FirmwareArtifact): Promise<string> =>
   invoke<string>('download_firmware_update', {
     payload: {
       version,
       artifactUrl: artifact.url,
-      signatureUrl: artifact.signature?.url ?? undefined,
+      signatureUrl: artifact.signature ? artifact.signature.url : UNSET,
       fileName: artifact.name,
       sha256: artifact.sha256,
       size: artifact.size,
@@ -172,7 +173,7 @@ const waitForFlashCompletion = (): Promise<void> =>
     }, FLASH_POLL_INTERVAL_MS);
   });
 
-const signalFlashAndCleanup = async (
+const signalFlashAndCleanup = (
   downloadedPath: string,
   artifact: FirmwareArtifact,
 ): Promise<void> => {
@@ -184,28 +185,32 @@ const signalFlashAndCleanup = async (
     bytesPerSecond: 0,
   });
 
-  await invoke<void>('signal_flash_image', {
+  return invoke<undefined>('signal_flash_image', {
     payload: { imagePath: downloadedPath, imageSize: artifact.size },
-  });
-  await waitForFlashCompletion();
-
-  invoke<void>('cleanup_firmware_cache', {
-    payload: { keepFileName: artifact.name },
-  }).catch((cleanupError: unknown) => {
-    logError('Failed to clean firmware cache:', cleanupError);
-  });
+  })
+    .then(() => waitForFlashCompletion())
+    .then(() => {
+      invoke<undefined>('cleanup_firmware_cache', {
+        payload: { keepFileName: artifact.name },
+      }).catch((cleanupError: unknown) => {
+        logError('Failed to clean firmware cache:', cleanupError);
+      });
+    });
 };
 
-export const startFirmwareFlash = async (version: string): Promise<void> => {
-  const entry = findVersionEntry(version);
-  if (entry === undefined) {
-    return;
-  }
-  const device = sdFlashStore.selectedDevice;
-  if (device === null) {
-    return;
+const createMissingArtifactError = (): Error =>
+  new Error('Firmware manifest has no SD image artifact.');
+
+const requireSdImage = (manifest: FirmwareReleaseManifest): FirmwareArtifact => {
+  const artifact = findSdImage(manifest);
+  if (!artifact) {
+    throw createMissingArtifactError();
   }
 
+  return artifact;
+};
+
+const initializeFlashState = (version: string): void => {
   setSdFlashFlashState({
     status: PipelineStatus.preparing,
     activeVersion: version,
@@ -213,39 +218,62 @@ export const startFirmwareFlash = async (version: string): Promise<void> => {
     bytesWritten: 0,
     totalBytes: 0,
     bytesPerSecond: 0,
-    error: null,
+    error: UNSET,
   });
-
-  try {
-    const manifest = await fetchManifest(version);
-    const artifact = findSdImage(manifest);
-    if (artifact === undefined) {
-      throw new Error('Firmware manifest has no SD image artifact.');
-    }
-    setSdFlashFlashState({ totalBytes: artifact.size });
-    await requestElevation(device);
-    setSdFlashFlashState({ status: PipelineStatus.downloading });
-    const downloadedPath = await downloadArtifact(version, artifact);
-    await signalFlashAndCleanup(downloadedPath, artifact);
-  } catch (error: unknown) {
-    logError('Flash pipeline failed:', error);
-
-    if (sdFlashStore.flash.status === PipelineStatus.cancelled) {
-      return;
-    }
-
-    const message = errorMessage(error);
-    setSdFlashFlashState({ status: PipelineStatus.error, error: message });
-    toast.create({ title: message, type: 'error' });
-  }
 };
 
-export const cancelFirmwareFlash = async (): Promise<void> => {
-  try {
-    await invoke<void>('cancel_flash');
-    setSdFlashFlashState({ status: PipelineStatus.cancelled });
-    toast.create({ title: m.sd_flash_flash_status_cancelled(), type: 'info' });
-  } catch (error: unknown) {
-    logError('Cancel flash failed:', error);
-  }
+const beginFlashDownload = (
+  version: string,
+  device: string,
+  artifact: FirmwareArtifact,
+): Promise<void> => {
+  setSdFlashFlashState({ totalBytes: artifact.size });
+  return requestElevation(device)
+    .then(() => {
+      setSdFlashFlashState({ status: PipelineStatus.downloading });
+      return downloadArtifact(version, artifact);
+    })
+    .then((downloadedPath) => signalFlashAndCleanup(downloadedPath, artifact));
 };
+
+const handleFlashFailure = (error: unknown): void => {
+  logError('Flash pipeline failed:', error);
+
+  if (sdFlashStore.flash.status === PipelineStatus.cancelled) {
+    return;
+  }
+
+  const message = errorMessage(error);
+  setSdFlashFlashState({ status: PipelineStatus.error, error: message });
+  toast.create({ title: message, type: 'error' });
+};
+
+export const startFirmwareFlash = (version: string): Promise<void> => {
+  const entry = findVersionEntry(version);
+  if (!entry) {
+    return Promise.resolve();
+  }
+  const device = sdFlashStore.selectedDevice;
+  if (typeof device !== 'string') {
+    return Promise.resolve();
+  }
+
+  initializeFlashState(version);
+
+  return fetchManifest(version)
+    .then((manifest) => requireSdImage(manifest))
+    .then((artifact) => beginFlashDownload(version, device, artifact))
+    .catch((error: unknown) => {
+      handleFlashFailure(error);
+    });
+};
+
+export const cancelFirmwareFlash = (): Promise<void> =>
+  invoke<undefined>('cancel_flash')
+    .then(() => {
+      setSdFlashFlashState({ status: PipelineStatus.cancelled });
+      toast.create({ title: m.sd_flash_flash_status_cancelled(), type: 'info' });
+    })
+    .catch((error: unknown) => {
+      logError('Cancel flash failed:', error);
+    });

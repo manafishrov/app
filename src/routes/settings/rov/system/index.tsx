@@ -1,13 +1,12 @@
-import type { Component } from 'solid-js';
-
 import { Badge } from '@manafishrov/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@manafishrov/ui/card';
 import { Link } from '@manafishrov/ui/link';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { Show, createMemo, onMount } from 'solid-js';
+import { Show, createMemo, onMount, type Component } from 'solid-js';
 
 import { System } from '@/features/settings/forms/System';
+import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { VersionsStatus, sdFlashStore } from '@/stores/sdFlash';
@@ -16,19 +15,24 @@ import { loadFirmwareVersions } from '@/tauri';
 const stripVersionPrefix = (value: string): string =>
   value.startsWith('v') ? value.slice(1) : value;
 
-const newerVersionAvailable = (): string | null => {
+const newerVersionAvailable = (): string | undefined => {
   const installed = rovConfigStore.firmwareVersion;
   if (installed === '' || installed === m.common_not_available()) {
-    return null;
+    return;
   }
-  const latest = sdFlashStore.versions[0]?.version;
-  if (latest === undefined) {
-    return null;
-  }
-  return stripVersionPrefix(latest) === stripVersionPrefix(installed) ? null : latest;
-};
 
-const noop = (): void => {};
+  const [latestEntry] = sdFlashStore.versions;
+  if (!latestEntry) {
+    return;
+  }
+
+  const { version: latest } = latestEntry;
+  if (stripVersionPrefix(latest) === stripVersionPrefix(installed)) {
+    return;
+  }
+
+  return latest;
+};
 
 const FirmwareVersionCard: Component = () => {
   const latestNewer = createMemo(newerVersionAvailable);
@@ -61,7 +65,7 @@ const FirmwareVersionCard: Component = () => {
 const SystemRovSettingsPage: Component = () => {
   onMount(() => {
     if (sdFlashStore.versionsStatus === VersionsStatus.idle) {
-      loadFirmwareVersions().catch(noop);
+      loadFirmwareVersions().catch(logError);
     }
   });
 

@@ -1,5 +1,3 @@
-import type { Component } from 'solid-js';
-
 import { Button } from '@manafishrov/ui/button';
 import { Separator } from '@manafishrov/ui/separator';
 import {
@@ -11,7 +9,7 @@ import {
 } from '@manafishrov/ui/tooltip';
 import { H1, H3, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
 
 import { DriveList } from '@/features/sdFlash/DriveList';
@@ -61,7 +59,7 @@ const useInitialLoad = (): void => {
 };
 
 const SdCardPage: Component = () => {
-  const [selectedVersion, setSelectedVersion] = createSignal<string | null>(null);
+  const [selectedVersion, setSelectedVersion] = createSignal<string>();
   useInitialLoad();
 
   return (

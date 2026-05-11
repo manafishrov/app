@@ -2,9 +2,21 @@ import { defineConfig } from 'oxfmt';
 
 export default defineConfig({
   ignorePatterns: [
+    '.github/**',
+    'AGENTS.md',
+    'README.md',
     'dist',
     'node_modules',
     'bun.lock',
+    'package.json',
+    'lefthook.yaml',
+    'index.html',
+    'public/**/*.html',
+    'messages/**/*.json',
+    'i18n.inlang/**/*.json',
+    'src/styles.css',
+    'src-tauri/**/*.json',
+    'tsconfig*.json',
     '**/*.tsbuildinfo',
     '**/*.toml',
     '**/autoImports.d.ts',

@@ -1,5 +1,3 @@
-import type { Component } from 'solid-js';
-
 import { Button } from '@manafishrov/ui/button';
 import {
   Tooltip,
@@ -8,14 +6,12 @@ import {
   TooltipPositioner,
   TooltipTrigger,
 } from '@manafishrov/ui/tooltip';
-import { For, Show } from 'solid-js';
+import { For, Show, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
-
-import type { FlashDrive } from '@/stores/sdFlash';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { sdFlashStore } from '@/stores/sdFlash';
+import { sdFlashStore, type FlashDrive } from '@/stores/sdFlash';
 import { refreshFlashDrives, selectFlashDrive } from '@/tauri';
 
 const BYTES_PER_GB = 1_000_000_000;
@@ -25,6 +21,18 @@ const formatGigabytes = (size: number): string =>
     gigabytes: (size / BYTES_PER_GB).toFixed(1),
   });
 
+const driveRowClass = (disabled: boolean, selected: boolean): string => {
+  if (disabled) {
+    return 'pointer-events-none border-border opacity-50';
+  }
+
+  if (selected) {
+    return 'border-primary bg-primary/5 ring-1 ring-primary/50';
+  }
+
+  return 'border-border hover:bg-muted/40';
+};
+
 const DriveRow: Component<{
   drive: FlashDrive;
   selected: boolean;
@@ -32,13 +40,7 @@ const DriveRow: Component<{
 }> = (props) => (
   <button
     type='button'
-    class={`flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-colors ${
-      props.disabled
-        ? 'pointer-events-none border-border opacity-50'
-        : props.selected
-          ? 'border-primary bg-primary/5 ring-1 ring-primary/50'
-          : 'border-border hover:bg-muted/40'
-    }`}
+    class={`flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-colors ${driveRowClass(props.disabled, props.selected)}`}
     disabled={props.disabled}
     onClick={(): void => {
       selectFlashDrive(props.drive.device);

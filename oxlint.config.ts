@@ -103,6 +103,7 @@ export default defineConfig({
     },
   ],
   options: {
+    denyWarnings: true,
     typeAware: true,
     typeCheck: true,
   },
