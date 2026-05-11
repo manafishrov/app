@@ -54,7 +54,6 @@ type DesiredIndicatorProps = SizeProps & {
 type ActualIndicatorProps = SizeProps & {
   pitch: number;
   roll: number;
-  deltaYaw: number;
 };
 
 type InfoTextsProps = SizeProps & {
@@ -174,11 +173,10 @@ export const DesiredIndicator: Component<DesiredIndicatorProps> = (props) => {
 export const ActualIndicator: Component<ActualIndicatorProps> = (props) => {
   const center = (): number => getScientificCenter(props.size);
   const pitchScale = (): number => getScientificPitchScale(props.size);
-  const yawScale = (): number => getScientificYawScale(props.size);
 
   return (
     <g
-      transform={`translate(${center()}, ${center()}) translate(${props.deltaYaw * yawScale()}, ${-props.pitch * pitchScale()}) rotate(${props.roll}) translate(${-center()}, ${-center()})`}
+      transform={`translate(${center()}, ${center()}) translate(0, ${-props.pitch * pitchScale()}) rotate(${props.roll}) translate(${-center()}, ${-center()})`}
     >
       <line
         x1={center() - props.size * ACTUAL_LINE_OFFSET_1}

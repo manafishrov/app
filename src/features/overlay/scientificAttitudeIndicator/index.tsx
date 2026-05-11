@@ -55,12 +55,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
           desiredRoll={props.desiredRoll}
           deltaYaw={deltaYaw()}
         />
-        <ActualIndicator
-          size={props.size}
-          pitch={props.pitch}
-          roll={props.roll}
-          deltaYaw={deltaYaw()}
-        />
+        <ActualIndicator size={props.size} pitch={props.pitch} roll={props.roll} />
         <InfoTexts
           size={props.size}
           pitch={props.pitch}
