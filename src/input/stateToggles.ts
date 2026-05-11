@@ -282,7 +282,6 @@ export const createStateToggleLoop = (
     frame = requestAnimationFrame(loop);
   };
   loop();
-  loop();
   return (): void => {
     if (frame !== null) {
       cancelAnimationFrame(frame);
