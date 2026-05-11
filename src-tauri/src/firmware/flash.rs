@@ -469,6 +469,14 @@ fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
     sink.bytes_written += u64::try_from(first_buffer.len()).map_err(|e| e.to_string())?;
   }
   sink.device.file.flush().map_err(|e| format!("Final flush failed: {e}"))?;
+  if sink.total_size > 0 {
+    sink.bytes_written = sink.total_size;
+  }
+  let _ = sink.status.write(&FlashStatus::Flashing {
+    bytes_written: sink.bytes_written,
+    total_bytes: sink.total_size,
+    bytes_per_second: 0,
+  });
   Ok(())
 }
 
