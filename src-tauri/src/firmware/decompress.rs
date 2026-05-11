@@ -7,6 +7,9 @@ use ruzstd::StreamingDecoder;
 use super::constants::READ_BUFFER_SIZE;
 
 pub trait ChunkSink {
+  /// # Errors
+  ///
+  /// Returns an error if the sink cannot accept or persist the provided chunk.
   fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), String>;
   fn on_progress(&mut self, bytes_read: u64, total_bytes: u64);
   fn cancelled(&self) -> bool;

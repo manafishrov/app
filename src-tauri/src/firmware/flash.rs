@@ -41,6 +41,10 @@ impl Drop for DeviceHandle {
 }
 
 #[cfg(target_os = "macos")]
+/// # Errors
+///
+/// Returns an error if the disk cannot be unmounted or its raw device cannot
+/// be opened for read/write access.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
   use std::process::Command;
 
@@ -65,6 +69,10 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
 }
 
 #[cfg(target_os = "linux")]
+/// # Errors
+///
+/// Returns an error if matching mounts cannot be read or unmounted, or the
+/// block device cannot be opened exclusively for read/write access.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
   use std::ffi::CString;
   use std::fs::read_to_string;
@@ -115,6 +123,10 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
 }
 
 #[cfg(target_os = "windows")]
+/// # Errors
+///
+/// Returns an error if the physical drive path is invalid, related volumes
+/// cannot be locked and dismounted, or the drive cannot be opened.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
   use std::os::windows::fs::OpenOptionsExt;
   use std::os::windows::io::FromRawHandle;
@@ -253,7 +265,11 @@ impl ChunkSink for DeviceSink<'_> {
     self.last_progress = now;
     let elapsed = now.duration_since(self.started_at).as_secs_f64();
     let speed = if elapsed > 0.0 {
-      (self.bytes_written as f64 / elapsed) as u64
+      #[allow(clippy::cast_sign_loss)]
+      // bytes_written is non-negative and elapsed > 0.0 keeps the computed rate non-negative.
+      {
+        (self.bytes_written as f64 / elapsed).floor().clamp(0.0, u64::MAX as f64) as u64
+      }
     } else {
       0
     };
@@ -269,6 +285,10 @@ impl ChunkSink for DeviceSink<'_> {
   }
 }
 
+/// # Errors
+///
+/// Returns an error if the delayed first buffer cannot be written back or the
+/// device cannot be flushed.
 fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
   if let Some(first_buffer) = sink.first_buffer.take() {
     sink
@@ -287,6 +307,10 @@ fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
   Ok(())
 }
 
+/// # Errors
+///
+/// Returns an error if the image cannot be streamed, written to the device, or
+/// final device writes cannot be flushed.
 fn flash_image(
   status: &mut StatusWriter,
   device: &mut DeviceHandle,
@@ -323,7 +347,7 @@ fn flash_image(
 /// # Errors
 /// Returns an error if any phase of the flash fails: unmount, device open,
 /// decompression, write, or finalise.
-pub fn run(args: FlashArgs) -> Result<(), String> {
+pub fn run(args: &FlashArgs) -> Result<(), String> {
   let mut status = StatusWriter::new(Path::new(&args.status_file))?;
   status.write(&FlashStatus::Starting)?;
   let mut device = open_device(&args.device)?;
@@ -339,10 +363,10 @@ pub fn run_deferred(device_path: &str, status_file: &str, signal_file: &str) -> 
 
   let signal: FlashSignal = loop {
     std::thread::sleep(Duration::from_millis(200));
-    if let Ok(contents) = std::fs::read_to_string(signal_file) {
-      if let Ok(parsed) = serde_json::from_str::<FlashSignal>(&contents) {
-        break parsed;
-      }
+    if let Ok(contents) = std::fs::read_to_string(signal_file)
+      && let Ok(parsed) = serde_json::from_str::<FlashSignal>(&contents)
+    {
+      break parsed;
     }
   };
 

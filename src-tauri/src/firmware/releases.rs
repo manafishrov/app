@@ -24,6 +24,10 @@ pub struct FirmwareReleasesRequest {
   pub repo_url: String,
 }
 
+/// # Errors
+///
+/// Returns an error if the repository URL is not a supported `GitHub`
+/// repository URL.
 fn api_url_from_repo(repo_url: &str) -> Result<String, String> {
   let trimmed = repo_url.trim_end_matches('/');
   let path = trimmed
@@ -33,7 +37,7 @@ fn api_url_from_repo(repo_url: &str) -> Result<String, String> {
 }
 
 /// # Errors
-/// Returns an error if the GitHub releases cannot be fetched or parsed.
+/// Returns an error if the `GitHub` releases cannot be fetched or parsed.
 pub async fn fetch_releases(repo_url: &str) -> Result<Vec<FirmwareRelease>, String> {
   let url = api_url_from_repo(repo_url)?;
   let client = Client::new();

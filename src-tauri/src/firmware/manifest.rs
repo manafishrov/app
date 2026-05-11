@@ -47,6 +47,10 @@ pub struct FirmwareManifestRequest {
   pub manifest_url: String,
 }
 
+/// # Errors
+///
+/// Returns an error if the request fails, returns a non-success status, or the
+/// response body cannot be read.
 async fn fetch_bytes(client: &Client, url: &str) -> Result<bytes::Bytes, String> {
   let response = client.get(url).send().await.map_err(|e| e.to_string())?;
   let status = response.status();
@@ -60,6 +64,10 @@ fn signature_url_for_manifest(manifest_url: &str) -> String {
   format!("{manifest_url}.minisig")
 }
 
+/// # Errors
+///
+/// Returns an error if the signing key or signature is invalid, or the bytes do
+/// not verify against the minisign signature.
 fn verify_minisign_bytes(data: &[u8], signature_bytes: &[u8]) -> Result<(), String> {
   let public_key = PublicKey::from_base64(SIGNING_PUBLIC_KEY).map_err(|e| e.to_string())?;
   let signature_text = std::str::from_utf8(signature_bytes).map_err(|e| e.to_string())?;

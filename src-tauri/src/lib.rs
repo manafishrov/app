@@ -97,13 +97,14 @@ fn run_flasher_cli(args: &[String]) -> i32 {
       .and_then(|raw| raw.parse::<u64>().ok())
       .unwrap_or(0);
     let verify = parse_flag("--verify=", args).is_none_or(|raw| raw != "false");
-    firmware::run_flash(firmware::FlashArgs {
+    let flash_args = firmware::FlashArgs {
       image,
       device,
       status_file: status_file.clone(),
       image_size,
       verify,
-    })
+    };
+    firmware::run_flash(&flash_args)
   };
 
   if let Err(error) = result {

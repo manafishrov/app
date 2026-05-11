@@ -4,6 +4,10 @@ use plist::Value;
 
 use super::{FlashDrive, FlashDriveMountpoint};
 
+/// # Errors
+///
+/// Returns an error if `diskutil` cannot be executed, exits unsuccessfully, or
+/// its plist output cannot be parsed.
 fn run_plist(args: &[&str]) -> Result<Value, String> {
   let output = Command::new("/usr/sbin/diskutil")
     .args(args)
@@ -40,7 +44,7 @@ fn dict_u64(dict: &plist::Dictionary, key: &str) -> u64 {
     .and_then(|value| {
       value
         .as_unsigned_integer()
-        .or_else(|| value.as_signed_integer().map(|n| n as u64))
+        .or_else(|| value.as_signed_integer().and_then(|n| u64::try_from(n).ok()))
     })
     .unwrap_or(0)
 }
@@ -64,6 +68,10 @@ fn collect_partition_identifiers(disk_info: &plist::Dictionary) -> Vec<String> {
   identifiers
 }
 
+/// # Errors
+///
+/// Returns an error if `diskutil` metadata for the disk or its partitions
+/// cannot be read or parsed.
 fn build_drive(disk_identifier: &str) -> Result<Option<FlashDrive>, String> {
   let disk_info_value = run_plist(&["info", "-plist", disk_identifier])?;
   let Some(disk_info) = as_dict(&disk_info_value) else {
@@ -127,6 +135,9 @@ fn build_drive(disk_identifier: &str) -> Result<Option<FlashDrive>, String> {
   }))
 }
 
+/// # Errors
+///
+/// Returns an error if the system disk listing cannot be queried or parsed.
 pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
   let listing = run_plist(&["list", "-plist", "physical"])?;
   let Some(root) = as_dict(&listing) else {
