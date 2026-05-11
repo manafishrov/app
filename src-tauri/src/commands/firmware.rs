@@ -287,8 +287,8 @@ async fn wait_for_status(status_file: &std::path::Path) -> Result<(), String> {
             if matches!(status, FlashStatus::WaitingForImage) {
               return Ok(());
             }
-            if matches!(status, FlashStatus::Error { .. }) {
-              return Err("Elevated flasher failed to open device".to_string());
+            if let FlashStatus::Error { message } = status {
+              return Err(message);
             }
           }
         }
