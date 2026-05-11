@@ -1,6 +1,19 @@
 import type { Component, JSXElement } from 'solid-js';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPositioner,
+  AlertDialogTitle,
+} from '@manafishrov/ui/alert-dialog';
 import { useAppForm } from '@manafishrov/ui/form';
+import { Portal } from 'solid-js/web';
 import { z } from 'zod';
 
 import * as m from '@/paraglide/messages';
@@ -8,6 +21,7 @@ import { rovConfigStore } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
 
 const MAX_POWER = 100;
+const POWER_WARNING_THRESHOLD = 40;
 const SLIDER_CLASS =
   'max-w-sm **:data-[slot=slider-track]:relative **:data-[slot=slider-track]:bg-linear-to-r **:data-[slot=slider-track]:from-green-500 **:data-[slot=slider-track]:via-yellow-500 **:data-[slot=slider-track]:to-red-500 [&_[data-slot=slider-track]::after]:content-[""] [&_[data-slot=slider-track]::after]:absolute [&_[data-slot=slider-track]::after]:inset-0 [&_[data-slot=slider-track]::after]:left-[calc(100%-var(--slider-range-end,0%))] [&_[data-slot=slider-track]::after]:bg-muted [&_[data-slot=slider-track]::after]:rounded-full **:data-[slot=slider-range]:bg-transparent [&_[data-scope=slider][data-part=value-text]::after]:content-["%"]';
 
@@ -25,6 +39,9 @@ const formSchema = z
     path: ['minBatteryVoltage'],
   });
 
+type PowerSliderName = 'thrustersLimit' | 'actionsLimit' | 'regulatorLimit';
+type WarnedSliderName = 'thrustersLimit' | 'regulatorLimit';
+
 type PowerFieldApi = {
   SliderField: (props: {
     class?: string;
@@ -33,6 +50,7 @@ type PowerFieldApi = {
     min?: number;
     max?: number;
     step?: number;
+    onValueChangeEnd?: (details: { value: number[] }) => void;
   }) => JSXElement;
   NumberInputField: (props: {
     label: string;
@@ -43,9 +61,7 @@ type PowerFieldApi = {
 };
 
 type PowerFieldName =
-  | 'thrustersLimit'
-  | 'actionsLimit'
-  | 'regulatorLimit'
+  | PowerSliderName
   | 'minBatteryVoltage'
   | 'maxBatteryVoltage'
   | 'internalResistance';
@@ -55,7 +71,12 @@ type PowerFieldRenderer = (props: {
   children: (field: PowerFieldApi) => JSXElement;
 }) => JSXElement;
 
-const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
+type PowerSliderFieldsProps = {
+  AppField: PowerFieldRenderer;
+  onSliderEnd: (name: WarnedSliderName, value: number[]) => void;
+};
+
+const PowerSliderFields: Component<PowerSliderFieldsProps> = (props) => (
   <>
     <props.AppField name='thrustersLimit'>
       {(field) => (
@@ -66,6 +87,9 @@ const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) =
           min={0}
           max={MAX_POWER}
           step={1}
+          onValueChangeEnd={(details): void => {
+            props.onSliderEnd('thrustersLimit', details.value);
+          }}
         />
       )}
     </props.AppField>
@@ -90,6 +114,9 @@ const PowerSliderFields: Component<{ AppField: PowerFieldRenderer }> = (props) =
           min={0}
           max={MAX_POWER}
           step={1}
+          onValueChangeEnd={(details): void => {
+            props.onSliderEnd('regulatorLimit', details.value);
+          }}
         />
       )}
     </props.AppField>
@@ -131,11 +158,48 @@ const PowerVoltageFields: Component<{ AppField: PowerFieldRenderer }> = (props) 
   </>
 );
 
-const PowerFields: Component<{ AppField: PowerFieldRenderer }> = (props) => (
+const PowerFields: Component<PowerSliderFieldsProps> = (props) => (
   <>
-    <PowerSliderFields AppField={props.AppField} />
+    <PowerSliderFields AppField={props.AppField} onSliderEnd={props.onSliderEnd} />
     <PowerVoltageFields AppField={props.AppField} />
   </>
+);
+
+const HighPowerWarningDialog: Component<{
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = (props) => (
+  <AlertDialog
+    open={props.open}
+    onOpenChange={(details): void => {
+      if (!details.open) {
+        props.onCancel();
+      }
+    }}
+  >
+    <Portal>
+      <AlertDialogOverlay />
+      <AlertDialogPositioner>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{m.power_high_power_warning_title()}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.power_high_power_warning_description()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={props.onCancel}>
+              {m.power_high_power_warning_cancel()}
+            </AlertDialogCancel>
+            <AlertDialogAction variant='destructive' onClick={props.onConfirm}>
+              {m.power_high_power_warning_confirm()}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogPositioner>
+    </Portal>
+  </AlertDialog>
 );
 
 const submitPowerSettings = (value: z.infer<typeof formSchema>): Promise<void> => {
@@ -154,6 +218,52 @@ const submitPowerSettings = (value: z.infer<typeof formSchema>): Promise<void> =
   });
 };
 
+type HighPowerWarningController = {
+  pendingField: () => WarnedSliderName | undefined;
+  handleSliderEnd: (name: WarnedSliderName, value: number[]) => void;
+  confirmHighPower: () => void;
+  cancelHighPower: () => void;
+};
+
+const createHighPowerWarning = (form: {
+  getFieldValue: (name: WarnedSliderName) => number[];
+  setFieldValue: (name: WarnedSliderName, value: number[]) => void;
+}): HighPowerWarningController => {
+  const lastSettled: Record<WarnedSliderName, number> = {
+    thrustersLimit: rovConfigStore.power.thrustersLimit,
+    regulatorLimit: rovConfigStore.power.regulatorLimit,
+  };
+  const [pendingField, setPendingField] = createSignal<WarnedSliderName>();
+
+  return {
+    pendingField,
+    handleSliderEnd: (name, value): void => {
+      const newValue = value[0] ?? 0;
+      const previous = lastSettled[name];
+      if (newValue > POWER_WARNING_THRESHOLD && previous <= POWER_WARNING_THRESHOLD) {
+        setPendingField(name);
+        return;
+      }
+      lastSettled[name] = newValue;
+    },
+    confirmHighPower: (): void => {
+      const name = pendingField();
+      if (name) {
+        lastSettled[name] = form.getFieldValue(name)[0] ?? lastSettled[name];
+      }
+      setPendingField();
+    },
+    cancelHighPower: (): void => {
+      const name = pendingField();
+      if (name) {
+        form.setFieldValue(name, [POWER_WARNING_THRESHOLD]);
+        lastSettled[name] = POWER_WARNING_THRESHOLD;
+      }
+      setPendingField();
+    },
+  };
+};
+
 export const Power: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
@@ -168,12 +278,19 @@ export const Power: Component = () => {
     onSubmit: ({ value }): Promise<void> => submitPowerSettings(value),
   }));
 
+  const warning = createHighPowerWarning(form);
+
   return (
     <form.AppForm>
       <form.Form>
-        <PowerFields AppField={form.AppField} />
+        <PowerFields AppField={form.AppField} onSliderEnd={warning.handleSliderEnd} />
         <form.AutoSubmit debounce={500} />
       </form.Form>
+      <HighPowerWarningDialog
+        open={Boolean(warning.pendingField())}
+        onConfirm={warning.confirmHighPower}
+        onCancel={warning.cancelHighPower}
+      />
     </form.AppForm>
   );
 };
