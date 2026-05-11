@@ -30,15 +30,19 @@ pub struct FlashDrive {
   pub mountpoints: Vec<FlashDriveMountpoint>,
 }
 
+use super::constants::MIN_DRIVE_SIZE_BYTES;
+
 /// # Errors
 /// Returns an error if drive enumeration fails or is not implemented for the platform.
 pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
   #[cfg(target_os = "macos")]
-  return macos::list_drives();
+  let drives = macos::list_drives()?;
   #[cfg(target_os = "linux")]
-  return linux::list_drives();
+  let drives = linux::list_drives()?;
   #[cfg(target_os = "windows")]
-  return windows::list_drives();
+  let drives = windows::list_drives()?;
   #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-  Err("Drive enumeration is not implemented on this platform".to_string())
+  return Err("Drive enumeration is not implemented on this platform".to_string());
+
+  Ok(drives.into_iter().filter(|drive| drive.size >= MIN_DRIVE_SIZE_BYTES).collect())
 }

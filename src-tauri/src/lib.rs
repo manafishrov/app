@@ -24,11 +24,11 @@ use std::sync::Arc;
 use commands::firmware::FlashControl;
 use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  check_firmware_update, close_splashscreen, download_firmware_update, flash_mcu_firmware,
-  gamepad_vibrate, get_config, list_flash_drives, request_rov_config, save_recording,
-  send_custom_action, send_direction_vector, set_config, set_desired_depth, set_rov_config,
-  start_flash, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
-  toggle_auto_stabilization, toggle_depth_hold,
+  cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_firmware_manifest,
+  flash_mcu_firmware, gamepad_vibrate, get_config, list_firmware_releases, list_flash_drives,
+  prepare_flash, request_rov_config, save_recording, send_custom_action, send_direction_vector,
+  set_config, set_desired_depth, set_rov_config, signal_flash_image, start_gamepad_stream,
+  start_regulator_auto_tuning, start_thruster_test, toggle_auto_stabilization, toggle_depth_hold,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -77,10 +77,6 @@ fn parse_flag(prefix: &str, args: &[String]) -> Option<String> {
 }
 
 fn run_flasher_cli(args: &[String]) -> i32 {
-  let Some(image) = parse_flag("--image=", args) else {
-    eprintln!("flasher: --image=PATH is required");
-    return 2;
-  };
   let Some(device) = parse_flag("--device=", args) else {
     eprintln!("flasher: --device=DEVICE is required");
     return 2;
@@ -89,18 +85,26 @@ fn run_flasher_cli(args: &[String]) -> i32 {
     eprintln!("flasher: --status-file=PATH is required");
     return 2;
   };
-  let image_size = parse_flag("--image-size=", args)
-    .and_then(|raw| raw.parse::<u64>().ok())
-    .unwrap_or(0);
-  let verify = parse_flag("--verify=", args).is_none_or(|raw| raw != "false");
 
-  let result = firmware::run_flash(firmware::FlashArgs {
-    image,
-    device,
-    status_file: status_file.clone(),
-    image_size,
-    verify,
-  });
+  let result = if let Some(signal_file) = parse_flag("--wait-for-signal=", args) {
+    firmware::run_flash_deferred(&device, &status_file, &signal_file)
+  } else {
+    let Some(image) = parse_flag("--image=", args) else {
+      eprintln!("flasher: --image=PATH or --wait-for-signal=PATH is required");
+      return 2;
+    };
+    let image_size = parse_flag("--image-size=", args)
+      .and_then(|raw| raw.parse::<u64>().ok())
+      .unwrap_or(0);
+    let verify = parse_flag("--verify=", args).is_none_or(|raw| raw != "false");
+    firmware::run_flash(firmware::FlashArgs {
+      image,
+      device,
+      status_file: status_file.clone(),
+      image_size,
+      verify,
+    })
+  };
 
   if let Err(error) = result {
     if let Ok(mut status) = firmware::status::StatusWriter::new(std::path::Path::new(&status_file))
@@ -152,10 +156,13 @@ pub fn run() -> tauri::Result<()> {
       append_recording_chunk,
       toggle_depth_hold,
       flash_mcu_firmware,
-      check_firmware_update,
+      list_firmware_releases,
+      fetch_firmware_manifest,
       download_firmware_update,
+      cleanup_firmware_cache,
       list_flash_drives,
-      start_flash,
+      prepare_flash,
+      signal_flash_image,
       cancel_flash,
       save_recording,
     ])

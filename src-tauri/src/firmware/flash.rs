@@ -1,14 +1,14 @@
 use std::fs::OpenOptions;
 use std::io::{Seek, SeekFrom, Write};
 use std::path::Path;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use serde::Deserialize;
 
 use super::decompress::{ChunkSink, stream_plain, stream_zstd};
-use super::status::{FlashStatus, StatusWriter};
+use super::status::{FlashSignal, FlashStatus, StatusWriter};
 
-const PROGRESS_THROTTLE_MS: u128 = 200;
+use super::constants::PROGRESS_THROTTLE_MS;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -287,20 +287,19 @@ fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
   Ok(())
 }
 
-/// # Errors
-/// Returns an error if any phase of the flash fails: unmount, device open,
-/// decompression, write, or finalise.
-pub fn run(args: FlashArgs) -> Result<(), String> {
-  let mut status = StatusWriter::new(Path::new(&args.status_file))?;
-  status.write(&FlashStatus::Starting)?;
-  let mut device = open_device(&args.device)?;
-
+fn flash_image(
+  status: &mut StatusWriter,
+  device: &mut DeviceHandle,
+  image: &str,
+  image_size: u64,
+  verify: bool,
+) -> Result<(), String> {
   let mut sink = DeviceSink {
-    device: &mut device,
-    status: &mut status,
+    device,
+    status,
     position: 0,
     bytes_written: 0,
-    total_size: args.image_size,
+    total_size: image_size,
     first_buffer: None,
     delay_first: cfg!(target_os = "windows"),
     started_at: Instant::now(),
@@ -308,15 +307,46 @@ pub fn run(args: FlashArgs) -> Result<(), String> {
     cancelled: false,
   };
 
-  let is_zstd = args.image.to_lowercase().ends_with(".zst");
+  let is_zstd = image.to_lowercase().ends_with(".zst");
   let total_decompressed = if is_zstd {
-    stream_zstd(&args.image, args.image_size, &mut sink)?
+    stream_zstd(image, image_size, &mut sink)?
   } else {
-    stream_plain(&args.image, args.image_size, &mut sink)?
+    stream_plain(image, image_size, &mut sink)?
   };
 
   finalise_device_writes(&mut sink)?;
   let _ = total_decompressed;
-  let _ = args.verify;
+  let _ = verify;
   status.write(&FlashStatus::Completed)
+}
+
+/// # Errors
+/// Returns an error if any phase of the flash fails: unmount, device open,
+/// decompression, write, or finalise.
+pub fn run(args: FlashArgs) -> Result<(), String> {
+  let mut status = StatusWriter::new(Path::new(&args.status_file))?;
+  status.write(&FlashStatus::Starting)?;
+  let mut device = open_device(&args.device)?;
+  flash_image(&mut status, &mut device, &args.image, args.image_size, args.verify)
+}
+
+/// # Errors
+/// Returns an error if the device cannot be opened or the signal file is
+/// missing or malformed.
+pub fn run_deferred(device_path: &str, status_file: &str, signal_file: &str) -> Result<(), String> {
+  let mut status = StatusWriter::new(Path::new(status_file))?;
+  status.write(&FlashStatus::WaitingForImage)?;
+
+  let signal: FlashSignal = loop {
+    std::thread::sleep(Duration::from_millis(200));
+    if let Ok(contents) = std::fs::read_to_string(signal_file) {
+      if let Ok(parsed) = serde_json::from_str::<FlashSignal>(&contents) {
+        break parsed;
+      }
+    }
+  };
+
+  status.write(&FlashStatus::Starting)?;
+  let mut device = open_device(device_path)?;
+  flash_image(&mut status, &mut device, &signal.image, signal.image_size, false)
 }

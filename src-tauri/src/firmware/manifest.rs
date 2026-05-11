@@ -2,7 +2,7 @@ use minisign_verify::{PublicKey, Signature};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-const MANIFEST_PUBLIC_KEY: &str = "RWQ79VrKeNgtcTOSQWqd8vI9zVSZbrzXzuUNUzht6ZpHwRLLnUZPSl8s";
+use super::constants::SIGNING_PUBLIC_KEY;
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -61,7 +61,7 @@ fn signature_url_for_manifest(manifest_url: &str) -> String {
 }
 
 fn verify_minisign_bytes(data: &[u8], signature_bytes: &[u8]) -> Result<(), String> {
-  let public_key = PublicKey::from_base64(MANIFEST_PUBLIC_KEY).map_err(|e| e.to_string())?;
+  let public_key = PublicKey::from_base64(SIGNING_PUBLIC_KEY).map_err(|e| e.to_string())?;
   let signature_text = std::str::from_utf8(signature_bytes).map_err(|e| e.to_string())?;
   let signature = Signature::decode(signature_text).map_err(|e| e.to_string())?;
   public_key.verify(data, &signature, false).map_err(|e| e.to_string())

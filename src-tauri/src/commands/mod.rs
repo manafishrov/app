@@ -11,7 +11,8 @@ pub use control::{
   toggle_depth_hold,
 };
 pub use firmware::{
-  cancel_flash, check_firmware_update, download_firmware_update, list_flash_drives, start_flash,
+  cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_firmware_manifest,
+  list_firmware_releases, list_flash_drives, prepare_flash, signal_flash_image,
 };
 pub use gamepad::{gamepad_vibrate, start_gamepad_stream};
 pub use recording::{append_recording_chunk, save_recording};

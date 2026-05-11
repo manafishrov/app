@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "phase", rename_all = "kebab-case")]
 pub enum FlashStatus {
+  WaitingForImage,
   Starting,
   Decompressing {
     bytes_processed: u64,
@@ -27,6 +28,13 @@ pub enum FlashStatus {
   },
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlashSignal {
+  pub image: String,
+  pub image_size: u64,
+}
+
 pub struct StatusWriter {
   path: PathBuf,
 }
@@ -36,9 +44,10 @@ impl StatusWriter {
   /// Returns an error if the parent directory of `path` cannot be created.
   pub fn new(path: &Path) -> Result<Self, String> {
     if let Some(parent) = path.parent()
-      && !parent.as_os_str().is_empty() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-      }
+      && !parent.as_os_str().is_empty()
+    {
+      std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
     Ok(Self {
       path: path.to_path_buf(),
     })
