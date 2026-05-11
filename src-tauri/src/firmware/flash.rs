@@ -1,4 +1,3 @@
-use std::fs::OpenOptions;
 use std::io::{Seek, SeekFrom, Write};
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -46,6 +45,7 @@ impl Drop for DeviceHandle {
 /// Returns an error if the disk cannot be unmounted or its raw device cannot
 /// be opened for read/write access.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
+  use std::fs::OpenOptions;
   use std::process::Command;
 
   let unmount = Command::new("/usr/sbin/diskutil")
@@ -75,7 +75,7 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
 /// block device cannot be opened exclusively for read/write access.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
   use std::ffi::CString;
-  use std::fs::read_to_string;
+  use std::fs::{OpenOptions, read_to_string};
   use std::os::unix::fs::OpenOptionsExt;
 
   let mounts = read_to_string("/proc/mounts").map_err(|e| e.to_string())?;
@@ -129,7 +129,6 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
 /// Returns an error if the physical drive path is invalid, related volumes
 /// cannot be locked and dismounted, or the drive cannot be opened.
 fn open_device(device: &str) -> Result<DeviceHandle, String> {
-  use std::os::windows::fs::OpenOptionsExt;
   use std::os::windows::io::FromRawHandle;
 
   use windows::Win32::Foundation::{CloseHandle, GENERIC_READ, GENERIC_WRITE, HANDLE};
