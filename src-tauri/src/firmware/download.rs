@@ -234,7 +234,11 @@ pub async fn download_firmware(
   file.flush().await.map_err(|e| e.to_string())?;
   drop(file);
 
-  let actual_sha256 = format!("{:x}", hasher.finalize());
+  let actual_sha256: String = hasher.finalize().iter().fold(String::new(), |mut s, b| {
+    use std::fmt::Write;
+    let _ = write!(s, "{b:02x}");
+    s
+  });
   if actual_sha256 != payload.sha256.to_lowercase() {
     let _ = std::fs::remove_file(&partial_path);
     return Err("Firmware checksum verification failed".to_string());
