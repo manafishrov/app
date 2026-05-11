@@ -32,3 +32,6 @@ export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void
       throw error;
     });
 };
+
+export const importRovConfig = (payload: unknown): Promise<void> =>
+  invokeCommand('import_rov_config', { payload }).then(resolveVoid);

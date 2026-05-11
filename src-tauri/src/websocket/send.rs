@@ -83,6 +83,15 @@ pub async fn handle_set_rov_config(
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
+pub async fn handle_import_rov_config(
+  state: &State<'_, MessageSendChannelState>,
+  payload: serde_json::Value,
+) -> Result<(), String> {
+  send_message(&state.tx, WebsocketMessage::ImportConfig(payload), "ImportConfig").await
+}
+
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_start_thruster_test(
   state: &State<'_, MessageSendChannelState>,
   payload: ThrusterTest,

@@ -5,6 +5,7 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 import { Show, createMemo, onMount, type Component } from 'solid-js';
 
+import { ConfigBackup } from '@/features/settings/forms/ConfigBackup';
 import { System } from '@/features/settings/forms/System';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
@@ -77,6 +78,7 @@ const SystemRovSettingsPage: Component = () => {
       </div>
       <FirmwareVersionCard />
       <System />
+      <ConfigBackup />
     </>
   );
 };

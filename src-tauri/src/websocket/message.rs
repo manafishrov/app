@@ -15,6 +15,7 @@ pub enum WebsocketMessage {
   DirectionVector(DirectionVector),
   GetConfig,
   SetConfig(PartialRovConfig),
+  ImportConfig(serde_json::Value),
   Config(RovConfig),
   StartThrusterTest(ThrusterTest),
   CancelThrusterTest(ThrusterTest),

@@ -14,7 +14,7 @@ export { getConfig, setConfig } from '@/tauri/config';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
-export { requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
+export { importRovConfig, requestRovConfig, setRovConfig } from '@/tauri/rovConfig';
 export {
   cancelFirmwareFlash,
   loadFirmwareVersions,
