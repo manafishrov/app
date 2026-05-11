@@ -257,10 +257,13 @@ impl ChunkSink for DeviceSink<'_> {
     Ok(())
   }
 
-  fn on_progress(&mut self, _bytes_read: u64, _total_bytes: u64) {
+  fn on_progress(&mut self, _bytes_read: u64, total_bytes: u64) {
     let now = Instant::now();
     if now.duration_since(self.last_progress).as_millis() < PROGRESS_THROTTLE_MS {
       return;
+    }
+    if total_bytes > 0 {
+      self.total_size = total_bytes;
     }
     self.last_progress = now;
     let elapsed = now.duration_since(self.started_at).as_secs_f64();

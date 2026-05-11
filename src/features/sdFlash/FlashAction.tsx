@@ -39,6 +39,7 @@ import {
 import { cancelFirmwareFlash, startFirmwareFlash } from '@/tauri';
 
 const BYTES_PER_MB = 1_000_000;
+const PERCENT_FULL = 100;
 
 const isFlashing = (): boolean =>
   sdFlashStore.flash.status === PipelineStatus.flashing ||
@@ -48,7 +49,6 @@ const isPreparing = (): boolean => sdFlashStore.flash.status === PipelineStatus.
 
 const isIndeterminate = (): boolean =>
   isPreparing() ||
-  isFlashing() ||
   sdFlashStore.flash.status === PipelineStatus.verifying ||
   sdFlashStore.flash.status === PipelineStatus.flashingVerifying;
 
@@ -85,6 +85,13 @@ const pipelineLabel = (): string => {
 const pipelinePercent = (): number | undefined => {
   if (isIndeterminate()) {
     return;
+  }
+  if (isFlashing()) {
+    const { bytesWritten, totalBytes } = sdFlashStore.flash;
+    if (totalBytes === 0) {
+      return 0;
+    }
+    return Math.min(PERCENT_FULL, Math.round((bytesWritten / totalBytes) * PERCENT_FULL));
   }
   return sdFlashStore.flash.downloadPercent ?? 0;
 };
