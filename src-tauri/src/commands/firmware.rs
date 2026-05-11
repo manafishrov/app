@@ -5,31 +5,65 @@ use serde::Deserialize;
 use tauri::async_runtime::spawn_blocking;
 use tauri::{AppHandle, Emitter, State, command};
 
-use crate::firmware::{
-  FirmwareDownloadRequest, FirmwareManifestRequest, FirmwareReleaseManifest, FlashDrive,
-  FlashStatus, download_firmware, fetch_manifest, list_drives, parse_status_line,
-};
+use serde::Serialize;
 
-const FLASH_PROGRESS_EVENT: &str = "firmware_flash_progress";
+use crate::firmware::{
+  FirmwareDownloadRequest, FirmwareManifestRequest, FirmwareRelease, FirmwareReleaseManifest,
+  FirmwareReleasesRequest, FlashDrive, FlashStatus, cleanup_cache, download_firmware,
+  fetch_manifest, fetch_releases, list_drives, parse_status_line,
+};
+use crate::{log_error, log_info, log_warn};
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FlashProgressEvent {
+  phase: String,
+  bytes_written: u64,
+  total_bytes: u64,
+  bytes_per_second: u64,
+  message: Option<String>,
+}
+
+use crate::firmware::constants::FLASH_PROGRESS_EVENT;
 
 #[derive(Default)]
 pub struct FlashControl {
   pub cancel_flag_path: Mutex<Option<std::path::PathBuf>>,
+  pub signal_file_path: Mutex<Option<std::path::PathBuf>>,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct StartFlashRequest {
-  pub image_path: String,
+pub struct PrepareFlashRequest {
   pub device: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SignalFlashImageRequest {
+  pub image_path: String,
   pub image_size: u64,
-  pub verify: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CleanupFirmwareCacheRequest {
+  pub keep_file_name: Option<String>,
+}
+
+#[command]
+/// # Errors
+/// Returns an error if the GitHub releases cannot be fetched or parsed.
+pub async fn list_firmware_releases(
+  payload: FirmwareReleasesRequest,
+) -> Result<Vec<FirmwareRelease>, String> {
+  fetch_releases(&payload.repo_url).await
 }
 
 #[command]
 /// # Errors
 /// Returns an error if the manifest cannot be fetched, verified, or parsed.
-pub async fn check_firmware_update(
+pub async fn fetch_firmware_manifest(
   payload: FirmwareManifestRequest,
 ) -> Result<FirmwareReleaseManifest, String> {
   fetch_manifest(&payload.manifest_url).await
@@ -48,9 +82,82 @@ pub async fn download_firmware_update(
 
 #[command]
 /// # Errors
+/// Returns an error if the firmware cache directory cannot be cleaned.
+pub fn cleanup_firmware_cache(payload: CleanupFirmwareCacheRequest) -> Result<(), String> {
+  cleanup_cache(payload.keep_file_name)
+}
+
+#[command]
+/// # Errors
 /// Returns an error if drive enumeration fails or is not implemented for the platform.
 pub fn list_flash_drives() -> Result<Vec<FlashDrive>, String> {
   list_drives()
+}
+
+impl From<&FlashStatus> for FlashProgressEvent {
+  fn from(status: &FlashStatus) -> Self {
+    match status {
+      FlashStatus::WaitingForImage => Self {
+        phase: "waitingForImage".to_string(),
+        bytes_written: 0,
+        total_bytes: 0,
+        bytes_per_second: 0,
+        message: None,
+      },
+      FlashStatus::Starting => Self {
+        phase: "starting".to_string(),
+        bytes_written: 0,
+        total_bytes: 0,
+        bytes_per_second: 0,
+        message: None,
+      },
+      FlashStatus::Decompressing {
+        bytes_processed,
+        total_bytes,
+      } => Self {
+        phase: "decompressing".to_string(),
+        bytes_written: *bytes_processed,
+        total_bytes: *total_bytes,
+        bytes_per_second: 0,
+        message: None,
+      },
+      FlashStatus::Flashing {
+        bytes_written,
+        total_bytes,
+        bytes_per_second,
+      } => Self {
+        phase: "flashing".to_string(),
+        bytes_written: *bytes_written,
+        total_bytes: *total_bytes,
+        bytes_per_second: *bytes_per_second,
+        message: None,
+      },
+      FlashStatus::Verifying {
+        bytes_verified,
+        total_bytes,
+      } => Self {
+        phase: "verifying".to_string(),
+        bytes_written: *bytes_verified,
+        total_bytes: *total_bytes,
+        bytes_per_second: 0,
+        message: None,
+      },
+      FlashStatus::Completed => Self {
+        phase: "completed".to_string(),
+        bytes_written: 0,
+        total_bytes: 0,
+        bytes_per_second: 0,
+        message: None,
+      },
+      FlashStatus::Error { message } => Self {
+        phase: "error".to_string(),
+        bytes_written: 0,
+        total_bytes: 0,
+        bytes_per_second: 0,
+        message: Some(message.clone()),
+      },
+    }
+  }
 }
 
 fn current_binary_path() -> Result<std::path::PathBuf, String> {
@@ -60,6 +167,7 @@ fn current_binary_path() -> Result<std::path::PathBuf, String> {
 fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
   use std::io::{BufRead, BufReader, Seek, SeekFrom};
 
+  log_info!("Flash status watcher started for {}", status_path.display());
   let mut offset: u64 = 0;
   loop {
     let Ok(mut file) = std::fs::OpenOptions::new().read(true).open(&status_path) else {
@@ -67,6 +175,7 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
       continue;
     };
     if file.seek(SeekFrom::Start(offset)).is_err() {
+      log_warn!("Flash status watcher seek failed, exiting");
       break;
     }
     let mut reader = BufReader::new(&mut file);
@@ -78,9 +187,9 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
         Ok(0) => break,
         Ok(_) => {
           if let Some(status) = parse_status_line(&buffer) {
-            let payload = serde_json::to_value(&status).ok();
-            if let Some(payload) = payload {
-              let _ = app.emit(FLASH_PROGRESS_EVENT, payload);
+            let event = FlashProgressEvent::from(&status);
+            if let Err(emit_err) = app.emit(FLASH_PROGRESS_EVENT, &event) {
+              log_error!("Flash status watcher emit failed: {emit_err}");
             }
             if matches!(status, FlashStatus::Completed | FlashStatus::Error { .. }) {
               done = true;
@@ -94,6 +203,7 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
     let position = file.stream_position().unwrap_or(offset);
     offset = position;
     if done {
+      log_info!("Flash status watcher finished");
       break;
     }
     std::thread::sleep(Duration::from_millis(200));
@@ -103,59 +213,106 @@ fn watch_status_file(app: AppHandle, status_path: std::path::PathBuf) {
 #[command]
 /// # Errors
 /// Returns an error if the elevated flasher subprocess cannot be spawned or
-/// fails during execution.
-pub async fn start_flash(
+/// the device cannot be opened.
+pub async fn prepare_flash(
   app: AppHandle,
   state: State<'_, Arc<FlashControl>>,
-  payload: StartFlashRequest,
+  payload: PrepareFlashRequest,
 ) -> Result<(), String> {
   let binary = current_binary_path()?;
   let temp_dir = std::env::temp_dir().join("manafish-flasher");
   std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
-  let status_file = temp_dir.join(format!("status-{}.jsonl", std::process::id()));
-  let cancel_file = temp_dir.join(format!("cancel-{}.flag", std::process::id()));
+  let pid = std::process::id();
+  let status_file = temp_dir.join(format!("status-{pid}.jsonl"));
+  let cancel_file = temp_dir.join(format!("cancel-{pid}.flag"));
+  let signal_file = temp_dir.join(format!("signal-{pid}.json"));
   let _ = std::fs::remove_file(&status_file);
   let _ = std::fs::remove_file(&cancel_file);
+  let _ = std::fs::remove_file(&signal_file);
 
   if let Ok(mut guard) = state.cancel_flag_path.lock() {
     *guard = Some(cancel_file.clone());
   }
+  if let Ok(mut guard) = state.signal_file_path.lock() {
+    *guard = Some(signal_file.clone());
+  }
 
   let watcher_app = app.clone();
   let watcher_status = status_file.clone();
-  let watcher_handle = spawn_blocking(move || watch_status_file(watcher_app, watcher_status));
+  tauri::async_runtime::spawn(async move {
+    spawn_blocking(move || watch_status_file(watcher_app, watcher_status))
+      .await
+      .ok();
+  });
 
   let device = payload.device.clone();
-  let image = payload.image_path.clone();
-  let image_size = payload.image_size;
-  let verify = payload.verify;
   let status_arg = status_file.display().to_string();
+  let signal_arg = signal_file.display().to_string();
 
-  let exit_status = spawn_blocking(move || {
-    runas::Command::new(binary)
+  spawn_blocking(move || {
+    log_info!("Spawning elevated flash subprocess for device {device}");
+    let result = runas::Command::new(binary)
       .args(&[
         "--flash".to_string(),
-        format!("--image={image}"),
         format!("--device={device}"),
         format!("--status-file={status_arg}"),
-        format!("--image-size={image_size}"),
-        format!("--verify={verify}"),
+        format!("--wait-for-signal={signal_arg}"),
       ])
       .gui(true)
       .show(false)
-      .status()
+      .status();
+    match &result {
+      Ok(exit_status) => log_info!("Flash subprocess exited with {exit_status}"),
+      Err(error) => log_error!("Flash subprocess spawn failed: {error}"),
+    }
+  });
+
+  wait_for_status(&status_file).await
+}
+
+async fn wait_for_status(status_file: &std::path::Path) -> Result<(), String> {
+  let path = status_file.to_path_buf();
+  spawn_blocking(move || {
+    for _ in 0..150_u32 {
+      std::thread::sleep(Duration::from_millis(200));
+      if let Ok(contents) = std::fs::read_to_string(&path) {
+        for line in contents.lines().rev() {
+          if let Some(status) = parse_status_line(line) {
+            if matches!(status, FlashStatus::WaitingForImage) {
+              return Ok(());
+            }
+            if matches!(status, FlashStatus::Error { .. }) {
+              return Err("Elevated flasher failed to open device".to_string());
+            }
+          }
+        }
+      }
+    }
+    Err("Timed out waiting for elevated flasher to be ready".to_string())
   })
   .await
-  .map_err(|e| format!("Flasher join failed: {e}"))?
-  .map_err(|e| format!("Flasher spawn failed: {e}"))?;
+  .map_err(|e| e.to_string())?
+}
 
-  let _ = watcher_handle.await;
-
-  if !exit_status.success() {
-    let code = exit_status.code().unwrap_or(-1);
-    return Err(format!("Flasher exited with code {code}"));
-  }
-  Ok(())
+#[command]
+/// # Errors
+/// Returns an error if the signal file cannot be written.
+pub fn signal_flash_image(
+  state: State<'_, Arc<FlashControl>>,
+  payload: SignalFlashImageRequest,
+) -> Result<(), String> {
+  let signal_path = state
+    .signal_file_path
+    .lock()
+    .map_err(|e| e.to_string())?
+    .clone()
+    .ok_or_else(|| "No flash session prepared".to_string())?;
+  let signal = crate::firmware::status::FlashSignal {
+    image: payload.image_path,
+    image_size: payload.image_size,
+  };
+  let json = serde_json::to_string(&signal).map_err(|e| e.to_string())?;
+  std::fs::write(&signal_path, json).map_err(|e| e.to_string())
 }
 
 #[command]

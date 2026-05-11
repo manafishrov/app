@@ -22,6 +22,7 @@ import ExploreIcon from '~icons/material-symbols/explore';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import MemoryIcon from '~icons/material-symbols/memory';
 import PaletteIcon from '~icons/material-symbols/palette';
+import SdCardIcon from '~icons/material-symbols/sd-card';
 import SettingsIcon from '~icons/material-symbols/settings';
 import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
 import SpeedIcon from '~icons/material-symbols/speed';
@@ -197,6 +198,19 @@ const SettingsSidebarContent: Component<{
 const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> = (props) => (
   <SidebarFooter>
     <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={m.settings_sd_card_title()}
+          aria-label={m.aria_labels_sd_card_button()}
+          isActive={props.isActive('/settings/sd-card')}
+          asChild={(triggerProps) => (
+            <Link {...triggerProps()} to='/settings/sd-card' activeOptions={{ exact: true }}>
+              <SdCardIcon aria-hidden='true' />
+              <span>{m.settings_sd_card_title()}</span>
+            </Link>
+          )}
+        />
+      </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={m.settings_debug_title()}

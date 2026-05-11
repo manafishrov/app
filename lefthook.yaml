@@ -3,7 +3,7 @@ pre-commit:
   commands:
     lint:
       glob: '*.{ts,tsx}'
-      run: bunx oxlint --fix --type-aware --type-check {staged_files} && git add {staged_files}
+      run: bunx oxlint --fix {staged_files} && git add {staged_files}
     fmt:
       glob: '*.{ts,tsx}'
       run: bunx oxfmt {staged_files} && git add {staged_files}

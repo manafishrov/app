@@ -1,0 +1,38 @@
+import { defineConfig } from 'oxfmt';
+
+export default defineConfig({
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    'bun.lock',
+    '**/*.tsbuildinfo',
+    '**/*.toml',
+    '**/autoImports.d.ts',
+    '**/paraglide/**',
+    '**/*.gen.ts',
+    'src-tauri/target/**',
+    'src-tauri/gen/**',
+    'src-yolo/**',
+  ],
+  singleQuote: true,
+  jsxSingleQuote: true,
+  sortImports: {
+    groups: [
+      'type-import',
+      ['value-builtin', 'value-external'],
+      'type-internal',
+      'value-internal',
+      ['type-parent', 'type-sibling', 'type-index'],
+      ['value-parent', 'value-sibling', 'value-index'],
+      'unknown',
+    ],
+  },
+  sortTailwindcss: {
+    stylesheet: './src/styles.css',
+    functions: ['tv', 'cn', 'cx', 'cnMerge'],
+    preserveWhitespace: true,
+  },
+  sortPackageJson: {
+    sortScripts: true,
+  },
+});

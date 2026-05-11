@@ -4,7 +4,7 @@ use std::path::Path;
 
 use ruzstd::StreamingDecoder;
 
-const READ_BUFFER_SIZE: usize = 1024 * 1024;
+use super::constants::READ_BUFFER_SIZE;
 
 pub trait ChunkSink {
   fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), String>;

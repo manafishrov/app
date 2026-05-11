@@ -55,9 +55,10 @@ fn collect_partition_identifiers(disk_info: &plist::Dictionary) -> Vec<String> {
   if let Some(partitions) = disk_info.get("Partitions").and_then(plist::Value::as_array) {
     for partition in partitions {
       if let Some(part_dict) = as_dict(partition)
-        && let Some(identifier) = dict_string(part_dict, "DeviceIdentifier") {
-          identifiers.push(identifier);
-        }
+        && let Some(identifier) = dict_string(part_dict, "DeviceIdentifier")
+      {
+        identifiers.push(identifier);
+      }
     }
   }
   identifiers
@@ -69,13 +70,20 @@ fn build_drive(disk_identifier: &str) -> Result<Option<FlashDrive>, String> {
     return Ok(None);
   };
 
-  let is_internal = dict_bool(disk_info, "Internal");
-  if is_internal {
+  if dict_string(disk_info, "VirtualOrPhysical").as_deref() == Some("Virtual") {
     return Ok(None);
   }
-  if dict_bool(disk_info, "VirtualOrPhysical")
-    && dict_string(disk_info, "VirtualOrPhysical").as_deref() == Some("Virtual")
-  {
+
+  let is_internal = dict_bool(disk_info, "Internal");
+  let is_removable = dict_bool(disk_info, "RemovableMediaOrExternalDevice")
+    || dict_bool(disk_info, "Removable")
+    || dict_bool(disk_info, "DeviceMediaIsRemovable")
+    || dict_bool(disk_info, "RemovableMedia");
+  let bus_protocol = dict_string(disk_info, "BusProtocol").unwrap_or_default();
+  let is_usb = bus_protocol.eq_ignore_ascii_case("USB");
+  let is_card = bus_protocol.eq_ignore_ascii_case("Secure Digital") || bus_protocol.contains("SD");
+
+  if is_internal && !is_removable && !is_card {
     return Ok(None);
   }
 
@@ -89,25 +97,19 @@ fn build_drive(disk_identifier: &str) -> Result<Option<FlashDrive>, String> {
   let size = dict_u64(disk_info, "TotalSize");
   let block_size = dict_u32(disk_info, "DeviceBlockSize");
   let is_read_only = !dict_bool(disk_info, "WritableMedia");
-  let is_removable = dict_bool(disk_info, "RemovableMediaOrExternalDevice")
-    || dict_bool(disk_info, "Removable")
-    || dict_bool(disk_info, "DeviceMediaIsRemovable")
-    || dict_bool(disk_info, "RemovableMedia");
-  let bus_protocol = dict_string(disk_info, "BusProtocol").unwrap_or_default();
-  let is_usb = bus_protocol.eq_ignore_ascii_case("USB");
-  let is_card = bus_protocol.eq_ignore_ascii_case("Secure Digital") || bus_protocol.contains("SD");
 
   let mut mountpoints = Vec::new();
   for partition_identifier in collect_partition_identifiers(disk_info) {
     if let Ok(part_value) = run_plist(&["info", "-plist", &partition_identifier])
       && let Some(part_dict) = as_dict(&part_value)
-        && let Some(mount) = dict_string(part_dict, "MountPoint")
-          && !mount.is_empty() {
-            mountpoints.push(FlashDriveMountpoint {
-              path: mount,
-              label: dict_string(part_dict, "VolumeName"),
-            });
-          }
+      && let Some(mount) = dict_string(part_dict, "MountPoint")
+      && !mount.is_empty()
+    {
+      mountpoints.push(FlashDriveMountpoint {
+        path: mount,
+        label: dict_string(part_dict, "VolumeName"),
+      });
+    }
   }
 
   Ok(Some(FlashDrive {
@@ -126,7 +128,7 @@ fn build_drive(disk_identifier: &str) -> Result<Option<FlashDrive>, String> {
 }
 
 pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
-  let listing = run_plist(&["list", "-plist", "external"])?;
+  let listing = run_plist(&["list", "-plist", "physical"])?;
   let Some(root) = as_dict(&listing) else {
     return Ok(Vec::new());
   };
@@ -135,9 +137,10 @@ pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
     for entry in disks_array {
       if let Some(entry_dict) = as_dict(entry)
         && let Some(identifier) = dict_string(entry_dict, "DeviceIdentifier")
-          && let Some(drive) = build_drive(&identifier)? {
-            drives.push(drive);
-          }
+        && let Some(drive) = build_drive(&identifier)?
+      {
+        drives.push(drive);
+      }
     }
   }
   Ok(drives)

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SettingsSdCardIndexRouteImport } from './routes/settings/sd-card/index'
 import { Route as SettingsKeyboardIndexRouteImport } from './routes/settings/keyboard/index'
 import { Route as SettingsGamepadIndexRouteImport } from './routes/settings/gamepad/index'
 import { Route as SettingsDebugIndexRouteImport } from './routes/settings/debug/index'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSdCardIndexRoute = SettingsSdCardIndexRouteImport.update({
+  id: '/sd-card/',
+  path: '/sd-card/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsKeyboardIndexRoute = SettingsKeyboardIndexRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
+  '/settings/sd-card/': typeof SettingsSdCardIndexRoute
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/settings/debug': typeof SettingsDebugIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
+  '/settings/sd-card': typeof SettingsSdCardIndexRoute
   '/settings/rov/calibration': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection': typeof SettingsRovConnectionIndexRoute
   '/settings/rov/mcu': typeof SettingsRovMcuIndexRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/settings/debug/': typeof SettingsDebugIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
+  '/settings/sd-card/': typeof SettingsSdCardIndexRoute
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/settings/debug/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
+    | '/settings/sd-card/'
     | '/settings/rov/calibration/'
     | '/settings/rov/connection/'
     | '/settings/rov/mcu/'
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/settings/debug'
     | '/settings/gamepad'
     | '/settings/keyboard'
+    | '/settings/sd-card'
     | '/settings/rov/calibration'
     | '/settings/rov/connection'
     | '/settings/rov/mcu'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/settings/debug/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
+    | '/settings/sd-card/'
     | '/settings/rov/calibration/'
     | '/settings/rov/connection/'
     | '/settings/rov/mcu/'
@@ -223,6 +235,13 @@ declare module '@tanstack/solid-router' {
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/sd-card/': {
+      id: '/settings/sd-card/'
+      path: '/sd-card'
+      fullPath: '/settings/sd-card/'
+      preLoaderRoute: typeof SettingsSdCardIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/keyboard/': {
@@ -312,6 +331,7 @@ interface SettingsRouteRouteChildren {
   SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
   SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
+  SettingsSdCardIndexRoute: typeof SettingsSdCardIndexRoute
   SettingsRovCalibrationIndexRoute: typeof SettingsRovCalibrationIndexRoute
   SettingsRovConnectionIndexRoute: typeof SettingsRovConnectionIndexRoute
   SettingsRovMcuIndexRoute: typeof SettingsRovMcuIndexRoute
@@ -327,6 +347,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsDebugIndexRoute: SettingsDebugIndexRoute,
   SettingsGamepadIndexRoute: SettingsGamepadIndexRoute,
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
+  SettingsSdCardIndexRoute: SettingsSdCardIndexRoute,
   SettingsRovCalibrationIndexRoute: SettingsRovCalibrationIndexRoute,
   SettingsRovConnectionIndexRoute: SettingsRovConnectionIndexRoute,
   SettingsRovMcuIndexRoute: SettingsRovMcuIndexRoute,
