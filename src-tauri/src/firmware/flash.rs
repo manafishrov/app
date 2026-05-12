@@ -405,8 +405,17 @@ impl ChunkSink for DeviceSink<'_> {
       return Err("Cancelled".to_string());
     }
     if self.delay_first && self.first_buffer.is_none() {
+      let chunk_len = u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
       self.first_buffer = Some(chunk.to_vec());
-      self.position += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
+      // Reserve the offset range for the delayed first chunk so subsequent
+      // writes land at the correct device offsets instead of overwriting it.
+      self
+        .device
+        .file
+        .seek(SeekFrom::Start(chunk_len))
+        .map_err(|e| format!("Failed to seek past delayed first chunk: {e}"))?;
+      self.position += chunk_len;
+      self.bytes_written += chunk_len;
       return Ok(());
     }
     self
@@ -466,10 +475,30 @@ fn finalise_device_writes(sink: &mut DeviceSink<'_>) -> Result<(), String> {
       .file
       .write_all(&first_buffer)
       .map_err(|e| format!("Failed to write delayed first buffer: {e}"))?;
-    sink.bytes_written += u64::try_from(first_buffer.len()).map_err(|e| e.to_string())?;
   }
   sink.device.file.flush().map_err(|e| format!("Final flush failed: {e}"))?;
+  flush_device_to_media(&sink.device.file)?;
   Ok(())
+}
+
+#[cfg(target_os = "windows")]
+/// # Errors
+/// Returns an error if `FlushFileBuffers` rejects the handle.
+fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
+  use std::os::windows::io::AsRawHandle;
+
+  use windows::Win32::Foundation::HANDLE;
+  use windows::Win32::Storage::FileSystem::FlushFileBuffers;
+
+  let handle = HANDLE(file.as_raw_handle() as _);
+  unsafe { FlushFileBuffers(handle) }.map_err(|e| format!("FlushFileBuffers failed: {e}"))
+}
+
+#[cfg(not(target_os = "windows"))]
+/// # Errors
+/// Returns an error if the device sync syscall fails.
+fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
+  file.sync_all().map_err(|e| format!("Final sync failed: {e}"))
 }
 
 /// # Errors
