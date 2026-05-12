@@ -32,6 +32,7 @@ import {
   setConfig,
 } from '@/stores/config';
 
+import { CustomActionsSettings } from '../CustomActionsSettings';
 import {
   NULL_VALUE,
   POLL_INTERVAL_MS,
@@ -180,6 +181,11 @@ const GamepadBindingsEditor: Component<{
           selectedGamepadId={props.selectedGamepadId()}
           bindings={bindings()}
           onBindChange={props.onBindChange}
+        />
+        <CustomActionsSettings
+          kind='gamepad'
+          selectedGamepadId={props.selectedGamepadId()}
+          selectedGamepadConnected={props.selectedGamepadConnected()}
         />
       </Show>
     )}
