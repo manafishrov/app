@@ -69,7 +69,7 @@ const SystemHealthTooltipContent = (props: { isMac: boolean }): JSXElement => (
 );
 
 const useSystemHealthKeybind = (
-  setPopoverOpen: (update: (prev: boolean) => boolean) => void,
+  setPopoverOpen: (update: (prev: boolean) => boolean) => unknown,
 ): void => {
   onMount(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -95,7 +95,9 @@ const SystemHealthPopover = (props: { isMac: boolean }): JSXElement => {
       <Popover
         open={popoverOpen()}
         positioning={{ placement: 'bottom' }}
-        onOpenChange={(details) => setPopoverOpen(details.open)}
+        onOpenChange={(details): void => {
+          setPopoverOpen(details.open);
+        }}
       >
         <Tooltip positioning={{ placement: 'bottom' }} disabled={popoverOpen()}>
           <TooltipTrigger

@@ -12,8 +12,8 @@ type WebRTCState = {
   retryTimeout?: ReturnType<typeof setTimeout>;
 };
 type UiHandlers = {
-  setHasError: (hasError: boolean) => void;
-  setIsLoading: (isLoading: boolean) => void;
+  setHasError: (hasError: boolean) => unknown;
+  setIsLoading: (isLoading: boolean) => unknown;
 };
 type StreamOffer = { sdp: string; type: 'offer' };
 type ConnectContext = {

@@ -84,6 +84,7 @@ const defaultConfig: Config = {
   webrtcSignalingApiPath: '/api/webrtc?src=cam',
   webSocketPort: 9000,
   keyboard: createNullKeyboardBindings(),
+  customActions: [],
   selectedGamepadId: NULL_VALUE,
   gamepad: {},
 };
@@ -136,5 +137,7 @@ export type {
   GamepadInput,
   KeyboardBindings,
   GamepadBindings,
+  CustomActionTrigger,
+  CustomActionBinding,
   Config,
 } from '@/stores/configTypes';

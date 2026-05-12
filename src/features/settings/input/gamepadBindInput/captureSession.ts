@@ -32,27 +32,27 @@ type StartCaptureContext = {
   options: GamepadBindCaptureOptions;
   state: CaptureState;
   isRecording: boolean;
-  setIsRecording: (next: boolean) => void;
+  setIsRecording: (next: boolean) => unknown;
 };
 type ProgressTickContext = {
   options: GamepadBindCaptureOptions;
   state: CaptureState;
   isRecording: boolean;
-  setProgressValue: (next: number) => void;
-  setCurrentValue: (next: number) => void;
-  setIsRecording: (next: boolean) => void;
+  setProgressValue: (next: number) => unknown;
+  setCurrentValue: (next: number) => unknown;
+  setIsRecording: (next: boolean) => unknown;
 };
 type ResetContext = {
   options: GamepadBindCaptureOptions;
   state: CaptureState;
-  setIsRecording: (next: boolean) => void;
+  setIsRecording: (next: boolean) => unknown;
 };
 type ChangedInput = { found: boolean; input: GamepadInput['input'] };
 type LiveValueContext = {
   value: GamepadInput | null;
   gamepad: Gamepad;
-  setProgressValue: (next: number) => void;
-  setCurrentValue: (next: number) => void;
+  setProgressValue: (next: number) => unknown;
+  setCurrentValue: (next: number) => unknown;
 };
 const ZERO = 0;
 const ONE = 1;
@@ -146,7 +146,7 @@ const resetCaptureState = (state: CaptureState): void => {
   state.changedInput = createFallbackInput();
   state.hasChangedInput = false;
 };
-const stopRecording = (state: CaptureState, setIsRecording: (next: boolean) => void): void => {
+const stopRecording = (state: CaptureState, setIsRecording: (next: boolean) => unknown): void => {
   clearCaptureTimers(state);
   removeEscapeListener(state);
   resetCaptureState(state);
@@ -166,8 +166,8 @@ const createCaptureState = (): CaptureState => ({
 });
 
 const setZeroProgress = (
-  setProgressValue: (next: number) => void,
-  setCurrentValue: (next: number) => void,
+  setProgressValue: (next: number) => unknown,
+  setCurrentValue: (next: number) => unknown,
 ): void => {
   setProgressValue(ZERO);
   setCurrentValue(ZERO);
@@ -202,7 +202,7 @@ const commitCapturedBinding = (options: GamepadBindCaptureOptions, state: Captur
 const scheduleSettledCommit = (
   options: GamepadBindCaptureOptions,
   state: CaptureState,
-  setIsRecording: (next: boolean) => void,
+  setIsRecording: (next: boolean) => unknown,
 ): void => {
   state.settleTimeoutId = globalThis.setTimeout((): void => {
     commitCapturedBinding(options, state);
@@ -239,7 +239,7 @@ const updateProgressTick = (context: ProgressTickContext): void => {
 
 const attachEscapeListener = (
   state: CaptureState,
-  setIsRecording: (next: boolean) => void,
+  setIsRecording: (next: boolean) => unknown,
 ): void => {
   state.escapeListener = (event: KeyboardEvent): void => {
     if (event.code === 'Escape') {

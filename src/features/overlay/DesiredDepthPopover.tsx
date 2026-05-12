@@ -42,7 +42,7 @@ const DesiredDepthInput = (props: {
   draftDepth: string;
   setDraftDepth: (value: string) => void;
   handleKeyDown: (event: KeyboardEvent) => void;
-  ref: (el: HTMLInputElement) => void;
+  ref: (el: HTMLInputElement) => unknown;
 }): JSXElement => (
   <NumberInput
     value={props.draftDepth}
@@ -129,7 +129,12 @@ export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement
   });
 
   return (
-    <div ref={setContainerRef} class='pointer-events-auto relative inline-flex'>
+    <div
+      ref={(element): void => {
+        setContainerRef(element);
+      }}
+      class='pointer-events-auto relative inline-flex'
+    >
       <div
         class='cursor-pointer'
         onClick={() => {

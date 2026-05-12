@@ -93,7 +93,15 @@ const VideoStream: Component = () => {
 
   return (
     <>
-      <video ref={(el) => (video = el)} class='h-full w-full' autoplay playsinline muted />
+      <video
+        ref={(el): void => {
+          video = el;
+        }}
+        class='h-full w-full'
+        autoplay
+        playsinline
+        muted
+      />
       {(isLoading() || hasError()) && (
         <div class='absolute inset-0 flex items-center justify-center'>
           <div class='text-center'>

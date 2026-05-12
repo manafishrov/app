@@ -21,7 +21,7 @@ const noop = function noop(): void {
   // Noop
 };
 
-const useHomePageSetup = (setIsFullscreen: (val: boolean) => void): void => {
+const useHomePageSetup = (setIsFullscreen: (val: boolean) => unknown): void => {
   let keyboardCleanup: () => void = noop;
   let directionCleanup: () => void = noop;
   let stateCleanup: () => void = noop;

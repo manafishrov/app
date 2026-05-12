@@ -74,7 +74,7 @@ const handleFormSubmit = ({ value }: { value: FormValues }): Promise<void> => {
 };
 
 const createAutoTuningHandler =
-  (setAutoTuningDisabled: (value: boolean) => void): (() => void) =>
+  (setAutoTuningDisabled: (value: boolean) => unknown): (() => void) =>
   (): void => {
     setAutoTuningDisabled(true);
     startRegulatorAutoTuning()
