@@ -185,6 +185,24 @@ pub struct GamepadBindings {
   pub record: Option<GamepadInput>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum CustomActionTrigger {
+  #[default]
+  Tap,
+  Hold,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct CustomActionBinding {
+  pub id: String,
+  pub module: String,
+  pub trigger: CustomActionTrigger,
+  pub keyboard: Option<KeyboardInput>,
+  pub gamepad: HashMap<String, Option<GamepadInput>>,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum AttitudeIndicator {
@@ -223,6 +241,8 @@ pub struct Config {
   pub webrtc_signaling_api_path: String,
   pub web_socket_port: u16,
   pub keyboard: KeyboardBindings,
+  #[serde(default)]
+  pub custom_actions: Vec<CustomActionBinding>,
   pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
 }
@@ -302,6 +322,7 @@ impl Default for Config {
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
       web_socket_port: 9000,
       keyboard: KeyboardBindings::default(),
+      custom_actions: Vec::new(),
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
     }
@@ -352,6 +373,7 @@ mod tests {
     assert_eq!(config.webrtc_signaling_api_port, 1984);
     assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
     assert_eq!(config.web_socket_port, 9000);
+    assert!(config.custom_actions.is_empty());
     assert!(config.selected_gamepad_id.is_none());
     assert!(config.gamepad.is_empty());
 
