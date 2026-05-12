@@ -11,6 +11,7 @@ import { setupToastListener } from '@/tauri/toast';
 
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
+export { sendCustomAction } from '@/tauri/customAction';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
