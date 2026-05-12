@@ -158,7 +158,7 @@ type AppFieldComponent = Component<{
   children: (field: AppFieldContext) => JSXElement;
 }>;
 
-const McuBoardField: Component<{
+const McuBoardSelectField: Component<{
   AppField: AppFieldComponent;
   boards: SelectCollection;
   onFlashFirmware: () => void;
@@ -190,7 +190,7 @@ const McuBoardField: Component<{
   </props.AppField>
 );
 
-const ThrusterProtocolField: Component<{
+const ThrusterProtocolSelectField: Component<{
   AppField: AppFieldComponent;
   protocols: SelectCollection;
 }> = (props) => (
@@ -210,7 +210,7 @@ const ThrusterProtocolField: Component<{
   </props.AppField>
 );
 
-const DshotSpeedField: Component<{
+const DshotSpeedSelectField: Component<{
   AppField: AppFieldComponent;
   speeds: SelectCollection;
   disabled: boolean;
@@ -232,7 +232,7 @@ const DshotSpeedField: Component<{
   </props.AppField>
 );
 
-const CurrentSensingModeField: Component<{
+const CurrentSensingModeSelectField: Component<{
   AppField: AppFieldComponent;
   modes: SelectCollection;
 }> = (props) => (
@@ -279,18 +279,18 @@ export const Mcu: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <McuBoardField
+        <McuBoardSelectField
           AppField={form.AppField}
           boards={boards}
           onFlashFirmware={handleFlashFirmware}
         />
-        <ThrusterProtocolField AppField={form.AppField} protocols={protocols} />
-        <DshotSpeedField
+        <ThrusterProtocolSelectField AppField={form.AppField} protocols={protocols} />
+        <DshotSpeedSelectField
           AppField={form.AppField}
           speeds={dshotSpeeds}
           disabled={rovConfigStore.thrusterProtocol !== ThrusterProtocol.dshot}
         />
-        <CurrentSensingModeField AppField={form.AppField} modes={currentSensingModes} />
+        <CurrentSensingModeSelectField AppField={form.AppField} modes={currentSensingModes} />
         <form.AutoSubmit debounce={500} />
       </form.Form>
     </form.AppForm>

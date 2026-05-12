@@ -43,7 +43,7 @@ const ConfirmUpdateDescription: Component<{
   </AlertDialogDescription>
 );
 
-type ConfirmUpdateDialogProps = Omit<ConfirmUpdateButtonProps, 'onConfirm'> & {
+type ConfirmUpdateAlertDialogProps = Omit<ConfirmUpdateButtonProps, 'onConfirm'> & {
   isPending: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => unknown;
@@ -63,7 +63,7 @@ const ConfirmUpdateFooter: Component<{
   </AlertDialogFooter>
 );
 
-const ConfirmUpdateDialog: Component<ConfirmUpdateDialogProps> = (props) => (
+const ConfirmUpdateAlertDialog: Component<ConfirmUpdateAlertDialogProps> = (props) => (
   <AlertDialog
     open={props.open}
     onOpenChange={(details): void => {
@@ -71,7 +71,7 @@ const ConfirmUpdateDialog: Component<ConfirmUpdateDialogProps> = (props) => (
     }}
   >
     <Portal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay class='rounded-2xl' />
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -121,7 +121,7 @@ export const ConfirmUpdateButton: Component<ConfirmUpdateButtonProps> = (props) 
       >
         {props.buttonLabel}
       </Button>
-      <ConfirmUpdateDialog
+      <ConfirmUpdateAlertDialog
         {...props}
         isPending={isPending()}
         open={open()}

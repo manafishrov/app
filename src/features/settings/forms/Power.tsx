@@ -179,7 +179,7 @@ const HighPowerWarningDialog: Component<{
     }}
   >
     <Portal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay class='rounded-2xl' />
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>

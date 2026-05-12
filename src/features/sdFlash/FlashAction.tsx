@@ -127,7 +127,7 @@ const PipelineProgress: Component = () => (
   </div>
 );
 
-const FlashSuccessDialog: Component<{
+const FlashSuccessAlertDialog: Component<{
   open: boolean;
   onClose: () => void;
 }> = (props) => (
@@ -140,7 +140,7 @@ const FlashSuccessDialog: Component<{
     }}
   >
     <Portal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay class='rounded-2xl' />
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -230,7 +230,7 @@ export const FlashAction: Component<{
         />
       </Show>
 
-      <FlashSuccessDialog
+      <FlashSuccessAlertDialog
         open={showSuccess()}
         onClose={(): void => {
           setShowSuccess(false);

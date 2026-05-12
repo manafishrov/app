@@ -126,7 +126,7 @@ const updateGamepadBinding = (
   });
 };
 
-const GamepadSelector: Component<{
+const GamepadSelect: Component<{
   gamepadOptions: Accessor<SelectItemOption[]>;
   selectedGamepadValue: Accessor<string[]>;
   selectedGamepadId: Accessor<string | null>;
@@ -215,7 +215,7 @@ const GamepadSettingsContent: Component<{
         </Empty>
       }
     >
-      <GamepadSelector
+      <GamepadSelect
         gamepadOptions={props.gamepadOptions}
         selectedGamepadValue={props.selectedGamepadValue}
         selectedGamepadId={props.selectedGamepadId}
@@ -272,4 +272,4 @@ const GamepadSettings: Component = () => {
   );
 };
 
-export { GamepadBindingsEditor, GamepadSelector, GamepadSettings };
+export { GamepadBindingsEditor, GamepadSelect, GamepadSettings };

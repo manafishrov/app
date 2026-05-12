@@ -26,7 +26,7 @@ import * as m from '@/paraglide/messages';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { AllocationTable } from './AllocationTable';
-import { IdentifierField, SpinDirectionField } from './FieldRenderers';
+import { IdentifierSelect, SpinDirectionSelect } from './FieldRenderers';
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from './thrusterPresets';
 
 type SharedProps = {
@@ -38,18 +38,18 @@ type PinSetupProps = {
   pinNumbers: readonly number[];
   testDisabled: Accessor<boolean[]>;
   onTestThruster: (index: number) => void;
-  form: ComponentProps<typeof IdentifierField>['form'];
-  identifierCollection: ComponentProps<typeof IdentifierField>['identifierCollection'];
+  form: ComponentProps<typeof IdentifierSelect>['form'];
+  identifierCollection: ComponentProps<typeof IdentifierSelect>['identifierCollection'];
   zeroValue: number;
 };
 type AllocationProps = {
   onApplyPreset: (presetRows: ThrusterPresetRow) => void;
   onResetAllocation: () => void;
-  form: ComponentProps<typeof IdentifierField>['form'];
+  form: ComponentProps<typeof IdentifierSelect>['form'];
 };
 type LayoutProps = SharedProps & PinSetupProps & AllocationProps;
 
-const TooltipHead: Component<{ label: string; tooltip: string; class?: string }> = (props) => (
+const TooltipTableHead: Component<{ label: string; tooltip: string; class?: string }> = (props) => (
   <TableHead class={props.class}>
     <Tooltip positioning={{ placement: 'top' }}>
       <TooltipTrigger>{props.label}</TooltipTrigger>
@@ -135,29 +135,29 @@ const AllocationResetButton: Component<{ onResetAllocation: () => void }> = (pro
 const PinSetupHeader: Component = () => (
   <TableHeader>
     <TableRow>
-      <TooltipHead
+      <TooltipTableHead
         class='text-center'
         label={m.calibration_thruster_pin_setup_pin_label()}
         tooltip={m.calibration_thruster_pin_setup_pin_tooltip()}
       />
-      <TooltipHead
+      <TooltipTableHead
         label={m.calibration_thruster_pin_setup_identifier_label()}
         tooltip={m.calibration_thruster_pin_setup_identifier_tooltip()}
       />
-      <TooltipHead
+      <TooltipTableHead
         label={m.calibration_thruster_pin_setup_spin_direction_label()}
         tooltip={m.calibration_thruster_pin_setup_spin_direction_tooltip()}
       />
-      <TooltipHead
+      <TooltipTableHead
         label={m.calibration_thruster_pin_setup_test_label()}
         tooltip={m.calibration_thruster_pin_setup_test_tooltip()}
       />
-      <TooltipHead
+      <TooltipTableHead
         class='text-right'
         label={m.calibration_thruster_pin_setup_rpm_label()}
         tooltip={m.calibration_thruster_pin_setup_rpm_tooltip()}
       />
-      <TooltipHead
+      <TooltipTableHead
         class='text-right'
         label={m.calibration_thruster_pin_setup_signal_quality_label()}
         tooltip={m.calibration_thruster_pin_setup_signal_quality_tooltip()}
@@ -173,7 +173,7 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
         <TableRow>
           <TableCell class='text-center'>GP{pin}</TableCell>
           <TableCell>
-            <IdentifierField
+            <IdentifierSelect
               form={props.form}
               index={index()}
               zeroValue={props.zeroValue}
@@ -181,7 +181,7 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
             />
           </TableCell>
           <TableCell>
-            <SpinDirectionField form={props.form} index={index()} zeroValue={props.zeroValue} />
+            <SpinDirectionSelect form={props.form} index={index()} zeroValue={props.zeroValue} />
           </TableCell>
           <TableCell>
             <Button
