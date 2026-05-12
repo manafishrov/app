@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
+import { CustomActionsSettings } from '@/features/settings/input/CustomActionsSettings';
 import { KeyboardSettings } from '@/features/settings/input/KeyboardSettings';
 import * as m from '@/paraglide/messages';
 
@@ -13,6 +14,7 @@ const KeyboardSettingsPage: Component = () => (
       <P>{m.keyboard_page_description()}</P>
     </div>
     <KeyboardSettings />
+    <CustomActionsSettings kind='keyboard' />
   </>
 );
 
