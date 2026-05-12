@@ -1,8 +1,13 @@
 import type { CleanupFn } from '@/input/types';
 import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/stores/config';
 
+import {
+  handleCustomActionToggles,
+  type CustomActionToggleState,
+} from '@/input/customActionToggles';
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
 import { getKeyboardValue } from '@/input/keyboard';
+import { handleRecordingToggle } from '@/input/recordingToggle';
 import {
   adjustDesiredDepthDraft,
   closeDesiredDepthPopup,
@@ -10,7 +15,6 @@ import {
   openDesiredDepthPopup,
 } from '@/stores/desiredDepthPopup';
 import { isInputSuppressed } from '@/stores/inputState';
-import { setRecordingStore } from '@/stores/recording';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
@@ -55,16 +59,15 @@ const THRESHOLD = 0.5;
 const DESIRED_DEPTH_STEP = 0.1;
 const DESIRED_DEPTH_REPEAT_DELAY_MS = 200;
 const DESIRED_DEPTH_REPEAT_INTERVAL_MS = 40;
-const [undefinedNumber] = [] as (number | undefined)[];
 
-const createNullValue = <ValueType>(): ValueType | null => {
-  const result = /a/.exec('');
+const createNullValue = (): null => {
+  const result = /a/u.exec('');
   if (Array.isArray(result)) {
     throw new TypeError('Expected null match result');
   }
   return result;
 };
-const getNullValue = <ValueType>(): ValueType | null => createNullValue<ValueType>();
+const getNullValue = (): null => createNullValue();
 const isInputPressed = ({
   input,
   pressedKeys,
@@ -93,17 +96,17 @@ const getGamepadBindingsOrNull = (
   config: Config,
 ): GamepadBindings | null => {
   if (!gamepad) {
-    return getNullValue<GamepadBindings>();
+    return getNullValue();
   }
   const bindings = getGamepadBindings(gamepad, config);
-  return bindings ?? getNullValue<GamepadBindings>();
+  return bindings ?? getNullValue();
 };
 const getGamepadInput = (
   bindings: GamepadBindings | null,
   key: ToggleBindingKey,
 ): GamepadInput | null => {
   if (!bindings) {
-    return getNullValue<GamepadInput>();
+    return getNullValue();
   }
   return bindings[key];
 };
@@ -186,24 +189,18 @@ const handleDepthHoldToggle = (ctx: ToggleContext): void => {
     action: toggleDepthHold,
   });
 };
-const handleRecordingToggle = (ctx: ToggleContext): void => {
+const handleRecordingInput = (ctx: ToggleContext): void => {
   const recordPressed = isInputPressed({
     input: getToggleInput(ctx, 'record'),
     pressedKeys: ctx.pressedKeys,
     gamepad: ctx.gamepad,
   });
-  const isRecording = ctx.getIsRecording();
-  const webrtcConnected = ctx.getWebrtcConnected();
-  if (recordPressed && !ctx.lastState.record && webrtcConnected) {
-    const startTime = isRecording ? undefinedNumber : Date.now();
-    setRecordingStore({
-      isRecording: !isRecording,
-      startTime,
-    });
-    ctx.lastState.record = true;
-  } else if (!recordPressed) {
-    ctx.lastState.record = false;
-  }
+  handleRecordingToggle({
+    isPressed: recordPressed,
+    lastState: ctx.lastState,
+    getIsRecording: ctx.getIsRecording,
+    getWebrtcConnected: ctx.getWebrtcConnected,
+  });
 };
 const createToggleContext = ({
   config,
@@ -239,10 +236,19 @@ const handleSuppressedFrame = (ctx: ToggleContext, repeatState: DesiredDepthRepe
     repeatState,
   );
 };
-const handleDefaultFrame = (ctx: ToggleContext): void => {
+const handleDefaultFrame = (
+  ctx: ToggleContext,
+  customActionState: CustomActionToggleState,
+): void => {
   handleAutoStabilizationToggle(ctx);
   handleDepthHoldToggle(ctx);
-  handleRecordingToggle(ctx);
+  handleCustomActionToggles({
+    config: ctx.config,
+    pressedKeys: ctx.pressedKeys,
+    gamepad: ctx.gamepad,
+    state: customActionState,
+  });
+  handleRecordingInput(ctx);
 };
 
 export const createStateToggleLoop = (
@@ -253,7 +259,7 @@ export const createStateToggleLoop = (
     () => boolean,
   ]
 ): CleanupFn => {
-  let frame: number | null = getNullValue<number>();
+  let frame: number | null = getNullValue();
   const lastState: ToggleState = {
     autoStabilization: false,
     depthHold: false,
@@ -264,6 +270,7 @@ export const createStateToggleLoop = (
     desiredDepthIncrease: 0,
     desiredDepthDecrease: 0,
   };
+  const customActionState: CustomActionToggleState = new Map();
   const loop = (): void => {
     const ctx = createToggleContext({
       config,
@@ -278,7 +285,7 @@ export const createStateToggleLoop = (
       frame = requestAnimationFrame(loop);
       return;
     }
-    handleDefaultFrame(ctx);
+    handleDefaultFrame(ctx, customActionState);
     frame = requestAnimationFrame(loop);
   };
   loop();

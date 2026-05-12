@@ -125,7 +125,7 @@ const handleHeaderMouseDown = (event: MouseEvent): void => {
 };
 
 const createUpdateFullscreenState =
-  (setIsFullscreen: (val: boolean) => void): (() => void) =>
+  (setIsFullscreen: (val: boolean) => unknown): (() => void) =>
   (): void => {
     getCurrentWindow().isFullscreen().then(setIsFullscreen).catch(ignoreError);
   };
@@ -143,7 +143,7 @@ const setupKeyboardListener = (navigate: (opts: { to: string }) => Promise<void>
   };
 };
 
-const setupMouseTracking = (setIsMouseInWindow: (val: boolean) => void): (() => void) => {
+const setupMouseTracking = (setIsMouseInWindow: (val: boolean) => unknown): (() => void) => {
   const handleEnter = (): void => {
     setIsMouseInWindow(true);
   };
@@ -160,8 +160,8 @@ const setupMouseTracking = (setIsMouseInWindow: (val: boolean) => void): (() => 
 };
 
 const useHeaderEffects = (
-  setIsFullscreen: (val: boolean) => void,
-  setIsFocused: (val: boolean) => void,
+  setIsFullscreen: (val: boolean) => unknown,
+  setIsFocused: (val: boolean) => unknown,
   navigate: (opts: { to: string }) => Promise<void>,
 ): (() => boolean) => {
   const updateFullscreenState = createUpdateFullscreenState(setIsFullscreen);
@@ -210,7 +210,7 @@ const useHeaderEffects = (
 };
 
 const useWindowActions = (
-  setIsFullscreen: (val: boolean) => void,
+  setIsFullscreen: (val: boolean) => unknown,
 ): {
   handleClose: () => void;
   handleMinimize: () => void;

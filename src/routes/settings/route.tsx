@@ -20,7 +20,7 @@ const noop = function noop(): void {
   // Noop
 };
 
-const useSettingsLayoutSetup = (setIsFullscreen: (val: boolean) => void): void => {
+const useSettingsLayoutSetup = (setIsFullscreen: (val: boolean) => unknown): void => {
   const location = useLocation();
   const navigate = useNavigate();
 

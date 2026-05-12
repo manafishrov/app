@@ -46,7 +46,7 @@ const ConfirmUpdateDescription: Component<{
 type ConfirmUpdateDialogProps = Omit<ConfirmUpdateButtonProps, 'onConfirm'> & {
   isPending: boolean;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: boolean) => unknown;
   onConfirm: () => void;
 };
 
