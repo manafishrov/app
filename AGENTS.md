@@ -47,6 +47,9 @@ Auto-fix variants: `fmt`, `lint:fix`, `fmt:rs`, `lint:rs:fix`.
   `src/tauri/` and Rust handlers in `src-tauri/src/`.
 - Keep concerns separated: data → store → feature → component.
 - Match existing patterns. Don't add dependencies without reason.
+- Name wrapper components that build around an `@manafishrov/ui` primitive with
+  the primitive component name at the end, e.g. `SubmitButton`,
+  `InfoTextInput`, `ShutdownAlertDialog`, or `FruitSelect`.
 - Use strict types; never `as any`, `@ts-ignore`, or `@ts-expect-error`.
 - Never commit secrets or hardcode local paths.
 - Don't push without being asked. CI runs on push to `main`.

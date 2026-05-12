@@ -37,13 +37,13 @@ const spinDirectionCollection = createListCollection<{ value: string; label: str
   ],
 });
 
-const IDENTIFIER_FIELD_DEFAULT_PROPS = {
+const IDENTIFIER_SELECT_DEFAULT_PROPS = {
   index: 0,
   zeroValue: 0,
   identifierCollection: createIdentifierCollection([0], 1),
 };
 
-const SPIN_DIRECTION_FIELD_DEFAULT_PROPS = {
+const SPIN_DIRECTION_SELECT_DEFAULT_PROPS = {
   index: 0,
   zeroValue: 0,
 };
@@ -56,10 +56,10 @@ const ALLOCATION_FIELD_DEFAULT_PROPS = {
   stepValue: 1,
 };
 
-export const IdentifierField = withForm({
+export const IdentifierSelect = withForm({
   defaultValues: CALIBRATION_FORM_DEFAULT_VALUES,
-  props: IDENTIFIER_FIELD_DEFAULT_PROPS,
-  render: function IdentifierFieldRender(props) {
+  props: IDENTIFIER_SELECT_DEFAULT_PROPS,
+  render: function IdentifierSelectRender(props) {
     return (
       <props.form.AppField name={`thrusterPinSetup.identifiers[${props.index}]`}>
         {(field) => (
@@ -102,10 +102,10 @@ export const IdentifierField = withForm({
   },
 });
 
-export const SpinDirectionField = withForm({
+export const SpinDirectionSelect = withForm({
   defaultValues: CALIBRATION_FORM_DEFAULT_VALUES,
-  props: SPIN_DIRECTION_FIELD_DEFAULT_PROPS,
-  render: function SpinDirectionFieldRender(props) {
+  props: SPIN_DIRECTION_SELECT_DEFAULT_PROPS,
+  render: function SpinDirectionSelectRender(props) {
     return (
       <props.form.AppField name={`thrusterPinSetup.spinDirections[${props.index}]`}>
         {(field) => (

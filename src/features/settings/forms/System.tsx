@@ -73,7 +73,7 @@ type AppFieldComponent = Component<{
   children: (field: AppFieldContext) => JSXElement;
 }>;
 
-const RovNameField: Component<{ AppField: AppFieldComponent }> = (props) => (
+const RovNameTextInputField: Component<{ AppField: AppFieldComponent }> = (props) => (
   <props.AppField name='rovName'>
     {(field: AppFieldContext): JSXElement => (
       <field.TextInputField
@@ -84,9 +84,10 @@ const RovNameField: Component<{ AppField: AppFieldComponent }> = (props) => (
   </props.AppField>
 );
 
-const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: SelectCollection }> = (
-  props,
-) => (
+const FluidTypeSelectField: Component<{
+  AppField: AppFieldComponent;
+  fluidTypes: SelectCollection;
+}> = (props) => (
   <props.AppField name='fluidType'>
     {(field: AppFieldContext): JSXElement => (
       <field.SelectField
@@ -103,7 +104,7 @@ const FluidTypeField: Component<{ AppField: AppFieldComponent; fluidTypes: Selec
   </props.AppField>
 );
 
-const SmoothingFactorField: Component<{ AppField: AppFieldComponent }> = (props) => (
+const SmoothingFactorSliderField: Component<{ AppField: AppFieldComponent }> = (props) => (
   <props.AppField name='smoothingFactor'>
     {(field: AppFieldContext): JSXElement => (
       <field.SliderField
@@ -135,9 +136,9 @@ export const System: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <RovNameField AppField={form.AppField} />
-        <FluidTypeField AppField={form.AppField} fluidTypes={fluidTypes} />
-        <SmoothingFactorField AppField={form.AppField} />
+        <RovNameTextInputField AppField={form.AppField} />
+        <FluidTypeSelectField AppField={form.AppField} fluidTypes={fluidTypes} />
+        <SmoothingFactorSliderField AppField={form.AppField} />
         <form.AutoSubmit debounce={500} />
       </form.Form>
     </form.AppForm>

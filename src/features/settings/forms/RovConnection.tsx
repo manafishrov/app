@@ -41,7 +41,7 @@ type AppFieldComponent = Component<{
   children: (field: AppFieldContext) => JSXElement;
 }>;
 
-const IpAddressField: Component<{ AppField: AppFieldComponent }> = (props) => (
+const IpAddressTextInputField: Component<{ AppField: AppFieldComponent }> = (props) => (
   <props.AppField name='ipAddress'>
     {(field: AppFieldContext): JSXElement => (
       <field.TextInputField
@@ -53,7 +53,7 @@ const IpAddressField: Component<{ AppField: AppFieldComponent }> = (props) => (
   </props.AppField>
 );
 
-const WebsocketPortField: Component<{ AppField: AppFieldComponent }> = (props) => (
+const WebsocketPortNumberInputField: Component<{ AppField: AppFieldComponent }> = (props) => (
   <props.AppField name='websocketPort'>
     {(field: AppFieldContext): JSXElement => (
       <field.NumberInputField
@@ -82,8 +82,8 @@ export const RovConnection: Component = () => {
   return (
     <form.AppForm>
       <form.Form>
-        <IpAddressField AppField={form.AppField} />
-        <WebsocketPortField AppField={form.AppField} />
+        <IpAddressTextInputField AppField={form.AppField} />
+        <WebsocketPortNumberInputField AppField={form.AppField} />
         <form.SubmitButton>{m.common_save()}</form.SubmitButton>
       </form.Form>
     </form.AppForm>

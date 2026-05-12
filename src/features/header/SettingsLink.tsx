@@ -51,7 +51,7 @@ const noop = function noop(): void {
   // Noop
 };
 
-const RecordingSettingsAlert = (props: { isMac: boolean }): JSXElement => {
+const RecordingSettingsAlertDialog = (props: { isMac: boolean }): JSXElement => {
   const navigate = useNavigate();
 
   return (
@@ -75,7 +75,7 @@ const RecordingSettingsAlert = (props: { isMac: boolean }): JSXElement => {
         </TooltipPositioner>
       </Tooltip>
       <Portal>
-        <AlertDialogOverlay />
+        <AlertDialogOverlay class='rounded-2xl' />
         <AlertDialogPositioner>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -120,7 +120,7 @@ const SettingsLink = (props: SettingsLinkProps): JSXElement => (
       </Tooltip>
     }
   >
-    <RecordingSettingsAlert isMac={props.isMac} />
+    <RecordingSettingsAlertDialog isMac={props.isMac} />
   </Show>
 );
 
