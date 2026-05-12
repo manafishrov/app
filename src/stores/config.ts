@@ -6,6 +6,7 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
   AttitudeIndicator,
+  CustomActionTrigger,
   type Config,
   type GamepadBindings,
   type KeyboardBindings,
@@ -126,6 +127,7 @@ export {
   getConfig,
   setConfig,
   AttitudeIndicator,
+  CustomActionTrigger,
   defaultConfig,
   createNullKeyboardBindings,
   createNullGamepadBindings,
@@ -137,7 +139,6 @@ export type {
   GamepadInput,
   KeyboardBindings,
   GamepadBindings,
-  CustomActionTrigger,
   CustomActionBinding,
   Config,
 } from '@/stores/configTypes';

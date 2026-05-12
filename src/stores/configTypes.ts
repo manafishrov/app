@@ -177,6 +177,21 @@ type GamepadBindings = {
   record: NullableGamepadInput;
 };
 
+export const CustomActionTrigger = {
+  tap: 'tap',
+  hold: 'hold',
+} as const;
+
+export type CustomActionTrigger = (typeof CustomActionTrigger)[keyof typeof CustomActionTrigger];
+
+type CustomActionBinding = {
+  id: string;
+  module: string;
+  trigger: CustomActionTrigger;
+  keyboard: NullableKeyboardInput;
+  gamepad: Record<string, NullableGamepadInput>;
+};
+
 export type AttitudeIndicator = (typeof AttitudeIndicator)[keyof typeof AttitudeIndicator];
 
 type Config = {
@@ -192,6 +207,7 @@ type Config = {
   webrtcSignalingApiPath: string;
   webSocketPort: number;
   keyboard: KeyboardBindings;
+  customActions: CustomActionBinding[];
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
 };
@@ -203,5 +219,6 @@ export type {
   GamepadInput,
   KeyboardBindings,
   GamepadBindings,
+  CustomActionBinding,
   Config,
 };
