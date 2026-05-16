@@ -124,6 +124,51 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
 }
 
 #[cfg(target_os = "windows")]
+const WINDOWS_DISKPART_MIN_INTERVAL: Duration = Duration::from_secs(15);
+
+#[cfg(target_os = "windows")]
+static WINDOWS_LAST_DISKPART_RUN: std::sync::OnceLock<std::sync::Mutex<Option<Instant>>> =
+  std::sync::OnceLock::new();
+
+#[cfg(target_os = "windows")]
+fn run_diskpart_script(context: &str, contents: &str) -> Result<(), String> {
+  use std::io::Write as _;
+  use std::process::Command;
+
+  let mut script =
+    tempfile::NamedTempFile::new().map_err(|e| format!("Failed to create diskpart script: {e}"))?;
+  script
+    .write_all(contents.as_bytes())
+    .map_err(|e| format!("Failed to write diskpart script: {e}"))?;
+  script.flush().map_err(|e| format!("Failed to flush diskpart script: {e}"))?;
+
+  let last_run = WINDOWS_LAST_DISKPART_RUN.get_or_init(|| std::sync::Mutex::new(None));
+  let mut last_run_guard = last_run
+    .lock()
+    .map_err(|e| format!("Failed to coordinate diskpart access: {e}"))?;
+  if let Some(finished_at) = *last_run_guard
+    && let Some(duration) = WINDOWS_DISKPART_MIN_INTERVAL.checked_sub(finished_at.elapsed())
+  {
+    std::thread::sleep(duration);
+  }
+
+  let output_result = Command::new("diskpart").arg("/s").arg(script.path()).output();
+  *last_run_guard = Some(Instant::now());
+  let output = output_result.map_err(|e| format!("Failed to run diskpart: {e}"))?;
+
+  if output.status.success() {
+    return Ok(());
+  }
+
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  let stderr = String::from_utf8_lossy(&output.stderr);
+  Err(format!(
+    "{context}. Diskpart status: {}. Diskpart script: {contents:?}. Diskpart stdout: {stdout}. Diskpart stderr: {stderr}",
+    output.status
+  ))
+}
+
+#[cfg(target_os = "windows")]
 /// # Errors
 ///
 /// Returns an error if the physical drive path is invalid, related volumes
@@ -232,62 +277,19 @@ fn ensure_windows_disk_is_flash_target(drive_number: u32) -> Result<(), String> 
 
 #[cfg(target_os = "windows")]
 fn remove_windows_volume_mountpoints(letter: char) -> Result<(), String> {
-  use std::io::Write as _;
-  use std::process::Command;
-
-  let mut script = tempfile::NamedTempFile::new()
-    .map_err(|e| format!("Failed to create diskpart remove script: {e}"))?;
-  writeln!(script, "select volume {letter}").map_err(|e| e.to_string())?;
-  writeln!(script, "remove all dismount").map_err(|e| e.to_string())?;
-  writeln!(script, "exit").map_err(|e| e.to_string())?;
-  script
-    .flush()
-    .map_err(|e| format!("Failed to write diskpart remove script: {e}"))?;
-
-  let output = Command::new("diskpart")
-    .arg("/s")
-    .arg(script.path())
-    .output()
-    .map_err(|e| format!("Failed to run diskpart remove for {letter}: {e}"))?;
-  if output.status.success() {
-    return Ok(());
-  }
-
-  let stdout = String::from_utf8_lossy(&output.stdout);
-  let stderr = String::from_utf8_lossy(&output.stderr);
-  Err(format!(
-    "Windows could not remove mount points for {letter}: before flashing. Diskpart stdout: {stdout}. Diskpart stderr: {stderr}"
-  ))
+  let script = format!("select volume {letter}\nremove all dismount\nexit\n");
+  run_diskpart_script(
+    &format!("Windows could not remove mount points for {letter}: before flashing"),
+    &script,
+  )
 }
 
 #[cfg(target_os = "windows")]
 fn clean_windows_disk(drive_number: u32) -> Result<(), String> {
-  use std::io::Write as _;
-  use std::process::Command;
-
-  let mut script =
-    tempfile::NamedTempFile::new().map_err(|e| format!("Failed to create diskpart script: {e}"))?;
-  writeln!(script, "select disk {drive_number}").map_err(|e| e.to_string())?;
-  writeln!(script, "attributes disk clear readonly noerr").map_err(|e| e.to_string())?;
-  writeln!(script, "online disk noerr").map_err(|e| e.to_string())?;
-  writeln!(script, "clean").map_err(|e| e.to_string())?;
-  writeln!(script, "exit").map_err(|e| e.to_string())?;
-  script.flush().map_err(|e| format!("Failed to write diskpart script: {e}"))?;
-
-  let output = Command::new("diskpart")
-    .arg("/s")
-    .arg(script.path())
-    .output()
-    .map_err(|e| format!("Failed to run diskpart: {e}"))?;
-  if output.status.success() {
-    return Ok(());
-  }
-
-  let stdout = String::from_utf8_lossy(&output.stdout);
-  let stderr = String::from_utf8_lossy(&output.stderr);
-  Err(format!(
-    "Windows could not clear the selected disk before flashing. Diskpart stdout: {stdout}. Diskpart stderr: {stderr}"
-  ))
+  let script = format!(
+    "rescan\nselect disk {drive_number}\nattributes disk clear readonly noerr\nonline disk noerr\nclean\nexit\n"
+  );
+  run_diskpart_script("Windows could not clear the selected disk before flashing", &script)
 }
 
 #[cfg(target_os = "windows")]
@@ -494,7 +496,45 @@ fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
   unsafe { FlushFileBuffers(handle) }.map_err(|e| format!("FlushFileBuffers failed: {e}"))
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+/// # Errors
+/// Returns an error if both the macOS full-sync and fallback sync syscalls fail
+/// for reasons other than an unsupported removable-device flush.
+fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
+  use std::os::fd::AsRawFd;
+
+  let full_sync_result = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_FULLFSYNC) };
+  if full_sync_result == 0 {
+    return Ok(());
+  }
+
+  let full_sync_error = std::io::Error::last_os_error();
+  match file.sync_all() {
+    Ok(()) => Ok(()),
+    Err(sync_error)
+      if is_macos_unsupported_sync_error(&full_sync_error)
+        && is_macos_unsupported_sync_error(&sync_error) =>
+    {
+      crate::log_warn!(
+        "macOS final device sync unsupported after flashing; continuing after completed writes. F_FULLFSYNC failed: {full_sync_error}; fsync failed: {sync_error}"
+      );
+      Ok(())
+    },
+    Err(sync_error) => Err(format!(
+      "Final sync failed: {sync_error}; F_FULLFSYNC also failed: {full_sync_error}"
+    )),
+  }
+}
+
+#[cfg(target_os = "macos")]
+fn is_macos_unsupported_sync_error(error: &std::io::Error) -> bool {
+  matches!(
+    error.raw_os_error(),
+    Some(code) if code == libc::ENOTTY || code == libc::ENOTSUP || code == libc::EINVAL
+  )
+}
+
+#[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
 /// # Errors
 /// Returns an error if the device sync syscall fails.
 fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
