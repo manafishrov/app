@@ -54,6 +54,7 @@ sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
 ffmpeg-next = "8.1.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2.181"
 plist = "1.7.4"
 
 [target.'cfg(target_os = "linux")'.dependencies]
