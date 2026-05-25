@@ -228,11 +228,12 @@ const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> 
   </SidebarFooter>
 );
 
+const isConnected = (): boolean => connectionStatusStore.isConnected;
+
 const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   const [local] = splitProps(props, ['isFullscreen']);
   const location = useLocation();
 
-  const isConnected = (): boolean => connectionStatusStore.isConnected;
   const isActive = (path: string): boolean =>
     normalizePath(location().pathname) === normalizePath(path);
 
