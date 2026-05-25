@@ -21,32 +21,32 @@
     "test": "bunx vitest run"
   },
   "dependencies": {
-    "@manafishrov/ui": "1.5.3",
+    "@manafishrov/ui": "1.5.5",
     "@tailwindcss/vite": "4.3.0",
     "@tanstack/router-plugin": "1.167.35",
     "@tanstack/solid-form": "1.32.0",
     "@tanstack/solid-router": "1.169.2",
-    "@tanstack/solid-virtual": "3.13.24",
+    "@tanstack/solid-virtual": "3.13.25",
     "@tauri-apps/api": "2.11.0",
     "@tauri-apps/plugin-dialog": "2.7.1",
     "@tauri-apps/plugin-fs": "2.5.1",
     "@tauri-apps/plugin-opener": "2.5.4",
     "@tauri-apps/plugin-updater": "2.10.1",
     "idb": "8.0.3",
-    "solid-js": "1.9.12",
+    "solid-js": "1.9.13",
     "three": "0.184.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "1.2.72",
-    "@inlang/paraglide-js": "2.18.0",
+    "@iconify-json/material-symbols": "1.2.73",
+    "@inlang/paraglide-js": "2.18.1",
     "@tanstack/devtools-vite": "0.7.0",
     "@tanstack/solid-devtools": "0.8.5",
     "@tanstack/solid-router-devtools": "1.166.13",
-    "@tauri-apps/cli": "2.11.1",
+    "@tauri-apps/cli": "2.11.2",
     "@types/bun": "1.3.14",
     "@types/three": "0.184.1",
-    "lefthook": "2.1.6",
+    "lefthook": "2.1.8",
     "oxfmt": "0.49.0",
     "oxlint": "1.64.0",
     "oxlint-tsgolint": "0.22.1",
@@ -54,8 +54,8 @@
     "typescript": "6.0.3",
     "unplugin-auto-import": "21.0.0",
     "unplugin-icons": "23.0.1",
-    "vite": "8.0.13",
+    "vite": "8.0.14",
     "vite-plugin-solid": "2.11.12",
-    "vitest": "4.1.6"
+    "vitest": "4.1.7"
   }
 }
