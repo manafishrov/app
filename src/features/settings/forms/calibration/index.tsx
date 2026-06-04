@@ -7,6 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
+  type NullspaceVectors,
   type Row,
   type ThrusterAllocation,
   type ThrusterPinSetup,
@@ -72,7 +73,7 @@ const transpose = (matrix: number[][]): number[][] => {
   return firstRow.map((_, columnIndex) => matrix.map((row) => row[columnIndex] ?? ZERO));
 };
 
-const clampAllocationValue = (value: number): number => {
+const clampThrusterValue = (value: number): number => {
   if (!Number.isFinite(value)) {
     return ZERO;
   }
@@ -80,10 +81,10 @@ const clampAllocationValue = (value: number): number => {
   return Math.round(clampedValue * DECIMAL_PRECISION_FACTOR) / DECIMAL_PRECISION_FACTOR;
 };
 
-const toRow = (values: number[] | undefined, fallback: Row): Row =>
+const toClampedRow = (values: number[] | undefined, fallback: Row): Row =>
   mapThrusterTuple((index) => {
     const valueAtIndex = values ? values[index] : fallback[index];
-    return clampAllocationValue(valueAtIndex ?? fallback[index] ?? ZERO);
+    return clampThrusterValue(valueAtIndex ?? fallback[index] ?? ZERO);
   });
 
 const toIdentifierValue = (value: number): IdentifierValue => {
@@ -134,7 +135,15 @@ const createCalibrationFormValues = (): FormValues => ({
     ),
   },
   thrusterAllocation: transpose(rovConfigStore.thrusterAllocation),
+  nullspaceVectors: (rovConfigStore.nullspaceVectors ?? []).map((row) =>
+    toClampedRow(row, EMPTY_ROW),
+  ),
 });
+
+const toNullspaceVectors = (rows: number[][]): NullspaceVectors | null => {
+  const normalized = rows.map((row) => toClampedRow(row, EMPTY_ROW));
+  return normalized.length > ZERO ? normalized : null;
+};
 
 const submitCalibrationForm = (value: FormValues): Promise<void> => {
   const currentPinSetup = rovConfigStore.thrusterPinSetup;
@@ -156,16 +165,17 @@ const submitCalibrationForm = (value: FormValues): Promise<void> => {
   };
   const currentAllocationRows = transpose(currentAllocation);
   const normalizedDisplayRows: ThrusterTuple<Row> = mapThrusterTuple((index) =>
-    toRow(
+    toClampedRow(
       value.thrusterAllocation[index],
-      toRow(currentAllocationRows[index], currentAllocation[index] ?? fallbackAllocationRow),
+      toClampedRow(currentAllocationRows[index], currentAllocation[index] ?? fallbackAllocationRow),
     ),
   );
   const allocationByThruster = transpose(normalizedDisplayRows);
   const thrusterAllocation: ThrusterAllocation = mapThrusterTuple((index) =>
-    toRow(allocationByThruster[index], currentAllocation[index] ?? fallbackAllocationRow),
+    toClampedRow(allocationByThruster[index], currentAllocation[index] ?? fallbackAllocationRow),
   );
-  return setRovConfig({ thrusterPinSetup, thrusterAllocation });
+  const nullspaceVectors = toNullspaceVectors(value.nullspaceVectors);
+  return setRovConfig({ thrusterPinSetup, thrusterAllocation, nullspaceVectors });
 };
 
 const testThruster = (
@@ -203,7 +213,7 @@ const applyPresetToForm = (
       for (const [columnIndex, value] of presetRow.entries()) {
         form.setFieldValue(
           `thrusterAllocation[${rowIndex}][${columnIndex}]`,
-          clampAllocationValue(value),
+          clampThrusterValue(value),
         );
       }
     }
@@ -225,7 +235,7 @@ export const Calibration: Component = (): JSXElement => {
   const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
   const [testDisabled, setTestDisabled] = createSignal(defaultDisabled);
   const form = useAppForm(() => ({
-    validators: { onSubmit: formSchema },
+    validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: createCalibrationFormValues(),
     onSubmit: ({ value }: { value: FormValues }): Promise<void> =>
       submitCalibrationForm(value).then(() => {
