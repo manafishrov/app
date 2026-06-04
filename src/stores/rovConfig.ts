@@ -59,6 +59,8 @@ type ThrusterAllocation = [
 
 type Row = [number, number, number, number, number, number, number, number];
 
+type NullspaceVectors = Row[];
+
 type AxisConfig = {
   kp: number;
   ki: number;
@@ -101,6 +103,7 @@ type RovConfig = {
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;
+  nullspaceVectors: NullspaceVectors | null;
   regulator: Regulator;
   directionCoefficients: DirectionCoefficients;
   power: Power;
@@ -150,6 +153,7 @@ const defaultRovConfig: RovConfig = {
     spinDirections: [1, 1, 1, 1, 1, 1, 1, 1],
   },
   thrusterAllocation: defaultThrusterAllocation,
+  nullspaceVectors: null,
   regulator: {
     pitch: createDefaultPitchRollYawAxisConfig(),
     roll: createDefaultPitchRollYawAxisConfig(),
@@ -192,6 +196,7 @@ export {
   type RovConfig,
   type ThrusterPinSetup,
   type ThrusterAllocation,
+  type NullspaceVectors,
   type Power,
   type RegulatorSuggestions,
   type Row,

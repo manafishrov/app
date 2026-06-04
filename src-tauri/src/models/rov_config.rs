@@ -37,6 +37,8 @@ pub struct ThrusterPinSetup {
 
 pub type ThrusterAllocation = [[f32; 8]; 8];
 
+pub type NullspaceVectors = Vec<[f32; 8]>;
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AxisConfig {
@@ -89,6 +91,7 @@ pub struct RovConfig {
   pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
   pub thruster_allocation: ThrusterAllocation,
+  pub nullspace_vectors: Option<NullspaceVectors>,
   pub regulator: Regulator,
   pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
@@ -132,6 +135,8 @@ pub struct PartialRovConfig {
   pub thruster_pin_setup: Option<ThrusterPinSetup>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub thruster_allocation: Option<ThrusterAllocation>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub nullspace_vectors: Option<NullspaceVectors>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub regulator: Option<Regulator>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -208,6 +213,10 @@ mod tests {
       smoothing_factor: 0.4,
       thruster_pin_setup: sample_thruster_pin_setup(),
       thruster_allocation: sample_thruster_allocation(),
+      nullspace_vectors: Some(vec![
+        [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+      ]),
       regulator: Regulator {
         pitch: sample_axis_config(),
         roll: sample_axis_config(),
@@ -410,6 +419,7 @@ mod tests {
     assert!(partial.smoothing_factor.is_none());
     assert!(partial.thruster_pin_setup.is_none());
     assert!(partial.thruster_allocation.is_none());
+    assert!(partial.nullspace_vectors.is_none());
     assert!(partial.regulator.is_none());
     assert!(partial.direction_coefficients.is_none());
     assert!(partial.power.is_none());
