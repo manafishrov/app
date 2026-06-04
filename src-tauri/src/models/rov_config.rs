@@ -91,7 +91,7 @@ pub struct RovConfig {
   pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
   pub thruster_allocation: ThrusterAllocation,
-  pub nullspace_vectors: Option<NullspaceVectors>,
+  pub nullspace_vectors: NullspaceVectors,
   pub regulator: Regulator,
   pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
@@ -213,10 +213,10 @@ mod tests {
       smoothing_factor: 0.4,
       thruster_pin_setup: sample_thruster_pin_setup(),
       thruster_allocation: sample_thruster_allocation(),
-      nullspace_vectors: Some(vec![
+      nullspace_vectors: vec![
         [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
         [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
-      ]),
+      ],
       regulator: Regulator {
         pitch: sample_axis_config(),
         roll: sample_axis_config(),
