@@ -26,6 +26,7 @@ import * as m from '@/paraglide/messages';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { AllocationTable } from './AllocationTable';
+import { DeadzoneTable } from './DeadzoneTable';
 import { IdentifierSelect, SpinDirectionSelect } from './FieldRenderers';
 import { THRUSTER_PRESETS, type ThrusterPresetRow } from './thrusterPresets';
 
@@ -257,6 +258,13 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
           rowLabelTooltips={props.rowLabelTooltips}
           form={props.form}
         />
+      </Fieldset>
+      <Fieldset>
+        <FieldLegend>{m.calibration_deadzone_avoidance_title()}</FieldLegend>
+        <p class='mb-4 text-sm text-muted-foreground'>
+          {m.calibration_deadzone_avoidance_description()}
+        </p>
+        <DeadzoneTable form={props.form} />
       </Fieldset>
       <props.form.AutoSubmit />
     </props.form.Form>

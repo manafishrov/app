@@ -56,6 +56,14 @@ const ALLOCATION_FIELD_DEFAULT_PROPS = {
   stepValue: 1,
 };
 
+const DEADZONE_FIELD_DEFAULT_PROPS = {
+  rowIndex: 0,
+  columnIndex: 0,
+  minimumValue: 0,
+  maximumValue: 0,
+  stepValue: 1,
+};
+
 export const IdentifierSelect = withForm({
   defaultValues: CALIBRATION_FORM_DEFAULT_VALUES,
   props: IDENTIFIER_SELECT_DEFAULT_PROPS,
@@ -154,6 +162,29 @@ export const AllocationField = withForm({
   render: function AllocationFieldRender(props) {
     return (
       <props.form.AppField name={`thrusterAllocation[${props.rowIndex}][${props.columnIndex}]`}>
+        {(field) => (
+          <field.NumberInputField
+            class='px-1 text-center'
+            inputMode='decimal'
+            showTriggers={false}
+            min={props.minimumValue}
+            max={props.maximumValue}
+            step={props.stepValue}
+            allowOverflow={false}
+            clampValueOnBlur
+          />
+        )}
+      </props.form.AppField>
+    );
+  },
+});
+
+export const DeadzoneField = withForm({
+  defaultValues: CALIBRATION_FORM_DEFAULT_VALUES,
+  props: DEADZONE_FIELD_DEFAULT_PROPS,
+  render: function DeadzoneFieldRender(props) {
+    return (
+      <props.form.AppField name={`nullspaceVectors[${props.rowIndex}][${props.columnIndex}]`}>
         {(field) => (
           <field.NumberInputField
             class='px-1 text-center'

@@ -9,6 +9,8 @@ const DECIMAL_RADIX = Number('10');
 const DECIMAL_PRECISION_FACTOR = Number('100');
 const THRUSTER_TEST_TIMEOUT_MS = Number('2000');
 const ALLOCATION_FIELD_STEP = Number('0.01');
+const DEADZONE_FIELD_STEP = Number('0.01');
+const DEADZONE_THRESHOLD = Number('0.2');
 
 const THRUSTER_COLUMN_VALUES = ['1', '2', '3', '4', '5', '6', '7', '8'] as const;
 const PIN_VALUE_STRINGS = ['6', '7', '8', '9', '18', '19', '20', '21'] as const;
@@ -64,6 +66,8 @@ const ROW_LABEL_TOOLTIPS = [
 
 export {
   ALLOCATION_FIELD_STEP,
+  DEADZONE_FIELD_STEP,
+  DEADZONE_THRESHOLD,
   DECIMAL_PRECISION_FACTOR,
   DECIMAL_RADIX,
   NEGATIVE_ONE,

@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
-import { NEGATIVE_ONE, ONE, THRUSTER_INDICES } from './constants';
+import * as m from '@/paraglide/messages';
+
+import { DEADZONE_THRESHOLD, NEGATIVE_ONE, ONE, THRUSTER_INDICES, ZERO } from './constants';
+
+const isOutsideDeadzone = (value: number): boolean =>
+  value === ZERO || Math.abs(value) >= DEADZONE_THRESHOLD;
+
+const deadzoneValueSchema = z.number().min(NEGATIVE_ONE).max(ONE);
+
+const allValuesOutsideDeadzone = (rows: number[][]): boolean =>
+  rows.every((row) => row.every((value) => isOutsideDeadzone(value)));
 
 export const IDENTIFIER_VALUES = ['0', '1', '2', '3', '4', '5', '6', '7'] as const;
 const SPIN_DIRECTION_VALUES = ['1', '-1'] as const;
@@ -19,6 +29,11 @@ export const formSchema = z.object({
   thrusterAllocation: z
     .array(z.array(z.number().min(NEGATIVE_ONE).max(ONE)).length(THRUSTER_INDICES.length))
     .length(THRUSTER_INDICES.length),
+  nullspaceVectors: z
+    .array(z.array(deadzoneValueSchema).length(THRUSTER_INDICES.length))
+    .refine(allValuesOutsideDeadzone, {
+      message: m.validation_deadzone_value(),
+    }),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
@@ -29,4 +44,5 @@ export const CALIBRATION_FORM_DEFAULT_VALUES: FormValues = {
     spinDirections: THRUSTER_INDICES.map((): SpinDirectionValue => '1'),
   },
   thrusterAllocation: THRUSTER_INDICES.map(() => THRUSTER_INDICES.map(() => 0)),
+  nullspaceVectors: [],
 };
