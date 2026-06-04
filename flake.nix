@@ -83,6 +83,7 @@
         env =
           pkgs.lib.optionalAttrs isLinux {
             WEBKIT_DISABLE_COMPOSITING_MODE = "1";
+            GDK_BACKEND = "x11";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg] ++ linuxLibs);
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
