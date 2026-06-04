@@ -60,14 +60,6 @@ const DESIRED_DEPTH_STEP = 0.1;
 const DESIRED_DEPTH_REPEAT_DELAY_MS = 200;
 const DESIRED_DEPTH_REPEAT_INTERVAL_MS = 40;
 
-const createNullValue = (): null => {
-  const result = /a/u.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null match result');
-  }
-  return result;
-};
-const getNullValue = (): null => createNullValue();
 const isInputPressed = ({
   input,
   pressedKeys,
@@ -96,17 +88,17 @@ const getGamepadBindingsOrNull = (
   config: Config,
 ): GamepadBindings | null => {
   if (!gamepad) {
-    return getNullValue();
+    return null;
   }
   const bindings = getGamepadBindings(gamepad, config);
-  return bindings ?? getNullValue();
+  return bindings ?? null;
 };
 const getGamepadInput = (
   bindings: GamepadBindings | null,
   key: ToggleBindingKey,
 ): GamepadInput | null => {
   if (!bindings) {
-    return getNullValue();
+    return null;
   }
   return bindings[key];
 };
@@ -259,7 +251,7 @@ export const createStateToggleLoop = (
     () => boolean,
   ]
 ): CleanupFn => {
-  let frame: number | null = getNullValue();
+  let frame: number | null = null;
   const lastState: ToggleState = {
     autoStabilization: false,
     depthHold: false,

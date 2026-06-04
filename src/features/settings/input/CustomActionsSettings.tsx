@@ -42,16 +42,6 @@ type CustomActionsSettingsProps =
 
 const MODULE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-const createNullValue = (): null => {
-  const result = /a/u.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null match result');
-  }
-  return result;
-};
-
-const NULL_VALUE = createNullValue();
-
 const createActionId = (): string => globalThis.crypto.randomUUID();
 
 const hasGamepadId = (gamepadId: string | null): gamepadId is string =>
@@ -61,7 +51,7 @@ const createCustomAction = (): CustomActionBinding => ({
   id: createActionId(),
   module: '',
   trigger: CustomActionTrigger.tap,
-  keyboard: createNullValue(),
+  keyboard: null,
   gamepad: {},
 });
 
@@ -120,9 +110,9 @@ const getGamepadInput = (
   gamepadId: string | null,
 ): GamepadInput | null => {
   if (!hasGamepadId(gamepadId)) {
-    return createNullValue();
+    return null;
   }
-  return action.gamepad[gamepadId] ?? createNullValue();
+  return action.gamepad[gamepadId] ?? null;
 };
 
 const getModuleHint = (moduleName: string): JSXElement => {
@@ -159,12 +149,12 @@ const BindingInput: Component<{
           label={m.custom_actions_gamepad_binding()}
           value={getGamepadInput(
             props.action,
-            props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : NULL_VALUE,
+            props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : null,
           )}
           onChange={(next) => {
             updateGamepad(
               props.action.id,
-              props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : NULL_VALUE,
+              props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : null,
               next,
             );
           }}

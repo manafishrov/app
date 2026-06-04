@@ -2,27 +2,16 @@ import type { Config, GamepadBindings, GamepadInput } from '@/stores/config';
 
 import { normalizeBindValue } from '@/input/bindings';
 
-const createNullValue = (): null => {
-  const result = /a/u.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null match result');
-  }
-
-  return result;
-};
-
-const getNullValue = (): null => createNullValue();
-
 const getButtonInputRawValue = (input: GamepadInput, gamepad: Gamepad): number | null => {
   if (!('Button' in input.input)) {
-    return getNullValue();
+    return null;
   }
 
   const button = input.input as { Button: number };
   const buttonData = gamepad.buttons[button.Button];
 
   if (!buttonData) {
-    return getNullValue();
+    return null;
   }
 
   return buttonData.value ?? 0;
@@ -30,7 +19,7 @@ const getButtonInputRawValue = (input: GamepadInput, gamepad: Gamepad): number |
 
 const getAxisInputRawValue = (input: GamepadInput, gamepad: Gamepad): number | null => {
   if (!('Axis' in input.input)) {
-    return getNullValue();
+    return null;
   }
 
   const axis = input.input as { Axis: number };
@@ -60,7 +49,7 @@ export const getGamepadBindings = (
   config: Config,
 ): GamepadBindings | null => {
   if (!gamepad) {
-    return getNullValue();
+    return null;
   }
 
   if (typeof config.selectedGamepadId === 'string') {
@@ -70,7 +59,7 @@ export const getGamepadBindings = (
     }
   }
 
-  return config.gamepad[gamepad.id] ?? getNullValue();
+  return config.gamepad[gamepad.id] ?? null;
 };
 
 export const getConnectedGamepads = (): Gamepad[] => {
@@ -90,8 +79,8 @@ export const getConnectedGamepads = (): Gamepad[] => {
 export const getActiveGamepad = (selectedGamepadId: string | null): Gamepad | null => {
   const connectedGamepads = getConnectedGamepads();
   if (connectedGamepads.length === 0 || typeof selectedGamepadId !== 'string') {
-    return getNullValue();
+    return null;
   }
 
-  return connectedGamepads.find((gamepad) => gamepad.id === selectedGamepadId) ?? getNullValue();
+  return connectedGamepads.find((gamepad) => gamepad.id === selectedGamepadId) ?? null;
 };

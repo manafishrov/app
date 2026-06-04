@@ -34,7 +34,6 @@ import {
 
 import { CustomActionsSettings } from '../CustomActionsSettings';
 import {
-  NULL_VALUE,
   POLL_INTERVAL_MS,
   getSelectedGamepadIdFromDetails,
   hasSelectedGamepadId,
@@ -50,9 +49,9 @@ const useConnectedGamepads = (): Accessor<Gamepad[]> => {
     setConnectedGamepads(getConnectedGamepads());
   };
 
-  let pollInterval: number | null = NULL_VALUE;
-  let gamepadConnectedHandler: (() => void) | null = NULL_VALUE;
-  let gamepadDisconnectedHandler: (() => void) | null = NULL_VALUE;
+  let pollInterval: number | null = null;
+  let gamepadConnectedHandler: (() => void) | null = null;
+  let gamepadDisconnectedHandler: (() => void) | null = null;
 
   onMount(() => {
     gamepadConnectedHandler = updateConnectedGamepads;
@@ -65,7 +64,7 @@ const useConnectedGamepads = (): Accessor<Gamepad[]> => {
   });
 
   onCleanup(() => {
-    if (pollInterval !== NULL_VALUE) {
+    if (pollInterval !== null) {
       globalThis.clearInterval(pollInterval);
     }
     if (gamepadConnectedHandler) {
@@ -86,13 +85,11 @@ const setSelectedGamepad = (
   connectedGamepads: Gamepad[],
 ): Promise<void> => {
   if (!hasSelectedGamepadId(gamepadId)) {
-    return setConfig({ selectedGamepadId: NULL_VALUE });
+    return setConfig({ selectedGamepadId: null });
   }
 
   const selectedGamepad = connectedGamepads.find((gamepad) => gamepad.id === gamepadId);
-  const fallbackLegacyBindings = selectedGamepad
-    ? configStore.gamepad[selectedGamepad.id]
-    : NULL_VALUE;
+  const fallbackLegacyBindings = selectedGamepad ? configStore.gamepad[selectedGamepad.id] : null;
   const nextGamepadBindings = configStore.gamepad[gamepadId]
     ? configStore.gamepad
     : {
@@ -247,7 +244,7 @@ const GamepadSettings: Component = () => {
     const selectedId = selectedGamepadId();
     return hasSelectedGamepadId(selectedId)
       ? (configStore.gamepad[selectedId] ?? createNullGamepadBindings())
-      : NULL_VALUE;
+      : null;
   });
   const selectedGamepadValue = createMemo<string[]>(() => {
     const selectedId = selectedGamepadId();

@@ -94,16 +94,6 @@ export const createFilteredLogs = (signals: ViewerSignals): Accessor<LogRecord[]
 
 export type VirtualizerType = Virtualizer<HTMLDivElement, Element>;
 
-const createNullValue = (): null => {
-  const result = /a/.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null from regex mismatch');
-  }
-  return result;
-};
-
-const NULL_VALUE = createNullValue();
-
 const createScrollToBottom =
   (
     virtualizer: VirtualizerType,
@@ -165,7 +155,7 @@ export const createVirtualizerTools = (args: {
     get enabled() {
       return Boolean(args.viewportRef());
     },
-    getScrollElement: () => args.viewportRef() ?? NULL_VALUE,
+    getScrollElement: () => args.viewportRef() ?? null,
     estimateSize: () => ROW_ESTIMATE,
     getItemKey: (index: number): number | string => {
       const item = args.filteredLogs()[index];

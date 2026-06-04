@@ -59,6 +59,7 @@ export default defineConfig({
     'typescript/no-misused-spread': 'off',
     'no-magic-numbers': ['warn', { ignore: [0, 1] }],
     'no-ternary': 'off',
+    'unicorn/no-null': 'off',
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'func-style': [
       'error',

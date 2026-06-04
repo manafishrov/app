@@ -89,33 +89,23 @@ const BINDING_SECTIONS: BindingSection[] = [
 
 const POLL_INTERVAL_MS = 500;
 
-const createNullValue = (): null => {
-  const result = /a/.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null from regex mismatch');
-  }
-  return result;
-};
-
-const NULL_VALUE = createNullValue();
-
 const ignoreSetConfigResult = (): void => {
   Number.isNaN(Number.NaN);
 };
 
 const hasSelectedGamepadId = (gamepadId: string | null): gamepadId is string =>
-  gamepadId !== NULL_VALUE && gamepadId.length > 0;
+  gamepadId !== null && gamepadId.length > 0;
 
 const hasValueArray = (details: unknown): details is { value: readonly unknown[] } =>
   details instanceof Object && 'value' in details && Array.isArray(details.value);
 
 const getSelectedGamepadIdFromDetails = (details: unknown): string | null => {
   if (!hasValueArray(details) || details.value.length === 0) {
-    return NULL_VALUE;
+    return null;
   }
 
   const [firstValue] = details.value;
-  return typeof firstValue === 'string' ? firstValue : NULL_VALUE;
+  return typeof firstValue === 'string' ? firstValue : null;
 };
 
 const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
@@ -140,7 +130,6 @@ const toGamepadOptions = (gamepads: Gamepad[]): SelectItemOption[] => {
 
 export {
   BINDING_SECTIONS,
-  NULL_VALUE,
   POLL_INTERVAL_MS,
   getSelectedGamepadIdFromDetails,
   hasSelectedGamepadId,
