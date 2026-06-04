@@ -11,65 +11,57 @@ import {
   type GamepadBindings,
   type KeyboardBindings,
 } from '@/stores/configTypes';
-const createNullValue = (): null => {
-  const result = /a/.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null match result');
-  }
-  return result;
-};
 
-const NULL_VALUE = createNullValue();
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 
 const createNullKeyboardBindings = (): KeyboardBindings => ({
-  surgeForward: NULL_VALUE,
-  surgeBackward: NULL_VALUE,
-  swayRight: NULL_VALUE,
-  swayLeft: NULL_VALUE,
-  heaveUp: NULL_VALUE,
-  heaveDown: NULL_VALUE,
-  pitchUp: NULL_VALUE,
-  pitchDown: NULL_VALUE,
-  yawRight: NULL_VALUE,
-  yawLeft: NULL_VALUE,
-  rollLeft: NULL_VALUE,
-  rollRight: NULL_VALUE,
-  action1Positive: NULL_VALUE,
-  action1Negative: NULL_VALUE,
-  action2Positive: NULL_VALUE,
-  action2Negative: NULL_VALUE,
-  autoStabilization: NULL_VALUE,
-  depthHold: NULL_VALUE,
-  desiredDepthEntry: NULL_VALUE,
-  desiredDepthIncrease: NULL_VALUE,
-  desiredDepthDecrease: NULL_VALUE,
-  record: NULL_VALUE,
+  surgeForward: null,
+  surgeBackward: null,
+  swayRight: null,
+  swayLeft: null,
+  heaveUp: null,
+  heaveDown: null,
+  pitchUp: null,
+  pitchDown: null,
+  yawRight: null,
+  yawLeft: null,
+  rollLeft: null,
+  rollRight: null,
+  action1Positive: null,
+  action1Negative: null,
+  action2Positive: null,
+  action2Negative: null,
+  autoStabilization: null,
+  depthHold: null,
+  desiredDepthEntry: null,
+  desiredDepthIncrease: null,
+  desiredDepthDecrease: null,
+  record: null,
 });
 
 const createNullGamepadBindings = (): GamepadBindings => ({
-  surgeForward: NULL_VALUE,
-  surgeBackward: NULL_VALUE,
-  swayRight: NULL_VALUE,
-  swayLeft: NULL_VALUE,
-  heaveUp: NULL_VALUE,
-  heaveDown: NULL_VALUE,
-  pitchUp: NULL_VALUE,
-  pitchDown: NULL_VALUE,
-  yawRight: NULL_VALUE,
-  yawLeft: NULL_VALUE,
-  rollLeft: NULL_VALUE,
-  rollRight: NULL_VALUE,
-  action1Positive: NULL_VALUE,
-  action1Negative: NULL_VALUE,
-  action2Positive: NULL_VALUE,
-  action2Negative: NULL_VALUE,
-  autoStabilization: NULL_VALUE,
-  depthHold: NULL_VALUE,
-  desiredDepthEntry: NULL_VALUE,
-  desiredDepthIncrease: NULL_VALUE,
-  desiredDepthDecrease: NULL_VALUE,
-  record: NULL_VALUE,
+  surgeForward: null,
+  surgeBackward: null,
+  swayRight: null,
+  swayLeft: null,
+  heaveUp: null,
+  heaveDown: null,
+  pitchUp: null,
+  pitchDown: null,
+  yawRight: null,
+  yawLeft: null,
+  rollLeft: null,
+  rollRight: null,
+  action1Positive: null,
+  action1Negative: null,
+  action2Positive: null,
+  action2Negative: null,
+  autoStabilization: null,
+  depthHold: null,
+  desiredDepthEntry: null,
+  desiredDepthIncrease: null,
+  desiredDepthDecrease: null,
+  record: null,
 });
 
 const defaultConfig: Config = {
@@ -86,7 +78,7 @@ const defaultConfig: Config = {
   webSocketPort: 9000,
   keyboard: createNullKeyboardBindings(),
   customActions: [],
-  selectedGamepadId: NULL_VALUE,
+  selectedGamepadId: null,
   gamepad: {},
 };
 

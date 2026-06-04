@@ -29,14 +29,6 @@ const THRESHOLD = 0.5;
 const HOLD_REPEAT_INTERVAL_MS = 250;
 const MODULE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-const createNullValue = (): null => {
-  const result = /a/u.exec('');
-  if (Array.isArray(result)) {
-    throw new TypeError('Expected null match result');
-  }
-  return result;
-};
-
 const executeActionSilently = (action: () => Promise<void>): void => {
   action().catch(() => {
     // Intentionally silent - prevents unhandled promise rejection
@@ -48,9 +40,9 @@ const getGamepadInput = (
   selectedGamepadId: string | null,
 ): GamepadInput | null => {
   if (typeof selectedGamepadId !== 'string' || selectedGamepadId.length === 0) {
-    return createNullValue();
+    return null;
   }
-  return action.gamepad[selectedGamepadId] ?? createNullValue();
+  return action.gamepad[selectedGamepadId] ?? null;
 };
 
 const getInput = (action: CustomActionBinding, config: Config): InputPair => ({
@@ -83,7 +75,7 @@ const getActionState = (
 
 const getEnabledModuleName = (moduleName: string): string | null => {
   const trimmed = moduleName.trim();
-  return MODULE_NAME_PATTERN.test(trimmed) ? trimmed : createNullValue();
+  return MODULE_NAME_PATTERN.test(trimmed) ? trimmed : null;
 };
 
 const shouldFire = (
