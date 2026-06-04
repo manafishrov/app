@@ -103,7 +103,7 @@ type RovConfig = {
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
   thrusterAllocation: ThrusterAllocation;
-  nullspaceVectors: NullspaceVectors | null;
+  nullspaceVectors: NullspaceVectors;
   regulator: Regulator;
   directionCoefficients: DirectionCoefficients;
   power: Power;
@@ -153,7 +153,7 @@ const defaultRovConfig: RovConfig = {
     spinDirections: [1, 1, 1, 1, 1, 1, 1, 1],
   },
   thrusterAllocation: defaultThrusterAllocation,
-  nullspaceVectors: null,
+  nullspaceVectors: [],
   regulator: {
     pitch: createDefaultPitchRollYawAxisConfig(),
     roll: createDefaultPitchRollYawAxisConfig(),

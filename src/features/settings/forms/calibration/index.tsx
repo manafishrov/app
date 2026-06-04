@@ -135,15 +135,11 @@ const createCalibrationFormValues = (): FormValues => ({
     ),
   },
   thrusterAllocation: transpose(rovConfigStore.thrusterAllocation),
-  nullspaceVectors: (rovConfigStore.nullspaceVectors ?? []).map((row) =>
-    toClampedRow(row, EMPTY_ROW),
-  ),
+  nullspaceVectors: rovConfigStore.nullspaceVectors.map((row) => toClampedRow(row, EMPTY_ROW)),
 });
 
-const toNullspaceVectors = (rows: number[][]): NullspaceVectors | null => {
-  const normalized = rows.map((row) => toClampedRow(row, EMPTY_ROW));
-  return normalized.length > ZERO ? normalized : null;
-};
+const toNullspaceVectors = (rows: number[][]): NullspaceVectors =>
+  rows.map((row) => toClampedRow(row, EMPTY_ROW));
 
 const submitCalibrationForm = (value: FormValues): Promise<void> => {
   const currentPinSetup = rovConfigStore.thrusterPinSetup;
