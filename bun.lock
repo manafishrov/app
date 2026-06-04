@@ -5,7 +5,7 @@
     "": {
       "name": "@manafishrov/app",
       "dependencies": {
-        "@manafishrov/ui": "1.5.6",
+        "@manafishrov/ui": "1.5.7",
         "@tailwindcss/vite": "4.3.0",
         "@tanstack/router-plugin": "1.168.13",
         "@tanstack/solid-form": "1.32.0",
@@ -139,7 +139,7 @@
 
     "@lix-js/server-protocol-schema": ["@lix-js/server-protocol-schema@0.1.1", "", {}, "sha512-jBeALB6prAbtr5q4vTuxnRZZv1M2rKe8iNqRQhFJ4Tv7150unEa0vKyz0hs8Gl3fUGsWaNJBh3J8++fpbrpRBQ=="],
 
-    "@manafishrov/ui": ["@manafishrov/ui@1.5.6", "", { "dependencies": { "@ark-ui/solid": "5.36.2", "@fontsource-variable/google-sans-code": "5.2.4", "@fontsource-variable/google-sans-flex": "5.2.3", "@fontsource/chakra-petch": "5.2.7", "@fontsource/rajdhani": "5.2.7", "tailwind-merge": "3.6.0", "tailwind-variants": "3.2.2" }, "peerDependencies": { "@iconify-json/material-symbols": "^1.2.9", "@tanstack/solid-form": "^1.28.0", "@tanstack/solid-router": "^1.162.1", "solid-js": "^1.9.0", "tailwindcss": "^4.0.0", "unplugin-icons": "^23.0.1" } }, "sha512-yJ9Z1LsdwpPhz26tNAsZ1nR6zjY8NpviqaoWltM18rbczSRoTNSzBRxHFtIPiZoUBZPYkH+BLwjG6JOPuXfBig=="],
+    "@manafishrov/ui": ["@manafishrov/ui@1.5.7", "", { "dependencies": { "@ark-ui/solid": "5.36.2", "@fontsource-variable/google-sans-code": "5.2.4", "@fontsource-variable/google-sans-flex": "5.2.3", "@fontsource/chakra-petch": "5.2.7", "@fontsource/rajdhani": "5.2.7", "tailwind-merge": "3.6.0", "tailwind-variants": "3.2.2" }, "peerDependencies": { "@iconify-json/material-symbols": "^1.2.9", "@tanstack/solid-form": "^1.28.0", "@tanstack/solid-router": "^1.162.1", "solid-js": "^1.9.0", "tailwindcss": "^4.0.0", "unplugin-icons": "^23.0.1" } }, "sha512-slmdstc4CrO58RbBwiw20EnPmjXtyfXViDtzcjKFHODjoOEC6f96NRvIYfxn5+BVDNa13+0E9emCGx04EnZSaQ=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
