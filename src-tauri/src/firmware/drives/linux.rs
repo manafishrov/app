@@ -1,8 +1,26 @@
 use std::process::Command;
 
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use super::{FlashDrive, FlashDriveMountpoint};
+
+/// Deserialize a flag that lsblk may emit as a JSON boolean (newer
+/// util-linux) or as an integer 0/1 (older util-linux).
+///
+/// # Errors
+/// Returns an error if the underlying value cannot be deserialized.
+fn deserialize_flag<'de, D>(deserializer: D) -> Result<Option<bool>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+  Ok(value.map(|v| match v {
+    serde_json::Value::Bool(b) => b,
+    serde_json::Value::Number(n) => n.as_u64().unwrap_or(0) == 1,
+    serde_json::Value::String(s) => s == "1" || s.eq_ignore_ascii_case("true"),
+    _ => false,
+  }))
+}
 
 #[derive(Deserialize, Default)]
 #[serde(default)]
@@ -17,9 +35,12 @@ struct LsblkDevice {
   #[serde(rename = "type")]
   kind: Option<String>,
   size: Option<serde_json::Value>,
-  ro: Option<u8>,
-  rm: Option<u8>,
-  hotplug: Option<u8>,
+  #[serde(default, deserialize_with = "deserialize_flag")]
+  ro: Option<bool>,
+  #[serde(default, deserialize_with = "deserialize_flag")]
+  rm: Option<bool>,
+  #[serde(default, deserialize_with = "deserialize_flag")]
+  hotplug: Option<bool>,
   tran: Option<String>,
   subsystems: Option<String>,
   model: Option<String>,
@@ -43,8 +64,8 @@ fn parse_size(value: &serde_json::Value) -> u64 {
   0
 }
 
-fn flag(value: Option<u8>) -> bool {
-  value.unwrap_or(0) == 1
+fn flag(value: Option<bool>) -> bool {
+  value.unwrap_or(false)
 }
 
 fn make_description(device: &LsblkDevice) -> String {
@@ -100,12 +121,26 @@ fn build_drive(device: &LsblkDevice) -> Option<FlashDrive> {
     return None;
   }
 
-  let tran = device.tran.as_deref().unwrap_or("").to_ascii_lowercase();
+  // Drop pseudo block devices (zram, device-mapper, md, etc.) that report a
+  // "block" subsystem rather than a real transport; they are never flash
+  // targets.
   let subsystems = device.subsystems.as_deref().unwrap_or("");
-  let is_virtual = subsystems.eq_ignore_ascii_case("block");
+  if subsystems.eq_ignore_ascii_case("block")
+    || name.starts_with("/dev/zram")
+    || name.starts_with("/dev/dm-")
+    || name.starts_with("/dev/md")
+  {
+    return None;
+  }
+
+  let tran = device.tran.as_deref().unwrap_or("").to_ascii_lowercase();
   let is_usb = tran == "usb";
-  let is_removable = flag(device.rm) || flag(device.hotplug) || is_virtual;
-  let is_system = !is_removable && !is_virtual;
+  // Internal SD/MMC readers report tran "mmc"/"sd" and may not set the
+  // removable flag, so treat them as removable cards explicitly.
+  let is_mmc = tran == "mmc" || tran == "sd" || name.starts_with("/dev/mmcblk");
+  let is_card = is_mmc;
+  let is_removable = flag(device.rm) || flag(device.hotplug) || is_mmc;
+  let is_system = !is_removable && !is_usb;
 
   let device_path = name.to_string();
   let size = device.size.as_ref().map_or(0, parse_size);
@@ -120,7 +155,7 @@ fn build_drive(device: &LsblkDevice) -> Option<FlashDrive> {
     is_read_only: flag(device.ro),
     is_removable,
     is_usb,
-    is_card: false,
+    is_card,
     is_system,
     mountpoints: collect_mountpoints(device),
   })

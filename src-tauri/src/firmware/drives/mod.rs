@@ -45,5 +45,16 @@ pub fn list_drives() -> Result<Vec<FlashDrive>, String> {
   #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
   return Err("Drive enumeration is not implemented on this platform".to_string());
 
-  Ok(drives.into_iter().filter(|drive| drive.size >= MIN_DRIVE_SIZE_BYTES).collect())
+  // Only surface removable flash targets (SD cards, USB sticks). Internal
+  // system disks and pseudo devices must never appear as flash destinations.
+  Ok(
+    drives
+      .into_iter()
+      .filter(|drive| {
+        drive.size >= MIN_DRIVE_SIZE_BYTES
+          && !drive.is_system
+          && (drive.is_removable || drive.is_usb || drive.is_card)
+      })
+      .collect(),
+  )
 }
