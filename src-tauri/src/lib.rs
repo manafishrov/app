@@ -121,6 +121,25 @@ fn run_flasher_cli(args: &[String]) -> i32 {
   0
 }
 
+/// Work around a `WebKitGTK` bug where an unset `gtk-xft-dpi` (`-1`) yields a
+/// negative `window.devicePixelRatio`, collapsing the layout so the UI renders
+/// microscopically. Happens on Wayland sessions with no XSETTINGS daemon (e.g.
+/// Hyprland). Set a valid 96 DPI only when unset, so sessions that provide one
+/// keep it; `HiDPI` scaling still comes from the compositor's output scale.
+///
+/// Remove once fixed upstream: <https://bugs.webkit.org/show_bug.cgi?id=287811>
+#[cfg(target_os = "linux")]
+fn fix_gtk_dpi() {
+  use gtk::prelude::GtkSettingsExt;
+
+  if let Some(settings) = gtk::Settings::default()
+    && settings.gtk_xft_dpi() <= 0
+  {
+    // 96 DPI in 1024ths of a point.
+    settings.set_gtk_xft_dpi(96 * 1024);
+  }
+}
+
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
@@ -170,6 +189,8 @@ pub fn run() -> tauri::Result<()> {
       save_recording,
     ])
     .setup(|app| {
+      #[cfg(target_os = "linux")]
+      fix_gtk_dpi();
       setup_handlers(app);
       Ok(())
     });
