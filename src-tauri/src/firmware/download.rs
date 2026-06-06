@@ -7,9 +7,12 @@ use reqwest::Client;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Emitter};
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
-use super::constants::{DOWNLOAD_PROGRESS_EVENT, SIGNING_PUBLIC_KEY};
+use super::constants::{
+  DOWNLOAD_CONNECT_TIMEOUT_SECS, DOWNLOAD_MAX_RETRIES, DOWNLOAD_PROGRESS_EVENT,
+  DOWNLOAD_READ_TIMEOUT_SECS, SIGNING_PUBLIC_KEY,
+};
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -180,12 +183,148 @@ async fn fetch_signature(client: &Client, signature_url: Option<&str>) -> Result
   let Some(url) = signature_url else {
     return Err("Manifest is missing a signature url for the firmware artifact".to_string());
   };
-  let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+  let response = client
+    .get(url)
+    .send()
+    .await
+    .map_err(|e| describe_request_error("Signature request failed", &e))?;
   let status = response.status();
   if !status.is_success() {
     return Err(format!("Signature download failed with status {status}"));
   }
-  Ok(response.bytes().await.map_err(|e| e.to_string())?.to_vec())
+  Ok(
+    response
+      .bytes()
+      .await
+      .map_err(|e| describe_request_error("Signature body read failed", &e))?
+      .to_vec(),
+  )
+}
+
+/// Build the download client with connect and per-read (idle) timeouts so a
+/// stalled connection becomes a retryable error instead of hanging.
+///
+/// # Errors
+///
+/// Returns an error if the client cannot be constructed.
+fn build_download_client() -> Result<Client, String> {
+  Client::builder()
+    .connect_timeout(std::time::Duration::from_secs(DOWNLOAD_CONNECT_TIMEOUT_SECS))
+    .read_timeout(std::time::Duration::from_secs(DOWNLOAD_READ_TIMEOUT_SECS))
+    .build()
+    .map_err(|e| format!("Failed to build download client: {e}"))
+}
+
+/// Flatten a reqwest error, appending its cause chain (its own `Display` is
+/// terse, e.g. "error decoding response body").
+fn describe_request_error(context: &str, error: &reqwest::Error) -> String {
+  let mut message = format!("{context}: {error}");
+  let mut source = std::error::Error::source(error);
+  while let Some(inner) = source {
+    use std::fmt::Write;
+    let _ = write!(message, " (caused by: {inner})");
+    source = inner.source();
+  }
+  message
+}
+
+/// Whether a failed attempt is worth retrying with a resumed range request.
+fn is_retryable_request_error(error: &reqwest::Error) -> bool {
+  error.is_timeout() || error.is_body() || error.is_decode() || error.is_request()
+}
+
+/// Stream the artifact to `partial_path`, resuming with HTTP range requests on
+/// transient failures. Returns the SHA-256 hasher and total bytes written.
+///
+/// # Errors
+///
+/// Returns an error if the retry budget is exhausted or a non-transient error
+/// (bad status, disk write) occurs.
+async fn stream_artifact_with_resume(
+  app: &AppHandle,
+  client: &Client,
+  payload: &FirmwareDownloadRequest,
+  partial_path: &Path,
+) -> Result<(Sha256, u64), String> {
+  let version = payload.version.as_str();
+  let mut bytes_written: u64 = 0;
+  let mut last_percent: u8 = 0;
+  let mut hasher = Sha256::new();
+  let mut last_error = String::new();
+
+  let mut file = tokio::fs::File::create(partial_path).await.map_err(|e| e.to_string())?;
+
+  for attempt in 0..=DOWNLOAD_MAX_RETRIES {
+    if attempt > 0 {
+      emit_progress(app, version, "downloading", bytes_written, payload.size);
+    }
+
+    let mut request = client.get(&payload.artifact_url);
+    if bytes_written > 0 {
+      request = request.header(reqwest::header::RANGE, format!("bytes={bytes_written}-"));
+    }
+
+    let response = match request.send().await {
+      Ok(response) => response,
+      Err(error) => {
+        last_error = describe_request_error("Artifact request failed", &error);
+        if is_retryable_request_error(&error) {
+          continue;
+        }
+        return Err(last_error);
+      },
+    };
+
+    let status = response.status();
+    if !status.is_success() {
+      return Err(format!("Artifact download failed with status {status}"));
+    }
+    // Server ignored Range and restarted: reset hasher/file to stay correct.
+    if bytes_written > 0 && status != reqwest::StatusCode::PARTIAL_CONTENT {
+      file.set_len(0).await.map_err(|e| e.to_string())?;
+      file.rewind().await.map_err(|e| e.to_string())?;
+      hasher = Sha256::new();
+      bytes_written = 0;
+      last_percent = 0;
+    }
+
+    let mut stream = response.bytes_stream();
+    let mut stream_failed = false;
+    while let Some(chunk_result) = stream.next().await {
+      match chunk_result {
+        Ok(chunk) => {
+          hasher.update(&chunk);
+          bytes_written += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
+          file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+          let percent = percent_of(bytes_written, payload.size);
+          if percent != last_percent {
+            last_percent = percent;
+            emit_progress(app, version, "downloading", bytes_written, payload.size);
+          }
+        },
+        Err(error) => {
+          last_error = describe_request_error("Artifact stream interrupted", &error);
+          if !is_retryable_request_error(&error) {
+            return Err(last_error);
+          }
+          stream_failed = true;
+          break;
+        },
+      }
+    }
+
+    if !stream_failed {
+      file.flush().await.map_err(|e| e.to_string())?;
+      return Ok((hasher, bytes_written));
+    }
+
+    file.flush().await.map_err(|e| e.to_string())?;
+  }
+
+  Err(format!(
+    "Firmware download failed after {} attempts. Last error: {last_error}",
+    DOWNLOAD_MAX_RETRIES + 1
+  ))
 }
 
 /// # Errors
@@ -198,41 +337,18 @@ pub async fn download_firmware(
   let target_path = resolve_download_path(&file_name)?;
   reject_existing_symlink_path(&target_path, "firmware file")?;
 
-  let client = Client::new();
+  let client = build_download_client()?;
   let signature_bytes = fetch_signature(&client, payload.signature_url.as_deref()).await?;
 
   let version = payload.version.as_str();
   emit_progress(app, version, "downloading", 0, payload.size);
-  let response = client.get(&payload.artifact_url).send().await.map_err(|e| e.to_string())?;
-  let status = response.status();
-  if !status.is_success() {
-    return Err(format!("Artifact download failed with status {status}"));
-  }
 
   let partial_path = target_path.with_extension("part");
   let _ = tokio::fs::remove_file(&partial_path).await;
   let _ = tokio::fs::remove_file(signature_path_for(&target_path)).await;
 
-  let mut file = tokio::fs::File::create(&partial_path).await.map_err(|e| e.to_string())?;
-  let mut stream = response.bytes_stream();
-  let mut hasher = Sha256::new();
-  let mut bytes_written: u64 = 0;
-  let mut last_percent: u8 = 0;
-
-  while let Some(chunk_result) = stream.next().await {
-    let chunk = chunk_result.map_err(|e| e.to_string())?;
-    hasher.update(&chunk);
-    bytes_written += u64::try_from(chunk.len()).map_err(|e| e.to_string())?;
-    file.write_all(&chunk).await.map_err(|e| e.to_string())?;
-    let percent = percent_of(bytes_written, payload.size);
-    if percent != last_percent {
-      last_percent = percent;
-      emit_progress(app, version, "downloading", bytes_written, payload.size);
-    }
-  }
-
-  file.flush().await.map_err(|e| e.to_string())?;
-  drop(file);
+  let (hasher, bytes_written) =
+    stream_artifact_with_resume(app, &client, &payload, &partial_path).await?;
 
   let actual_sha256: String = hasher.finalize().iter().fold(String::new(), |mut s, b| {
     use std::fmt::Write;

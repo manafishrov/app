@@ -114,10 +114,13 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
     }
   }
 
+  // O_EXCL for exclusive access. No O_DIRECT: it requires block-aligned
+  // writes, but decompressed chunks are arbitrary sizes (EINVAL otherwise).
+  // Durability comes from the final sync_all in flush_device_to_media.
   let file = OpenOptions::new()
     .read(true)
     .write(true)
-    .custom_flags(libc::O_DIRECT | libc::O_EXCL)
+    .custom_flags(libc::O_EXCL)
     .open(device)
     .map_err(|e| format!("Failed to open block device {device}: {e}"))?;
   Ok(DeviceHandle { file })

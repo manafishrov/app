@@ -52,12 +52,32 @@ pub struct FirmwareManifestRequest {
 /// Returns an error if the request fails, returns a non-success status, or the
 /// response body cannot be read.
 async fn fetch_bytes(client: &Client, url: &str) -> Result<bytes::Bytes, String> {
-  let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+  let response = client
+    .get(url)
+    .send()
+    .await
+    .map_err(|e| describe_request_error(&format!("Request to {url} failed"), &e))?;
   let status = response.status();
   if !status.is_success() {
-    return Err(format!("Request failed with status {status}"));
+    return Err(format!("Request to {url} failed with status {status}"));
   }
-  response.bytes().await.map_err(|e| e.to_string())
+  response
+    .bytes()
+    .await
+    .map_err(|e| describe_request_error(&format!("Reading body of {url} failed"), &e))
+}
+
+/// Flatten a reqwest error, appending its cause chain (its own `Display` is
+/// terse, e.g. "error decoding response body").
+fn describe_request_error(context: &str, error: &reqwest::Error) -> String {
+  let mut message = format!("{context}: {error}");
+  let mut source = std::error::Error::source(error);
+  while let Some(inner) = source {
+    use std::fmt::Write;
+    let _ = write!(message, " (caused by: {inner})");
+    source = inner.source();
+  }
+  message
 }
 
 fn signature_url_for_manifest(manifest_url: &str) -> String {
