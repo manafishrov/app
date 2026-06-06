@@ -188,7 +188,7 @@ fn flasher_temp_dir() -> std::path::PathBuf {
 /// the `identifier` in `tauri.conf.json`. Used to re-enter the sandbox from the
 /// host-side elevated process.
 #[cfg(target_os = "linux")]
-const FLATPAK_APP_ID: &str = "com.manafish.rov";
+const FLATPAK_APP_ID: &str = "com.manafishrov.Manafish";
 
 /// Detect whether the application is running inside a Flatpak sandbox.
 ///

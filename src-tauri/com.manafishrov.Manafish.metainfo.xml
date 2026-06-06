@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.manafishrov.Manafish</id>
+
+  <name>Manafish</name>
+  <summary>Control your Manafish ROV</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+
+  <developer id="com.manafishrov">
+    <name>Manafish</name>
+  </developer>
+
+  <description>
+    <p>
+      Manafish is the desktop control application for the Manafish remotely
+      operated underwater vehicle (ROV). It provides a live video feed,
+      gamepad and keyboard piloting, telemetry, and configuration tools so
+      you can operate the vehicle in real time.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Live low-latency video from the ROV camera</li>
+      <li>Gamepad and keyboard piloting controls</li>
+      <li>Real-time telemetry and sensor readouts</li>
+      <li>Vehicle configuration and firmware update tooling</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.manafishrov.Manafish.desktop</launchable>
+
+  <categories>
+    <category>Utility</category>
+    <category>Science</category>
+  </categories>
+
+  <url type="homepage">https://www.manafishrov.com</url>
+  <url type="bugtracker">https://github.com/manafishrov/app/issues</url>
+  <url type="vcs-browser">https://github.com/manafishrov/app</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/manafishrov/app/main/.github/screenshots/main.png</image>
+      <caption>Piloting view with live video and telemetry</caption>
+    </screenshot>
+  </screenshots>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="1.0.12" date="2026-06-04" />
+  </releases>
+</component>

@@ -9,6 +9,8 @@ const PERCENT_MULTIPLIER = 100;
 const MAX_PERCENT = 100;
 const [UNSET]: undefined[] = [];
 
+export const isUpdaterEnabled = import.meta.env['VITE_UPDATER_DISABLED'] !== '1';
+
 const showAppUpdateAvailableToast = (version: string): void => {
   toast.create({
     title: m.toasts_update_available(),
@@ -18,6 +20,10 @@ const showAppUpdateAvailableToast = (version: string): void => {
 };
 
 export const checkForAppUpdates = (showAvailableToast = false): Promise<void> => {
+  if (!isUpdaterEnabled) {
+    return Promise.resolve();
+  }
+
   setAppUpdateState({
     error: UNSET,
     status: 'checking',
@@ -135,6 +141,10 @@ const createDownloadEventHandler = (toastId: string) => {
 };
 
 export const installAppUpdate = (): Promise<void> => {
+  if (!isUpdaterEnabled) {
+    return Promise.resolve();
+  }
+
   const update = updatesStore.app.availableUpdate;
   if (!update) {
     return Promise.resolve();

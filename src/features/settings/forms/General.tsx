@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore, setConfig } from '@/stores/config';
+import { isUpdaterEnabled } from '@/tauri';
 
 const createFormSchema = (): z.ZodObject<{
   videoDirectory: z.ZodString;
@@ -95,14 +96,16 @@ const GeneralFields: Component<{
         />
       )}
     </props.AppField>
-    <props.AppField name='checkForAppUpdatesOnStartup'>
-      {(field) => (
-        <field.SwitchField
-          label={m.general_settings_check_for_app_updates_title()}
-          description={m.general_settings_check_for_app_updates_description()}
-        />
-      )}
-    </props.AppField>
+    <Show when={isUpdaterEnabled}>
+      <props.AppField name='checkForAppUpdatesOnStartup'>
+        {(field) => (
+          <field.SwitchField
+            label={m.general_settings_check_for_app_updates_title()}
+            description={m.general_settings_check_for_app_updates_description()}
+          />
+        )}
+      </props.AppField>
+    </Show>
   </>
 );
 

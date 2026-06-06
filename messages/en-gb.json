@@ -61,6 +61,7 @@
   "general_settings_app_update_status_ready_to_restart": "Update downloaded. Restart the app to apply it.",
   "general_settings_app_update_check_failed": "Failed to check for app updates.",
   "general_settings_app_update_install_failed": "Failed to update the app.",
+  "general_settings_app_update_managed_externally": "Updates are managed by your package manager. Update Manafish the same way you installed it.",
   "general_settings_video_directory_required": "Video directory is required",
   "general_settings_video_directory_title": "Video directory",
   "general_settings_video_directory_description": "Select the directory where recordings will be saved.",

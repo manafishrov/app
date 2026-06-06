@@ -148,11 +148,25 @@ pub fn run() -> tauri::Result<()> {
     let exit_code = run_flasher_cli(&raw_args);
     std::process::exit(exit_code);
   }
-  let builder = Builder::default()
+  // Builds distributed through a package manager (Flatpak, Snap, AUR,
+  // nixpkgs, Homebrew, winget, deb/rpm repos) must not self-update: the
+  // package manager owns the binary and its version. Those builds set
+  // `MANAFISH_UPDATER_DISABLED=1` at compile time (and the matching
+  // `VITE_UPDATER_DISABLED=1` for the frontend) so the updater plugin is not
+  // registered. Direct downloads (AppImage, macOS .dmg/.app, Windows
+  // .exe/.msi) leave it unset, keeping the updater enabled by default.
+  let updater_disabled = matches!(option_env!("MANAFISH_UPDATER_DISABLED"), Some("1"));
+
+  let mut builder = Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
-    .plugin(tauri_plugin_fs::init())
-    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_fs::init());
+
+  if !updater_disabled {
+    builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+  }
+
+  let builder = builder
     .on_page_load(|webview, payload| {
       if webview.label() == "splashscreen" && payload.event() == PageLoadEvent::Finished {
         let _ = webview.window().show();

@@ -17,6 +17,7 @@ import {
   closeSplashscreen,
   getConfig,
   initializeVideoDirectory,
+  isUpdaterEnabled,
   recoverTempRecordings,
   setupAllListeners,
 } from '@/tauri';
@@ -31,7 +32,7 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
         cleanupFns.push(contextMenuCleanup);
       }
 
-      if (configStore.checkForAppUpdatesOnStartup) {
+      if (isUpdaterEnabled && configStore.checkForAppUpdatesOnStartup) {
         checkForAppUpdates(true).catch(logError);
       }
       return initializeVideoDirectory().then(() => recoverTempRecordings());
