@@ -169,36 +169,8 @@ fn current_binary_path() -> Result<std::path::PathBuf, String> {
 
 /// Directory used for the status/cancel/signal coordination files shared
 /// between the app and the (possibly elevated) flasher subprocess.
-///
-/// Inside a Flatpak sandbox the elevated flasher runs as a *separate* sandbox
-/// instance whose private temp directory is not the same as this process's
-/// `std::env::temp_dir()`. With `--filesystem=/tmp` granted in the manifest,
-/// the host `/tmp` is mapped to `/tmp` in every instance, so we use a fixed
-/// `/tmp` path to give both sides a shared location. Outside Flatpak we keep
-/// using the platform temp directory.
 fn flasher_temp_dir() -> std::path::PathBuf {
-  #[cfg(target_os = "linux")]
-  if running_in_flatpak() {
-    return std::path::PathBuf::from("/tmp").join("manafish-flasher");
-  }
   std::env::temp_dir().join("manafish-flasher")
-}
-
-/// The Flatpak application ID. Must match the `id` in the Flatpak manifest and
-/// the `identifier` in `tauri.conf.json`. Used to re-enter the sandbox from the
-/// host-side elevated process.
-#[cfg(target_os = "linux")]
-const FLATPAK_APP_ID: &str = "com.manafishrov.Manafish";
-
-/// Detect whether the application is running inside a Flatpak sandbox.
-///
-/// Flatpak guarantees the presence of the `/.flatpak-info` file and sets the
-/// `FLATPAK_ID` environment variable for every sandboxed process. We check the
-/// file (the env var can be cleared by child processes) to decide which
-/// elevation strategy to use.
-#[cfg(target_os = "linux")]
-fn running_in_flatpak() -> bool {
-  std::path::Path::new("/.flatpak-info").exists()
 }
 
 /// Fail with an actionable error if the elevation launcher is missing, rather
@@ -209,20 +181,8 @@ fn running_in_flatpak() -> bool {
 /// Returns an error describing the missing launcher and how to install it.
 #[cfg(target_os = "linux")]
 fn ensure_elevation_available() -> Result<(), String> {
-  let launcher = if running_in_flatpak() {
-    "flatpak-spawn"
-  } else {
-    "pkexec"
-  };
-  if which_in_path(launcher).is_some() {
+  if which_in_path("pkexec").is_some() {
     return Ok(());
-  }
-  if running_in_flatpak() {
-    return Err(
-      "Cannot elevate privileges to flash: `flatpak-spawn` is unavailable. The Flatpak \
-       sandbox is missing the `org.freedesktop.Flatpak` portal permission."
-        .to_string(),
-    );
   }
   Err(
     "Cannot elevate privileges to flash: `pkexec` was not found. Flashing requires polkit \
@@ -244,31 +204,18 @@ fn which_in_path(program: &str) -> Option<std::path::PathBuf> {
   None
 }
 
-/// Spawn the elevated flasher, dispatching to the Flatpak or host strategy.
+/// Spawn the flasher subprocess with elevated privileges (Linux).
+///
+/// Uses `pkexec` so the user gets a graphical polkit authentication dialog.
+/// polkit resets the environment for the elevated process, so the dynamic
+/// library search paths the binary relies on are forwarded explicitly by
+/// invoking the binary through `env VAR=value ...`.
 ///
 /// # Errors
 ///
 /// Returns an error if the elevated process cannot be spawned or waited on.
 #[cfg(target_os = "linux")]
 fn spawn_elevated_flasher(
-  binary: &std::path::Path,
-  flasher_args: &[String],
-) -> Result<std::process::ExitStatus, std::io::Error> {
-  if running_in_flatpak() {
-    spawn_elevated_flasher_flatpak(flasher_args)
-  } else {
-    spawn_elevated_flasher_host(binary, flasher_args)
-  }
-}
-
-/// Elevation path used on a normal Linux host (deb, `AppImage`, Snap classic,
-/// dev shell). See [`spawn_elevated_flasher`] for details.
-///
-/// # Errors
-///
-/// Returns an error if the elevated process cannot be spawned or waited on.
-#[cfg(target_os = "linux")]
-fn spawn_elevated_flasher_host(
   binary: &std::path::Path,
   flasher_args: &[String],
 ) -> Result<std::process::ExitStatus, std::io::Error> {
@@ -286,44 +233,6 @@ fn spawn_elevated_flasher_host(
     }
   }
   command.arg(binary).args(flasher_args).status()
-}
-
-/// Elevation path used inside a Flatpak sandbox. See
-/// [`spawn_elevated_flasher`] for details.
-///
-/// Note: the in-sandbox executable path is intentionally unused here; the host
-/// re-enters the sandbox via `flatpak run` instead of executing the sandboxed
-/// binary directly.
-///
-/// # Errors
-///
-/// Returns an error if the elevated process cannot be spawned or waited on.
-#[cfg(target_os = "linux")]
-fn spawn_elevated_flasher_flatpak(
-  flasher_args: &[String],
-) -> Result<std::process::ExitStatus, std::io::Error> {
-  // The flasher re-runs the app binary as a Tauri "sidecar" entrypoint, so we
-  // launch it through `flatpak run --command=<binary-name>`. The binary name
-  // matches the package binary installed at /app/bin inside the sandbox.
-  let binary_name = std::env::current_exe()
-    .ok()
-    .and_then(|path| path.file_name().map(|name| name.to_string_lossy().into_owned()))
-    .unwrap_or_else(|| FLATPAK_APP_ID.to_string());
-
-  let mut command = std::process::Command::new("flatpak-spawn");
-  command
-    .arg("--host")
-    .arg("pkexec")
-    .arg("flatpak")
-    .arg("run")
-    .arg(format!("--command={binary_name}"))
-    // The elevated instance must reach the shared /tmp coordination files.
-    .arg("--filesystem=/tmp")
-    // Allow the elevated instance to access the flash target device.
-    .arg("--device=all")
-    .arg(FLATPAK_APP_ID)
-    .args(flasher_args);
-  command.status()
 }
 
 /// Spawn the elevated flasher via the `runas` native elevation dialog.
