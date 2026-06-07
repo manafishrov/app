@@ -42,27 +42,27 @@ bun run tauri build
 
 ## Installing on Linux
 
-The video stream uses WebRTC via WebKitGTK, which needs the GStreamer WebRTC
-plugins (incl. the libnice ICE agent) and an H.264 decoder at runtime.
+The video stream uses WebRTC via WebKitGTK (GStreamer WebRTC plugins + the
+libnice ICE agent + an H.264 decoder), and recording uses FFmpeg.
 
-The `.deb` and `.rpm` packages declare these as dependencies, so `apt`/`dnf`
-install them automatically. The `.AppImage` uses the host system's libraries —
-if the stream stays black, install the plugins manually:
+- **`.deb` (Debian / Ubuntu / Mint):** declares every dependency, so `apt`
+  installs them automatically. Nothing else to do.
 
-- **Debian / Ubuntu / Mint:**
+- **`.AppImage`:** bundles FFmpeg and its libraries, but uses the host system's
+  GStreamer/WebKitGTK. If the stream stays black, install the GStreamer plugins:
 
   ```bash
   sudo apt install gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
     gstreamer1.0-libav gstreamer1.0-nice
   ```
 
-- **Fedora:** `gstreamer1-libav` (the H.264 decoder) lives in RPM Fusion, so it
-  is not a hard package dependency. Enable [RPM Fusion](https://rpmfusion.org)
-  and install:
+- **`.rpm` (Fedora):** the FFmpeg libraries and `gstreamer1-libav` (the H.264
+  decoder) live in RPM Fusion, so they are not hard package dependencies. Enable
+  [RPM Fusion](https://rpmfusion.org) and install:
 
   ```bash
   sudo dnf install gstreamer1-plugins-good gstreamer1-plugins-bad-free \
-    libnice-gstreamer1 gstreamer1-libav
+    libnice-gstreamer1 gstreamer1-libav ffmpeg-libs
   ```
 
 ## License

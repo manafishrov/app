@@ -60,7 +60,14 @@
           "gstreamer1.0-plugins-good",
           "gstreamer1.0-plugins-bad",
           "gstreamer1.0-libav",
-          "gstreamer1.0-nice"
+          "gstreamer1.0-nice",
+          "libavcodec60",
+          "libavformat60",
+          "libavutil58",
+          "libavfilter9",
+          "libavdevice60",
+          "libswscale7",
+          "libswresample4"
         ],
         "files": {
           "/usr/share/metainfo/com.manafishrov.Manafish.metainfo.xml": "com.manafishrov.Manafish.metainfo.xml"

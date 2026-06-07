@@ -135,15 +135,10 @@ jobs:
             gstreamer1.0-libav \
             gstreamer1.0-nice \
             xdg-utils
-          # Multiarch triplet differs per arch (x86_64-linux-gnu vs aarch64-linux-gnu).
-          ARCH_TRIPLET="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavcodec*.so* src-tauri/
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavdevice*.so* src-tauri/
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavfilter*.so* src-tauri/
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavformat*.so* src-tauri/
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavutil*.so* src-tauri/
-          cp -P "/usr/lib/${ARCH_TRIPLET}"/libsw*.so* src-tauri/
-          echo '{"bundle": {"resources": ["*.so*", "*.so"]}}' > src-tauri/tauri.linux.conf.json
+          # FFmpeg libraries are NOT bundled manually here. The deb/rpm declare
+          # the system libav* packages as dependencies (see tauri.conf.json), and
+          # the AppImage's linuxdeploy step auto-bundles them (with their
+          # transitive deps, e.g. libxml2) by following the binary's ldd chain.
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
