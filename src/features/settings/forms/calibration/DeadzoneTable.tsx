@@ -54,27 +54,10 @@ type DeadzoneRowProps = {
   onRemove: () => void;
 };
 
-type FieldCallbacks = {
-  currentLength: number;
-  removeValue: (idx: number) => void;
-  pushValue: (vec: number[]) => void;
-};
-
 type NullspaceField = {
   state: { value: readonly number[][] };
-  removeValue: (idx: number) => void;
-  pushValue: (vec: number[]) => void;
+  setValue: (value: number[][]) => void;
 };
-
-const buildFieldCallbacks = (field: NullspaceField): FieldCallbacks => ({
-  currentLength: field.state.value.length,
-  removeValue: (idx): void => {
-    field.removeValue(idx);
-  },
-  pushValue: (vec): void => {
-    field.pushValue(vec);
-  },
-});
 
 const EMPTY_DEADZONE_ROW = THRUSTER_COLUMNS.map(() => ZERO);
 
@@ -159,16 +142,7 @@ const DeadzoneRows: Component<{
   </For>
 );
 
-const replaceVectorsInField = (callbacks: FieldCallbacks, vectors: number[][]): void => {
-  for (let idx = callbacks.currentLength - 1; idx >= ZERO; idx -= 1) {
-    callbacks.removeValue(idx);
-  }
-  for (const vector of vectors) {
-    callbacks.pushValue(vector);
-  }
-};
-
-const applyNullspaceToField = (callbacks: FieldCallbacks): void => {
+const applyNullspaceToField = (field: NullspaceField): void => {
   const result = computeNullspaceFromAllocation(rovConfigStore.thrusterAllocation);
   if (result.type === 'no_vectors') {
     toast.create({ title: m.toasts_no_nullspace_vectors_found(), type: 'warning' });
@@ -178,7 +152,7 @@ const applyNullspaceToField = (callbacks: FieldCallbacks): void => {
     toast.create({ title: m.toasts_nullspace_computation_error(), type: 'error' });
     return;
   }
-  replaceVectorsInField(callbacks, result.vectors);
+  field.setValue(result.vectors);
 };
 
 const GenerateConfirmDialog: Component<{
@@ -271,7 +245,7 @@ export const DeadzoneTable: Component<DeadzoneTableProps> = (props) => {
                 if (field().state.value.length > ZERO) {
                   setShowConfirmDialog(true);
                 } else {
-                  applyNullspaceToField(buildFieldCallbacks(field()));
+                  applyNullspaceToField(field());
                 }
               }}
             />
@@ -281,7 +255,7 @@ export const DeadzoneTable: Component<DeadzoneTableProps> = (props) => {
             open={showConfirmDialog()}
             onConfirm={() => {
               setShowConfirmDialog(false);
-              applyNullspaceToField(buildFieldCallbacks(field()));
+              applyNullspaceToField(field());
             }}
             onCancel={() => {
               setShowConfirmDialog(false);
