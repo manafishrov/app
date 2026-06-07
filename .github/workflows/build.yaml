@@ -11,8 +11,38 @@ permissions:
   id-token: write
 
 jobs:
+  create-release:
+    name: Create Draft Release
+    runs-on: ubuntu-24.04
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      # Create the draft release once up front so the parallel build jobs only
+      # upload assets to it. Creating it inside each build job races and can fail
+      # with a 422 conflict when jobs start at the same time.
+      - name: Create draft release
+        id: create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.ref_name }}"
+          repo="${{ github.repository }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            args=(--draft --title "$tag" --notes "Release assets for $tag.")
+            if [[ "$tag" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh release create "$tag" "${args[@]}"
+          fi
+          release_id="$(gh api "repos/$repo/releases/tags/$tag" -q '.id')"
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
   build-binary:
     name: Build Binaries
+    needs: create-release
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -100,7 +130,8 @@ jobs:
             gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad \
             gstreamer1.0-libav \
-            gstreamer1.0-nice
+            gstreamer1.0-nice \
+            xdg-utils
           # Multiarch triplet differs per arch (x86_64-linux-gnu vs aarch64-linux-gnu).
           ARCH_TRIPLET="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           cp -P "/usr/lib/${ARCH_TRIPLET}"/libavcodec*.so* src-tauri/
@@ -130,7 +161,7 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build and create draft release
+      - name: Build and upload to draft release
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -138,8 +169,4 @@ jobs:
           VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: ${{ github.ref_name }}
-          releaseBody: 'Release assets for ${{ github.ref_name }}.'
-          releaseDraft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          releaseId: ${{ needs.create-release.outputs.release_id }}
