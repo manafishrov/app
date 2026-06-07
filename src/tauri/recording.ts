@@ -1,4 +1,5 @@
 import { toast } from '@manafishrov/ui/toaster';
+import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { mkdir, readDir } from '@tauri-apps/plugin-fs';
 
@@ -62,8 +63,15 @@ export const createRecordingPath = (mimeType: string): Promise<string> => {
   return join(configStore.videoDirectory, `Recording_${timestamp}${TEMP_MARKER}${extension}`);
 };
 
+/*
+ * Send the chunk as a raw binary IPC body (with the path in a header) instead of
+ * a JSON number array, which would bloat the transfer ~10x for video data. The
+ * path is percent-encoded so non-ASCII characters survive the header.
+ */
 export const appendRecordingChunk = (tempPath: string, chunk: Uint8Array): Promise<void> =>
-  invokeCommand('append_recording_chunk', { tempPath, chunk: [...chunk] })
+  invoke<null>('append_recording_chunk', chunk, {
+    headers: { 'temp-path': encodeURIComponent(tempPath) },
+  })
     .catch((error: unknown) => {
       logError('Failed to append recording chunk:', error);
       const message = String(error);

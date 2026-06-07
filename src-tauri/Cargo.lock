@@ -2274,6 +2274,7 @@ dependencies = [
  "libc",
  "minisign-verify",
  "nix",
+ "percent-encoding",
  "plist",
  "reqwest",
  "runas",
