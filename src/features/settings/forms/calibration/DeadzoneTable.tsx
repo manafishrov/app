@@ -60,6 +60,22 @@ type FieldCallbacks = {
   pushValue: (vec: number[]) => void;
 };
 
+type NullspaceField = {
+  state: { value: readonly number[][] };
+  removeValue: (idx: number) => void;
+  pushValue: (vec: number[]) => void;
+};
+
+const buildFieldCallbacks = (field: NullspaceField): FieldCallbacks => ({
+  currentLength: field.state.value.length,
+  removeValue: (idx): void => {
+    field.removeValue(idx);
+  },
+  pushValue: (vec): void => {
+    field.pushValue(vec);
+  },
+});
+
 const EMPTY_DEADZONE_ROW = THRUSTER_COLUMNS.map(() => ZERO);
 
 const DeadzoneHeader: Component = () => (
@@ -255,15 +271,7 @@ export const DeadzoneTable: Component<DeadzoneTableProps> = (props) => {
                 if (field().state.value.length > ZERO) {
                   setShowConfirmDialog(true);
                 } else {
-                  applyNullspaceToField({
-                    currentLength: field().state.value.length,
-                    removeValue: (idx) => {
-                      field().removeValue(idx);
-                    },
-                    pushValue: (vec) => {
-                      field().pushValue(vec);
-                    },
-                  });
+                  applyNullspaceToField(buildFieldCallbacks(field()));
                 }
               }}
             />
@@ -273,15 +281,7 @@ export const DeadzoneTable: Component<DeadzoneTableProps> = (props) => {
             open={showConfirmDialog()}
             onConfirm={() => {
               setShowConfirmDialog(false);
-              applyNullspaceToField({
-                currentLength: field().state.value.length,
-                removeValue: (idx) => {
-                  field().removeValue(idx);
-                },
-                pushValue: (vec) => {
-                  field().pushValue(vec);
-                },
-              });
+              applyNullspaceToField(buildFieldCallbacks(field()));
             }}
             onCancel={() => {
               setShowConfirmDialog(false);

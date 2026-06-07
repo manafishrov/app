@@ -118,9 +118,8 @@ const extractNullspaceBasis = (rrefResult: RREFResult, numCols: number): number[
   });
 };
 
-const vectorDot = (aa: number[], bb: number[]): number =>
-  aa.reduce((sum, val, idx) => sum + val * (bb[idx] ?? 0), 0);
-
+const vectorDot = (vecA: number[], vecB: number[]): number =>
+  vecA.reduce((sum, val, idx) => sum + val * (vecB[idx] ?? 0), 0);
 const vectorNorm = (vec: number[]): number =>
   Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
 
@@ -145,21 +144,21 @@ const gramSchmidtOrthonormalize = (vectors: number[][]): number[][] => {
   return result;
 };
 
-const computeL1AtAngle = (uu1: number[], uu2: number[], theta: number): number => {
+const computeL1AtAngle = (basisU: number[], basisV: number[], theta: number): number => {
   const cosTheta = Math.cos(theta);
   const sinTheta = Math.sin(theta);
-  return uu1.reduce(
-    (sum, val, thrIdx) => sum + Math.abs(cosTheta * val + sinTheta * (uu2[thrIdx] ?? 0)),
+  return basisU.reduce(
+    (sum, val, thrIdx) => sum + Math.abs(cosTheta * val + sinTheta * (basisV[thrIdx] ?? 0)),
     0,
   );
 };
 
-const findBestAngle = (uu1: number[], uu2: number[]): number => {
+const findBestAngle = (basisU: number[], basisV: number[]): number => {
   let minL1 = Infinity;
   let bestAngle = 0;
   for (let step = 0; step < L1_SCAN_STEPS; step += 1) {
     const theta = (Math.PI * step) / L1_SCAN_STEPS;
-    const l1 = computeL1AtAngle(uu1, uu2, theta);
+    const l1 = computeL1AtAngle(basisU, basisV, theta);
     if (l1 < minL1) {
       minL1 = l1;
       bestAngle = theta;
@@ -168,13 +167,13 @@ const findBestAngle = (uu1: number[], uu2: number[]): number => {
   return bestAngle;
 };
 
-const findSparsestPairByL1 = (uu1: number[], uu2: number[]): [number[], number[]] => {
-  const bestAngle = findBestAngle(uu1, uu2);
+const findSparsestPairByL1 = (basisU: number[], basisV: number[]): [number[], number[]] => {
+  const bestAngle = findBestAngle(basisU, basisV);
   const cosAngle = Math.cos(bestAngle);
   const sinAngle = Math.sin(bestAngle);
   return [
-    uu1.map((val, thrIdx) => cosAngle * val + sinAngle * (uu2[thrIdx] ?? 0)),
-    uu1.map((val, thrIdx) => -sinAngle * val + cosAngle * (uu2[thrIdx] ?? 0)),
+    basisU.map((val, thrIdx) => cosAngle * val + sinAngle * (basisV[thrIdx] ?? 0)),
+    basisU.map((val, thrIdx) => -sinAngle * val + cosAngle * (basisV[thrIdx] ?? 0)),
   ];
 };
 
@@ -197,8 +196,8 @@ const computeSparsestPairFromBasis = (rawBasis: number[][]): number[][] => {
   if (ortho.length < rawBasis.length) {
     return rawBasis.map((vec) => normalizeToMaxOne(vec));
   }
-  const [vv1, vv2] = findSparsestPairByL1(ortho[0] ?? [], ortho[1] ?? []);
-  return [normalizeToMaxOne(vv1), normalizeToMaxOne(vv2)];
+  const [sparseA, sparseB] = findSparsestPairByL1(ortho[0] ?? [], ortho[1] ?? []);
+  return [normalizeToMaxOne(sparseA), normalizeToMaxOne(sparseB)];
 };
 
 const selectSparsestVectors = (rawBasis: number[][]): number[][] => {
