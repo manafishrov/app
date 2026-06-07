@@ -41,6 +41,7 @@
         gst-plugins-bad
         gst-plugins-ugly
         gst-libav
+        gst-plugins-rs
       ];
       # libnice provides webrtcbin's ICE agent; its plugin is in the `out` output.
       gstPluginPath =

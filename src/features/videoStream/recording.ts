@@ -65,11 +65,24 @@ const trackRecordingChunk = (state: RecordingState, event: BlobEvent): void => {
     });
 };
 
+/*
+ * Prefer H.264: the ROV stream is H.264 and the saved file is MP4, so recording
+ * H.264 lets the Rust converter stream-copy it (no re-encode, no quality loss)
+ * and it plays everywhere. VP8/VP9 in MP4 is non-standard, and WebKitGTK reports
+ * VP9 as supported while being unable to encode it, producing empty files.
+ */
+const RECORDING_MIME_TYPES = [
+  'video/mp4;codecs=avc1',
+  'video/x-matroska;codecs=avc1',
+  'video/webm;codecs=h264',
+  'video/webm;codecs=vp8',
+  'video/webm',
+];
 const createMediaRecorder = (stream: MediaStream): MediaRecorder => {
-  if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
-    return new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+  const mimeType = RECORDING_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+  if (typeof mimeType === 'string') {
+    return new MediaRecorder(stream, { mimeType });
   }
-
   return new MediaRecorder(stream);
 };
 
@@ -79,7 +92,7 @@ const beginRecording = (state: RecordingState, stream: MediaStream): Promise<voi
     return Promise.resolve();
   }
   state.mediaRecorder = createMediaRecorder(stream);
-  return createRecordingPath().then((tempFilePath) => {
+  return createRecordingPath(state.mediaRecorder.mimeType).then((tempFilePath) => {
     state.tempFilePath = tempFilePath;
     if (!state.mediaRecorder) {
       return;
@@ -128,8 +141,8 @@ const takeActiveRecorder = (
   }
   const recorder = state.mediaRecorder;
   const filePath = state.tempFilePath;
+  // Keep `state.tempFilePath` so the final `dataavailable` from `stop()` is not dropped.
   delete state.mediaRecorder;
-  delete state.tempFilePath;
   return { filePath, recorder };
 };
 const stopRecording = (state: RecordingState): Promise<void> => {
@@ -140,6 +153,7 @@ const stopRecording = (state: RecordingState): Promise<void> => {
   }
   const { filePath, recorder } = activeRecorder;
   const onStop = (): void => {
+    delete state.tempFilePath;
     recorder.removeEventListener('stop', onStop);
     finalizeRecording(state, filePath);
   };

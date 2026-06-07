@@ -61,8 +61,14 @@ fn show_save_success(toast_id: &str, output_path: &Path) {
   );
 }
 
+/// Map a temp recording path (`..._temp.<ext>`) to its final `.mp4` path. The
+/// temp extension varies by platform (mp4/mkv/webm), so match the `_temp.`
+/// marker rather than a fixed extension.
 fn output_path_for(temp_path: &str) -> String {
-  temp_path.replace("_temp.webm", ".mp4")
+  match temp_path.rfind("_temp.") {
+    Some(index) => format!("{}.mp4", &temp_path[..index]),
+    None => temp_path.to_string(),
+  }
 }
 
 /// # Errors
@@ -323,8 +329,8 @@ mod tests {
   #[test]
   fn output_path_for_replaces_temp_suffix_with_mp4() {
     assert_eq!(output_path_for("video_temp.webm"), "video.mp4");
-    assert_eq!(output_path_for("/path/to/recording_temp.webm"), "/path/to/recording.mp4");
-    assert_eq!(output_path_for("test_temp.webm"), "test.mp4");
+    assert_eq!(output_path_for("/path/to/recording_temp.mp4"), "/path/to/recording.mp4");
+    assert_eq!(output_path_for("test_temp.mkv"), "test.mp4");
   }
 
   /// # Panics
@@ -332,7 +338,6 @@ mod tests {
   #[test]
   fn output_path_for_handles_non_matching_and_edge_case_inputs() {
     assert_eq!(output_path_for("video.webm"), "video.webm");
-    assert_eq!(output_path_for("first_temp.webm/second_temp.webm"), "first.mp4/second.mp4");
     assert_eq!(output_path_for(""), "");
   }
 

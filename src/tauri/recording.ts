@@ -10,12 +10,25 @@ import { invokeCommand } from '@/tauri/core';
 
 const TIMESTAMP_LENGTH = 19;
 const MAX_CONSECUTIVE_CHUNK_FAILURES = 3;
+const TEMP_MARKER = '_temp.';
 
 const resolveVoid: () => void = () => 0;
 
+// Container extension actually written by MediaRecorder (varies per platform).
+const extensionForMimeType = (mimeType: string): string => {
+  const type = mimeType.toLowerCase();
+  if (type.includes('mp4')) {
+    return 'mp4';
+  }
+  if (type.includes('matroska')) {
+    return 'mkv';
+  }
+  return 'webm';
+};
+
 const getTempFileNames = (entries: Awaited<ReturnType<typeof readDir>>): string[] =>
   entries
-    .filter((entry) => entry.isFile && entry.name.endsWith('_temp.webm'))
+    .filter((entry) => entry.isFile && entry.name.includes(TEMP_MARKER))
     .map((entry) => entry.name);
 
 const recoverTempFile = (videoDirectory: string, fileName: string): Promise<void> =>
@@ -39,13 +52,14 @@ export const ensureVideoDirectory = (): Promise<void> =>
     throw error;
   });
 
-export const createRecordingPath = (): Promise<string> => {
+export const createRecordingPath = (mimeType: string): Promise<string> => {
   const timestamp = new Date()
     .toISOString()
     .replace('T', '_')
     .replaceAll(/[:.]/g, '-')
     .slice(0, TIMESTAMP_LENGTH);
-  return join(configStore.videoDirectory, `Recording_${timestamp}_temp.webm`);
+  const extension = extensionForMimeType(mimeType);
+  return join(configStore.videoDirectory, `Recording_${timestamp}${TEMP_MARKER}${extension}`);
 };
 
 export const appendRecordingChunk = (tempPath: string, chunk: Uint8Array): Promise<void> =>
