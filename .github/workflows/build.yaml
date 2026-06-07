@@ -168,7 +168,7 @@ jobs:
               fi
             done
           done
-          echo '{"bundle": {"resources": ["*.so*", "*.so"]}}' > src-tauri/tauri.linux.conf.json
+          echo '{"bundle": {"resources": ["*.so*"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
