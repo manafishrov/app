@@ -19,7 +19,8 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-          - platform: ubuntu-latest
+          - platform: ubuntu-22.04
+          - platform: ubuntu-22.04-arm
           - platform: windows-latest
 
     steps:
@@ -80,7 +81,7 @@ jobs:
           bun -e "console.log(JSON.stringify({bundle: {macOS: {frameworks: [$DYLIBS_JSON]}}}))" > src-tauri/tauri.macos.conf.json
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -95,14 +96,19 @@ jobs:
             libavformat-dev \
             libavutil-dev \
             libswresample-dev \
-            libswscale-dev
-          mkdir -p src-tauri/libs
-          cp -P /usr/lib/x86_64-linux-gnu/libavcodec*.so* src-tauri/
-          cp -P /usr/lib/x86_64-linux-gnu/libavdevice*.so* src-tauri/
-          cp -P /usr/lib/x86_64-linux-gnu/libavfilter*.so* src-tauri/
-          cp -P /usr/lib/x86_64-linux-gnu/libavformat*.so* src-tauri/
-          cp -P /usr/lib/x86_64-linux-gnu/libavutil*.so* src-tauri/
-          cp -P /usr/lib/x86_64-linux-gnu/libsw*.so* src-tauri/
+            libswscale-dev \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-libav \
+            gstreamer1.0-nice
+          # Multiarch triplet differs per arch (x86_64-linux-gnu vs aarch64-linux-gnu).
+          ARCH_TRIPLET="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavcodec*.so* src-tauri/
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavdevice*.so* src-tauri/
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavfilter*.so* src-tauri/
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavformat*.so* src-tauri/
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libavutil*.so* src-tauri/
+          cp -P "/usr/lib/${ARCH_TRIPLET}"/libsw*.so* src-tauri/
           echo '{"bundle": {"resources": ["*.so*", "*.so"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
@@ -129,6 +135,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         with:

@@ -56,11 +56,22 @@
     "createUpdaterArtifacts": true,
     "linux": {
       "deb": {
+        "depends": [
+          "gstreamer1.0-plugins-good",
+          "gstreamer1.0-plugins-bad",
+          "gstreamer1.0-libav",
+          "gstreamer1.0-nice"
+        ],
         "files": {
           "/usr/share/metainfo/com.manafishrov.Manafish.metainfo.xml": "com.manafishrov.Manafish.metainfo.xml"
         }
       },
       "rpm": {
+        "depends": [
+          "gstreamer1-plugins-good",
+          "gstreamer1-plugins-bad-free",
+          "libnice-gstreamer1"
+        ],
         "files": {
           "/usr/share/metainfo/com.manafishrov.Manafish.metainfo.xml": "com.manafishrov.Manafish.metainfo.xml"
         }
