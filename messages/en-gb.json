@@ -515,5 +515,12 @@
   "calibration_deadzone_avoidance_remove_row": "Remove vector",
   "calibration_deadzone_avoidance_empty": "No deadzone avoidance vectors. Click \"Add vector\" to create one.",
   "calibration_deadzone_avoidance_row_aria": "Deadzone avoidance vector {index}",
+  "calibration_deadzone_avoidance_generate_row": "Generate nullspace vectors from thrust allocation matrix",
+  "calibration_deadzone_avoidance_generate_confirm_title": "Replace nullspace vectors?",
+  "calibration_deadzone_avoidance_generate_confirm_description": "Generating nullspace vectors from the thrust allocation matrix will delete all currently saved nullspace vectors. Are you sure you want to proceed?",
+  "calibration_deadzone_avoidance_generate_confirm_cancel": "Cancel",
+  "calibration_deadzone_avoidance_generate_confirm_proceed": "Proceed",
+  "toasts_no_nullspace_vectors_found": "No nullspace vectors found for current thrust allocation matrix",
+  "toasts_nullspace_computation_error": "Failed to compute nullspace vectors",
   "validation_deadzone_value": "Values with magnitude less than 0.2 make the algorithm unstable, they are better off being rounded to 0"
 }
