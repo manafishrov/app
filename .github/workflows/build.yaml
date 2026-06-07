@@ -141,19 +141,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # The app links the system FFmpeg (libav*/libsw*), whose SONAME differs
-          # between distro releases, so bundle those libraries — plus the FFmpeg
-          # codec/helper libraries they depend on that minimal systems may lack
-          # (e.g. libxml2) — to make deb/rpm/AppImage self-contained. Only the
-          # allowlisted FFmpeg-related deps are bundled; the desktop/font/GTK/GL
-          # stack is intentionally left to the host to avoid conflicts.
+          # Bundle FFmpeg libs + allowlisted FFmpeg deps so the package is
+          # self-contained across distro versions.
           triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           libdir="/usr/lib/${triplet}"
-          allow='^(libxml2|libbz2|liblzma|libvpx|libx264|libx265|libdav1d|libaom|libopus|libvorbis|libvorbisenc|libvorbisfile|libtheora|libtheoradec|libtheoraenc|libmp3lame|libwebp|libwebpmux|libspeex|libgsm|libopenjp2|libsnappy|libzvbi|libsvtav1|librav1e|libcodec2|libshine|libtwolame|libxvidcore|libva|libva-drm|libva-x11|libvdpau|libsoxr|libmfx|libgme|libopenmpt|librsvg|libchromaprint|libbluray|libssh|libsrt|librist|libzmq|libzimg|libnuma|libdrm|libudfread)'
+          allow='^(libxml2|libbz2|liblzma|libvpx|libx264|libx265|libdav1d|libaom|libopus|libvorbis|libvorbisenc|libvorbisfile|libtheora|libtheoradec|libtheoraenc|libmp3lame|libwebp|libwebpmux|libspeex|libgsm|libopenjp2|libsnappy|libzvbi|libsvtav1|librav1e|libcodec2|libshine|libtwolame|libxvidcore|libsoxr|libmfx|libgme|libopenmpt|libchromaprint|libbluray|libssh|libsrt|librist|libzmq|libzimg)'
 
           copy_soname() {
-            # Copy a library dereferenced, named by its SONAME major (the name the
-            # loader looks up), so no symlink chain is needed in the bundle.
+            # Dereference and name by SONAME major so no symlink chain is needed.
             local src="$1"
             local soname
             soname="$(basename "$(readlink -f "$src")" | sed -E 's/(\.so\.[0-9]+)\..*/\1/')"
