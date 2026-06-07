@@ -141,11 +141,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Bundle FFmpeg libs + allowlisted FFmpeg deps so the package is
-          # self-contained across distro versions.
+          # Bundle the FFmpeg libraries and their direct (one level) dependencies
+          # so the package is self-contained across distro versions. Use a denylist
+          # of the desktop/GPU/font/core libraries that must come from the host
+          # (bundling those would conflict with the system GTK/WebKit/GL stack);
+          # everything else FFmpeg links directly is a codec/helper lib we bundle.
           triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           libdir="/usr/lib/${triplet}"
-          allow='^(libxml2|libbz2|liblzma|libvpx|libx264|libx265|libdav1d|libaom|libopus|libvorbis|libvorbisenc|libvorbisfile|libtheora|libtheoradec|libtheoraenc|libmp3lame|libwebp|libwebpmux|libspeex|libgsm|libopenjp2|libsnappy|libzvbi|libsvtav1|librav1e|libcodec2|libshine|libtwolame|libxvidcore|libsoxr|libmfx|libgme|libopenmpt|libchromaprint|libbluray|libssh|libsrt|librist|libzmq|libzimg)'
+          deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
 
           copy_soname() {
             # Dereference and name by SONAME major so no symlink chain is needed.
@@ -163,7 +166,7 @@ jobs:
             [ -e "$f" ] || continue
             ldd "$f" 2>/dev/null | awk '/=> \//{print $3}' | while read -r dep; do
               base="$(basename "$dep")"
-              if echo "$base" | grep -Eq "$allow" && [ -e "$dep" ]; then
+              if ! echo "$base" | grep -Eq "$deny" && [ -e "$dep" ]; then
                 copy_soname "$dep"
               fi
             done
