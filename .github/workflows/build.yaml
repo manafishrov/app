@@ -134,7 +134,8 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-libav \
             gstreamer1.0-nice \
-            xdg-utils
+            xdg-utils \
+            patchelf
 
       - name: Bundle FFmpeg libraries
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
@@ -170,6 +171,14 @@ jobs:
                 copy_soname "$dep"
               fi
             done
+          done
+          # Give each bundled library an $ORIGIN rpath so they find their
+          # siblings. The loader's DT_RUNPATH does not apply to transitive deps
+          # (e.g. libavformat needs libavutil), so without this the bundled libs
+          # cannot locate each other even though they sit in the same directory.
+          for f in src-tauri/*.so*; do
+            [ -e "$f" ] || continue
+            patchelf --set-rpath '$ORIGIN' "$f" || true
           done
           echo '{"bundle": {"resources": ["*.so*"]}}' > src-tauri/tauri.linux.conf.json
 
