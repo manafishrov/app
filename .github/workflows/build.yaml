@@ -26,18 +26,21 @@ jobs:
       - name: Create draft release
         id: create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           tag="${{ github.ref_name }}"
           repo="${{ github.repository }}"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
+          if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
             args=(--draft --title "$tag" --notes "Release assets for $tag.")
             if [[ "$tag" == *-* ]]; then
               args+=(--prerelease)
             fi
-            gh release create "$tag" "${args[@]}"
+            gh release create "$tag" -R "$repo" "${args[@]}"
           fi
-          release_id="$(gh api "repos/$repo/releases/tags/$tag" -q '.id')"
+          # The `releases/tags/{tag}` API hides drafts, so read the id via the
+          # gh CLI which can see drafts created by this token.
+          release_id="$(gh release view "$tag" -R "$repo" --json databaseId -q '.databaseId')"
           echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
 
   build-binary:
