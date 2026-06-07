@@ -136,6 +136,45 @@ jobs:
             gstreamer1.0-nice \
             xdg-utils
 
+      - name: Bundle FFmpeg libraries
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The app links the system FFmpeg (libav*/libsw*), whose SONAME differs
+          # between distro releases, so bundle those libraries — plus the FFmpeg
+          # codec/helper libraries they depend on that minimal systems may lack
+          # (e.g. libxml2) — to make deb/rpm/AppImage self-contained. Only the
+          # allowlisted FFmpeg-related deps are bundled; the desktop/font/GTK/GL
+          # stack is intentionally left to the host to avoid conflicts.
+          triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+          libdir="/usr/lib/${triplet}"
+          allow='^(libxml2|libbz2|liblzma|libvpx|libx264|libx265|libdav1d|libaom|libopus|libvorbis|libvorbisenc|libvorbisfile|libtheora|libtheoradec|libtheoraenc|libmp3lame|libwebp|libwebpmux|libspeex|libgsm|libopenjp2|libsnappy|libzvbi|libsvtav1|librav1e|libcodec2|libshine|libtwolame|libxvidcore|libva|libva-drm|libva-x11|libvdpau|libsoxr|libmfx|libgme|libopenmpt|librsvg|libchromaprint|libbluray|libssh|libsrt|librist|libzmq|libzimg|libnuma|libdrm|libudfread)'
+
+          copy_soname() {
+            # Copy a library dereferenced, named by its SONAME major (the name the
+            # loader looks up), so no symlink chain is needed in the bundle.
+            local src="$1"
+            local soname
+            soname="$(basename "$(readlink -f "$src")" | sed -E 's/(\.so\.[0-9]+)\..*/\1/')"
+            cp -Lf "$src" "src-tauri/${soname}"
+          }
+
+          for f in "${libdir}"/libav*.so.* "${libdir}"/libsw*.so.*; do
+            [ -e "$f" ] || continue
+            copy_soname "$f"
+          done
+          for f in "${libdir}"/libav*.so.* "${libdir}"/libsw*.so.*; do
+            [ -e "$f" ] || continue
+            ldd "$f" 2>/dev/null | awk '/=> \//{print $3}' | while read -r dep; do
+              base="$(basename "$dep")"
+              if echo "$base" | grep -Eq "$allow" && [ -e "$dep" ]; then
+                copy_soname "$dep"
+              fi
+            done
+          done
+          echo '{"bundle": {"resources": ["*.so*", "*.so"]}}' > src-tauri/tauri.linux.conf.json
+
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         shell: powershell
