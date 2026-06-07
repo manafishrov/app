@@ -42,7 +42,10 @@
         gst-plugins-ugly
         gst-libav
       ];
-      gstPluginPath = pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins;
+      # libnice provides webrtcbin's ICE agent; its plugin is in the `out` output.
+      gstPluginPath =
+        pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins
+        + ":${pkgs.libnice.out}/lib/gstreamer-1.0";
       linuxLibs = with pkgs; [
         glib
         gtk3

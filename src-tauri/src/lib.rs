@@ -140,6 +140,22 @@ fn fix_gtk_dpi() {
   }
 }
 
+/// Enable `WebRTC` in the `WebKitGTK` webview; it is gated off by default.
+#[cfg(target_os = "linux")]
+fn enable_webkit_webrtc(app: &App) {
+  use tauri::Manager;
+  use webkit2gtk::{SettingsExt, WebViewExt};
+
+  for webview in app.webview_windows().values() {
+    let _ = webview.with_webview(|platform_webview| {
+      let inner = platform_webview.inner();
+      if let Some(settings) = WebViewExt::settings(&inner) {
+        settings.set_enable_webrtc(true);
+      }
+    });
+  }
+}
+
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
@@ -204,7 +220,10 @@ pub fn run() -> tauri::Result<()> {
     ])
     .setup(|app| {
       #[cfg(target_os = "linux")]
-      fix_gtk_dpi();
+      {
+        fix_gtk_dpi();
+        enable_webkit_webrtc(app);
+      }
       setup_handlers(app);
       Ok(())
     });

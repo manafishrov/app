@@ -68,6 +68,30 @@ const attachVideoStream = (
   video.srcObject = stream;
   video.addEventListener('playing', onPlaying);
 };
+// Pin the offer to one H.264 codec; WebKitGTK drops RTP when it offers several.
+const selectH264Codec = (codecs: RTCRtpCodec[]): RTCRtpCodec | undefined => {
+  const h264 = codecs.filter((codec) => codec.mimeType.toLowerCase() === 'video/h264');
+  const preferred = h264.find((codec) =>
+    (codec.sdpFmtpLine ?? '').includes('packetization-mode=1'),
+  );
+  return preferred ?? h264[0];
+};
+const preferH264 = (transceiver: RTCRtpTransceiver): void => {
+  if (
+    typeof RTCRtpReceiver.getCapabilities !== 'function' ||
+    typeof transceiver.setCodecPreferences !== 'function'
+  ) {
+    return;
+  }
+  const capabilities = RTCRtpReceiver.getCapabilities('video');
+  if (!capabilities) {
+    return;
+  }
+  const codec = selectH264Codec(capabilities.codecs);
+  if (codec) {
+    transceiver.setCodecPreferences([codec]);
+  }
+};
 const createOffer = (connection: RTCPeerConnection): Promise<StreamOffer> =>
   connection
     .createOffer()
@@ -113,6 +137,15 @@ const bindConnectionEvents = (connection: RTCPeerConnection, context: ConnectCon
     scheduleRetry(state, setup);
   };
 };
+const createPeerConnection = (context: ConnectContext): RTCPeerConnection => {
+  // `max-bundle`: WebKitGTK does not implement the default `balanced` policy.
+  const connection = new RTCPeerConnection({ bundlePolicy: 'max-bundle' });
+  context.state.peerConnection = connection;
+  bindConnectionEvents(connection, context);
+  const transceiver = connection.addTransceiver('video', { direction: 'recvonly' });
+  preferH264(transceiver);
+  return connection;
+};
 const connectWebRTC = (context: ConnectContext): Promise<void> => {
   const signalingUrl = getSignalingUrl();
   if (context.state.disposed || signalingUrl.length === 0) {
@@ -120,10 +153,7 @@ const connectWebRTC = (context: ConnectContext): Promise<void> => {
   }
   setRecordingStore({ webrtcConnected: false });
   closePeerConnection(context.state);
-  const connection = new RTCPeerConnection();
-  context.state.peerConnection = connection;
-  bindConnectionEvents(connection, context);
-  connection.addTransceiver('video', { direction: 'recvonly' });
+  const connection = createPeerConnection(context);
   return createOffer(connection)
     .then((offer) => {
       if (!isActiveConnection(context.state, connection)) {
@@ -140,7 +170,8 @@ const connectWebRTC = (context: ConnectContext): Promise<void> => {
       if (!isActiveConnection(context.state, connection)) {
         return;
       }
-      logInfo('WebRTC connection failed, retrying in 3 seconds...', error);
+      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      logInfo('WebRTC connection failed, retrying in 3 seconds...', detail);
       markDisconnected(context.handlers);
       scheduleRetry(context.state, context.setup);
     });

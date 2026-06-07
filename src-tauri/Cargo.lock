@@ -2292,6 +2292,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "tokio-util",
+ "webkit2gtk",
  "windows 0.62.2",
 ]
 
