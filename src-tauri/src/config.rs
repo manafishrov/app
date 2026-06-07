@@ -18,7 +18,9 @@ pub fn get_config_path() -> Option<PathBuf> {
 }
 
 fn parse_semver(version: &str) -> (u32, u32, u32) {
-  let parts: Vec<&str> = version.split('.').collect();
+  // Drop any pre-release/build suffix (e.g. `1.0.13-rc.1`) so the patch parses.
+  let core = version.split(['-', '+']).next().unwrap_or(version);
+  let parts: Vec<&str> = core.split('.').collect();
   let major = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0);
   let minor = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
   let patch = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
@@ -202,6 +204,8 @@ mod tests {
       ("1", (1, 0, 0)),
       ("", (0, 0, 0)),
       ("abc.def.ghi", (0, 0, 0)),
+      ("1.0.13-rc.1", (1, 0, 13)),
+      ("1.0.13+build.5", (1, 0, 13)),
     ];
 
     for (input, expected) in cases {
@@ -221,6 +225,7 @@ mod tests {
       (("1.1.0", "1.0.0"), Ordering::Greater),
       (("1.0.1", "1.0.0"), Ordering::Greater),
       (("0.9.9", "1.0.0"), Ordering::Less),
+      (("1.0.12", "1.0.13-rc.1"), Ordering::Less),
     ];
 
     for ((left, right), expected) in cases {
