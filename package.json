@@ -23,10 +23,10 @@
   "dependencies": {
     "@manafishrov/ui": "1.5.7",
     "@tailwindcss/vite": "4.3.0",
-    "@tanstack/router-plugin": "1.168.13",
+    "@tanstack/router-plugin": "1.168.14",
     "@tanstack/solid-form": "1.33.0",
-    "@tanstack/solid-router": "1.170.10",
-    "@tanstack/solid-virtual": "3.13.26",
+    "@tanstack/solid-router": "1.170.11",
+    "@tanstack/solid-virtual": "3.13.28",
     "@tauri-apps/api": "2.11.0",
     "@tauri-apps/plugin-dialog": "2.7.1",
     "@tauri-apps/plugin-fs": "2.5.1",
@@ -38,8 +38,8 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "1.2.75",
-    "@inlang/paraglide-js": "2.18.1",
+    "@iconify-json/material-symbols": "1.2.76",
+    "@inlang/paraglide-js": "2.18.2",
     "@tanstack/devtools-vite": "0.7.0",
     "@tanstack/solid-devtools": "0.8.5",
     "@tanstack/solid-router-devtools": "1.167.0",
@@ -54,8 +54,8 @@
     "typescript": "6.0.3",
     "unplugin-auto-import": "21.0.0",
     "unplugin-icons": "23.0.1",
-    "vite": "8.0.14",
+    "vite": "8.0.16",
     "vite-plugin-solid": "2.11.12",
-    "vitest": "4.1.7"
+    "vitest": "4.1.8"
   }
 }
