@@ -45,7 +45,7 @@ pub async fn fetch_releases(repo_url: &str) -> Result<Vec<FirmwareRelease>, Stri
   let response = client
     .get(&url)
     .header("Accept", "application/vnd.github+json")
-    .header("User-Agent", "manafish-app")
+    .header("User-Agent", "manafish")
     .send()
     .await
     .map_err(|e| e.to_string())?;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.manafishrov.Manafish</id>
+  <id>com.manafishrov.manafish</id>
 
   <name>Manafish</name>
   <summary>Control your Manafish ROV</summary>
@@ -28,7 +28,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.manafishrov.Manafish.desktop</launchable>
+  <launchable type="desktop-id">com.manafishrov.manafish.desktop</launchable>
 
   <categories>
     <category>Utility</category>
