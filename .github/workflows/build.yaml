@@ -142,7 +142,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Bundle the FFmpeg libraries and their direct (one level) dependencies
+          # Bundle the FFmpeg libraries and their full dependency closure
           # so the package is self-contained across distro versions. Use a denylist
           # of the desktop/GPU/font/core libraries that must come from the host
           # (bundling those would conflict with the system GTK/WebKit/GL stack);
@@ -152,25 +152,44 @@ jobs:
           deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
 
           copy_soname() {
-            # Dereference and name by SONAME major so no symlink chain is needed.
+            # Name the bundled file by its real ELF SONAME (the exact name the
+            # loader requests), not a guessed suffix. SONAMEs are not always a
+            # single integer major (e.g. libjxl.so.0.7), so deriving the name
+            # from the filename with a regex misnames the file and the loader
+            # then fails with "cannot open shared object file".
             local src="$1"
-            local soname
-            soname="$(basename "$(readlink -f "$src")" | sed -E 's/(\.so\.[0-9]+)\..*/\1/')"
-            cp -Lf "$src" "src-tauri/${soname}"
+            local real soname
+            real="$(readlink -f "$src")"
+            soname="$(patchelf --print-soname "$real" 2>/dev/null || true)"
+            [ -n "$soname" ] || soname="$(basename "$real")"
+            cp -Lf "$real" "src-tauri/${soname}"
           }
 
+          # Recursively bundle the FFmpeg libraries and their entire dependency
+          # closure (deps-of-deps included), skipping anything on the denylist
+          # which must come from the host. A one-level walk misses transitive
+          # deps such as libjxl's own libbrotli/libhwy.
+          declare -A seen=()
+          queue=()
           for f in "${libdir}"/libav*.so.* "${libdir}"/libsw*.so.*; do
             [ -e "$f" ] || continue
-            copy_soname "$f"
+            queue+=("$f")
           done
-          for f in "${libdir}"/libav*.so.* "${libdir}"/libsw*.so.*; do
-            [ -e "$f" ] || continue
-            ldd "$f" 2>/dev/null | awk '/=> \//{print $3}' | while read -r dep; do
-              base="$(basename "$dep")"
-              if ! echo "$base" | grep -Eq "$deny" && [ -e "$dep" ]; then
-                copy_soname "$dep"
+          while [ "${#queue[@]}" -gt 0 ]; do
+            cur="${queue[0]}"
+            queue=("${queue[@]:1}")
+            base="$(basename "$(readlink -f "$cur")")"
+            if [ -n "${seen[$base]:-}" ]; then
+              continue
+            fi
+            seen[$base]=1
+            copy_soname "$cur"
+            while read -r dep; do
+              dbase="$(basename "$dep")"
+              if [ -e "$dep" ] && ! echo "$dbase" | grep -Eq "$deny"; then
+                queue+=("$dep")
               fi
-            done
+            done < <(ldd "$cur" 2>/dev/null | awk '/=> \//{print $3}')
           done
           # Give each bundled library an $ORIGIN rpath so they find their
           # siblings. The loader's DT_RUNPATH does not apply to transitive deps
