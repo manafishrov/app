@@ -43,16 +43,10 @@ jobs:
           - platform: ubuntu-24.04-arm
             arch: aarch64
 
+    env:
+      # Version comes from the dispatch input or from a webkitgtk-build-<v> tag.
+      WK_VERSION: ${{ inputs.version || replace(github.ref_name, 'webkitgtk-build-', '') }}
     steps:
-      - name: Resolve version
-        id: ver
-        run: |
-          v="${{ inputs.version }}"
-          if [ -z "$v" ]; then
-            v="${GITHUB_REF_NAME#webkitgtk-build-}"
-          fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
