@@ -149,9 +149,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
+          # --prerelease keeps this out of GitHub's releases/latest, which the
+          # Tauri updater endpoint resolves; a plain release here would shadow
+          # the app releases and 404 every update check.
           tag="webkitgtk-${{ inputs.version }}-webrtc"
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" \
+              --prerelease \
               --title "$tag" \
               --notes "WebKitGTK ${{ inputs.version }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
           fi
