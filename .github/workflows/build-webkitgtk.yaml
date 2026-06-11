@@ -44,6 +44,15 @@ jobs:
             arch: aarch64
 
     steps:
+      - name: Resolve version
+        id: ver
+        run: |
+          v="${{ inputs.version }}"
+          if [ -z "$v" ]; then
+            v="${GITHUB_REF_NAME#webkitgtk-build-}"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
@@ -63,23 +72,23 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ccache
-          key: webkitgtk-ccache-${{ matrix.arch }}-${{ inputs.version }}
+          key: webkitgtk-ccache-${{ matrix.arch }}-${{ env.WK_VERSION }}
           restore-keys: |
             webkitgtk-ccache-${{ matrix.arch }}-
 
       - name: Download WebKitGTK source
         run: |
-          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz"
-          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz.sums"
-          grep -E 'sha256|^[0-9a-f]{64}' webkitgtk-${{ inputs.version }}.tar.xz.sums || true
-          sha256=$(grep -Eo '^[0-9a-f]{64}' webkitgtk-${{ inputs.version }}.tar.xz.sums | head -1 || true)
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ env.WK_VERSION }}.tar.xz"
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums"
+          grep -E 'sha256|^[0-9a-f]{64}' webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums || true
+          sha256=$(grep -Eo '^[0-9a-f]{64}' webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums | head -1 || true)
           if [ -n "$sha256" ]; then
-            echo "${sha256}  webkitgtk-${{ inputs.version }}.tar.xz" | sha256sum -c -
+            echo "${sha256}  webkitgtk-${{ env.WK_VERSION }}.tar.xz" | sha256sum -c -
           fi
-          tar xf "webkitgtk-${{ inputs.version }}.tar.xz"
+          tar xf "webkitgtk-${{ env.WK_VERSION }}.tar.xz"
 
       - name: Configure
-        working-directory: webkitgtk-${{ inputs.version }}
+        working-directory: webkitgtk-${{ env.WK_VERSION }}
         run: |
           cmake -B build -G Ninja \
             -DPORT=GTK \
@@ -99,28 +108,28 @@ jobs:
             -DENABLE_INTROSPECTION=OFF
 
       - name: Build
-        working-directory: webkitgtk-${{ inputs.version }}
+        working-directory: webkitgtk-${{ env.WK_VERSION }}
         run: |
           ccache --zero-stats
           ninja -C build
           ccache --show-stats
 
       - name: Package
-        working-directory: webkitgtk-${{ inputs.version }}
+        working-directory: webkitgtk-${{ env.WK_VERSION }}
         run: |
           DESTDIR="$PWD/dest" ninja -C build install
           tar -C dest/usr/lib/Manafish -I 'zstd -19 -T0' \
-            -cf "../webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
+            -cf "../webkitgtk-${{ env.WK_VERSION }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
 
       - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="webkitgtk-${{ inputs.version }}-webrtc"
+          tag="webkitgtk-${{ env.WK_VERSION }}-webrtc"
           if ! gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create "$tag" -R "${{ github.repository }}" \
               --title "$tag" \
-              --notes "WebKitGTK ${{ inputs.version }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
+              --notes "WebKitGTK ${{ env.WK_VERSION }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
           fi
           gh release upload "$tag" -R "${{ github.repository }}" --clobber \
-            "webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst"
+            "webkitgtk-${{ env.WK_VERSION }}-webrtc-${{ matrix.arch }}.tar.zst"
