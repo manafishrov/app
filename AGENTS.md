@@ -72,6 +72,22 @@ and release notes back to the user before doing anything.**
   and creates a **draft** GitHub release. Edit and publish manually.
 - Pre-releases use `vX.Y.Z-rc.N` (or similar) and are auto-marked prerelease.
 
+### Bundled WebKitGTK (Linux)
+
+Linux packages bundle a custom WebKitGTK built with `ENABLE_WEB_RTC` (distro
+builds compile it out, which leaves `RTCPeerConnection` undefined and breaks
+the live video feed). The release workflow builds it automatically via
+`.github/workflows/build-webkitgtk.yaml` when the
+`webkitgtk-<version>-webrtc` release is missing (one-time ~4h per version),
+then reuses the published tarballs.
+
+To bump the WebKitGTK version (new release or CVE), update it in **both**:
+
+- `.github/workflows/build.yaml` → `webkitgtk` job `with: version`
+- `.github/workflows/build-webkitgtk.yaml` → `workflow_dispatch` input default
+
+The next release tag rebuilds and bundles it automatically.
+
 Workflow before tagging: confirm the bumped version with the user, confirm the
 release notes text, then commit, tag, push.
 

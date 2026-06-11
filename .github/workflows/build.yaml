@@ -153,7 +153,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WEBKITGTK_VERSION: 2.48.7
+          # Single source of truth: the version passed to the webkitgtk job.
+          WEBKITGTK_VERSION: ${{ needs.webkitgtk.outputs.version }}
         run: |
           set -euo pipefail
           # Distro WebKitGTK builds compile without ENABLE_WEB_RTC, leaving
@@ -213,16 +214,14 @@ jobs:
           # webp, woff2, ...) so they land in the resource root too. The webkit
           # files themselves are shipped as the webkit/ tree, not copied here;
           # ldd resolves their deps against the build host's packages.
-          if [ -d src-tauri/webkit ]; then
-            while read -r wk; do
-              while read -r dep; do
-                dbase="$(basename "$dep")"
-                if [ -e "$dep" ] && ! echo "$dbase" | grep -Eq "$deny"; then
-                  queue+=("$dep")
-                fi
-              done < <(ldd "$wk" 2>/dev/null | awk '/=> \//{print $3}')
-            done < <(find src-tauri/webkit/lib src-tauri/webkit/libexec -type f \( -name '*.so*' -o -perm -u+x \) 2>/dev/null)
-          fi
+          while read -r wk; do
+            while read -r dep; do
+              dbase="$(basename "$dep")"
+              if [ -e "$dep" ] && ! echo "$dbase" | grep -Eq "$deny"; then
+                queue+=("$dep")
+              fi
+            done < <(ldd "$wk" 2>/dev/null | awk '/=> \//{print $3}')
+          done < <(find src-tauri/webkit/lib src-tauri/webkit/libexec -type f \( -name '*.so*' -o -perm -u+x \) 2>/dev/null)
           while [ "${#queue[@]}" -gt 0 ]; do
             cur="${queue[0]}"
             queue=("${queue[@]:1}")
@@ -247,27 +246,24 @@ jobs:
             [ -e "$f" ] || continue
             patchelf --set-rpath '$ORIGIN' "$f" || true
           done
-          # Wire the bundled WebKitGTK tree to its own libs (webkit/lib) and to
-          # the resource root (icu etc.). Relative $ORIGIN paths work in the
-          # installed tree and the AppImage; the absolute path is a fallback for
-          # helper binaries that had to be copied out (exec-bit recovery).
-          if [ -d src-tauri/webkit ]; then
-            for f in src-tauri/webkit/lib/*.so*; do
-              [ -f "$f" ] || continue
-              patchelf --set-rpath '$ORIGIN:$ORIGIN/../..' "$f" || true
-            done
-            for f in src-tauri/webkit/libexec/webkit2gtk-4.1/*; do
-              [ -f "$f" ] || continue
-              patchelf --set-rpath '$ORIGIN/../../lib:$ORIGIN/../../..:/usr/lib/Manafish/webkit/lib:/usr/lib/Manafish' "$f" || true
-            done
-            for f in src-tauri/webkit/lib/webkit2gtk-4.1/injected-bundle/*.so*; do
-              [ -f "$f" ] || continue
-              patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
-            done
-            echo '{"bundle": {"resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
-          else
-            echo '{"bundle": {"resources": ["*.so*"]}}' > src-tauri/tauri.linux.conf.json
-          fi
+          # Wire the bundled WebKitGTK tree (guaranteed by the download step)
+          # to its own libs (webkit/lib) and to the resource root (icu etc.).
+          # Relative $ORIGIN paths work in the installed tree and the AppImage;
+          # the absolute path is a fallback for helper binaries that had to be
+          # copied out (exec-bit recovery).
+          for f in src-tauri/webkit/lib/*.so*; do
+            [ -f "$f" ] || continue
+            patchelf --set-rpath '$ORIGIN:$ORIGIN/../..' "$f" || true
+          done
+          for f in src-tauri/webkit/libexec/webkit2gtk-4.1/*; do
+            [ -f "$f" ] || continue
+            patchelf --set-rpath '$ORIGIN/../../lib:$ORIGIN/../../..:/usr/lib/Manafish/webkit/lib:/usr/lib/Manafish' "$f" || true
+          done
+          for f in src-tauri/webkit/lib/webkit2gtk-4.1/injected-bundle/*.so*; do
+            [ -f "$f" ] || continue
+            patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
+          done
+          echo '{"bundle": {"resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'

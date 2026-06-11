@@ -28,6 +28,10 @@ on:
         description: WebKitGTK version to build
         required: true
         type: string
+    outputs:
+      version:
+        description: The WebKitGTK version that was ensured
+        value: ${{ inputs.version }}
 
 permissions:
   contents: write
