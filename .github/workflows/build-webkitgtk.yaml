@@ -20,6 +20,11 @@ on:
         description: WebKitGTK version to build
         required: true
         default: 2.48.7
+  push:
+    tags:
+      # Alternative trigger for when no API credentials are at hand:
+      # `git tag webkitgtk-build-2.48.7 && git push origin webkitgtk-build-2.48.7`
+      - webkitgtk-build-*
 
 permissions:
   contents: write
