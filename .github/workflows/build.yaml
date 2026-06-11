@@ -150,13 +150,18 @@ jobs:
           # (from the build-webkitgtk.yaml workflow) so the live video feed
           # works everywhere. Installed under <resources>/webkit; the app
           # binary's rpath prefers webkit/lib over the host library.
-          gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
-            -R "${{ github.repository }}" \
-            --pattern "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
-          mkdir -p src-tauri/webkit
-          tar -C src-tauri/webkit --strip-components=1 -I zstd \
-            -xf "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
-          rm "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+          # If the tarball release is missing (first builds bootstrapping),
+          # warn and build without it - the app then falls back to the host
+          # webkit, which has no WebRTC.
+          asset="webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+          if gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
+            -R "${{ github.repository }}" --pattern "$asset"; then
+            mkdir -p src-tauri/webkit
+            tar -C src-tauri/webkit --strip-components=1 -I zstd -xf "$asset"
+            rm "$asset"
+          else
+            echo "::warning::webkitgtk-${WEBKITGTK_VERSION}-webrtc release/asset not found; packaging WITHOUT bundled WebKitGTK (no WebRTC on stock distros)"
+          fi
 
       - name: Bundle FFmpeg and WebKitGTK libraries
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
