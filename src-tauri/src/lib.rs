@@ -140,6 +140,87 @@ fn fix_gtk_dpi() {
   }
 }
 
+/// Make the bundled `WebKit` helper binaries executable, recovering into the
+/// cache dir when the install location is read-only and the packaging dropped
+/// the exec bits. Returns the directory the helpers should be spawned from.
+#[cfg(target_os = "linux")]
+fn ensure_webkit_helpers_executable(exec_dir: std::path::PathBuf) -> std::path::PathBuf {
+  use std::os::unix::fs::PermissionsExt;
+
+  let probe = exec_dir.join("WebKitWebProcess");
+  let Ok(meta) = probe.metadata() else {
+    return exec_dir;
+  };
+  if meta.permissions().mode() & 0o111 != 0 {
+    return exec_dir;
+  }
+  let helpers: Vec<std::path::PathBuf> = std::fs::read_dir(&exec_dir)
+    .map(|entries| entries.flatten().map(|entry| entry.path()).collect())
+    .unwrap_or_default();
+  let executable = std::fs::Permissions::from_mode(0o755);
+  if helpers
+    .iter()
+    .all(|path| std::fs::set_permissions(path, executable.clone()).is_ok())
+  {
+    return exec_dir;
+  }
+  // Read-only install (e.g. /usr). Copy the helpers somewhere writable; their
+  // rpath carries an absolute /usr/lib/Manafish fallback so they still find
+  // the bundled libraries from there.
+  let Some(cache_dir) = dirs::cache_dir() else {
+    return exec_dir;
+  };
+  let recovered = cache_dir.join("manafish/webkit-exec");
+  if std::fs::create_dir_all(&recovered).is_err() {
+    return exec_dir;
+  }
+  for path in &helpers {
+    let Some(name) = path.file_name() else {
+      continue;
+    };
+    let target = recovered.join(name);
+    if std::fs::copy(path, &target).is_err()
+      || std::fs::set_permissions(&target, executable.clone()).is_err()
+    {
+      return exec_dir;
+    }
+  }
+  recovered
+}
+
+/// Point `WebKitGTK` at the bundled WebRTC-enabled runtime when present.
+///
+/// Distro `WebKitGTK` builds compile without `ENABLE_WEB_RTC`, leaving
+/// `RTCPeerConnection` undefined in the webview, so the packages ship our own
+/// build under `<resources>/webkit`. The deb/rpm install it at the compiled-in
+/// prefix (`/usr/lib/Manafish/webkit`), but the `AppImage` mounts at a random
+/// path, so the helper binaries are located through `WEBKIT_EXEC_PATH`
+/// (honored because the build sets `ENABLE_DEVELOPER_MODE`). Must run before
+/// any GTK/WebKit code and before other threads exist: `set_var` requires it.
+#[cfg(target_os = "linux")]
+fn setup_bundled_webkit() {
+  let Ok(exe) = std::env::current_exe() else {
+    return;
+  };
+  let Some(bin_dir) = exe.parent() else {
+    return;
+  };
+  let Ok(webkit_dir) = bin_dir.join("../lib/Manafish/webkit").canonicalize() else {
+    return;
+  };
+  let exec_dir = webkit_dir.join("libexec/webkit2gtk-4.1");
+  if !exec_dir.join("WebKitWebProcess").is_file() {
+    return;
+  }
+  let exec_dir = ensure_webkit_helpers_executable(exec_dir);
+  let bundle_dir = webkit_dir.join("lib/webkit2gtk-4.1/injected-bundle");
+  // SAFETY: called at startup before any other threads are spawned.
+  unsafe {
+    std::env::set_var("WEBKIT_EXEC_PATH", &exec_dir);
+    std::env::set_var("WEBKIT_INJECTED_BUNDLE_PATH", &bundle_dir);
+  }
+}
+
 /// Enable `WebRTC` in the `WebKitGTK` webview; it is gated off by default.
 #[cfg(target_os = "linux")]
 fn enable_webkit_webrtc(app: &App) {
@@ -164,6 +245,8 @@ pub fn run() -> tauri::Result<()> {
     let exit_code = run_flasher_cli(&raw_args);
     std::process::exit(exit_code);
   }
+  #[cfg(target_os = "linux")]
+  setup_bundled_webkit();
   // Builds distributed through a package manager (Flatpak, Snap, AUR,
   // nixpkgs, Homebrew, winget, deb/rpm repos) must not self-update: the
   // package manager owns the binary and its version. Those builds set

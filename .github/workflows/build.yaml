@@ -137,7 +137,28 @@ jobs:
             xdg-utils \
             patchelf
 
-      - name: Bundle FFmpeg libraries
+      - name: Download WebRTC-enabled WebKitGTK
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBKITGTK_VERSION: 2.48.7
+        run: |
+          set -euo pipefail
+          # Distro WebKitGTK builds compile without ENABLE_WEB_RTC, leaving
+          # RTCPeerConnection undefined in the webview. Bundle our own build
+          # (from the build-webkitgtk.yaml workflow) so the live video feed
+          # works everywhere. Installed under <resources>/webkit; the app
+          # binary's rpath prefers webkit/lib over the host library.
+          gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
+            -R "${{ github.repository }}" \
+            --pattern "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+          mkdir -p src-tauri/webkit
+          tar -C src-tauri/webkit --strip-components=1 -I zstd \
+            -xf "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+          rm "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+
+      - name: Bundle FFmpeg and WebKitGTK libraries
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         shell: bash
         run: |
@@ -149,7 +170,10 @@ jobs:
           # everything else FFmpeg links directly is a codec/helper lib we bundle.
           triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           libdir="/usr/lib/${triplet}"
-          deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
+          # libsoup and libgst* must come from the host: libsoup loads host
+          # glib-networking gio modules and gst core must match the host's
+          # gstreamer plugins (webrtcbin etc. come from the deb/rpm Depends).
+          deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libsoup|libgst|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
 
           copy_soname() {
             # Name the bundled file by its real ELF SONAME (the exact name the
@@ -175,6 +199,20 @@ jobs:
             [ -e "$f" ] || continue
             queue+=("$f")
           done
+          # Seed the walk with the bundled WebKitGTK's third-party deps (icu,
+          # webp, woff2, ...) so they land in the resource root too. The webkit
+          # files themselves are shipped as the webkit/ tree, not copied here;
+          # ldd resolves their deps against the build host's packages.
+          if [ -d src-tauri/webkit ]; then
+            while read -r wk; do
+              while read -r dep; do
+                dbase="$(basename "$dep")"
+                if [ -e "$dep" ] && ! echo "$dbase" | grep -Eq "$deny"; then
+                  queue+=("$dep")
+                fi
+              done < <(ldd "$wk" 2>/dev/null | awk '/=> \//{print $3}')
+            done < <(find src-tauri/webkit/lib src-tauri/webkit/libexec -type f \( -name '*.so*' -o -perm -u+x \) 2>/dev/null)
+          fi
           while [ "${#queue[@]}" -gt 0 ]; do
             cur="${queue[0]}"
             queue=("${queue[@]:1}")
@@ -199,7 +237,27 @@ jobs:
             [ -e "$f" ] || continue
             patchelf --set-rpath '$ORIGIN' "$f" || true
           done
-          echo '{"bundle": {"resources": ["*.so*"]}}' > src-tauri/tauri.linux.conf.json
+          # Wire the bundled WebKitGTK tree to its own libs (webkit/lib) and to
+          # the resource root (icu etc.). Relative $ORIGIN paths work in the
+          # installed tree and the AppImage; the absolute path is a fallback for
+          # helper binaries that had to be copied out (exec-bit recovery).
+          if [ -d src-tauri/webkit ]; then
+            for f in src-tauri/webkit/lib/*.so*; do
+              [ -f "$f" ] || continue
+              patchelf --set-rpath '$ORIGIN:$ORIGIN/../..' "$f" || true
+            done
+            for f in src-tauri/webkit/libexec/webkit2gtk-4.1/*; do
+              [ -f "$f" ] || continue
+              patchelf --set-rpath '$ORIGIN/../../lib:$ORIGIN/../../..:/usr/lib/Manafish/webkit/lib:/usr/lib/Manafish' "$f" || true
+            done
+            for f in src-tauri/webkit/lib/webkit2gtk-4.1/injected-bundle/*.so*; do
+              [ -f "$f" ] || continue
+              patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
+            done
+            echo '{"bundle": {"resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
+          else
+            echo '{"bundle": {"resources": ["*.so*"]}}' > src-tauri/tauri.linux.conf.json
+          fi
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'

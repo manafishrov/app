@@ -1,0 +1,121 @@
+name: Build WebKitGTK (WebRTC)
+
+# Builds WebKitGTK with ENABLE_WEB_RTC (off in all distro builds) so the
+# release packages can bundle a WebRTC-capable webview. Stock Ubuntu/Debian/
+# Fedora compile WebKit without WebRTC, which leaves RTCPeerConnection
+# undefined in the webview - the live video feed cannot work there.
+#
+# Runs on demand only (webkit version bumps / CVEs), NOT per release. The
+# resulting tarballs are published to a `webkitgtk-<version>-webrtc` GitHub
+# release that build.yaml downloads from.
+#
+# ENABLE_DEVELOPER_MODE makes WebKit honor WEBKIT_EXEC_PATH at runtime so the
+# helper binaries (WebKitWebProcess etc.) can live inside our package instead
+# of the compiled-in /usr/libexec path.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: WebKitGTK version to build
+        required: true
+        default: 2.48.7
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-24.04
+            arch: x86_64
+          - platform: ubuntu-24.04-arm
+            arch: aarch64
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /usr/local/share/boost /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Install build dependencies
+        run: |
+          # deb-src entries are disabled by default on the runners; build-dep needs them.
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          sudo apt-get build-dep -y webkit2gtk
+          sudo apt-get install -y ninja-build ccache lld unifdef \
+            libgstreamer-plugins-bad1.0-dev libnice-dev
+
+      - name: Restore ccache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ccache
+          key: webkitgtk-ccache-${{ matrix.arch }}-${{ inputs.version }}
+          restore-keys: |
+            webkitgtk-ccache-${{ matrix.arch }}-
+
+      - name: Download WebKitGTK source
+        run: |
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz"
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz.sums"
+          grep -E 'sha256|^[0-9a-f]{64}' webkitgtk-${{ inputs.version }}.tar.xz.sums || true
+          sha256=$(grep -Eo '^[0-9a-f]{64}' webkitgtk-${{ inputs.version }}.tar.xz.sums | head -1 || true)
+          if [ -n "$sha256" ]; then
+            echo "${sha256}  webkitgtk-${{ inputs.version }}.tar.xz" | sha256sum -c -
+          fi
+          tar xf "webkitgtk-${{ inputs.version }}.tar.xz"
+
+      - name: Configure
+        working-directory: webkitgtk-${{ inputs.version }}
+        run: |
+          cmake -B build -G Ninja \
+            -DPORT=GTK \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/lib/Manafish/webkit \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld \
+            -DCMAKE_SHARED_LINKER_FLAGS=-fuse-ld=lld \
+            -DCMAKE_MODULE_LINKER_FLAGS=-fuse-ld=lld \
+            -DUSE_GTK4=OFF \
+            -DENABLE_WEB_RTC=ON \
+            -DENABLE_DEVELOPER_MODE=ON \
+            -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
+            -DENABLE_MINIBROWSER=OFF \
+            -DENABLE_DOCUMENTATION=OFF \
+            -DENABLE_INTROSPECTION=OFF
+
+      - name: Build
+        working-directory: webkitgtk-${{ inputs.version }}
+        run: |
+          ccache --zero-stats
+          ninja -C build
+          ccache --show-stats
+
+      - name: Package
+        working-directory: webkitgtk-${{ inputs.version }}
+        run: |
+          DESTDIR="$PWD/dest" ninja -C build install
+          tar -C dest/usr/lib/Manafish -I 'zstd -19 -T0' \
+            -cf "../webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="webkitgtk-${{ inputs.version }}-webrtc"
+          if ! gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release create "$tag" -R "${{ github.repository }}" \
+              --title "$tag" \
+              --notes "WebKitGTK ${{ inputs.version }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
+          fi
+          gh release upload "$tag" -R "${{ github.repository }}" --clobber \
+            "webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst"
