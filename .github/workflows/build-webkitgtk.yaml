@@ -74,8 +74,10 @@ jobs:
           sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
           sudo apt-get update
           sudo apt-get build-dep -y webkit2gtk
+          # libssl-dev: ENABLE_WEB_RTC needs OpenSSL 3 (not in webkit2gtk
+          # build-deps because distro builds compile without WebRTC).
           sudo apt-get install -y ninja-build ccache lld unifdef \
-            libgstreamer-plugins-bad1.0-dev libnice-dev
+            libgstreamer-plugins-bad1.0-dev libnice-dev libssl-dev
 
       - name: Restore ccache
         if: steps.check.outputs.exists != 'true'
@@ -116,7 +118,9 @@ jobs:
             -DENABLE_BUBBLEWRAP_SANDBOX=OFF \
             -DENABLE_MINIBROWSER=OFF \
             -DENABLE_DOCUMENTATION=OFF \
-            -DENABLE_INTROSPECTION=OFF
+            -DENABLE_INTROSPECTION=OFF \
+            -DENABLE_SPEECH_SYNTHESIS=OFF \
+            -DUSE_LIBBACKTRACE=OFF
 
       - name: Build
         if: steps.check.outputs.exists != 'true'
