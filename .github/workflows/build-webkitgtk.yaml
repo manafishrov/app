@@ -5,9 +5,11 @@ name: Build WebKitGTK (WebRTC)
 # Fedora compile WebKit without WebRTC, which leaves RTCPeerConnection
 # undefined in the webview - the live video feed cannot work there.
 #
-# Runs on demand only (webkit version bumps / CVEs), NOT per release. The
-# resulting tarballs are published to a `webkitgtk-<version>-webrtc` GitHub
-# release that build.yaml downloads from.
+# Tarballs are published to a `webkitgtk-<version>-webrtc` GitHub release
+# that build.yaml downloads from. The release workflow calls this one
+# automatically; when the tarball is already published the job no-ops in
+# seconds, so only the first release after a version bump pays the build
+# time. It can also be dispatched manually for CVE rebuilds.
 #
 # ENABLE_DEVELOPER_MODE makes WebKit honor WEBKIT_EXEC_PATH at runtime so the
 # helper binaries (WebKitWebProcess etc.) can live inside our package instead
@@ -20,11 +22,12 @@ on:
         description: WebKitGTK version to build
         required: true
         default: 2.48.7
-  push:
-    tags:
-      # Alternative trigger for when no API credentials are at hand:
-      # `git tag webkitgtk-build-2.48.7 && git push origin webkitgtk-build-2.48.7`
-      - webkitgtk-build-*
+  workflow_call:
+    inputs:
+      version:
+        description: WebKitGTK version to build
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -43,17 +46,29 @@ jobs:
           - platform: ubuntu-24.04-arm
             arch: aarch64
 
-    env:
-      # Version comes from the dispatch input or from a webkitgtk-build-<v> tag.
-      WK_VERSION: ${{ inputs.version || replace(github.ref_name, 'webkitgtk-build-', '') }}
     steps:
+      - name: Skip when tarball already published
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          asset="webkitgtk-${{ inputs.version }}-webrtc-$(uname -m).tar.zst"
+          if gh release view "webkitgtk-${{ inputs.version }}-webrtc" \
+            --json assets -q '.assets[].name' 2>/dev/null | grep -qx "$asset"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$asset already published; skipping build"
+          fi
+
       - name: Free disk space
+        if: steps.check.outputs.exists != 'true'
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
             /usr/local/share/boost /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
           df -h /
 
       - name: Install build dependencies
+        if: steps.check.outputs.exists != 'true'
         run: |
           # deb-src entries are disabled by default on the runners; build-dep needs them.
           sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
@@ -63,26 +78,28 @@ jobs:
             libgstreamer-plugins-bad1.0-dev libnice-dev
 
       - name: Restore ccache
+        if: steps.check.outputs.exists != 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ccache
-          key: webkitgtk-ccache-${{ matrix.arch }}-${{ env.WK_VERSION }}
+          key: webkitgtk-ccache-${{ matrix.arch }}-${{ inputs.version }}
           restore-keys: |
             webkitgtk-ccache-${{ matrix.arch }}-
 
       - name: Download WebKitGTK source
+        if: steps.check.outputs.exists != 'true'
         run: |
-          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ env.WK_VERSION }}.tar.xz"
-          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums"
-          grep -E 'sha256|^[0-9a-f]{64}' webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums || true
-          sha256=$(grep -Eo '^[0-9a-f]{64}' webkitgtk-${{ env.WK_VERSION }}.tar.xz.sums | head -1 || true)
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz"
+          curl -fLO "https://webkitgtk.org/releases/webkitgtk-${{ inputs.version }}.tar.xz.sums"
+          sha256=$(grep -Eo '^[0-9a-f]{64}' webkitgtk-${{ inputs.version }}.tar.xz.sums | head -1 || true)
           if [ -n "$sha256" ]; then
-            echo "${sha256}  webkitgtk-${{ env.WK_VERSION }}.tar.xz" | sha256sum -c -
+            echo "${sha256}  webkitgtk-${{ inputs.version }}.tar.xz" | sha256sum -c -
           fi
-          tar xf "webkitgtk-${{ env.WK_VERSION }}.tar.xz"
+          tar xf "webkitgtk-${{ inputs.version }}.tar.xz"
 
       - name: Configure
-        working-directory: webkitgtk-${{ env.WK_VERSION }}
+        if: steps.check.outputs.exists != 'true'
+        working-directory: webkitgtk-${{ inputs.version }}
         run: |
           cmake -B build -G Ninja \
             -DPORT=GTK \
@@ -102,28 +119,32 @@ jobs:
             -DENABLE_INTROSPECTION=OFF
 
       - name: Build
-        working-directory: webkitgtk-${{ env.WK_VERSION }}
+        if: steps.check.outputs.exists != 'true'
+        working-directory: webkitgtk-${{ inputs.version }}
         run: |
           ccache --zero-stats
           ninja -C build
           ccache --show-stats
 
       - name: Package
-        working-directory: webkitgtk-${{ env.WK_VERSION }}
+        if: steps.check.outputs.exists != 'true'
+        working-directory: webkitgtk-${{ inputs.version }}
         run: |
           DESTDIR="$PWD/dest" ninja -C build install
           tar -C dest/usr/lib/Manafish -I 'zstd -19 -T0' \
-            -cf "../webkitgtk-${{ env.WK_VERSION }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
+            -cf "../webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
 
       - name: Upload to release
+        if: steps.check.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          tag="webkitgtk-${{ env.WK_VERSION }}-webrtc"
-          if ! gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release create "$tag" -R "${{ github.repository }}" \
+          tag="webkitgtk-${{ inputs.version }}-webrtc"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
               --title "$tag" \
-              --notes "WebKitGTK ${{ env.WK_VERSION }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
+              --notes "WebKitGTK ${{ inputs.version }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
           fi
-          gh release upload "$tag" -R "${{ github.repository }}" --clobber \
-            "webkitgtk-${{ env.WK_VERSION }}-webrtc-${{ matrix.arch }}.tar.zst"
+          gh release upload "$tag" --clobber \
+            "webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst"

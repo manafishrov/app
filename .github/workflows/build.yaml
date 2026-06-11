@@ -43,9 +43,20 @@ jobs:
           release_id="$(gh release view "$tag" -R "$repo" --json databaseId -q '.databaseId')"
           echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
 
+  # Ensures the WebRTC-enabled WebKitGTK tarballs exist before the Linux
+  # builds bundle them. No-ops in seconds when already published; only the
+  # first release after a webkit version bump pays the ~4h build.
+  webkitgtk:
+    name: WebKitGTK (WebRTC)
+    uses: ./.github/workflows/build-webkitgtk.yaml
+    permissions:
+      contents: write
+    with:
+      version: 2.48.7
+
   build-binary:
     name: Build Binaries
-    needs: create-release
+    needs: [create-release, webkitgtk]
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -147,21 +158,15 @@ jobs:
           set -euo pipefail
           # Distro WebKitGTK builds compile without ENABLE_WEB_RTC, leaving
           # RTCPeerConnection undefined in the webview. Bundle our own build
-          # (from the build-webkitgtk.yaml workflow) so the live video feed
-          # works everywhere. Installed under <resources>/webkit; the app
-          # binary's rpath prefers webkit/lib over the host library.
-          # If the tarball release is missing (first builds bootstrapping),
-          # warn and build without it - the app then falls back to the host
-          # webkit, which has no WebRTC.
+          # so the live video feed works everywhere. The webkitgtk job above
+          # guarantees the tarball exists. Installed under <resources>/webkit;
+          # the app binary's rpath prefers webkit/lib over the host library.
           asset="webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
-          if gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
-            -R "${{ github.repository }}" --pattern "$asset"; then
-            mkdir -p src-tauri/webkit
-            tar -C src-tauri/webkit --strip-components=1 -I zstd -xf "$asset"
-            rm "$asset"
-          else
-            echo "::warning::webkitgtk-${WEBKITGTK_VERSION}-webrtc release/asset not found; packaging WITHOUT bundled WebKitGTK (no WebRTC on stock distros)"
-          fi
+          gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
+            -R "${{ github.repository }}" --pattern "$asset"
+          mkdir -p src-tauri/webkit
+          tar -C src-tauri/webkit --strip-components=1 -I zstd -xf "$asset"
+          rm "$asset"
 
       - name: Bundle FFmpeg and WebKitGTK libraries
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
