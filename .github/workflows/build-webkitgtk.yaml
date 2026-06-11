@@ -1,19 +1,16 @@
 name: Build WebKitGTK (WebRTC)
 
-# Builds WebKitGTK with ENABLE_WEB_RTC (off in all distro builds) so the
-# release packages can bundle a WebRTC-capable webview. Stock Ubuntu/Debian/
-# Fedora compile WebKit without WebRTC, which leaves RTCPeerConnection
-# undefined in the webview - the live video feed cannot work there.
+# Builds WebKitGTK with ENABLE_WEB_RTC, which every distro compiles out -
+# leaving RTCPeerConnection undefined and breaking the live video feed.
+# Tarballs go to a `webkitgtk-<version>-webrtc` release that build.yaml
+# bundles into the Linux packages.
 #
-# Tarballs are published to a `webkitgtk-<version>-webrtc` GitHub release
-# that build.yaml downloads from. The release workflow calls this one
-# automatically; when the tarball is already published the job no-ops in
-# seconds, so only the first release after a version bump pays the build
-# time. It can also be dispatched manually for CVE rebuilds.
+# Called from the release workflow on every tag: no-ops in seconds when the
+# tarball exists, so only the first release after a version bump pays the
+# ~4h build. Manual dispatch is for CVE rebuilds.
 #
-# ENABLE_DEVELOPER_MODE makes WebKit honor WEBKIT_EXEC_PATH at runtime so the
-# helper binaries (WebKitWebProcess etc.) can live inside our package instead
-# of the compiled-in /usr/libexec path.
+# ENABLE_DEVELOPER_MODE makes WebKit honor WEBKIT_EXEC_PATH so the helper
+# binaries can live inside our package instead of /usr/libexec.
 
 on:
   workflow_dispatch:
@@ -74,12 +71,12 @@ jobs:
       - name: Install build dependencies
         if: steps.check.outputs.exists != 'true'
         run: |
-          # deb-src entries are disabled by default on the runners; build-dep needs them.
+          # build-dep needs deb-src entries, which the runners disable.
           sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
           sudo apt-get update
           sudo apt-get build-dep -y webkit2gtk
-          # libssl-dev: ENABLE_WEB_RTC needs OpenSSL 3 (not in webkit2gtk
-          # build-deps because distro builds compile without WebRTC).
+          # libssl-dev: WebRTC needs OpenSSL 3, absent from the build-deps
+          # because the distro build compiles WebRTC out.
           sudo apt-get install -y ninja-build ccache lld unifdef \
             libgstreamer-plugins-bad1.0-dev libnice-dev libssl-dev
 
@@ -107,6 +104,10 @@ jobs:
         if: steps.check.outputs.exists != 'true'
         working-directory: webkitgtk-${{ inputs.version }}
         run: |
+          # Prefix matches where the deb/rpm install the resource dir, so the
+          # compiled-in helper paths resolve without env overrides there.
+          # Speech synthesis (needs flite) and libbacktrace (not packaged on
+          # noble) are off; neither is useful to this app.
           cmake -B build -G Ninja \
             -DPORT=GTK \
             -DCMAKE_BUILD_TYPE=Release \

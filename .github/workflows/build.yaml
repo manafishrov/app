@@ -153,15 +153,12 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Single source of truth: the version passed to the webkitgtk job.
           WEBKITGTK_VERSION: ${{ needs.webkitgtk.outputs.version }}
         run: |
           set -euo pipefail
-          # Distro WebKitGTK builds compile without ENABLE_WEB_RTC, leaving
-          # RTCPeerConnection undefined in the webview. Bundle our own build
-          # so the live video feed works everywhere. The webkitgtk job above
-          # guarantees the tarball exists. Installed under <resources>/webkit;
-          # the app binary's rpath prefers webkit/lib over the host library.
+          # Distro WebKitGTK has no WebRTC compiled in, so the packages ship
+          # our own build (published by the webkitgtk job) under
+          # <resources>/webkit. The app binary's rpath prefers it at runtime.
           asset="webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
           gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
             -R "${{ github.repository }}" --pattern "$asset"
@@ -174,24 +171,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Bundle the FFmpeg libraries and their full dependency closure
-          # so the package is self-contained across distro versions. Use a denylist
-          # of the desktop/GPU/font/core libraries that must come from the host
-          # (bundling those would conflict with the system GTK/WebKit/GL stack);
-          # everything else FFmpeg links directly is a codec/helper lib we bundle.
+          # Bundle FFmpeg and its full dependency closure so the package works
+          # across distro versions. The denylist holds everything that must
+          # come from the host instead: the GTK/WebKit/GL desktop stack,
+          # libsoup (loads host gio modules) and libgst* (must match the
+          # host's gstreamer plugins, pulled in via the deb/rpm Depends).
           triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           libdir="/usr/lib/${triplet}"
-          # libsoup and libgst* must come from the host: libsoup loads host
-          # glib-networking gio modules and gst core must match the host's
-          # gstreamer plugins (webrtcbin etc. come from the deb/rpm Depends).
           deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libsoup|libgst|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
 
           copy_soname() {
-            # Name the bundled file by its real ELF SONAME (the exact name the
-            # loader requests), not a guessed suffix. SONAMEs are not always a
-            # single integer major (e.g. libjxl.so.0.7), so deriving the name
-            # from the filename with a regex misnames the file and the loader
-            # then fails with "cannot open shared object file".
+            # Name the copy by its real ELF SONAME - the exact name the loader
+            # requests. Guessing from the filename breaks on multi-part majors
+            # like libjxl.so.0.7.
             local src="$1"
             local real soname
             real="$(readlink -f "$src")"
@@ -200,20 +192,16 @@ jobs:
             cp -Lf "$real" "src-tauri/${soname}"
           }
 
-          # Recursively bundle the FFmpeg libraries and their entire dependency
-          # closure (deps-of-deps included), skipping anything on the denylist
-          # which must come from the host. A one-level walk misses transitive
-          # deps such as libjxl's own libbrotli/libhwy.
+          # BFS over the dependency closure; a one-level walk would miss
+          # transitive deps such as libjxl's own libbrotli/libhwy.
           declare -A seen=()
           queue=()
           for f in "${libdir}"/libav*.so.* "${libdir}"/libsw*.so.*; do
             [ -e "$f" ] || continue
             queue+=("$f")
           done
-          # Seed the walk with the bundled WebKitGTK's third-party deps (icu,
-          # webp, woff2, ...) so they land in the resource root too. The webkit
-          # files themselves are shipped as the webkit/ tree, not copied here;
-          # ldd resolves their deps against the build host's packages.
+          # Also seed with the bundled WebKitGTK's third-party deps (icu, webp,
+          # woff2, ...); the webkit files themselves ship as the webkit/ tree.
           while read -r wk; do
             while read -r dep; do
               dbase="$(basename "$dep")"
@@ -238,19 +226,16 @@ jobs:
               fi
             done < <(ldd "$cur" 2>/dev/null | awk '/=> \//{print $3}')
           done
-          # Give each bundled library an $ORIGIN rpath so they find their
-          # siblings. The loader's DT_RUNPATH does not apply to transitive deps
-          # (e.g. libavformat needs libavutil), so without this the bundled libs
-          # cannot locate each other even though they sit in the same directory.
+          # $ORIGIN rpath lets the bundled libs find their siblings; the app
+          # binary's DT_RUNPATH does not apply to transitive loads.
           for f in src-tauri/*.so*; do
             [ -e "$f" ] || continue
             patchelf --set-rpath '$ORIGIN' "$f" || true
           done
-          # Wire the bundled WebKitGTK tree (guaranteed by the download step)
-          # to its own libs (webkit/lib) and to the resource root (icu etc.).
-          # Relative $ORIGIN paths work in the installed tree and the AppImage;
-          # the absolute path is a fallback for helper binaries that had to be
-          # copied out (exec-bit recovery).
+          # Wire the webkit tree to its own libs and the resource root.
+          # Relative $ORIGIN paths cover the installed tree and the AppImage;
+          # the absolute paths are a fallback for helpers that get copied out
+          # by the exec-bit recovery in the app.
           for f in src-tauri/webkit/lib/*.so*; do
             [ -f "$f" ] || continue
             patchelf --set-rpath '$ORIGIN:$ORIGIN/../..' "$f" || true
