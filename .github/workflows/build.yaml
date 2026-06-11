@@ -147,6 +147,17 @@ jobs:
             gstreamer1.0-nice \
             xdg-utils \
             patchelf
+          # Runtime deps of the bundled WebKitGTK: the AppImage bundler
+          # (linuxdeploy) resolves every NEEDED of the webkit resource tree
+          # on this host and hard-fails on any it cannot find.
+          sudo apt-get install -y \
+            libwoff1 \
+            libjxl0.7 \
+            libavif16 \
+            libenchant-2-2 \
+            libsecret-1-0 \
+            libhyphen0 \
+            libmanette-0.2-0
 
       - name: Download WebRTC-enabled WebKitGTK
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
@@ -248,9 +259,7 @@ jobs:
             [ -f "$f" ] || continue
             patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
           done
-          # AppImage is temporarily excluded: linuxdeploy fails on the bundled
-          # WebKitGTK tree (under investigation). deb/rpm bundle it fine.
-          echo '{"bundle": {"targets": ["deb", "rpm"], "resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
+          echo '{"bundle": {"resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
@@ -278,5 +287,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
+          # Makes the AppImage bundler resolve libwebkit2gtk to OUR WebRTC
+          # build (deployed into the AppImage's usr/lib) instead of the host
+          # webkit, which would shadow it via the AppRun LD_LIBRARY_PATH and
+          # lose WebRTC. Harmless for the deb/rpm targets and other platforms.
+          LD_LIBRARY_PATH: ${{ github.workspace }}/src-tauri/webkit/lib
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
