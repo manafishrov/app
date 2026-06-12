@@ -78,8 +78,10 @@ Linux packages bundle a custom WebKitGTK built with `ENABLE_WEB_RTC` (distro
 builds compile it out, which leaves `RTCPeerConnection` undefined and breaks
 the live video feed). The release workflow builds it automatically via
 `.github/workflows/build-webkitgtk.yaml` when the
-`webkitgtk-<version>-webrtc` release is missing (one-time ~4h per version),
-then reuses the published tarballs.
+`ghcr.io/manafishrov/webkitgtk-webrtc` package is missing the version tag
+(one-time ~4h per version), then reuses the published tarballs. The package
+must be set to public visibility (one-time, GitHub UI) so it can be pulled
+anonymously.
 
 To bump the WebKitGTK version (new release or CVE), update it in **both**:
 

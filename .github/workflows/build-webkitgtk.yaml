@@ -2,12 +2,17 @@ name: Build WebKitGTK (WebRTC)
 
 # Builds WebKitGTK with ENABLE_WEB_RTC, which every distro compiles out -
 # leaving RTCPeerConnection undefined and breaking the live video feed.
-# Tarballs go to a `webkitgtk-<version>-webrtc` release that build.yaml
-# bundles into the Linux packages.
+# Tarballs are pushed to the ghcr.io/<owner>/webkitgtk-webrtc package
+# (NOT a GitHub release: releases would clutter the repo's tags/releases
+# and shadow the Tauri updater's releases/latest endpoint) and build.yaml
+# bundles them into the Linux packages.
 #
 # Called from the release workflow on every tag: no-ops in seconds when the
 # tarball exists, so only the first release after a version bump pays the
 # ~4h build. Manual dispatch is for CVE rebuilds.
+#
+# One-time setup after the first push: set the package visibility to public
+# in the GitHub UI so non-CI consumers can pull it anonymously.
 #
 # ENABLE_DEVELOPER_MODE makes WebKit honor WEBKIT_EXEC_PATH so the helper
 # binaries can live inside our package instead of /usr/libexec.
@@ -31,7 +36,7 @@ on:
         value: ${{ inputs.version }}
 
 permissions:
-  contents: write
+  packages: write
 
 jobs:
   build:
@@ -48,17 +53,24 @@ jobs:
             arch: aarch64
 
     steps:
+      - name: Install oras
+        run: |
+          case "$(uname -m)" in
+            x86_64) oras_arch=amd64 ;;
+            aarch64) oras_arch=arm64 ;;
+          esac
+          curl -fsSL "https://github.com/oras-project/oras/releases/download/v1.3.2/oras_1.3.2_linux_${oras_arch}.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin oras
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+
       - name: Skip when tarball already published
         id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
         run: |
-          asset="webkitgtk-${{ inputs.version }}-webrtc-$(uname -m).tar.zst"
-          if gh release view "webkitgtk-${{ inputs.version }}-webrtc" \
-            --json assets -q '.assets[].name' 2>/dev/null | grep -qx "$asset"; then
+          ref="ghcr.io/${{ github.repository_owner }}/webkitgtk-webrtc:${{ inputs.version }}-$(uname -m)"
+          if oras manifest fetch "$ref" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::$asset already published; skipping build"
+            echo "::notice::$ref already published; skipping build"
           fi
 
       - name: Free disk space
@@ -143,21 +155,11 @@ jobs:
           tar -C dest/usr/lib/Manafish -I 'zstd -19 -T0' \
             -cf "../webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst" webkit
 
-      - name: Upload to release
+      - name: Push to GitHub Packages
         if: steps.check.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
         run: |
-          # --prerelease keeps this out of GitHub's releases/latest, which the
-          # Tauri updater endpoint resolves; a plain release here would shadow
-          # the app releases and 404 every update check.
-          tag="webkitgtk-${{ inputs.version }}-webrtc"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" \
-              --prerelease \
-              --title "$tag" \
-              --notes "WebKitGTK ${{ inputs.version }} built with ENABLE_WEB_RTC for bundling into release packages. Not an app release." || true
-          fi
-          gh release upload "$tag" --clobber \
+          # The source annotation links the package to this repository.
+          oras push \
+            --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            "ghcr.io/${{ github.repository_owner }}/webkitgtk-webrtc:${{ inputs.version }}-${{ matrix.arch }}" \
             "webkitgtk-${{ inputs.version }}-webrtc-${{ matrix.arch }}.tar.zst"

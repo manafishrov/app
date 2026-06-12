@@ -50,7 +50,7 @@ jobs:
     name: WebKitGTK (WebRTC)
     uses: ./.github/workflows/build-webkitgtk.yaml
     permissions:
-      contents: write
+      packages: write
     with:
       version: 2.48.7
 
@@ -163,19 +163,25 @@ jobs:
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WEBKITGTK_VERSION: ${{ needs.webkitgtk.outputs.version }}
         run: |
           set -euo pipefail
           # Distro WebKitGTK has no WebRTC compiled in, so the packages ship
-          # our own build (published by the webkitgtk job) under
-          # <resources>/webkit. The app binary's rpath prefers it at runtime.
-          asset="webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
-          gh release download "webkitgtk-${WEBKITGTK_VERSION}-webrtc" \
-            -R "${{ github.repository }}" --pattern "$asset"
+          # our own build (published by the webkitgtk job to GitHub Packages)
+          # under <resources>/webkit. The app binary's rpath prefers it.
+          case "$(uname -m)" in
+            x86_64) oras_arch=amd64 ;;
+            aarch64) oras_arch=arm64 ;;
+          esac
+          curl -fsSL "https://github.com/oras-project/oras/releases/download/v1.3.2/oras_1.3.2_linux_${oras_arch}.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin oras
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+          oras pull "ghcr.io/${{ github.repository_owner }}/webkitgtk-webrtc:${WEBKITGTK_VERSION}-$(uname -m)"
           mkdir -p src-tauri/webkit
-          tar -C src-tauri/webkit --strip-components=1 -I zstd -xf "$asset"
-          rm "$asset"
+          tar -C src-tauri/webkit --strip-components=1 -I zstd \
+            -xf "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
+          rm "webkitgtk-${WEBKITGTK_VERSION}-webrtc-$(uname -m).tar.zst"
 
       - name: Bundle FFmpeg and WebKitGTK libraries
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
