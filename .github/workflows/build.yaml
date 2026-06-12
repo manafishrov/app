@@ -289,17 +289,50 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      # Non-Linux (macOS/Windows): single build with the updater enabled.
+      # Direct downloads (.dmg/.app, .exe/.msi) own their own updates.
       - name: Build and upload to draft release
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'windows-latest'
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
-          # Makes the AppImage bundler resolve libwebkit2gtk to OUR WebRTC
-          # build (deployed into the AppImage's usr/lib) instead of the host
-          # webkit, which would shadow it via the AppRun LD_LIBRARY_PATH and
-          # lose WebRTC. Harmless for the deb/rpm targets and other platforms.
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+
+      # Linux deb/rpm: package-manager owned, so the in-app updater is
+      # compiled out (it can only replace an AppImage in place; touching a
+      # dpkg/rpm-managed binary would desync the package database).
+      - name: Build and upload deb/rpm
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
+          MANAFISH_UPDATER_DISABLED: '1'
+          VITE_UPDATER_DISABLED: '1'
           LD_LIBRARY_PATH: ${{ github.workspace }}/src-tauri/webkit/lib
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --bundles deb,rpm
+
+      # Linux AppImage: a direct download, so the in-app updater stays on.
+      # LD_LIBRARY_PATH makes the AppImage bundler resolve libwebkit2gtk to
+      # OUR WebRTC build instead of the host one (which AppRun would otherwise
+      # shadow it with, losing WebRTC).
+      - name: Build and upload AppImage
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
+          LD_LIBRARY_PATH: ${{ github.workspace }}/src-tauri/webkit/lib
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --bundles appimage

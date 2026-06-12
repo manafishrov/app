@@ -70,7 +70,8 @@
         "depends": [
           "gstreamer1-plugins-good",
           "gstreamer1-plugins-bad-free",
-          "libnice-gstreamer1"
+          "libnice-gstreamer1",
+          "gstreamer1-plugin-openh264"
         ],
         "files": {
           "/usr/share/metainfo/com.manafishrov.manafish.metainfo.xml": "com.manafishrov.manafish.metainfo.xml"
