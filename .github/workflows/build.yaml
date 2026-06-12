@@ -185,11 +185,14 @@ jobs:
           # Bundle FFmpeg and its full dependency closure so the package works
           # across distro versions. The denylist holds everything that must
           # come from the host instead: the GTK/WebKit/GL desktop stack,
-          # libsoup (loads host gio modules) and libgst* (must match the
-          # host's gstreamer plugins, pulled in via the deb/rpm Depends).
+          # libsoup (loads host gio modules), libgst* (must match the host's
+          # gstreamer plugins, pulled in via the deb/rpm Depends) and
+          # libssl/libcrypto (host gst plugins like gstdtls link the host
+          # openssl pair; pinning an older bundled libcrypto breaks the
+          # symbol-versioning contract and crashes WebRTC's DTLS path).
           triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           libdir="/usr/lib/${triplet}"
-          deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libsoup|libgst|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
+          deny='^(ld-linux|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libgcc_s\.|libstdc\+\+|libz\.|libresolv|libselinux|libpcre|libffi|libuuid|libmount|libblkid|libsystemd|libcap|libgcrypt|libgpg-error|libglib-2|libgobject-2|libgio-2|libgmodule-2|libgthread|libgtk-3|libgdk-3|libgdk_pixbuf|libwebkit2gtk|libjavascriptcoregtk|libsoup|libgst|libssl|libcrypto|libcairo|libcairo-gobject|libpango|libpangocairo|libpangoft2|libharfbuzz|libfontconfig|libfreetype|libexpat|libpng|libpixman|libgraphite|libthai|libdatrie|libfribidi|libepoxy|libGL|libOpenGL|libEGL|libGLX|libGLdispatch|libGLU|libgbm|libdrm|libva|libvdpau|libwayland|libX11|libxcb|libXext|libXfixes|libXrender|libXi|libXrandr|libXcursor|libXcomposite|libXdamage|libXinerama|libXxf86vm|libXau|libXdmcp|libxkbcommon|libxshmfence|libxcb-|librsvg|libgmodule|libatk|libatspi|libdbus)'
 
           copy_soname() {
             # Name the copy by its real ELF SONAME - the exact name the loader
