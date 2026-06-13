@@ -1,9 +1,16 @@
 import { toast } from '@manafishrov/ui/toaster';
+import { Channel, invoke } from '@tauri-apps/api/core';
 import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 
 import { logError, logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { setAppUpdateState, updatesStore } from '@/stores/updates';
+import {
+  ReleasesStatus,
+  setAppReleasesState,
+  setAppUpdateState,
+  updatesStore,
+  type AppReleaseEntry,
+} from '@/stores/updates';
 
 const PERCENT_MULTIPLIER = 100;
 const MAX_PERCENT = 100;
@@ -37,16 +44,20 @@ export const checkForAppUpdates = (showAvailableToast = false): Promise<void> =>
           availableUpdate: UNSET,
           error: UNSET,
           latestVersion: UNSET,
+          releaseNotes: UNSET,
           status: 'upToDate',
         });
         return;
       }
 
       logInfo(`App update available: ${update.version}`);
+      const trimmedNotes = typeof update.body === 'string' ? update.body.trim() : '';
+      const releaseNotes = trimmedNotes.length > 0 ? trimmedNotes : UNSET;
       setAppUpdateState({
         availableUpdate: update,
         error: UNSET,
         latestVersion: update.version,
+        releaseNotes,
         status: 'available',
       });
       if (showAvailableToast) {
@@ -182,6 +193,87 @@ export const installAppUpdate = (): Promise<void> => {
         error: m.general_settings_app_update_install_failed(),
         status: 'available',
       });
+      toast.update(toastId, {
+        title: m.general_settings_app_update_install_failed(),
+        type: 'error',
+      });
+    });
+};
+
+type AppReleasePayload = {
+  version: string;
+  tag: string;
+  publishedAt: string;
+  prerelease: boolean;
+  releaseNotes?: string;
+};
+
+const toReleaseEntry = (release: AppReleasePayload): AppReleaseEntry => ({
+  version: release.version,
+  tag: release.tag,
+  publishedAt: release.publishedAt,
+  prerelease: release.prerelease,
+  ...(typeof release.releaseNotes === 'string' ? { releaseNotes: release.releaseNotes } : {}),
+});
+
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+export const loadAppReleases = (): Promise<void> => {
+  if (!isUpdaterEnabled) {
+    return Promise.resolve();
+  }
+
+  setAppReleasesState({ status: ReleasesStatus.loading, error: UNSET });
+  return invoke<AppReleasePayload[]>('fetch_app_releases')
+    .then((releases) => {
+      setAppReleasesState({
+        status: ReleasesStatus.ready,
+        entries: releases.map((release) => toReleaseEntry(release)),
+      });
+    })
+    .catch((error: unknown) => {
+      logError('Failed to load app releases:', error);
+      setAppReleasesState({ status: ReleasesStatus.error, error: errorMessage(error) });
+    });
+};
+
+export const installAppReleaseVersion = (tag: string): Promise<void> => {
+  if (!isUpdaterEnabled) {
+    return Promise.resolve();
+  }
+
+  // Picker progress lives in `releases.installingTag`.
+  // Shared `app.*` state is written only after a successful install (restart).
+  // Leaving it alone on start and error avoids misleading the main update card.
+  setAppReleasesState({ installingTag: tag });
+
+  const toastId = toast.create({
+    title: m.toasts_update_downloading(),
+    type: 'loading',
+  });
+
+  const onProgress = new Channel<DownloadEvent>(createDownloadEventHandler(toastId));
+
+  return invoke<undefined>('install_app_release', { tag, onProgress })
+    .then(() => {
+      setAppReleasesState({ installingTag: UNSET });
+      setAppUpdateState({
+        availableUpdate: UNSET,
+        error: UNSET,
+        latestVersion: tag.replace(/^v/, ''),
+        status: 'readyToRestart',
+      });
+      toast.update(toastId, {
+        title: m.toasts_update_ready(),
+        description: m.toasts_update_restart_to_apply(),
+        type: 'success',
+      });
+      logInfo(`App release ${tag} installed. Ready to restart.`);
+    })
+    .catch((error: unknown) => {
+      logError('Error installing app release:', error);
+      setAppReleasesState({ installingTag: UNSET });
       toast.update(toastId, {
         title: m.general_settings_app_update_install_failed(),
         type: 'error',

@@ -1,4 +1,5 @@
 pub mod app;
+pub mod app_update;
 pub mod control;
 pub mod firmware;
 pub mod gamepad;
@@ -6,6 +7,7 @@ pub mod recording;
 pub mod rov;
 
 pub use app::{close_splashscreen, get_config, set_config};
+pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{
   send_custom_action, send_direction_vector, set_desired_depth, toggle_auto_stabilization,
   toggle_depth_hold,

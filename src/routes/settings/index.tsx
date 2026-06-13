@@ -1,5 +1,3 @@
-import type { Component } from 'solid-js';
-
 import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import {
@@ -10,16 +8,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@manafishrov/ui/card';
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipPositioner,
+  TooltipTrigger,
+} from '@manafishrov/ui/tooltip';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
+import { Show, createSignal, type Component } from 'solid-js';
+import RefreshIcon from '~icons/material-symbols/refresh';
 
 import { General } from '@/features/settings/forms/General';
+import { AppVersionList } from '@/features/update/AppVersionList';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
+import { ReleaseNotes } from '@/features/update/ReleaseNotes';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
-import { updatesStore } from '@/stores/updates';
-import { checkForAppUpdates, installAppUpdate, isUpdaterEnabled } from '@/tauri';
+import { ReleasesStatus, updatesStore } from '@/stores/updates';
+import { checkForAppUpdates, installAppUpdate, isUpdaterEnabled, loadAppReleases } from '@/tauri';
 
 const createAppUpdateStatusMessage = (): string => {
   switch (updatesStore.app.status) {
@@ -50,53 +59,128 @@ const createAppUpdateStatusMessage = (): string => {
   }
 };
 
+const AppUpdateActions: Component = () => (
+  <CardAction class='flex flex-wrap gap-2'>
+    <Button
+      variant='outline'
+      disabled={updatesStore.app.status === 'checking'}
+      onClick={(): void => {
+        checkForAppUpdates().catch(logError);
+      }}
+    >
+      {updatesStore.app.status === 'checking'
+        ? m.general_settings_app_update_status_checking()
+        : m.common_check_for_updates()}
+    </Button>
+    <ConfirmUpdateButton
+      buttonLabel={m.general_settings_app_update_button()}
+      confirmLabel={m.general_settings_app_update_button()}
+      disabled={updatesStore.app.status !== 'available'}
+      title={m.alerts_app_update_title()}
+      description={<p>{m.alerts_app_update_description()}</p>}
+      onConfirm={() => installAppUpdate()}
+    />
+  </CardAction>
+);
+
+const RefreshAppVersionsButton: Component<{ disabled: boolean }> = (props) => (
+  <Tooltip positioning={{ placement: 'bottom' }}>
+    <TooltipTrigger
+      asChild={(tooltipProps) => (
+        <Button
+          {...tooltipProps()}
+          variant='ghost'
+          size='icon'
+          class='h-8 w-8 shrink-0'
+          disabled={props.disabled}
+          onClick={(): void => {
+            loadAppReleases().catch(logError);
+          }}
+        >
+          <RefreshIcon class='h-4 w-4' />
+        </Button>
+      )}
+    />
+    <TooltipPositioner>
+      <TooltipContent>
+        <span>{m.app_versions_refresh()}</span>
+        <TooltipArrow />
+      </TooltipContent>
+    </TooltipPositioner>
+  </Tooltip>
+);
+
+const isReleasesBusy = (): boolean =>
+  typeof updatesStore.releases.installingTag === 'string' ||
+  updatesStore.releases.status === ReleasesStatus.loading;
+
+const AppVersionPicker: Component = () => {
+  const [open, setOpen] = createSignal(false);
+  const [selectedTag, setSelectedTag] = createSignal<string>();
+
+  const toggle = (): void => {
+    const next = !open();
+    setOpen(next);
+    if (next && updatesStore.releases.status === ReleasesStatus.idle) {
+      loadAppReleases().catch(logError);
+    }
+  };
+
+  return (
+    <div class='flex flex-col gap-3 border-t border-border pt-4'>
+      <div class='flex items-center justify-between gap-2'>
+        <Button variant='ghost' size='sm' class='self-start' onClick={toggle}>
+          {open() ? m.app_versions_hide() : m.app_versions_show()}
+        </Button>
+        <Show when={open()}>
+          <RefreshAppVersionsButton disabled={isReleasesBusy()} />
+        </Show>
+      </div>
+      <Show when={open()}>
+        <p class='text-sm text-muted-foreground'>{m.app_versions_picker_description()}</p>
+        <AppVersionList selectedTag={selectedTag()} onSelectTag={setSelectedTag} />
+      </Show>
+    </div>
+  );
+};
+
+const AppVersionCard: Component = () => (
+  <Card class='my-8'>
+    <CardHeader>
+      <CardTitle>{m.general_settings_app_version_title()}</CardTitle>
+      <CardDescription>{m.general_settings_app_version_description()}</CardDescription>
+      <Show when={isUpdaterEnabled}>
+        <AppUpdateActions />
+      </Show>
+    </CardHeader>
+    <CardContent class='flex flex-col gap-4'>
+      <div class='flex flex-wrap items-center gap-3'>
+        <Badge class='bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
+          v{configStore.appVersion}
+        </Badge>
+        <p class='text-sm text-muted-foreground'>
+          {isUpdaterEnabled
+            ? createAppUpdateStatusMessage()
+            : m.general_settings_app_update_managed_externally()}
+        </p>
+      </div>
+      <Show when={isUpdaterEnabled && updatesStore.app.status === 'available'}>
+        <ReleaseNotes notes={updatesStore.app.releaseNotes} />
+      </Show>
+      <Show when={isUpdaterEnabled}>
+        <AppVersionPicker />
+      </Show>
+    </CardContent>
+  </Card>
+);
+
 const GeneralSettingsPage: Component = () => (
   <>
     <div class='mb-6 flex flex-col gap-2'>
       <H1>{m.general_settings_page_title()}</H1>
       <P>{m.general_settings_page_description()}</P>
     </div>
-    <Card class='my-8'>
-      <CardHeader>
-        <CardTitle>{m.general_settings_app_version_title()}</CardTitle>
-        <CardDescription>{m.general_settings_app_version_description()}</CardDescription>
-        <Show when={isUpdaterEnabled}>
-          <CardAction class='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              disabled={updatesStore.app.status === 'checking'}
-              onClick={(): void => {
-                checkForAppUpdates().catch(logError);
-              }}
-            >
-              {updatesStore.app.status === 'checking'
-                ? m.general_settings_app_update_status_checking()
-                : m.common_check_for_updates()}
-            </Button>
-            <ConfirmUpdateButton
-              buttonLabel={m.general_settings_app_update_button()}
-              confirmLabel={m.general_settings_app_update_button()}
-              disabled={updatesStore.app.status !== 'available'}
-              title={m.alerts_app_update_title()}
-              description={<p>{m.alerts_app_update_description()}</p>}
-              onConfirm={() => installAppUpdate()}
-            />
-          </CardAction>
-        </Show>
-      </CardHeader>
-      <CardContent>
-        <div class='flex flex-wrap items-center gap-3'>
-          <Badge class='bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
-            v{configStore.appVersion}
-          </Badge>
-          <p class='text-sm text-muted-foreground'>
-            {isUpdaterEnabled
-              ? createAppUpdateStatusMessage()
-              : m.general_settings_app_update_managed_externally()}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <AppVersionCard />
     <General />
   </>
 );

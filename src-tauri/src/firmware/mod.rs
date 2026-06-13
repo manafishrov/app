@@ -1,4 +1,3 @@
-pub mod constants;
 pub mod decompress;
 pub mod download;
 pub mod drives;

@@ -30,6 +30,7 @@ export type FirmwareRelease = {
   version: string;
   publishedAt: string;
   prerelease: boolean;
+  releaseNotes?: string;
 };
 
 export type FlashDriveMountpoint = {
@@ -78,6 +79,7 @@ export type VersionEntryState = {
   version: string;
   publishedAt: string;
   prerelease: boolean;
+  releaseNotes?: string;
 };
 
 type SdFlashState = {

@@ -2279,6 +2279,7 @@ dependencies = [
  "runas",
  "ruzstd",
  "sdl2",
+ "semver",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -2292,6 +2293,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "tokio-util",
+ "url",
  "windows 0.62.2",
 ]
 

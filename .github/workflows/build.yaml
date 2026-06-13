@@ -32,7 +32,7 @@ jobs:
           tag="${{ github.ref_name }}"
           repo="${{ github.repository }}"
           if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
-            args=(--draft --title "$tag" --notes "Release assets for $tag.")
+            args=(--draft --title "$tag" --notes "")
             if [[ "$tag" == *-* ]]; then
               args+=(--prerelease)
             fi

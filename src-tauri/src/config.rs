@@ -1,7 +1,7 @@
-use std::cmp::Ordering;
 use std::fs;
 use std::path::PathBuf;
 
+use semver::Version;
 use tokio::sync::mpsc::Sender;
 
 use crate::models::config::Config;
@@ -17,20 +17,23 @@ pub fn get_config_path() -> Option<PathBuf> {
   dirs::config_dir().map(|base_dir| base_dir.join("manafish").join("config.json"))
 }
 
-fn parse_semver(version: &str) -> (u32, u32, u32) {
-  // Drop any pre-release/build suffix (e.g. `1.0.13-rc.1`) so the patch parses.
-  let core = version.split(['-', '+']).next().unwrap_or(version);
-  let parts: Vec<&str> = core.split('.').collect();
-  let major = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0);
-  let minor = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
-  let patch = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
-  (major, minor, patch)
+fn stored_version_is_newer(stored: &str, current: &str) -> bool {
+  match (Version::parse(stored), Version::parse(current)) {
+    (Ok(stored), Ok(current)) => stored > current,
+    _ => false,
+  }
 }
 
-fn compare_semver(a: &str, b: &str) -> Ordering {
-  let (a_major, a_minor, a_patch) = parse_semver(a);
-  let (b_major, b_minor, b_patch) = parse_semver(b);
-  (a_major, a_minor, a_patch).cmp(&(b_major, b_minor, b_patch))
+/// Drop top-level keys this build doesn't recognise (against a serialized
+/// default `Config`), so a config from a newer version still loads after a
+/// downgrade instead of failing `deny_unknown_fields`.
+fn strip_unknown_fields(raw: &mut serde_json::Value) {
+  let Ok(serde_json::Value::Object(defaults)) = serde_json::to_value(Config::default()) else {
+    return;
+  };
+  if let Some(object) = raw.as_object_mut() {
+    object.retain(|key, _| defaults.contains_key(key));
+  }
 }
 
 fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
@@ -112,8 +115,13 @@ pub fn get_config_from_file() -> Config {
 
   let current_version = env!("CARGO_PKG_VERSION");
 
-  if compare_semver(stored_version, current_version) == Ordering::Greater {
-    return Config::default();
+  if stored_version_is_newer(stored_version, current_version) {
+    // Downgrade: keep what this build understands, drop newer-only fields.
+    log_warn!(
+      "Config was written by a newer app version ({stored_version} > {current_version}). \
+       Dropping unrecognised fields."
+    );
+    strip_unknown_fields(&mut raw);
   }
 
   raw = apply_migrations(raw);
@@ -192,44 +200,33 @@ mod tests {
   }
 
   /// # Panics
-  /// Panics if any semantic version input does not parse into the expected
-  /// tuple.
+  /// Panics if the stored-vs-current version comparison does not match the
+  /// expected result for any case.
   #[test]
-  fn parse_semver_handles_expected_inputs() {
+  fn stored_version_is_newer_detects_downgrades() {
     let cases = [
-      ("1.2.3", (1, 2, 3)),
-      ("0.0.0", (0, 0, 0)),
-      ("10.20.30", (10, 20, 30)),
-      ("1.0", (1, 0, 0)),
-      ("1", (1, 0, 0)),
-      ("", (0, 0, 0)),
-      ("abc.def.ghi", (0, 0, 0)),
-      ("1.0.13-rc.1", (1, 0, 13)),
-      ("1.0.13+build.5", (1, 0, 13)),
+      // (stored, current, stored_is_newer)
+      ("1.0.0", "1.0.0", false),
+      ("2.0.0", "1.0.0", true),
+      ("1.0.0", "2.0.0", false),
+      ("1.1.0", "1.0.0", true),
+      ("1.0.1", "1.0.0", true),
+      ("0.9.9", "1.0.0", false),
+      // A prerelease is older than its stable, so it never looks newer.
+      ("1.0.13-rc.1", "1.0.13", false),
+      ("1.0.13", "1.0.13-rc.1", true),
+      // Unparseable stored versions must never trigger a config reset.
+      ("", "1.0.0", false),
+      ("abc.def.ghi", "1.0.0", false),
+      ("1.0", "1.0.0", false),
     ];
 
-    for (input, expected) in cases {
-      assert_eq!(parse_semver(input), expected);
-    }
-  }
-
-  /// # Panics
-  /// Panics if semantic version comparisons do not return the expected
-  /// ordering.
-  #[test]
-  fn compare_semver_orders_versions() {
-    let cases = [
-      (("1.0.0", "1.0.0"), Ordering::Equal),
-      (("1.0.0", "2.0.0"), Ordering::Less),
-      (("2.0.0", "1.0.0"), Ordering::Greater),
-      (("1.1.0", "1.0.0"), Ordering::Greater),
-      (("1.0.1", "1.0.0"), Ordering::Greater),
-      (("0.9.9", "1.0.0"), Ordering::Less),
-      (("1.0.12", "1.0.13-rc.1"), Ordering::Less),
-    ];
-
-    for ((left, right), expected) in cases {
-      assert_eq!(compare_semver(left, right), expected);
+    for (stored, current, expected) in cases {
+      assert_eq!(
+        stored_version_is_newer(stored, current),
+        expected,
+        "stored={stored} current={current}"
+      );
     }
   }
 
@@ -244,5 +241,35 @@ mod tests {
     assert!(result.get("checkForUpdatesOnStartup").is_none());
     assert_eq!(result.get("checkForAppUpdatesOnStartup"), Some(&json!(true)));
     assert_eq!(result.get("checkForFirmwareUpdatesOnConnect"), None);
+  }
+
+  /// # Panics
+  /// Panics if stripping removes a recognised field, keeps an unknown field, or
+  /// leaves a config that no longer deserializes.
+  #[test]
+  fn strip_unknown_fields_drops_only_unrecognised_keys() {
+    // A config written by a newer app version: a valid default plus an extra
+    // field this build doesn't know about.
+    let mut raw = serde_json::to_value(Config::default()).expect("serialize default");
+    raw
+      .as_object_mut()
+      .expect("config is an object")
+      .insert("newFutureField".to_string(), json!({ "anything": 42 }));
+
+    strip_unknown_fields(&mut raw);
+
+    let object = raw.as_object().expect("still an object");
+    // The unknown field is gone...
+    assert!(!object.contains_key("newFutureField"));
+    // ...while recognised fields (including a flattened one) remain.
+    assert!(object.contains_key("appVersion"));
+    assert!(object.contains_key("workIndicator"));
+    assert!(object.contains_key("ipAddress"));
+
+    // The stripped config still deserializes despite `deny_unknown_fields`.
+    assert!(
+      serde_json::from_value::<Config>(raw).is_ok(),
+      "stripped config should deserialize"
+    );
   }
 }

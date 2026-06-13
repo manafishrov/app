@@ -5,7 +5,7 @@ use std::path::Path;
 use ruzstd::decoding::StreamingDecoder;
 use ruzstd::decoding::errors::FrameDecoderError;
 
-use super::constants::READ_BUFFER_SIZE;
+use crate::constants::READ_BUFFER_SIZE;
 
 pub trait ChunkSink {
   /// # Errors

@@ -2,7 +2,7 @@ use minisign_verify::{PublicKey, Signature};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use super::constants::SIGNING_PUBLIC_KEY;
+use crate::constants::SIGNING_PUBLIC_KEY;
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

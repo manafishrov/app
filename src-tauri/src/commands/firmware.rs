@@ -24,7 +24,7 @@ struct FlashProgressEvent {
   message: Option<String>,
 }
 
-use crate::firmware::constants::FLASH_PROGRESS_EVENT;
+use crate::constants::FLASH_PROGRESS_EVENT;
 
 #[derive(Default)]
 pub struct FlashControl {

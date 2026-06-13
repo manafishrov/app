@@ -7,7 +7,7 @@ use serde::Deserialize;
 use super::decompress::{ChunkSink, stream_plain, stream_zstd};
 use super::status::{FlashSignal, FlashStatus, StatusWriter};
 
-use super::constants::PROGRESS_THROTTLE_MS;
+use crate::constants::PROGRESS_THROTTLE_MS;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

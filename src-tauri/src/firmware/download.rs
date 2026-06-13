@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
-use super::constants::{
+use crate::constants::{
   DOWNLOAD_CONNECT_TIMEOUT_SECS, DOWNLOAD_MAX_RETRIES, DOWNLOAD_PROGRESS_EVENT,
   DOWNLOAD_READ_TIMEOUT_SECS, SIGNING_PUBLIC_KEY,
 };

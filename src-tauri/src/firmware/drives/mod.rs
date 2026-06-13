@@ -31,7 +31,7 @@ pub struct FlashDrive {
   pub mountpoints: Vec<FlashDriveMountpoint>,
 }
 
-use super::constants::MIN_DRIVE_SIZE_BYTES;
+use crate::constants::MIN_DRIVE_SIZE_BYTES;
 
 /// # Errors
 /// Returns an error if drive enumeration fails or is not implemented for the platform.

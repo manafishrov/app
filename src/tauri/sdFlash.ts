@@ -67,6 +67,7 @@ export const loadFirmwareVersions = (): Promise<void> => {
         version: release.version,
         publishedAt: release.publishedAt,
         prerelease: release.prerelease,
+        ...(typeof release.releaseNotes === 'string' ? { releaseNotes: release.releaseNotes } : {}),
       }));
       setVersions(entries);
       setSdFlashState({ versionsStatus: VersionsStatus.ready });

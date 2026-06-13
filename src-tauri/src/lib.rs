@@ -1,4 +1,5 @@
 mod commands;
+mod constants;
 mod firmware;
 
 mod models {
@@ -24,12 +25,12 @@ use std::sync::Arc;
 use commands::firmware::FlashControl;
 use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_firmware_manifest,
-  flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config, list_firmware_releases,
-  list_flash_drives, prepare_flash, request_rov_config, save_recording, send_custom_action,
-  send_direction_vector, set_config, set_desired_depth, set_rov_config, signal_flash_image,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
-  toggle_auto_stabilization, toggle_depth_hold,
+  cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_app_releases,
+  fetch_firmware_manifest, flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config,
+  install_app_release, list_firmware_releases, list_flash_drives, prepare_flash,
+  request_rov_config, save_recording, send_custom_action, send_direction_vector, set_config,
+  set_desired_depth, set_rov_config, signal_flash_image, start_gamepad_stream,
+  start_regulator_auto_tuning, start_thruster_test, toggle_auto_stabilization, toggle_depth_hold,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -284,6 +285,8 @@ pub fn run() -> tauri::Result<()> {
       signal_flash_image,
       cancel_flash,
       save_recording,
+      fetch_app_releases,
+      install_app_release,
     ])
     .setup(|app| {
       #[cfg(target_os = "linux")]
