@@ -49,10 +49,10 @@ export const getGamepadRawInputValue = (
 
 export const formatKeyboardKeyLabel = (key: string): string =>
   key
-    .replaceAll(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replaceAll(/([A-Z])([A-Z][a-z])/g, '$1 $2')
-    .replaceAll(/([A-Za-z])(\d)/g, '$1 $2')
-    .replaceAll(/(\d)([A-Za-z])/g, '$1 $2')
+    .replaceAll(/(?<lower>[a-z0-9])(?<upper>[A-Z])/g, '$<lower> $<upper>')
+    .replaceAll(/(?<acronym>[A-Z])(?<word>[A-Z][a-z])/g, '$<acronym> $<word>')
+    .replaceAll(/(?<letter>[A-Za-z])(?<digit>\d)/g, '$<letter> $<digit>')
+    .replaceAll(/(?<digit>\d)(?<letter>[A-Za-z])/g, '$<digit> $<letter>')
     .trim();
 
 const NAMED_KEYBOARD_KEYS = new Set([
@@ -110,7 +110,7 @@ const isPatternKey = (key: string): boolean => {
   if (/^Digit[0-9]$/.test(key)) {
     return true;
   }
-  if (/^F([1-9]|1[0-2])$/.test(key)) {
+  if (/^F(?<fkey>[1-9]|1[0-2])$/.test(key)) {
     return true;
   }
   if (/^Numpad[0-9]$/.test(key)) {
