@@ -129,17 +129,17 @@ const DeadzoneRows: Component<{
   rows: Accessor<readonly number[][]>;
   onRemove: (index: number) => void;
 }> = (props) => (
-  <For each={props.rows()}>
+  <Index each={props.rows()}>
     {(_row, rowIndex) => (
       <DeadzoneRow
         form={props.form}
-        rowIndex={rowIndex()}
+        rowIndex={rowIndex}
         onRemove={() => {
-          props.onRemove(rowIndex());
+          props.onRemove(rowIndex);
         }}
       />
     )}
-  </For>
+  </Index>
 );
 
 const applyNullspaceToField = (field: NullspaceField): void => {
