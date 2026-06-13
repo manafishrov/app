@@ -84,10 +84,10 @@ export type FormValues = {
 };
 
 export const REGULATOR_FORM_DEFAULT_VALUES: FormValues = {
-  pitch: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
-  yaw: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
-  roll: { kp: 1, ki: 0.5, kd: 0.1, rate: [DEFAULT_TURN_RATE] },
-  depth: { kp: 0.6, ki: 0, kd: 0.1, rate: [DEFAULT_DEPTH_RATE] },
+  pitch: { kp: 6, ki: 2, kd: 0.6, rate: [DEFAULT_TURN_RATE] },
+  yaw: { kp: 6, ki: 2, kd: 0.6, rate: [DEFAULT_TURN_RATE] },
+  roll: { kp: 6, ki: 2, kd: 0.6, rate: [DEFAULT_TURN_RATE] },
+  depth: { kp: 6, ki: 2, kd: 0.6, rate: [DEFAULT_DEPTH_RATE] },
   fpvMode: false,
   surge: 0,
   heave: 0,
