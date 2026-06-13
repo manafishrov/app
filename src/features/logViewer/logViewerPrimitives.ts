@@ -1,19 +1,25 @@
 import { createVirtualizer, type Virtualizer } from '@tanstack/solid-virtual';
 import { type Accessor, createMemo, createSignal } from 'solid-js';
 
-import { getAllLogRecords, type LogLevel, type LogOrigin, type LogRecord } from '@/lib/log';
+import type { LogLevel, LogOrigin, LogRecord } from '@/lib/log';
 
-import { ROW_ESTIMATE, isNearBottom } from './logViewerUtils';
+import { ROW_ESTIMATE, estimateRowHeight } from './logViewerUtils';
 
 export type ViewerSignals = {
   viewportRef: Accessor<HTMLDivElement | undefined>;
   setViewportRef: (value: HTMLDivElement | undefined) => void;
+  viewportWidth: Accessor<number>;
+  setViewportWidth: (value: number) => void;
   logs: Accessor<LogRecord[]>;
   setLogs: (value: LogRecord[] | ((prev: LogRecord[]) => LogRecord[])) => void;
   searchQuery: Accessor<string>;
   setSearchQuery: (value: string) => void;
   followTail: Accessor<boolean>;
   setFollowTail: (value: boolean) => void;
+  paused: Accessor<boolean>;
+  setPaused: (value: boolean) => void;
+  pendingCount: Accessor<number>;
+  setPendingCount: (value: number) => void;
   isLoading: Accessor<boolean>;
   setIsLoading: (value: boolean) => void;
   sourceFilters: Accessor<Record<LogOrigin, boolean>>;
@@ -30,12 +36,10 @@ export type ViewerSignals = {
   ) => void;
 };
 
-export const createViewerSignals = (): ViewerSignals => {
-  const [viewportRef, setViewportRef] = createSignal<HTMLDivElement | undefined>();
-  const [logs, setLogs] = createSignal<LogRecord[]>([]);
-  const [searchQuery, setSearchQuery] = createSignal('');
-  const [followTail, setFollowTail] = createSignal(true);
-  const [isLoading, setIsLoading] = createSignal(true);
+const createFilterSignals = (): Pick<
+  ViewerSignals,
+  'sourceFilters' | 'setSourceFilters' | 'levelFilters' | 'setLevelFilters'
+> => {
   const [sourceFilters, setSourceFilters] = createSignal<Record<LogOrigin, boolean>>({
     frontend: true,
     backend: true,
@@ -48,21 +52,38 @@ export const createViewerSignals = (): ViewerSignals => {
     error: true,
   });
 
+  return { sourceFilters, setSourceFilters, levelFilters, setLevelFilters };
+};
+
+export const createViewerSignals = (): ViewerSignals => {
+  const [viewportRef, setViewportRef] = createSignal<HTMLDivElement | undefined>();
+  const [viewportWidth, setViewportWidth] = createSignal(0);
+  const [logs, setLogs] = createSignal<LogRecord[]>([]);
+  const [searchQuery, setSearchQuery] = createSignal('');
+  const [followTail, setFollowTail] = createSignal(true);
+  const [paused, setPaused] = createSignal(false);
+  const [pendingCount, setPendingCount] = createSignal(0);
+  const [isLoading, setIsLoading] = createSignal(true);
+  const filters = createFilterSignals();
+
   return {
     viewportRef,
     setViewportRef,
+    viewportWidth,
+    setViewportWidth,
     logs,
     setLogs,
     searchQuery,
     setSearchQuery,
     followTail,
     setFollowTail,
+    paused,
+    setPaused,
+    pendingCount,
+    setPendingCount,
     isLoading,
     setIsLoading,
-    sourceFilters,
-    setSourceFilters,
-    levelFilters,
-    setLevelFilters,
+    ...filters,
   };
 };
 
@@ -109,18 +130,6 @@ const createScrollToBottom =
     setFollowTail(true);
   };
 
-const createMeasureRow =
-  (virtualizer: VirtualizerType) =>
-  (element: HTMLDivElement): void => {
-    virtualizer.measureElement(element);
-    queueMicrotask((): void => {
-      virtualizer.measureElement(element);
-    });
-    requestAnimationFrame((): void => {
-      virtualizer.measureElement(element);
-    });
-  };
-
 const createRemeasureAndFollowTail =
   (virtualizer: VirtualizerType, followTail: Accessor<boolean>, scrollToBottom: () => void) =>
   (): void => {
@@ -138,14 +147,26 @@ const createRemeasureAndFollowTail =
     });
   };
 
+// Pretext computes the exact wrapped height per row from its text and the current viewport width, so no DOM measurement happens on the scroll path and the scrollbar stays accurate from the first render.
+const createEstimateSize =
+  (filteredLogs: Accessor<LogRecord[]>, viewportWidth: Accessor<number>) =>
+  (index: number): number => {
+    const log = filteredLogs()[index];
+    const width = viewportWidth();
+    if (!log || width <= 0) {
+      return ROW_ESTIMATE;
+    }
+    return estimateRowHeight(log, width);
+  };
+
 export const createVirtualizerTools = (args: {
   viewportRef: Accessor<HTMLDivElement | undefined>;
+  viewportWidth: Accessor<number>;
   filteredLogs: Accessor<LogRecord[]>;
   followTail: Accessor<boolean>;
   setFollowTail: (value: boolean) => void;
 }): {
   virtualizer: VirtualizerType;
-  measureRow: (element: HTMLDivElement) => void;
   remeasureAndFollowTail: () => void;
 } => {
   const virtualizer = createVirtualizer<HTMLDivElement, Element>({
@@ -156,7 +177,7 @@ export const createVirtualizerTools = (args: {
       return Boolean(args.viewportRef());
     },
     getScrollElement: () => args.viewportRef() ?? null,
-    estimateSize: () => ROW_ESTIMATE,
+    estimateSize: createEstimateSize(args.filteredLogs, args.viewportWidth),
     getItemKey: (index: number): number | string => {
       const item = args.filteredLogs()[index];
       if (!item) {
@@ -167,107 +188,11 @@ export const createVirtualizerTools = (args: {
   });
 
   const scrollToBottom = createScrollToBottom(virtualizer, args.filteredLogs, args.setFollowTail);
-  const measureRow = createMeasureRow(virtualizer);
   const remeasureAndFollowTail = createRemeasureAndFollowTail(
     virtualizer,
     args.followTail,
     scrollToBottom,
   );
 
-  return { virtualizer, measureRow, remeasureAndFollowTail };
-};
-
-const createLoadLogs =
-  (signals: ViewerSignals, remeasureAndFollowTail: () => void) => (): Promise<void> => {
-    signals.setIsLoading(true);
-    return getAllLogRecords().then((records): void => {
-      signals.setLogs(records);
-      signals.setIsLoading(false);
-      remeasureAndFollowTail();
-    });
-  };
-
-const isCustomEvent = (event: Event): event is CustomEvent<unknown> => 'detail' in event;
-
-const isLogRecord = (value: unknown): value is LogRecord => {
-  if (!(value instanceof Object)) {
-    return false;
-  }
-
-  return (
-    'timestamp' in value &&
-    value.timestamp instanceof Date &&
-    'origin' in value &&
-    (value.origin === 'frontend' ||
-      value.origin === 'backend' ||
-      value.origin === 'firmware' ||
-      value.origin === 'mcu') &&
-    'level' in value &&
-    (value.level === 'info' || value.level === 'warn' || value.level === 'error') &&
-    'message' in value &&
-    typeof value.message === 'string'
-  );
-};
-
-const createHandleLogAdded =
-  (signals: ViewerSignals, remeasureAndFollowTail: () => void) =>
-  (event: Event): void => {
-    if (!isCustomEvent(event)) {
-      return;
-    }
-
-    const { detail } = event;
-    if (!isLogRecord(detail)) {
-      return;
-    }
-
-    signals.setLogs((prev): LogRecord[] => [...prev, detail]);
-    remeasureAndFollowTail();
-  };
-
-const createHandleViewportScroll = (signals: ViewerSignals) => (): void => {
-  const viewport = signals.viewportRef();
-  if (!viewport) {
-    return;
-  }
-  signals.setFollowTail(isNearBottom(viewport));
-};
-
-export const createViewerActions = (
-  signals: ViewerSignals,
-  remeasureAndFollowTail: () => void,
-): {
-  setViewportRefWhenReady: (element: HTMLDivElement) => void;
-  loadLogs: () => Promise<void>;
-  handleLogAdded: (event: Event) => void;
-  handleViewportScroll: () => void;
-  toggleSourceFilter: (source: LogOrigin) => void;
-  toggleLevelFilter: (level: LogLevel) => void;
-} => {
-  const setViewportRefWhenReady = (element: HTMLDivElement): void => {
-    queueMicrotask((): void => {
-      if (element.isConnected) {
-        signals.setViewportRef(element);
-      }
-    });
-  };
-
-  const toggleSourceFilter = (source: LogOrigin): void => {
-    signals.setSourceFilters((prev) => ({ ...prev, [source]: !prev[source] }));
-    remeasureAndFollowTail();
-  };
-
-  const toggleLevelFilter = (level: LogLevel): void => {
-    signals.setLevelFilters((prev) => ({ ...prev, [level]: !prev[level] }));
-    remeasureAndFollowTail();
-  };
-
-  return {
-    setViewportRefWhenReady,
-    loadLogs: createLoadLogs(signals, remeasureAndFollowTail),
-    handleLogAdded: createHandleLogAdded(signals, remeasureAndFollowTail),
-    handleViewportScroll: createHandleViewportScroll(signals),
-    toggleSourceFilter,
-    toggleLevelFilter,
-  };
+  return { virtualizer, remeasureAndFollowTail };
 };

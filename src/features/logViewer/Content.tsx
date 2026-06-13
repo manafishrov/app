@@ -25,7 +25,6 @@ type LogViewerContentProps = {
   };
   filteredLogs: Accessor<LogRecord[]>;
   virtualizer: VirtualizerType;
-  measureRow: (element: HTMLDivElement) => void;
 };
 
 const EmptyState: Component<LogViewerContentProps> = (props) => (
@@ -64,8 +63,8 @@ const LogList: Component<LogViewerContentProps> = (props) => (
           <VirtualLogRow
             index={virtualItem.index}
             start={virtualItem.start}
+            size={virtualItem.size}
             log={log}
-            measureRow={props.measureRow}
           />
         );
       }}
