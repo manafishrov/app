@@ -70,7 +70,7 @@ const SettingsLayout: Component = () => {
               tabIndex={-1}
               class='focus-visible:ring-0 focus-visible:outline-none'
             >
-              <ScrollAreaContent>
+              <ScrollAreaContent class='@container'>
                 <div class='relative mx-auto w-full max-w-3xl p-4 md:p-8'>
                   <Outlet />
                 </div>
