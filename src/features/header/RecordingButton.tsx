@@ -11,13 +11,16 @@ import {
 import VideoIcon from '~icons/material-symbols/video-camera-back';
 
 import * as m from '@/paraglide/messages';
+import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
+import { vibrateConfirm } from '@/tauri/gamepad';
 
 const [undef] = [] as (number | undefined)[];
 
 const RecordingButton = (): JSXElement => {
   const handleRecordingClick = (): void => {
     const { isRecording } = recordingStore;
+    vibrateConfirm(configStore.selectedGamepadId);
     setRecordingStore({
       isRecording: !isRecording,
       startTime: isRecording ? undef : Date.now(),

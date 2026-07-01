@@ -16,6 +16,7 @@ import {
   setDesiredDepthDraft,
 } from '@/stores/desiredDepthPopup';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
+import { vibrateConfirm } from '@/tauri/gamepad';
 
 const FOCUS_DELAY_MS = 50;
 const ignoreDesiredDepthCloseError = (error: unknown): void => {
@@ -143,6 +144,7 @@ export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement
             return;
           }
 
+          vibrateConfirm(configStore.selectedGamepadId);
           openDesiredDepthPopup(rovTelemetryStore.desiredDepth);
         }}
       >

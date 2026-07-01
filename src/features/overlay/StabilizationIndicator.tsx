@@ -16,6 +16,7 @@ import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
+import { vibrateConfirm } from '@/tauri/gamepad';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
 const TOGGLE_BASE_REM = 2.25;
@@ -93,6 +94,7 @@ const StabilizationIndicator: Component = () => (
       active={rovStatusStore.autoStabilization}
       label={m.controls_stabilization_stabilization()}
       onToggle={() => {
+        vibrateConfirm(configStore.selectedGamepadId);
         toggleAutoStabilization().catch(handleToggleError);
       }}
       icon={<AutoStabilizationIcon class='size-full' />}
@@ -101,6 +103,7 @@ const StabilizationIndicator: Component = () => (
       active={rovStatusStore.depthHold}
       label={m.controls_stabilization_depth_hold()}
       onToggle={() => {
+        vibrateConfirm(configStore.selectedGamepadId);
         toggleDepthHold().catch(handleToggleError);
       }}
       icon={<DepthHoldIcon class='size-full' />}

@@ -6,6 +6,8 @@ import type { CleanupFn } from '@/tauri/core';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import { configStore } from '@/stores/config';
+import { vibrateConfirm } from '@/tauri/gamepad';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
@@ -234,6 +236,11 @@ const createToastOptions = (payload: ToastPayload): ToastCreateOptions => {
   return options;
 };
 
+const SETTINGS_SUCCESS_KEYS = new Set([
+  'toasts_app_config_set_success',
+  'toasts_rov_config_set_successfully',
+]);
+
 const handleToastPayload = (payload: ToastPayload): void => {
   const toastId = isNonEmptyString(payload.identifier) ? payload.identifier : '';
 
@@ -243,6 +250,10 @@ const handleToastPayload = (payload: ToastPayload): void => {
 
   if (payload.variant === ToastPayloadVariant.loading && toastId.length > 0) {
     scheduleLoadingTimeout(toastId);
+  }
+
+  if (SETTINGS_SUCCESS_KEYS.has(payload.content.messageKey)) {
+    vibrateConfirm(configStore.selectedGamepadId);
   }
 
   toast.create(createToastOptions(payload));

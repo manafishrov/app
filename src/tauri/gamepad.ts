@@ -1,4 +1,5 @@
 import { toast } from '@manafishrov/ui/toaster';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 import { logError } from '@/lib/log';
@@ -46,17 +47,17 @@ const createVibrationActuator = (
 
       return invokeCommand('gamepad_vibrate', {
         index,
-        low_freq: params.weakMagnitude ?? 0,
-        high_freq: params.strongMagnitude ?? 0,
-        duration_ms: params.duration ?? 0,
+        lowFreq: params.weakMagnitude ?? 0,
+        highFreq: params.strongMagnitude ?? 0,
+        durationMs: params.duration ?? 0,
       }).then((): GamepadHapticsResult => 'complete');
     },
     pulse: (value: number, duration: number): Promise<boolean> =>
       invokeCommand('gamepad_vibrate', {
         index,
-        low_freq: value,
-        high_freq: value,
-        duration_ms: duration,
+        lowFreq: value,
+        highFreq: value,
+        durationMs: duration,
       })
         .then((): boolean => true)
         .catch((): boolean => false),
@@ -139,8 +140,45 @@ export const vibrateGamepad: VibrateGamepadFn = (...params): Promise<void> => {
 
   return invokeCommand('gamepad_vibrate', {
     index,
-    low_freq: weakMagnitude,
-    high_freq: strongMagnitude,
-    duration_ms: duration,
+    lowFreq: weakMagnitude,
+    highFreq: strongMagnitude,
+    durationMs: duration,
   }).then(resolveVoid);
+};
+
+type VibrateParams = {
+  weakMagnitude: number;
+  strongMagnitude: number;
+  duration: number;
+};
+
+const CONFIRM_WEAK_MAGNITUDE = 0.2;
+const CONFIRM_STRONG_MAGNITUDE = 0.9;
+const CONFIRM_DURATION_MS = 60;
+
+export const vibrateGamepadById = (
+  gamepadId: string | null | undefined,
+  params: VibrateParams,
+): void => {
+  if (typeof gamepadId !== 'string') {
+    return;
+  }
+  const gamepad = [...navigator.getGamepads()].find((gp) => gp !== null && gp.id === gamepadId);
+  if (!gamepad) {
+    return;
+  }
+  invoke('gamepad_vibrate', {
+    index: gamepad.index,
+    lowFreq: params.weakMagnitude,
+    highFreq: params.strongMagnitude,
+    durationMs: params.duration,
+  }).catch(() => null);
+};
+
+export const vibrateConfirm = (gamepadId: string | null | undefined): void => {
+  vibrateGamepadById(gamepadId, {
+    weakMagnitude: CONFIRM_WEAK_MAGNITUDE,
+    strongMagnitude: CONFIRM_STRONG_MAGNITUDE,
+    duration: CONFIRM_DURATION_MS,
+  });
 };

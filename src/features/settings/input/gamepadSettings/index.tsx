@@ -31,6 +31,7 @@ import {
   configStore,
   setConfig,
 } from '@/stores/config';
+import { vibrateConfirm } from '@/tauri/gamepad';
 
 import { CustomActionsSettings } from '../CustomActionsSettings';
 import {
@@ -120,6 +121,8 @@ const updateGamepadBinding = (
       ...configStore.gamepad,
       [selectedGamepadId]: updatedBindings,
     },
+  }).then(() => {
+    vibrateConfirm(selectedGamepadId);
   });
 };
 
