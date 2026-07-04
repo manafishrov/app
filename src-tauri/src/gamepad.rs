@@ -66,6 +66,10 @@ fn run_gamepad_stream<R: Runtime>(
   app: &AppHandle<R>,
   rx: &mpsc::Receiver<VibrateCommand>,
 ) -> Result<(), String> {
+  // This background stream has no SDL window, so use XInput instead of
+  // Windows RawInput for Xbox controllers.
+  sdl2::hint::set("SDL_JOYSTICK_RAWINPUT", "0");
+
   let sdl = sdl2::init()?;
   let controller_subsystem = sdl.game_controller()?;
   let joystick_subsystem = sdl.joystick()?;
