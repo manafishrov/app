@@ -25,7 +25,7 @@ export {
 } from '@/tauri/sdFlash';
 export { sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
-export { vibrateGamepad } from '@/tauri/gamepad';
+export { playConfirmHaptic } from '@/tauri/gamepad';
 export {
   checkForAppUpdates,
   installAppReleaseVersion,

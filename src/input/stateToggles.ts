@@ -16,6 +16,7 @@ import {
 } from '@/stores/desiredDepthPopup';
 import { isInputSuppressed } from '@/stores/inputState';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
+import { playConfirmHaptic } from '@/tauri/gamepad';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
 type ToggleState = {
@@ -123,6 +124,7 @@ const handleDesiredDepthEntryToggle = (ctx: ToggleContext): void => {
       if (desiredDepthPopupStore.isOpen) {
         return closeDesiredDepthPopup();
       }
+      playConfirmHaptic(ctx.config.selectedGamepadId);
       openDesiredDepthPopup(rovTelemetryStore.desiredDepth);
       return Promise.resolve();
     },
@@ -161,6 +163,9 @@ const handleAutoStabilizationToggle = (ctx: ToggleContext): void => {
     pressedKeys: ctx.pressedKeys,
     gamepad: ctx.gamepad,
   });
+  if (isPressed && !ctx.lastState.autoStabilization) {
+    playConfirmHaptic(ctx.config.selectedGamepadId);
+  }
   handleToggle({
     isPressed,
     state: 'autoStabilization',
@@ -174,6 +179,9 @@ const handleDepthHoldToggle = (ctx: ToggleContext): void => {
     pressedKeys: ctx.pressedKeys,
     gamepad: ctx.gamepad,
   });
+  if (isPressed && !ctx.lastState.depthHold) {
+    playConfirmHaptic(ctx.config.selectedGamepadId);
+  }
   handleToggle({
     isPressed,
     state: 'depthHold',
@@ -187,6 +195,9 @@ const handleRecordingInput = (ctx: ToggleContext): void => {
     pressedKeys: ctx.pressedKeys,
     gamepad: ctx.gamepad,
   });
+  if (recordPressed && !ctx.lastState.record && ctx.getWebrtcConnected()) {
+    playConfirmHaptic(ctx.config.selectedGamepadId);
+  }
   handleRecordingToggle({
     isPressed: recordPressed,
     lastState: ctx.lastState,

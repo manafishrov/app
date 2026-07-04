@@ -3,6 +3,11 @@ import { listen } from '@tauri-apps/api/event';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import {
+  CONFIRM_HAPTIC_DURATION_MS,
+  CONFIRM_HAPTIC_STRONG_MAGNITUDE,
+  CONFIRM_HAPTIC_WEAK_MAGNITUDE,
+} from '@/tauri/constants';
 import { invokeCommand, type CleanupFn } from '@/tauri/core';
 
 const EVENT = 'gamepad_event';
@@ -21,8 +26,6 @@ type GamepadData = {
 const gamepads = new Map<number, Gamepad>();
 
 const noopCleanup: CleanupFn = () => 0;
-
-const resolveVoid: () => void = () => 0;
 
 const getGamepads = (): ReturnType<Navigator['getGamepads']> => [...gamepads.values()];
 
@@ -44,20 +47,28 @@ const createVibrationActuator = (
         return Promise.resolve('complete');
       }
 
-      return invokeCommand('gamepad_vibrate', {
-        index,
-        low_freq: params.weakMagnitude ?? 0,
-        high_freq: params.strongMagnitude ?? 0,
-        duration_ms: params.duration ?? 0,
-      }).then((): GamepadHapticsResult => 'complete');
+      return invokeCommand(
+        'gamepad_vibrate',
+        {
+          index,
+          lowFreq: params.weakMagnitude ?? 0,
+          highFreq: params.strongMagnitude ?? 0,
+          durationMs: params.duration ?? 0,
+        },
+        { warnOnly: true },
+      ).then((): GamepadHapticsResult => 'complete');
     },
     pulse: (value: number, duration: number): Promise<boolean> =>
-      invokeCommand('gamepad_vibrate', {
-        index,
-        low_freq: value,
-        high_freq: value,
-        duration_ms: duration,
-      })
+      invokeCommand(
+        'gamepad_vibrate',
+        {
+          index,
+          lowFreq: value,
+          highFreq: value,
+          durationMs: duration,
+        },
+        { warnOnly: true },
+      )
         .then((): boolean => true)
         .catch((): boolean => false),
     reset: (): Promise<GamepadHapticsResult> => Promise.resolve('complete'),
@@ -130,17 +141,30 @@ export const setupGamepadListener = (): Promise<CleanupFn> => {
   );
 };
 
-type VibrateGamepadFn = (
-  ...params: [index: number, weakMagnitude: number, strongMagnitude: number, duration: number]
-) => Promise<void>;
+type VibrateParams = {
+  weakMagnitude: number;
+  strongMagnitude: number;
+  duration: number;
+};
 
-export const vibrateGamepad: VibrateGamepadFn = (...params): Promise<void> => {
-  const [index, weakMagnitude, strongMagnitude, duration] = params;
+const playGamepadEffectById = (
+  gamepadId: string | null | undefined,
+  params: VibrateParams,
+): void => {
+  if (typeof gamepadId !== 'string') {
+    return;
+  }
+  const gamepad = [...navigator.getGamepads()].find((gp) => gp !== null && gp.id === gamepadId);
+  if (!gamepad) {
+    return;
+  }
+  gamepad.vibrationActuator.playEffect('dual-rumble', params).catch(() => null);
+};
 
-  return invokeCommand('gamepad_vibrate', {
-    index,
-    low_freq: weakMagnitude,
-    high_freq: strongMagnitude,
-    duration_ms: duration,
-  }).then(resolveVoid);
+export const playConfirmHaptic = (gamepadId: string | null | undefined): void => {
+  playGamepadEffectById(gamepadId, {
+    weakMagnitude: CONFIRM_HAPTIC_WEAK_MAGNITUDE,
+    strongMagnitude: CONFIRM_HAPTIC_STRONG_MAGNITUDE,
+    duration: CONFIRM_HAPTIC_DURATION_MS,
+  });
 };
