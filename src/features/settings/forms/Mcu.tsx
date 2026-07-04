@@ -24,8 +24,8 @@ type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
 const createMcuBoards = (): SelectCollection =>
   createListCollection<SelectOption>({
     items: [
-      { value: McuBoard.pico as string, label: m.general_rov_settings_mcu_board_pico() },
-      { value: McuBoard.pico2 as string, label: m.general_rov_settings_mcu_board_pico2() },
+      { value: McuBoard.pico, label: m.general_rov_settings_mcu_board_pico() },
+      { value: McuBoard.pico2, label: m.general_rov_settings_mcu_board_pico2() },
     ],
   });
 
@@ -33,11 +33,11 @@ const createThrusterProtocols = (): SelectCollection =>
   createListCollection<SelectOption>({
     items: [
       {
-        value: ThrusterProtocol.pwm as string,
+        value: ThrusterProtocol.pwm,
         label: m.general_rov_settings_thruster_protocol_pwm(),
       },
       {
-        value: ThrusterProtocol.dshot as string,
+        value: ThrusterProtocol.dshot,
         label: m.general_rov_settings_thruster_protocol_dshot(),
       },
     ],
@@ -57,11 +57,11 @@ const createCurrentSensingModes = (): SelectCollection =>
   createListCollection<SelectOption>({
     items: [
       {
-        value: CurrentSensingMode.sharedBus as string,
+        value: CurrentSensingMode.sharedBus,
         label: m.general_rov_settings_current_sensing_mode_shared_bus(),
       },
       {
-        value: CurrentSensingMode.perMotor as string,
+        value: CurrentSensingMode.perMotor,
         label: m.general_rov_settings_current_sensing_mode_per_motor(),
       },
     ],

@@ -88,7 +88,9 @@ const toClampedRow = (values: number[] | undefined, fallback: Row): Row =>
   });
 
 const toIdentifierValue = (value: number): IdentifierValue => {
-  const parsed = String(Math.max(ZERO, Math.min(THRUSTER_INDICES.length - ONE, Math.trunc(value))));
+  const truncatedValue = Math.trunc(value);
+  const clampedValue = Math.max(ZERO, Math.min(THRUSTER_INDICES.length - ONE, truncatedValue));
+  const parsed = String(clampedValue);
   const result = identifierSchema.safeParse(parsed);
   return result.success ? result.data : DEFAULT_IDENTIFIER_VALUE;
 };

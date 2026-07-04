@@ -7,8 +7,7 @@ const getButtonInputRawValue = (input: GamepadInput, gamepad: Gamepad): number |
     return null;
   }
 
-  const button = input.input as { Button: number };
-  const buttonData = gamepad.buttons[button.Button];
+  const buttonData = gamepad.buttons[input.input.Button];
 
   if (!buttonData) {
     return null;
@@ -22,8 +21,7 @@ const getAxisInputRawValue = (input: GamepadInput, gamepad: Gamepad): number | n
     return null;
   }
 
-  const axis = input.input as { Axis: number };
-  return gamepad.axes[axis.Axis] ?? 0;
+  return gamepad.axes[input.input.Axis] ?? 0;
 };
 
 export const readGamepadInput = (input: GamepadInput | null, gamepad: Gamepad | null): number => {
