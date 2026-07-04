@@ -105,12 +105,13 @@ const setConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
   setConfigStore(newConfig);
 
   return invoke('set_config', { payload: newConfig })
+    .then(ignoreInvokeResult)
     .catch((error: unknown) => {
       setConfigStore(currentConfig);
       logError('Failed to set config:', error);
       toast.create({ title: m.toasts_failed_to_set_config_reverted(), type: 'error' });
-    })
-    .then(ignoreInvokeResult);
+      throw error;
+    });
 };
 
 export {

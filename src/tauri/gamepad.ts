@@ -47,20 +47,28 @@ const createVibrationActuator = (
         return Promise.resolve('complete');
       }
 
-      return invokeCommand('gamepad_vibrate', {
-        index,
-        lowFreq: params.weakMagnitude ?? 0,
-        highFreq: params.strongMagnitude ?? 0,
-        durationMs: params.duration ?? 0,
-      }).then((): GamepadHapticsResult => 'complete');
+      return invokeCommand(
+        'gamepad_vibrate',
+        {
+          index,
+          lowFreq: params.weakMagnitude ?? 0,
+          highFreq: params.strongMagnitude ?? 0,
+          durationMs: params.duration ?? 0,
+        },
+        { warnOnly: true },
+      ).then((): GamepadHapticsResult => 'complete');
     },
     pulse: (value: number, duration: number): Promise<boolean> =>
-      invokeCommand('gamepad_vibrate', {
-        index,
-        lowFreq: value,
-        highFreq: value,
-        durationMs: duration,
-      })
+      invokeCommand(
+        'gamepad_vibrate',
+        {
+          index,
+          lowFreq: value,
+          highFreq: value,
+          durationMs: duration,
+        },
+        { warnOnly: true },
+      )
         .then((): boolean => true)
         .catch((): boolean => false),
     reset: (): Promise<GamepadHapticsResult> => Promise.resolve('complete'),
