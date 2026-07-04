@@ -238,7 +238,7 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
   let drive_handle = open_physical_drive_with_retries(device)?;
 
   let raw = drive_handle.0;
-  let file = unsafe { std::fs::File::from_raw_handle(raw as _) };
+  let file = unsafe { std::fs::File::from_raw_handle(raw.cast()) };
   Ok(DeviceHandle {
     file,
     _volume_handles: volume_handles,
@@ -495,7 +495,7 @@ fn flush_device_to_media(file: &std::fs::File) -> Result<(), String> {
   use windows::Win32::Foundation::HANDLE;
   use windows::Win32::Storage::FileSystem::FlushFileBuffers;
 
-  let handle = HANDLE(file.as_raw_handle() as _);
+  let handle = HANDLE(file.as_raw_handle().cast());
   unsafe { FlushFileBuffers(handle) }.map_err(|e| format!("FlushFileBuffers failed: {e}"))
 }
 
