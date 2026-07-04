@@ -8,16 +8,25 @@ import { FieldSuggestionActions } from './FieldSuggestionActions';
 import { REGULATOR_FORM_DEFAULT_VALUES } from './schema';
 
 type DirectionName = 'surge' | 'heave' | 'sway';
+type DirectionFieldProps = {
+  name: DirectionName;
+  label: string;
+  description: string;
+  defaultValue: number;
+  hasSuggestions: boolean;
+};
+
+const DEFAULT_DIRECTION_FIELD_PROPS: DirectionFieldProps = {
+  name: 'surge',
+  label: '',
+  description: '',
+  defaultValue: 0,
+  hasSuggestions: false,
+};
 
 const DirectionField = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,
-  props: {
-    name: 'surge' as DirectionName,
-    label: '',
-    description: '',
-    defaultValue: 0,
-    hasSuggestions: false,
-  },
+  props: DEFAULT_DIRECTION_FIELD_PROPS,
   render: (props) => (
     <props.form.AppField name={props.name}>
       {(field) => (

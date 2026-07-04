@@ -21,11 +21,11 @@ const createFluidTypes = (): SelectCollection =>
   createListCollection<SelectOption>({
     items: [
       {
-        value: FluidType.freshwater as string,
+        value: FluidType.freshwater,
         label: m.general_rov_settings_fluid_type_freshwater(),
       },
       {
-        value: FluidType.saltwater as string,
+        value: FluidType.saltwater,
         label: m.general_rov_settings_fluid_type_saltwater(),
       },
     ],

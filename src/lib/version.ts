@@ -15,7 +15,7 @@ const parseNumericParts = (version: string): number[] =>
   version
     .split('.')
     .slice(0, VERSION_PARTS)
-    .map((part) => Number.parseInt(part, 10));
+    .map((part) => Math.trunc(Number(part)));
 
 const hasInvalidNumericParts = (numericParts: number[]): boolean =>
   numericParts.some((part) => Number.isNaN(part));

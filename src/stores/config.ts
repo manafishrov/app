@@ -6,11 +6,11 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
   AttitudeIndicator,
-  CustomActionTrigger,
   type Config,
   type GamepadBindings,
   type KeyboardBindings,
 } from '@/stores/configTypes';
+export { AttitudeIndicator, CustomActionTrigger } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 
@@ -119,8 +119,6 @@ export {
   setConfigStore,
   getConfig,
   setConfig,
-  AttitudeIndicator,
-  CustomActionTrigger,
   defaultConfig,
   createNullKeyboardBindings,
   createNullGamepadBindings,

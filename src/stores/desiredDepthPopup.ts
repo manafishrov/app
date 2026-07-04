@@ -26,7 +26,7 @@ const [desiredDepthPopupStore, setDesiredDepthPopupStore] = createStore<DesiredD
 const formatDepth = (depth: number): string => depth.toFixed(DECIMAL_PRECISION);
 
 const parseDesiredDepthDraft = (): number => {
-  const parsedDepth = Number.parseFloat(desiredDepthPopupStore.draftDepth);
+  const parsedDepth = Number(desiredDepthPopupStore.draftDepth);
   if (!Number.isFinite(parsedDepth) || parsedDepth < 0) {
     return INVALID_DEPTH;
   }
@@ -79,7 +79,7 @@ const adjustDesiredDepthDraft = (delta: number): void => {
 
 const openDesiredDepthPopup = (initialDepth = rovTelemetryStore.desiredDepth): void => {
   const formattedDepth = formatDepth(Math.max(0, initialDepth));
-  const parsedDepth = Number.parseFloat(formattedDepth);
+  const parsedDepth = Number(formattedDepth);
 
   setDesiredDepthPopupStore({
     isOpen: true,

@@ -8,6 +8,10 @@ const isOutsideDeadzone = (value: number): boolean =>
   value === ZERO || Math.abs(value) >= DEADZONE_THRESHOLD;
 
 const deadzoneValueSchema = z.number().min(NEGATIVE_ONE).max(ONE);
+const thrusterRowSchema = z
+  .array(z.number().min(NEGATIVE_ONE).max(ONE))
+  .length(THRUSTER_INDICES.length);
+const nullspaceVectorSchema = z.array(deadzoneValueSchema).length(THRUSTER_INDICES.length);
 
 const allValuesOutsideDeadzone = (rows: number[][]): boolean =>
   rows.every((row) => row.every((value) => isOutsideDeadzone(value)));
@@ -26,14 +30,10 @@ export const formSchema = z.object({
     identifiers: z.array(identifierSchema).length(THRUSTER_INDICES.length),
     spinDirections: z.array(spinDirectionSchema).length(THRUSTER_INDICES.length),
   }),
-  thrusterAllocation: z
-    .array(z.array(z.number().min(NEGATIVE_ONE).max(ONE)).length(THRUSTER_INDICES.length))
-    .length(THRUSTER_INDICES.length),
-  nullspaceVectors: z
-    .array(z.array(deadzoneValueSchema).length(THRUSTER_INDICES.length))
-    .refine(allValuesOutsideDeadzone, {
-      message: m.validation_deadzone_value(),
-    }),
+  thrusterAllocation: z.array(thrusterRowSchema).length(THRUSTER_INDICES.length),
+  nullspaceVectors: z.array(nullspaceVectorSchema).refine(allValuesOutsideDeadzone, {
+    message: m.validation_deadzone_value(),
+  }),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
