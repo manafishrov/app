@@ -7,7 +7,7 @@ import type { CleanupFn } from '@/tauri/core';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
-import { vibrateConfirm } from '@/tauri/gamepad';
+import { playConfirmHaptic } from '@/tauri/gamepad';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
@@ -253,7 +253,7 @@ const handleToastPayload = (payload: ToastPayload): void => {
   }
 
   if (SETTINGS_SUCCESS_KEYS.has(payload.content.messageKey)) {
-    vibrateConfirm(configStore.selectedGamepadId);
+    playConfirmHaptic(configStore.selectedGamepadId);
   }
 
   toast.create(createToastOptions(payload));

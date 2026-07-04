@@ -5,7 +5,7 @@ import { H3 } from '@manafishrov/ui/typography';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
-import { vibrateConfirm } from '@/tauri/gamepad';
+import { playConfirmHaptic } from '@/tauri/gamepad';
 
 import { KeyboardBindInput } from './keyboardBindInput';
 
@@ -100,7 +100,7 @@ const updateKeyboardBinding = (
 
   setConfig({ keyboard: updatedBindings })
     .then(() => {
-      vibrateConfirm(configStore.selectedGamepadId);
+      playConfirmHaptic(configStore.selectedGamepadId);
     })
     .catch(logError);
 };

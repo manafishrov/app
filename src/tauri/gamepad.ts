@@ -1,9 +1,13 @@
 import { toast } from '@manafishrov/ui/toaster';
-import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import {
+  CONFIRM_HAPTIC_DURATION_MS,
+  CONFIRM_HAPTIC_STRONG_MAGNITUDE,
+  CONFIRM_HAPTIC_WEAK_MAGNITUDE,
+} from '@/tauri/constants';
 import { invokeCommand, type CleanupFn } from '@/tauri/core';
 
 const EVENT = 'gamepad_event';
@@ -22,8 +26,6 @@ type GamepadData = {
 const gamepads = new Map<number, Gamepad>();
 
 const noopCleanup: CleanupFn = () => 0;
-
-const resolveVoid: () => void = () => 0;
 
 const getGamepads = (): ReturnType<Navigator['getGamepads']> => [...gamepads.values()];
 
@@ -131,32 +133,13 @@ export const setupGamepadListener = (): Promise<CleanupFn> => {
   );
 };
 
-type VibrateGamepadFn = (
-  ...params: [index: number, weakMagnitude: number, strongMagnitude: number, duration: number]
-) => Promise<void>;
-
-export const vibrateGamepad: VibrateGamepadFn = (...params): Promise<void> => {
-  const [index, weakMagnitude, strongMagnitude, duration] = params;
-
-  return invokeCommand('gamepad_vibrate', {
-    index,
-    lowFreq: weakMagnitude,
-    highFreq: strongMagnitude,
-    durationMs: duration,
-  }).then(resolveVoid);
-};
-
 type VibrateParams = {
   weakMagnitude: number;
   strongMagnitude: number;
   duration: number;
 };
 
-const CONFIRM_WEAK_MAGNITUDE = 0.2;
-const CONFIRM_STRONG_MAGNITUDE = 0.9;
-const CONFIRM_DURATION_MS = 60;
-
-export const vibrateGamepadById = (
+const playGamepadEffectById = (
   gamepadId: string | null | undefined,
   params: VibrateParams,
 ): void => {
@@ -167,18 +150,13 @@ export const vibrateGamepadById = (
   if (!gamepad) {
     return;
   }
-  invoke('gamepad_vibrate', {
-    index: gamepad.index,
-    lowFreq: params.weakMagnitude,
-    highFreq: params.strongMagnitude,
-    durationMs: params.duration,
-  }).catch(() => null);
+  gamepad.vibrationActuator.playEffect('dual-rumble', params).catch(() => null);
 };
 
-export const vibrateConfirm = (gamepadId: string | null | undefined): void => {
-  vibrateGamepadById(gamepadId, {
-    weakMagnitude: CONFIRM_WEAK_MAGNITUDE,
-    strongMagnitude: CONFIRM_STRONG_MAGNITUDE,
-    duration: CONFIRM_DURATION_MS,
+export const playConfirmHaptic = (gamepadId: string | null | undefined): void => {
+  playGamepadEffectById(gamepadId, {
+    weakMagnitude: CONFIRM_HAPTIC_WEAK_MAGNITUDE,
+    strongMagnitude: CONFIRM_HAPTIC_STRONG_MAGNITUDE,
+    duration: CONFIRM_HAPTIC_DURATION_MS,
   });
 };

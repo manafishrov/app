@@ -31,7 +31,7 @@ import {
   configStore,
   setConfig,
 } from '@/stores/config';
-import { vibrateConfirm } from '@/tauri/gamepad';
+import { playConfirmHaptic } from '@/tauri/gamepad';
 
 import { CustomActionsSettings } from '../CustomActionsSettings';
 import {
@@ -122,7 +122,7 @@ const updateGamepadBinding = (
       [selectedGamepadId]: updatedBindings,
     },
   }).then(() => {
-    vibrateConfirm(selectedGamepadId);
+    playConfirmHaptic(selectedGamepadId);
   });
 };
 

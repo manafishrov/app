@@ -20,7 +20,7 @@ import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
-import { vibrateConfirm } from '@/tauri/gamepad';
+import { playConfirmHaptic } from '@/tauri/gamepad';
 
 const MAX_POWER = 100;
 const POWER_WARNING_THRESHOLD = 40;
@@ -243,7 +243,7 @@ const createHighPowerWarning = (form: {
       const newValue = value[0] ?? 0;
       const previous = lastSettled[name];
       if (newValue > POWER_WARNING_THRESHOLD && previous <= POWER_WARNING_THRESHOLD) {
-        vibrateConfirm(configStore.selectedGamepadId);
+        playConfirmHaptic(configStore.selectedGamepadId);
         setPendingField(name);
         return;
       }
