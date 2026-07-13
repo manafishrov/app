@@ -45,7 +45,7 @@ reqwest = { version = "0.13.0", default-features = false, features = ["json", "r
 sha2 = "0.11.0"
 minisign-verify = "0.2.4"
 tokio = { version = "1.49.0", features = ["full"] }
-tokio-tungstenite = "0.29.0"
+tokio-tungstenite = "0.30.0"
 tokio-util = { version = "0.7.17", features = ["io"] }
 futures-util = "0.3.31"
 bytes = "1.10.1"
