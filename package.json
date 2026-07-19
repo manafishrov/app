@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@chenglou/pretext": "0.0.8",
-    "@manafishrov/ui": "1.5.8",
+    "@manafishrov/ui": "1.5.9",
     "@tailwindcss/vite": "4.3.2",
     "@tanstack/router-plugin": "1.168.19",
     "@tanstack/solid-form": "1.33.1",
