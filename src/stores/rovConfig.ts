@@ -41,6 +41,44 @@ const FluidType = {
 
 type FluidType = (typeof FluidType)[keyof typeof FluidType];
 
+const H264Profile = {
+  baseline: 'baseline',
+  main: 'main',
+  high: 'high',
+} as const;
+
+type H264Profile = (typeof H264Profile)[keyof typeof H264Profile];
+
+const H264Level = {
+  level4: '4',
+  level41: '4.1',
+  level42: '4.2',
+} as const;
+
+type H264Level = (typeof H264Level)[keyof typeof H264Level];
+
+const AwbMode = {
+  auto: 'auto',
+  incandescent: 'incandescent',
+  tungsten: 'tungsten',
+  fluorescent: 'fluorescent',
+  indoor: 'indoor',
+  daylight: 'daylight',
+  cloudy: 'cloudy',
+} as const;
+
+type AwbMode = (typeof AwbMode)[keyof typeof AwbMode];
+
+const DenoiseMode = {
+  auto: 'auto',
+  off: 'off',
+  cdnOff: 'cdn_off',
+  cdnFast: 'cdn_fast',
+  cdnHq: 'cdn_hq',
+} as const;
+
+type DenoiseMode = (typeof DenoiseMode)[keyof typeof DenoiseMode];
+
 type ThrusterPinSetup = {
   identifiers: [number, number, number, number, number, number, number, number];
   spinDirections: [number, number, number, number, number, number, number, number];
@@ -91,6 +129,26 @@ type Power = {
   internalResistance: number;
 };
 
+type Camera = {
+  width: number;
+  height: number;
+  framerate: number;
+  bitrate: number;
+  keyframeInterval: number;
+  profile: H264Profile;
+  level: H264Level;
+  rotation: number;
+  hflip: boolean;
+  vflip: boolean;
+  awb: AwbMode;
+  exposureValue: number;
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  sharpness: number;
+  denoise: DenoiseMode;
+};
+
 type RovConfig = {
   firmwareVersion: string;
   mcuFirmwareVersion: string;
@@ -107,6 +165,7 @@ type RovConfig = {
   regulator: Regulator;
   directionCoefficients: DirectionCoefficients;
   power: Power;
+  camera: Camera;
   ipAddress: string;
   websocketPort: number;
 };
@@ -170,6 +229,25 @@ const defaultRovConfig: RovConfig = {
     maxBatteryVoltage: 20.5,
     internalResistance: 0.1,
   },
+  camera: {
+    width: 1920,
+    height: 1080,
+    framerate: 30,
+    bitrate: 20_000_000,
+    keyframeInterval: 30,
+    profile: H264Profile.baseline,
+    level: H264Level.level42,
+    rotation: 0,
+    hflip: false,
+    vflip: false,
+    awb: AwbMode.auto,
+    exposureValue: 0,
+    brightness: 0,
+    contrast: 1,
+    saturation: 1,
+    sharpness: 1,
+    denoise: DenoiseMode.auto,
+  },
   ipAddress: '10.10.10.10',
   websocketPort: 9000,
 };
@@ -189,6 +267,10 @@ export {
   DshotSpeed,
   McuBoard,
   ThrusterProtocol,
+  H264Profile,
+  H264Level,
+  AwbMode,
+  DenoiseMode,
   defaultRovConfig,
   type AxisConfig,
   type Regulator,
@@ -198,6 +280,7 @@ export {
   type ThrusterAllocation,
   type NullspaceVectors,
   type Power,
+  type Camera,
   type RegulatorSuggestions,
   type Row,
 };

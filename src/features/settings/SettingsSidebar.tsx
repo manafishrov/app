@@ -22,6 +22,7 @@ import ExploreIcon from '~icons/material-symbols/explore';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import MemoryIcon from '~icons/material-symbols/memory';
 import PaletteIcon from '~icons/material-symbols/palette';
+import PhotoCameraIcon from '~icons/material-symbols/photo-camera';
 import SdCardIcon from '~icons/material-symbols/sd-card';
 import SettingsIcon from '~icons/material-symbols/settings';
 import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
@@ -96,6 +97,12 @@ const ROV_ITEMS = [
     ariaLabel: (): string => m.aria_labels_regulator_button(),
     to: '/settings/rov/regulator',
     Icon: ExploreIcon,
+  },
+  {
+    label: (): string => m.settings_rov_camera(),
+    ariaLabel: (): string => m.aria_labels_camera_button(),
+    to: '/settings/rov/camera',
+    Icon: PhotoCameraIcon,
   },
   {
     label: (): string => m.settings_rov_power(),

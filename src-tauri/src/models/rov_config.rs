@@ -77,6 +77,28 @@ pub struct Power {
   pub internal_resistance: f32,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Camera {
+  pub width: u32,
+  pub height: u32,
+  pub framerate: u32,
+  pub bitrate: u32,
+  pub keyframe_interval: u32,
+  pub profile: String,
+  pub level: String,
+  pub rotation: u32,
+  pub hflip: bool,
+  pub vflip: bool,
+  pub awb: String,
+  pub exposure_value: f32,
+  pub brightness: f32,
+  pub contrast: f32,
+  pub saturation: f32,
+  pub sharpness: f32,
+  pub denoise: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
@@ -95,6 +117,7 @@ pub struct RovConfig {
   pub regulator: Regulator,
   pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
+  pub camera: Camera,
   pub ip_address: String,
   pub websocket_port: u16,
 }
@@ -144,6 +167,8 @@ pub struct PartialRovConfig {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub power: Option<Power>,
   #[serde(skip_serializing_if = "Option::is_none")]
+  pub camera: Option<Camera>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub ip_address: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub websocket_port: Option<u16>,
@@ -184,6 +209,28 @@ mod tests {
     ThrusterPinSetup {
       identifiers: [1, 2, 3, 4, 5, 6, 7, 8],
       spin_directions: [1, -1, 1, -1, 1, -1, 1, -1],
+    }
+  }
+
+  fn sample_camera() -> Camera {
+    Camera {
+      width: 1920,
+      height: 1080,
+      framerate: 30,
+      bitrate: 20_000_000,
+      keyframe_interval: 30,
+      profile: "baseline".to_string(),
+      level: "4.2".to_string(),
+      rotation: 0,
+      hflip: false,
+      vflip: true,
+      awb: "auto".to_string(),
+      exposure_value: 0.0,
+      brightness: 0.0,
+      contrast: 1.0,
+      saturation: 1.0,
+      sharpness: 1.0,
+      denoise: "auto".to_string(),
     }
   }
 
@@ -237,6 +284,7 @@ mod tests {
         max_battery_voltage: 16.8,
         internal_resistance: 0.02,
       },
+      camera: sample_camera(),
       ip_address: "10.10.10.10".to_string(),
       websocket_port: 9000,
     }
