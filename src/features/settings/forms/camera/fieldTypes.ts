@@ -4,13 +4,14 @@ import type { JSXElement } from 'solid-js';
 export type SelectOption = { value: string; label: string };
 export type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
 
-export type CameraNumberFieldName =
-  | 'width'
-  | 'height'
-  | 'framerate'
-  | 'bitrateMbps'
-  | 'keyframeInterval';
-export type CameraSelectFieldName = 'profile' | 'level' | 'rotation' | 'awb' | 'denoise';
+export type CameraNumberFieldName = 'framerate' | 'bitrateMbps' | 'keyframeInterval';
+export type CameraSelectFieldName =
+  | 'resolution'
+  | 'profile'
+  | 'level'
+  | 'rotation'
+  | 'awb'
+  | 'denoise';
 export type CameraSliderFieldName =
   | 'exposureValue'
   | 'brightness'

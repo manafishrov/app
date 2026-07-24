@@ -1,11 +1,34 @@
-export const MIN_WIDTH = 160;
-export const MAX_WIDTH = 4056;
-export const MIN_HEIGHT = 160;
-export const MAX_HEIGHT = 3040;
-export const DIMENSION_STEP = 2;
+// 4:3 resolution presets matching the imx477 sensor (native 4056x3040), so every option uses the full sensor field of view instead of a 16:9 crop.
+// Sizes stay within the Raspberry Pi hardware H.264 encoder limit (width <= 2048 and a <= 1920x1080 macroblock budget); larger frames fail to encode and the stream never starts.
+export const ResolutionKey = {
+  lowest: 'lowest',
+  low: 'low',
+  standard: 'standard',
+  high: 'high',
+  max: 'max',
+} as const;
+
+export type ResolutionKey = (typeof ResolutionKey)[keyof typeof ResolutionKey];
+
+export type ResolutionOption = {
+  value: ResolutionKey;
+  width: number;
+  height: number;
+};
+
+/* oxlint-disable no-magic-numbers */
+export const RESOLUTION_OPTIONS: ResolutionOption[] = [
+  { value: ResolutionKey.lowest, width: 320, height: 240 },
+  { value: ResolutionKey.low, width: 640, height: 480 },
+  { value: ResolutionKey.standard, width: 1024, height: 768 },
+  { value: ResolutionKey.high, width: 1280, height: 960 },
+  { value: ResolutionKey.max, width: 1440, height: 1080 },
+];
+/* oxlint-enable no-magic-numbers */
 
 export const MIN_FRAMERATE = 1;
-export const MAX_FRAMERATE = 60;
+// The full-FOV 2028x1520 sensor mode caps at 40 fps, also the H.264 level-4 macroblock-rate ceiling for the largest option (1440x1080).
+export const MAX_FRAMERATE = 40;
 
 export const MIN_BITRATE_MBPS = 1;
 export const MAX_BITRATE_MBPS = 25;

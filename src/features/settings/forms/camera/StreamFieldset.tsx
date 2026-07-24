@@ -14,19 +14,25 @@ import type {
 } from './fieldTypes';
 
 import {
-  DIMENSION_STEP,
   MAX_BITRATE_MBPS,
   MAX_FRAMERATE,
-  MAX_HEIGHT,
   MAX_KEYFRAME_INTERVAL,
-  MAX_WIDTH,
   MIN_BITRATE_MBPS,
   MIN_FRAMERATE,
-  MIN_HEIGHT,
   MIN_KEYFRAME_INTERVAL,
-  MIN_WIDTH,
+  ResolutionKey,
 } from './constants';
 import { NumberFieldRow, SelectFieldRow } from './FieldRows';
+
+const resolutionCollection = createListCollection<SelectOption>({
+  items: [
+    { value: ResolutionKey.lowest, label: m.camera_settings_resolution_lowest() },
+    { value: ResolutionKey.low, label: m.camera_settings_resolution_low() },
+    { value: ResolutionKey.standard, label: m.camera_settings_resolution_standard() },
+    { value: ResolutionKey.high, label: m.camera_settings_resolution_high() },
+    { value: ResolutionKey.max, label: m.camera_settings_resolution_max() },
+  ],
+});
 
 const profileCollection = createListCollection<SelectOption>({
   items: [
@@ -44,25 +50,14 @@ const levelCollection = createListCollection<SelectOption>({
   ],
 });
 
+const RESOLUTION_FIELD: SelectFieldConfig = {
+  name: 'resolution',
+  label: m.camera_settings_resolution_title,
+  description: m.camera_settings_resolution_description,
+  collection: resolutionCollection,
+};
+
 const NUMBER_FIELDS: NumberFieldConfig[] = [
-  {
-    name: 'width',
-    label: m.camera_settings_width_title,
-    description: m.camera_settings_width_description,
-    min: MIN_WIDTH,
-    max: MAX_WIDTH,
-    step: DIMENSION_STEP,
-    addon: 'px',
-  },
-  {
-    name: 'height',
-    label: m.camera_settings_height_title,
-    description: m.camera_settings_height_description,
-    min: MIN_HEIGHT,
-    max: MAX_HEIGHT,
-    step: DIMENSION_STEP,
-    addon: 'px',
-  },
   {
     name: 'framerate',
     label: m.camera_settings_framerate_title,
@@ -112,6 +107,7 @@ export const StreamFieldset: Component<{ AppField: CameraFieldRenderer }> = (pro
     <FieldLegend>{m.camera_settings_stream_title()}</FieldLegend>
     <p class='mb-4 text-sm text-muted-foreground'>{m.camera_settings_stream_description()}</p>
     <div class='space-y-4'>
+      <SelectFieldRow AppField={props.AppField} config={RESOLUTION_FIELD} />
       <For each={NUMBER_FIELDS}>
         {(config) => <NumberFieldRow AppField={props.AppField} config={config} />}
       </For>

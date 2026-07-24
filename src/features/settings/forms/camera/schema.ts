@@ -17,24 +17,31 @@ import {
   MAX_BRIGHTNESS,
   MAX_EXPOSURE_VALUE,
   MAX_FRAMERATE,
-  MAX_HEIGHT,
   MAX_IMAGE_ADJUSTMENT,
   MAX_KEYFRAME_INTERVAL,
-  MAX_WIDTH,
   MIN_BITRATE_MBPS,
   MIN_BRIGHTNESS,
   MIN_EXPOSURE_VALUE,
   MIN_FRAMERATE,
-  MIN_HEIGHT,
   MIN_IMAGE_ADJUSTMENT,
   MIN_KEYFRAME_INTERVAL,
-  MIN_WIDTH,
+  RESOLUTION_OPTIONS,
+  ResolutionKey,
   ROTATION_FLIPPED,
 } from './constants';
 
 const FORM_SCHEMA = z.object({
-  width: z.number().min(MIN_WIDTH).max(MAX_WIDTH),
-  height: z.number().min(MIN_HEIGHT).max(MAX_HEIGHT),
+  resolution: z
+    .array(
+      z.enum([
+        ResolutionKey.lowest,
+        ResolutionKey.low,
+        ResolutionKey.standard,
+        ResolutionKey.high,
+        ResolutionKey.max,
+      ]),
+    )
+    .length(1),
   framerate: z.number().min(MIN_FRAMERATE).max(MAX_FRAMERATE),
   bitrateMbps: z.number().min(MIN_BITRATE_MBPS).max(MAX_BITRATE_MBPS),
   keyframeInterval: z.number().min(MIN_KEYFRAME_INTERVAL).max(MAX_KEYFRAME_INTERVAL),
@@ -75,8 +82,7 @@ const FORM_SCHEMA = z.object({
 });
 
 export type CameraFormValues = {
-  width: number;
-  height: number;
+  resolution: ResolutionKey[];
   framerate: number;
   bitrateMbps: number;
   keyframeInterval: number;
@@ -99,9 +105,23 @@ export const createCameraFormSchema = (): typeof FORM_SCHEMA => FORM_SCHEMA;
 const rotationToString = (rotation: number): CameraRotation =>
   rotation === ROTATION_FLIPPED ? '180' : '0';
 
+// Maps a stored width/height to the closest preset by pixel count, so a device reporting a pre-dropdown resolution still resolves to a defined option (an exact match wins with a zero area difference).
+const findResolutionKey = (width: number, height: number): ResolutionKey => {
+  const targetArea = width * height;
+  let closestValue: ResolutionKey = ResolutionKey.high;
+  let smallestDiff = Number.POSITIVE_INFINITY;
+  for (const option of RESOLUTION_OPTIONS) {
+    const diff = Math.abs(option.width * option.height - targetArea);
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      closestValue = option.value;
+    }
+  }
+  return closestValue;
+};
+
 const cameraToFormValues = (camera: Camera): CameraFormValues => ({
-  width: camera.width,
-  height: camera.height,
+  resolution: [findResolutionKey(camera.width, camera.height)],
   framerate: camera.framerate,
   bitrateMbps: Math.round(camera.bitrate / BITRATE_BPS_PER_MBPS),
   keyframeInterval: camera.keyframeInterval,
@@ -128,9 +148,13 @@ export const getCameraFormValues = (): CameraFormValues =>
 
 export const resolveCameraConfig = (value: CameraFormValues): Camera => {
   const { camera } = rovConfigStore;
+  const match = RESOLUTION_OPTIONS.find((option) => option.value === value.resolution[0]);
+  const width = match ? match.width : camera.width;
+  const height = match ? match.height : camera.height;
+
   return {
-    width: value.width,
-    height: value.height,
+    width,
+    height,
     framerate: value.framerate,
     bitrate: Math.round(value.bitrateMbps * BITRATE_BPS_PER_MBPS),
     keyframeInterval: value.keyframeInterval,

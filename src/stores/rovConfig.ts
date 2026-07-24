@@ -230,8 +230,8 @@ const defaultRovConfig: RovConfig = {
     internalResistance: 0.1,
   },
   camera: {
-    width: 1920,
-    height: 1080,
+    width: 1280,
+    height: 960,
     framerate: 30,
     bitrate: 20_000_000,
     keyframeInterval: 30,
