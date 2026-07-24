@@ -133,6 +133,7 @@ type Camera = {
   width: number;
   height: number;
   framerate: number;
+  cropFov: boolean;
   bitrate: number;
   keyframeInterval: number;
   profile: H264Profile;
@@ -230,10 +231,13 @@ const defaultRovConfig: RovConfig = {
     internalResistance: 0.1,
   },
   camera: {
-    width: 1280,
-    height: 960,
-    framerate: 30,
-    bitrate: 20_000_000,
+    // Highest supported preset (see camera/constants.ts RESOLUTION_OPTIONS) at the full-FOV framerate ceiling for that resolution.
+    width: 1440,
+    height: 1080,
+    framerate: 40,
+    cropFov: false,
+    // Width * height * framerate * 0.15 bits-per-pixel - the same formula camera/constants.ts uses to auto-tune the bitrate live.
+    bitrate: 9_331_200,
     keyframeInterval: 30,
     profile: H264Profile.baseline,
     level: H264Level.level42,
@@ -246,7 +250,7 @@ const defaultRovConfig: RovConfig = {
     contrast: 1,
     saturation: 1,
     sharpness: 1,
-    denoise: DenoiseMode.auto,
+    denoise: DenoiseMode.off,
   },
   ipAddress: '10.10.10.10',
   websocketPort: 9000,
