@@ -187,6 +187,8 @@ pub async fn handle_flash_mcu_firmware(
 mod tests {
   use super::*;
 
+  /// # Panics
+  /// Panics if the message isn't queued, acknowledged, or completed successfully.
   #[tokio::test]
   async fn send_message_waits_for_websocket_delivery() {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
@@ -205,6 +207,8 @@ mod tests {
     assert_eq!(send_task.await.expect("send task"), Ok(()));
   }
 
+  /// # Panics
+  /// Panics if the message isn't queued or the delivery failure isn't propagated.
   #[tokio::test]
   async fn send_message_returns_websocket_delivery_failure() {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
