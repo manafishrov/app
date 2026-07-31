@@ -36,6 +36,13 @@ pub struct DirectionVectorSendChannelState {
   pub tx: mpsc::Sender<WebsocketMessage>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MessageSendOutcome {
+  Sent,
+  SerializationFailed,
+  ConnectionFailed,
+}
+
 fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u128>) {
   if let Err(error) = app.emit(
     "rov_connection_status_updated",
@@ -84,7 +91,7 @@ async fn send_serialized_message<S>(
   message: &WebsocketMessage,
   serialize_label: &str,
   error_label: &str,
-) -> bool
+) -> MessageSendOutcome
 where
   S: Sink<Message, Error = tungstenite::Error> + Unpin,
 {
@@ -92,11 +99,34 @@ where
     Ok(text) => text,
     Err(error) => {
       log_warn!("Failed to serialize {}: {}", serialize_label, error);
-      return true;
+      return MessageSendOutcome::SerializationFailed;
     },
   };
 
-  send_text_message(write, app, message_text, error_label).await
+  if send_text_message(write, app, message_text, error_label).await {
+    MessageSendOutcome::Sent
+  } else {
+    MessageSendOutcome::ConnectionFailed
+  }
+}
+
+fn complete_outbound_message(
+  completion: Option<oneshot::Sender<Result<(), String>>>,
+  outcome: MessageSendOutcome,
+) -> bool {
+  let result = match outcome {
+    MessageSendOutcome::Sent => Ok(()),
+    MessageSendOutcome::SerializationFailed => {
+      Err("Failed to serialize message for the ROV.".to_string())
+    },
+    MessageSendOutcome::ConnectionFailed => Err("Failed to send message to the ROV.".to_string()),
+  };
+
+  if let Some(completion) = completion {
+    let _ = completion.send(result);
+  }
+
+  outcome == MessageSendOutcome::ConnectionFailed
 }
 
 async fn send_ping<S>(write: &mut S, app: &AppHandle) -> bool
@@ -210,33 +240,25 @@ pub async fn start_websocket_client(
             config = new_config;
           }
           Some(outbound) = message_rx.recv() => {
-              let sent = send_serialized_message(
+              let outcome = send_serialized_message(
                 &mut write,
                 &app,
                 &outbound.message,
                 "message",
                 "",
               ).await;
-              if let Some(completion) = outbound.sent {
-                let result = if sent {
-                  Ok(())
-                } else {
-                  Err("Failed to send message to the ROV.".to_string())
-                };
-                let _ = completion.send(result);
-              }
-              if !sent {
+              if complete_outbound_message(outbound.sent, outcome) {
                 break;
               }
           }
           Some(direction_vector) = direction_vector_rx.recv() => {
-              if !send_serialized_message(
+              if send_serialized_message(
                 &mut write,
                 &app,
                 &direction_vector,
                 "direction vector",
                 " (direction vector)",
-              ).await {
+              ).await == MessageSendOutcome::ConnectionFailed {
                 break;
               }
           }
@@ -265,5 +287,42 @@ async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
           log_info!("3 seconds passed, retrying connection.");
           None
       }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// # Panics
+  /// Panics if serialization failure is not returned to the waiting sender.
+  #[tokio::test]
+  async fn serialization_failure_is_reported_without_reconnecting() {
+    let (sent_tx, sent_rx) = oneshot::channel();
+
+    let should_reconnect =
+      complete_outbound_message(Some(sent_tx), MessageSendOutcome::SerializationFailed);
+
+    assert!(!should_reconnect);
+    assert_eq!(
+      sent_rx.await.expect("delivery acknowledgement"),
+      Err("Failed to serialize message for the ROV.".to_string())
+    );
+  }
+
+  /// # Panics
+  /// Panics if a connection failure is not returned to the waiting sender.
+  #[tokio::test]
+  async fn connection_failure_is_reported_and_reconnects() {
+    let (sent_tx, sent_rx) = oneshot::channel();
+
+    let should_reconnect =
+      complete_outbound_message(Some(sent_tx), MessageSendOutcome::ConnectionFailed);
+
+    assert!(should_reconnect);
+    assert_eq!(
+      sent_rx.await.expect("delivery acknowledgement"),
+      Err("Failed to send message to the ROV.".to_string())
+    );
   }
 }
