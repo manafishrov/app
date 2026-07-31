@@ -240,11 +240,23 @@ pub struct Config {
   pub webrtc_signaling_api_port: u16,
   pub webrtc_signaling_api_path: String,
   pub web_socket_port: u16,
+  // Whether the Camera settings form computes bitrate automatically from the
+  // selected resolution/framerate, or shows a manual slider. This is purely
+  // an app-side UI preference (unlike the rest of the camera settings, which
+  // live in the ROV config), so it's stored here instead. `serde(default)`
+  // so a config saved before this field existed still loads instead of being
+  // discarded wholesale.
+  #[serde(default = "default_automatic_bitrate")]
+  pub automatic_bitrate: bool,
   pub keyboard: KeyboardBindings,
   #[serde(default)]
   pub custom_actions: Vec<CustomActionBinding>,
   pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
+}
+
+fn default_automatic_bitrate() -> bool {
+  true
 }
 
 fn default_video_directory() -> String {
@@ -321,6 +333,7 @@ impl Default for Config {
       webrtc_signaling_api_port: 1984,
       webrtc_signaling_api_path: "/api/webrtc?src=cam".to_string(),
       web_socket_port: 9000,
+      automatic_bitrate: true,
       keyboard: KeyboardBindings::default(),
       custom_actions: Vec::new(),
       selected_gamepad_id: None,
@@ -373,6 +386,7 @@ mod tests {
     assert_eq!(config.webrtc_signaling_api_port, 1984);
     assert_eq!(config.webrtc_signaling_api_path, "/api/webrtc?src=cam");
     assert_eq!(config.web_socket_port, 9000);
+    assert!(config.automatic_bitrate);
     assert!(config.custom_actions.is_empty());
     assert!(config.selected_gamepad_id.is_none());
     assert!(config.gamepad.is_empty());
@@ -538,5 +552,32 @@ mod tests {
 
     let deserialized = serde_json::from_value::<Config>(serialized);
     assert!(deserialized.is_err());
+  }
+
+  /// # Panics
+  /// Panics if a config saved before `automaticBitrate` existed fails to
+  /// deserialize, or doesn't fall back to `true`.
+  #[test]
+  fn config_deserialization_defaults_automatic_bitrate_when_missing() {
+    let serialized = serde_json::to_value(Config::default());
+    assert!(serialized.is_ok(), "Config serialization failed: {serialized:?}");
+    let Ok(mut serialized) = serialized else {
+      return;
+    };
+
+    let object = serialized.as_object_mut();
+    assert!(object.is_some());
+    let Some(object) = object else {
+      return;
+    };
+    let _ = object.remove("automaticBitrate");
+
+    let deserialized = serde_json::from_value::<Config>(serialized);
+    assert!(deserialized.is_ok());
+    let Ok(deserialized) = deserialized else {
+      return;
+    };
+
+    assert!(deserialized.automatic_bitrate);
   }
 }

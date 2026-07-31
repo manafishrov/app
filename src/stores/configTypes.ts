@@ -206,6 +206,7 @@ type Config = {
   webrtcSignalingApiPort: number;
   webrtcSignalingApiPath: string;
   webSocketPort: number;
+  automaticBitrate: boolean;
   keyboard: KeyboardBindings;
   customActions: CustomActionBinding[];
   selectedGamepadId: string | null;
