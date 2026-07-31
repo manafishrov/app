@@ -192,6 +192,15 @@ pub async fn start_websocket_client(
 
     loop {
       tokio::select! {
+          // A ROV address update and the matching app retarget arrive on
+          // separate channels. Flush the ROV update to the current socket
+          // before reconnecting to its new address.
+          biased;
+          Some(message_to_send) = message_rx.recv() => {
+              if !send_serialized_message(&mut write, &app, &message_to_send, "message", "").await {
+                break;
+              }
+          }
           Some(new_config) = config_rx.recv() => {
             if config_requires_reconnect(&new_config, &config) {
               log_info!("WebSocket config updated. Reconnecting websocket.");
@@ -200,11 +209,6 @@ pub async fn start_websocket_client(
               break;
             }
             config = new_config;
-          }
-          Some(message_to_send) = message_rx.recv() => {
-              if !send_serialized_message(&mut write, &app, &message_to_send, "message", "").await {
-                break;
-              }
           }
           Some(direction_vector) = direction_vector_rx.recv() => {
               if !send_serialized_message(

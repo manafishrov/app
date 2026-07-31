@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
-import { setRovConfig } from '@/tauri';
+import { updateRovConnection } from '@/tauri';
 
 const MAX_PORT = 65_535;
 
@@ -26,10 +26,7 @@ const formSchema = z.object({
 type RovConnectionFormValues = z.infer<typeof formSchema>;
 
 const submitRovConnectionConfig = (value: RovConnectionFormValues): Promise<void> =>
-  setRovConfig({
-    ipAddress: value.ipAddress,
-    websocketPort: value.websocketPort,
-  });
+  updateRovConnection(value);
 
 type AppFieldContext = {
   NumberInputField: Component<NumberInputFieldProps>;
