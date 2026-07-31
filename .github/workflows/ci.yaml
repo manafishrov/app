@@ -5,6 +5,10 @@ on:
     branches:
       - main
   pull_request:
+
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -79,3 +83,19 @@ jobs:
         run: cargo test
       - name: Build
         run: cargo build --all-targets --all-features
+
+  ci:
+    name: ci
+    if: always()
+    needs:
+      - check-frontend
+      - check-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all checks
+        env:
+          FRONTEND_RESULT: ${{ needs.check-frontend.result }}
+          BACKEND_RESULT: ${{ needs.check-backend.result }}
+        run: |
+          test "$FRONTEND_RESULT" = success
+          test "$BACKEND_RESULT" = success
