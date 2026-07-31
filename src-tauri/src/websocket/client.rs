@@ -2,7 +2,10 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use futures_util::{Sink, SinkExt, StreamExt};
 use tauri::{AppHandle, Emitter};
-use tokio::sync::mpsc::{self, Receiver};
+use tokio::sync::{
+  mpsc::{self, Receiver},
+  oneshot,
+};
 use tokio::time::{interval, sleep, timeout};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{self, Message};
@@ -21,7 +24,12 @@ struct ConnectionStatus {
 }
 
 pub struct MessageSendChannelState {
-  pub tx: mpsc::Sender<WebsocketMessage>,
+  pub tx: mpsc::Sender<OutboundMessage>,
+}
+
+pub struct OutboundMessage {
+  pub message: WebsocketMessage,
+  pub sent: Option<oneshot::Sender<Result<(), String>>>,
 }
 
 pub struct DirectionVectorSendChannelState {
@@ -151,7 +159,7 @@ where
 pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
-  mut message_rx: Receiver<WebsocketMessage>,
+  mut message_rx: Receiver<OutboundMessage>,
   mut direction_vector_rx: Receiver<WebsocketMessage>,
 ) {
   let mut config = get_config_from_file();
@@ -192,15 +200,6 @@ pub async fn start_websocket_client(
 
     loop {
       tokio::select! {
-          // A ROV address update and the matching app retarget arrive on
-          // separate channels. Flush the ROV update to the current socket
-          // before reconnecting to its new address.
-          biased;
-          Some(message_to_send) = message_rx.recv() => {
-              if !send_serialized_message(&mut write, &app, &message_to_send, "message", "").await {
-                break;
-              }
-          }
           Some(new_config) = config_rx.recv() => {
             if config_requires_reconnect(&new_config, &config) {
               log_info!("WebSocket config updated. Reconnecting websocket.");
@@ -209,6 +208,26 @@ pub async fn start_websocket_client(
               break;
             }
             config = new_config;
+          }
+          Some(outbound) = message_rx.recv() => {
+              let sent = send_serialized_message(
+                &mut write,
+                &app,
+                &outbound.message,
+                "message",
+                "",
+              ).await;
+              if let Some(completion) = outbound.sent {
+                let result = if sent {
+                  Ok(())
+                } else {
+                  Err("Failed to send message to the ROV.".to_string())
+                };
+                let _ = completion.send(result);
+              }
+              if !sent {
+                break;
+              }
           }
           Some(direction_vector) = direction_vector_rx.recv() => {
               if !send_serialized_message(
