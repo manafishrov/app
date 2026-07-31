@@ -25,7 +25,7 @@ import {
   MIN_EXPOSURE_VALUE,
   MIN_IMAGE_ADJUSTMENT,
 } from './constants';
-import { SelectFieldRow, SliderFieldRow, SwitchFieldRow } from './FieldRows';
+import { CameraSelectField, CameraSliderField, CameraSwitchField } from './FieldRows';
 
 const rotationCollection = createListCollection<SelectOption>({
   items: [
@@ -139,13 +139,13 @@ export const ImageFieldset: Component<{ AppField: CameraFieldRenderer }> = (prop
     <p class='mb-4 text-sm text-muted-foreground'>{m.camera_settings_image_description()}</p>
     <div class='space-y-4'>
       <For each={SELECT_FIELDS}>
-        {(config) => <SelectFieldRow AppField={props.AppField} config={config} />}
+        {(config) => <CameraSelectField AppField={props.AppField} config={config} />}
       </For>
       <For each={SWITCH_FIELDS}>
-        {(config) => <SwitchFieldRow AppField={props.AppField} config={config} />}
+        {(config) => <CameraSwitchField AppField={props.AppField} config={config} />}
       </For>
       <For each={SLIDER_FIELDS}>
-        {(config) => <SliderFieldRow AppField={props.AppField} config={config} />}
+        {(config) => <CameraSliderField AppField={props.AppField} config={config} />}
       </For>
     </div>
   </Fieldset>

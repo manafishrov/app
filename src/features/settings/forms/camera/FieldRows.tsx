@@ -10,7 +10,7 @@ import type {
   SwitchFieldConfig,
 } from './fieldTypes';
 
-export const NumberFieldRow: Component<{
+export const CameraNumberInputField: Component<{
   AppField: CameraFieldRenderer;
   config: NumberFieldConfig;
 }> = (props) => (
@@ -29,7 +29,7 @@ export const NumberFieldRow: Component<{
   </props.AppField>
 );
 
-export const SelectFieldRow: Component<{
+export const CameraSelectField: Component<{
   AppField: CameraFieldRenderer;
   config: SelectFieldConfig;
 }> = (props) => (
@@ -49,7 +49,7 @@ export const SelectFieldRow: Component<{
   </props.AppField>
 );
 
-export const SliderFieldRow: Component<{
+export const CameraSliderField: Component<{
   AppField: CameraFieldRenderer;
   config: SliderFieldConfig;
 }> = (props) => (
@@ -66,7 +66,7 @@ export const SliderFieldRow: Component<{
   </props.AppField>
 );
 
-export const SwitchFieldRow: Component<{
+export const CameraSwitchField: Component<{
   AppField: CameraFieldRenderer;
   config: SwitchFieldConfig;
 }> = (props) => (

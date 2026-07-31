@@ -79,6 +79,46 @@ pub struct Power {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+pub enum H264Profile {
+  Baseline,
+  Main,
+  High,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub enum H264Level {
+  #[serde(rename = "4")]
+  Level4,
+  #[serde(rename = "4.1")]
+  Level41,
+  #[serde(rename = "4.2")]
+  Level42,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum AwbMode {
+  Auto,
+  Incandescent,
+  Tungsten,
+  Fluorescent,
+  Indoor,
+  Daylight,
+  Cloudy,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum DenoiseMode {
+  Auto,
+  Off,
+  CdnOff,
+  CdnFast,
+  CdnHq,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Camera {
   pub width: u32,
   pub height: u32,
@@ -86,18 +126,43 @@ pub struct Camera {
   pub crop_fov: bool,
   pub bitrate: u32,
   pub keyframe_interval: u32,
-  pub profile: String,
-  pub level: String,
+  pub profile: H264Profile,
+  pub level: H264Level,
   pub rotation: u32,
   pub hflip: bool,
   pub vflip: bool,
-  pub awb: String,
+  pub awb: AwbMode,
   pub exposure_value: f32,
   pub brightness: f32,
   pub contrast: f32,
   pub saturation: f32,
   pub sharpness: f32,
-  pub denoise: String,
+  pub denoise: DenoiseMode,
+}
+
+impl Default for Camera {
+  fn default() -> Self {
+    Self {
+      width: 1440,
+      height: 1080,
+      framerate: 40,
+      crop_fov: false,
+      bitrate: 20_000_000,
+      keyframe_interval: 30,
+      profile: H264Profile::Baseline,
+      level: H264Level::Level42,
+      rotation: 0,
+      hflip: false,
+      vflip: false,
+      awb: AwbMode::Auto,
+      exposure_value: 0.0,
+      brightness: 0.0,
+      contrast: 1.0,
+      saturation: 1.0,
+      sharpness: 1.0,
+      denoise: DenoiseMode::Off,
+    }
+  }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -118,6 +183,7 @@ pub struct RovConfig {
   pub regulator: Regulator,
   pub direction_coefficients: DirectionCoefficients,
   pub power: Power,
+  #[serde(default)]
   pub camera: Camera,
   pub ip_address: String,
   pub websocket_port: u16,
@@ -221,18 +287,18 @@ mod tests {
       crop_fov: true,
       bitrate: 20_000_000,
       keyframe_interval: 30,
-      profile: "baseline".to_string(),
-      level: "4.2".to_string(),
+      profile: H264Profile::Baseline,
+      level: H264Level::Level42,
       rotation: 0,
       hflip: false,
       vflip: true,
-      awb: "auto".to_string(),
+      awb: AwbMode::Auto,
       exposure_value: 0.0,
       brightness: 0.0,
       contrast: 1.0,
       saturation: 1.0,
       sharpness: 1.0,
-      denoise: "auto".to_string(),
+      denoise: DenoiseMode::Auto,
     }
   }
 
@@ -430,6 +496,50 @@ mod tests {
   }
 
   /// # Panics
+  /// Panics if a config from firmware predating camera settings fails to
+  /// deserialize or does not receive the camera defaults.
+  #[test]
+  fn rov_config_deserialization_defaults_camera_when_missing() {
+    let serialized = serde_json::to_value(sample_rov_config());
+    assert!(serialized.is_ok(), "RovConfig serialization failed: {serialized:?}");
+    let Ok(mut serialized) = serialized else {
+      return;
+    };
+    let Some(object) = serialized.as_object_mut() else {
+      return;
+    };
+    let _ = object.remove("camera");
+
+    let deserialized = serde_json::from_value::<RovConfig>(serialized);
+    assert!(
+      deserialized.is_ok(),
+      "Legacy RovConfig deserialization failed: {deserialized:?}"
+    );
+    let Ok(deserialized) = deserialized else {
+      return;
+    };
+
+    assert_eq!(deserialized.camera.width, 1440);
+    assert_eq!(deserialized.camera.height, 1080);
+    assert_eq!(deserialized.camera.framerate, 40);
+  }
+
+  /// # Panics
+  /// Panics if an unsupported closed camera value is accepted.
+  #[test]
+  fn camera_deserialization_rejects_unknown_enum_values() {
+    let serialized = serde_json::to_value(sample_camera());
+    assert!(serialized.is_ok(), "Camera serialization failed: {serialized:?}");
+    let Ok(mut serialized) = serialized else {
+      return;
+    };
+    serialized["profile"] = json!("unsupported");
+
+    let deserialized = serde_json::from_value::<Camera>(serialized);
+    assert!(deserialized.is_err());
+  }
+
+  /// # Panics
   /// Panics if `None` fields are serialized or the populated fields are not
   /// preserved.
   #[test]
@@ -498,5 +608,13 @@ mod tests {
     assert_serializes_to_expected_string(CurrentSensingMode::SharedBus, "sharedBus");
     assert_serializes_to_expected_string(FluidType::Saltwater, "saltwater");
     assert_serializes_to_expected_string(FluidType::Freshwater, "freshwater");
+    assert_serializes_to_expected_string(H264Profile::Baseline, "baseline");
+    assert_serializes_to_expected_string(H264Profile::Main, "main");
+    assert_serializes_to_expected_string(H264Profile::High, "high");
+    assert_serializes_to_expected_string(H264Level::Level4, "4");
+    assert_serializes_to_expected_string(H264Level::Level41, "4.1");
+    assert_serializes_to_expected_string(H264Level::Level42, "4.2");
+    assert_serializes_to_expected_string(AwbMode::Daylight, "daylight");
+    assert_serializes_to_expected_string(DenoiseMode::CdnFast, "cdn_fast");
   }
 }

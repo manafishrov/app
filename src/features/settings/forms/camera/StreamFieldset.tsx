@@ -27,7 +27,7 @@ import {
   RESOLUTION_OPTIONS,
   ResolutionKey,
 } from './constants';
-import { NumberFieldRow, SelectFieldRow, SwitchFieldRow } from './FieldRows';
+import { CameraNumberInputField, CameraSelectField, CameraSwitchField } from './FieldRows';
 
 const resolutionCollection = createListCollection<SelectOption>({
   items: [
@@ -109,7 +109,9 @@ const resolveFramerateMax = (resolutionKey: ResolutionKey, cropFov: boolean): nu
   return getMaxFramerate(resolution.width, resolution.height, cropFov);
 };
 
-const FramerateField: Component<{ AppField: CameraFieldRenderer; max: number }> = (props) => (
+const FramerateNumberInputField: Component<{ AppField: CameraFieldRenderer; max: number }> = (
+  props,
+) => (
   <props.AppField name='framerate'>
     {(field) => (
       <field.NumberInputField
@@ -125,7 +127,7 @@ const FramerateField: Component<{ AppField: CameraFieldRenderer; max: number }> 
   </props.AppField>
 );
 
-const BitrateField: Component<{ AppField: CameraFieldRenderer }> = (props) => (
+const BitrateSliderField: Component<{ AppField: CameraFieldRenderer }> = (props) => (
   <props.AppField name='bitrateMbps'>
     {(field) => (
       <field.SliderField
@@ -146,34 +148,50 @@ type StreamFieldsetProps = {
   ) => () => TSelected;
 } & CameraTuningForm;
 
-export const StreamFieldset: Component<StreamFieldsetProps> = (props) => {
+const createAutoTuneEffects = (
+  props: StreamFieldsetProps,
+  signals: {
+    resolution: () => ResolutionKey;
+    cropFov: () => boolean;
+    framerate: () => number;
+    automaticBitrate: () => boolean;
+  },
+): void => {
   const autoTune = createCameraAutoTune(props);
+  createEffect(on(signals.resolution, autoTune.handleResolutionChange, { defer: true }));
+  createEffect(on(signals.cropFov, autoTune.handleCropFovChange, { defer: true }));
+  createEffect(on(signals.framerate, autoTune.handleFramerateChange, { defer: true }));
+  createEffect(
+    on(signals.automaticBitrate, autoTune.handleAutomaticBitrateChange, { defer: true }),
+  );
+};
+
+export const StreamFieldset: Component<StreamFieldsetProps> = (props) => {
   const resolution = props.useSelector((state) => state.values.resolution[0] ?? ResolutionKey.high);
   const cropFov = props.useSelector((state) => state.values.cropFov);
+  const framerate = props.useSelector((state) => state.values.framerate);
   const automaticBitrate = props.useSelector((state) => state.values.automaticBitrate);
   const framerateMax = createMemo(() => resolveFramerateMax(resolution(), cropFov()));
 
-  createEffect(on(resolution, autoTune.handleResolutionChange, { defer: true }));
-  createEffect(on(cropFov, autoTune.handleCropFovChange, { defer: true }));
-  createEffect(on(automaticBitrate, autoTune.handleAutomaticBitrateChange, { defer: true }));
+  createAutoTuneEffects(props, { resolution, cropFov, framerate, automaticBitrate });
 
   return (
     <Fieldset>
       <FieldLegend>{m.camera_settings_stream_title()}</FieldLegend>
       <p class='mb-4 text-sm text-muted-foreground'>{m.camera_settings_stream_description()}</p>
       <div class='space-y-4'>
-        <SelectFieldRow AppField={props.AppField} config={RESOLUTION_FIELD} />
-        <SwitchFieldRow AppField={props.AppField} config={CROP_FOV_FIELD} />
-        <FramerateField AppField={props.AppField} max={framerateMax()} />
-        <SwitchFieldRow AppField={props.AppField} config={AUTOMATIC_BITRATE_FIELD} />
+        <CameraSelectField AppField={props.AppField} config={RESOLUTION_FIELD} />
+        <CameraSwitchField AppField={props.AppField} config={CROP_FOV_FIELD} />
+        <FramerateNumberInputField AppField={props.AppField} max={framerateMax()} />
+        <CameraSwitchField AppField={props.AppField} config={AUTOMATIC_BITRATE_FIELD} />
         <Show when={!automaticBitrate()}>
-          <BitrateField AppField={props.AppField} />
+          <BitrateSliderField AppField={props.AppField} />
         </Show>
         <For each={NUMBER_FIELDS}>
-          {(config) => <NumberFieldRow AppField={props.AppField} config={config} />}
+          {(config) => <CameraNumberInputField AppField={props.AppField} config={config} />}
         </For>
         <For each={SELECT_FIELDS}>
-          {(config) => <SelectFieldRow AppField={props.AppField} config={config} />}
+          {(config) => <CameraSelectField AppField={props.AppField} config={config} />}
         </For>
       </div>
     </Fieldset>

@@ -20,11 +20,26 @@ export type CameraTuningForm = {
 export type CameraAutoTune = {
   handleResolutionChange: (resolutionKey: string) => void;
   handleCropFovChange: (cropFov: boolean) => void;
+  handleFramerateChange: (framerate: number) => void;
   handleAutomaticBitrateChange: (automaticBitrate: boolean) => void;
 };
 
 const resolveResolutionOption = (resolutionKey: string): ResolutionOption | undefined =>
   RESOLUTION_OPTIONS.find((option) => option.value === resolutionKey);
+
+const updateAutomaticBitrate = (form: CameraTuningForm, framerate: number): void => {
+  const [resolutionKey] = form.getFieldValue('resolution');
+  if (!resolutionKey) {
+    return;
+  }
+  const resolution = resolveResolutionOption(resolutionKey);
+  if (!resolution) {
+    return;
+  }
+  form.setBitrateMbps([
+    computeAutomaticBitrateMbps(resolution.width, resolution.height, framerate),
+  ]);
+};
 
 // Whenever the resolution or Crop FOV changes, the frame rate is pushed to the new highest possible value for that combination - never left at a stale rate that might now be too high (invalid) or needlessly low.
 // When Automatic bitrate is on, the bitrate is recalculated for the resulting combination too.
@@ -55,26 +70,23 @@ export const createCameraAutoTune = (form: CameraTuningForm): CameraAutoTune => 
     applyForResolutionAndCropFov(resolutionKey, cropFov);
   };
 
+  const handleFramerateChange = (framerate: number): void => {
+    if (form.getFieldValue('automaticBitrate')) {
+      updateAutomaticBitrate(form, framerate);
+    }
+  };
+
   const handleAutomaticBitrateChange = (automaticBitrate: boolean): void => {
     if (!automaticBitrate) {
       return;
     }
-    const [resolutionKey] = form.getFieldValue('resolution');
-    if (!resolutionKey) {
-      return;
-    }
-    const resolution = resolveResolutionOption(resolutionKey);
-    if (!resolution) {
-      return;
-    }
-    form.setBitrateMbps([
-      computeAutomaticBitrateMbps(
-        resolution.width,
-        resolution.height,
-        form.getFieldValue('framerate'),
-      ),
-    ]);
+    updateAutomaticBitrate(form, form.getFieldValue('framerate'));
   };
 
-  return { handleResolutionChange, handleCropFovChange, handleAutomaticBitrateChange };
+  return {
+    handleResolutionChange,
+    handleCropFovChange,
+    handleFramerateChange,
+    handleAutomaticBitrateChange,
+  };
 };
