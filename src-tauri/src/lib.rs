@@ -42,7 +42,7 @@ use toast::toast_init;
 use tokio::sync::mpsc::channel;
 
 use websocket::client::{
-  DirectionVectorSendChannelState, MessageSendChannelState, start_websocket_client,
+  DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage, start_websocket_client,
 };
 use websocket::message::WebsocketMessage;
 
@@ -58,7 +58,7 @@ fn setup_handlers(app: &mut App) {
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
   app.manage(ConfigSendChannelState { tx: config_tx });
-  let (message_tx, message_rx) = channel::<WebsocketMessage>(1);
+  let (message_tx, message_rx) = channel::<OutboundMessage>(1);
   app.manage(MessageSendChannelState { tx: message_tx });
   let (direction_vector_tx, direction_vector_rx) = channel::<WebsocketMessage>(8);
   app.manage(DirectionVectorSendChannelState {

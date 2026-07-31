@@ -498,6 +498,7 @@
   "toasts_rov_config_import_not_object": "Selected file is not a configuration object",
   "toasts_rov_config_imported_partial": "Imported with {count} skipped fields: {fields}",
   "toasts_rov_ip_address_changing": "IP address changing, you may need to reconnect.",
+  "toasts_rov_connection_restart_failed": "ROV connection saved, but the firmware service could not restart. Reboot the ROV to apply it.",
   "toasts_example_action_triggered": "Example action triggered",
   "toasts_example_action_description": "This is a sample custom action",
   "toasts_cpu_temperature_title": "CPU temperature: {temperature}°C",
