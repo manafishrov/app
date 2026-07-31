@@ -24,7 +24,7 @@ export type CameraAutoTune = {
   handleAutomaticBitrateChange: (automaticBitrate: boolean) => void;
 };
 
-const resolveResolutionOption = (resolutionKey: string): ResolutionOption | undefined =>
+export const resolveResolutionOption = (resolutionKey: string): ResolutionOption | undefined =>
   RESOLUTION_OPTIONS.find((option) => option.value === resolutionKey);
 
 const updateAutomaticBitrate = (form: CameraTuningForm, framerate: number): void => {

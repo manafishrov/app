@@ -27,7 +27,7 @@ const submitCameraConfig = (value: CameraFormValues): Promise<void> => {
   return Promise.all([rovConfigPromise, automaticBitratePromise]).then(ignoreSubmitResults);
 };
 
-export const Camera: Component = () => {
+export const CameraSettingsForm: Component = () => {
   const form = useAppForm(() => ({
     validators: {
       onChange: createCameraFormSchema(),

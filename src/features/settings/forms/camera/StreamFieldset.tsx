@@ -15,7 +15,7 @@ import type {
 } from './fieldTypes';
 import type { CameraFormValues } from './schema';
 
-import { createCameraAutoTune, type CameraTuningForm } from './autoTune';
+import { createCameraAutoTune, type CameraTuningForm, resolveResolutionOption } from './autoTune';
 import {
   ABSOLUTE_MAX_FRAMERATE,
   getMaxFramerate,
@@ -24,7 +24,6 @@ import {
   MIN_BITRATE_MBPS,
   MIN_FRAMERATE,
   MIN_KEYFRAME_INTERVAL,
-  RESOLUTION_OPTIONS,
   ResolutionKey,
 } from './constants';
 import { CameraNumberInputField, CameraSelectField, CameraSwitchField } from './FieldRows';
@@ -102,7 +101,7 @@ const SELECT_FIELDS: SelectFieldConfig[] = [
 ];
 
 const resolveFramerateMax = (resolutionKey: ResolutionKey, cropFov: boolean): number => {
-  const resolution = RESOLUTION_OPTIONS.find((option) => option.value === resolutionKey);
+  const resolution = resolveResolutionOption(resolutionKey);
   if (!resolution) {
     return ABSOLUTE_MAX_FRAMERATE;
   }

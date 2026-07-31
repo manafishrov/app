@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { Camera } from '@/features/settings/forms/camera';
+import { CameraSettingsForm } from '@/features/settings/forms/camera';
 import * as m from '@/paraglide/messages';
 
 const CameraRovSettingsPage: Component = () => (
@@ -12,7 +12,7 @@ const CameraRovSettingsPage: Component = () => (
       <H1>{m.camera_settings_page_title()}</H1>
       <P>{m.camera_settings_page_description()}</P>
     </div>
-    <Camera />
+    <CameraSettingsForm />
   </>
 );
 
