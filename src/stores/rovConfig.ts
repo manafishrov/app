@@ -151,6 +151,7 @@ type Camera = {
 
 type RovConfig = {
   firmwareVersion: string;
+  configSchemaVersion: number;
   mcuFirmwareVersion: string;
   rovName: string;
   mcuBoard: McuBoard;
@@ -199,6 +200,7 @@ const defaultThrusterAllocation: ThrusterAllocation = [
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
+  configSchemaVersion: 0,
   mcuFirmwareVersion: m.common_not_available(),
   rovName: 'Manafish Nomad',
   mcuBoard: McuBoard.pico,

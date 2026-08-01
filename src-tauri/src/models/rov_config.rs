@@ -168,6 +168,8 @@ impl Default for Camera {
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
   pub firmware_version: String,
+  #[serde(default)]
+  pub config_schema_version: u32,
   pub mcu_firmware_version: String,
   pub rov_name: String,
   pub mcu_board: McuBoard,
@@ -317,6 +319,7 @@ mod tests {
   fn sample_rov_config() -> RovConfig {
     RovConfig {
       firmware_version: "1.2.3".to_string(),
+      config_schema_version: 1,
       mcu_firmware_version: "4.5.6".to_string(),
       rov_name: "Manafish".to_string(),
       mcu_board: McuBoard::Pico2,

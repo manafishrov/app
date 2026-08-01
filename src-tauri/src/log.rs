@@ -106,6 +106,9 @@ macro_rules! log_error {
 mod tests {
   use super::*;
 
+  /// # Panics
+  /// Panics if a startup diagnostic is not returned when the main listener is
+  /// initialized.
   #[test]
   fn startup_diagnostics_are_buffered_until_the_main_log_listener_is_ready() {
     log_startup_diagnostic("buffered startup diagnostic");
