@@ -126,7 +126,6 @@ type Power = {
   regulatorLimit: number;
   minBatteryVoltage: number;
   maxBatteryVoltage: number;
-  internalResistance: number;
 };
 
 type Camera = {
@@ -185,7 +184,7 @@ const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({
   kd: 0.6,
   rate: 120,
 });
-const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 6, ki: 2, kd: 0.6, rate: 0.5 });
+const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 2, ki: 0, kd: 0.5, rate: 0.5 });
 
 const defaultThrusterAllocation: ThrusterAllocation = [
   [1, 1, 0, 0, -1, 0, 0, 0],
@@ -228,7 +227,6 @@ const defaultRovConfig: RovConfig = {
     regulatorLimit: 30,
     minBatteryVoltage: 16,
     maxBatteryVoltage: 20.5,
-    internalResistance: 0.1,
   },
   camera: {
     // Highest supported preset (see camera/constants.ts RESOLUTION_OPTIONS) at the full-FOV framerate ceiling for that resolution.

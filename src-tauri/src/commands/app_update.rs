@@ -60,6 +60,15 @@ fn version_from_tag(tag: &str) -> &str {
   tag.strip_prefix('v').unwrap_or(tag)
 }
 
+fn manifest_matches_tag(expected: &Version, manifest: &Version) -> bool {
+  manifest == expected
+    || (!expected.pre.is_empty()
+      && manifest.pre.is_empty()
+      && manifest.major == expected.major
+      && manifest.minor == expected.minor
+      && manifest.patch == expected.patch)
+}
+
 /// # Errors
 /// Returns an error if the `GitHub` releases cannot be fetched or parsed.
 #[command]
@@ -141,7 +150,9 @@ pub async fn install_app_release(
     .updater_builder()
     .endpoints(vec![endpoint])
     .map_err(|e| e.to_string())?
-    .version_comparator(move |_current, release| release.version == comparator_expected)
+    .version_comparator(move |_current, release| {
+      manifest_matches_tag(&comparator_expected, &release.version)
+    })
     .build()
     .map_err(|e| e.to_string())?;
 
@@ -170,4 +181,49 @@ pub async fn install_app_release(
     .map_err(|e| e.to_string())?;
 
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  /// # Panics
+  /// Panics if stable manifest matching accepts a different version.
+  #[test]
+  fn stable_tags_require_an_exact_manifest_version() {
+    let expected = Version::parse("1.2.3").expect("test version should be valid");
+
+    assert!(manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.3").expect("test version should be valid")
+    ));
+    assert!(!manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.4").expect("test version should be valid")
+    ));
+  }
+
+  /// # Panics
+  /// Panics if prerelease tags do not accept the same release's stable manifest version.
+  #[test]
+  fn prerelease_tags_accept_release_builds_with_the_same_core_version() {
+    let expected = Version::parse("1.2.3-rc2").expect("test version should be valid");
+
+    assert!(manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.3-rc2").expect("test version should be valid")
+    ));
+    assert!(manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.3").expect("test version should be valid")
+    ));
+    assert!(!manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.3-rc1").expect("test version should be valid")
+    ));
+    assert!(!manifest_matches_tag(
+      &expected,
+      &Version::parse("1.2.4").expect("test version should be valid")
+    ));
+  }
 }

@@ -74,7 +74,6 @@ pub struct Power {
   pub regulator_limit: f32,
   pub min_battery_voltage: f32,
   pub max_battery_voltage: f32,
-  pub internal_resistance: f32,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -350,7 +349,6 @@ mod tests {
         regulator_limit: 0.8,
         min_battery_voltage: 14.0,
         max_battery_voltage: 16.8,
-        internal_resistance: 0.02,
       },
       camera: sample_camera(),
       ip_address: "10.10.10.10".to_string(),

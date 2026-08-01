@@ -27,9 +27,9 @@ use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
   cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_app_releases,
   fetch_firmware_manifest, flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config,
-  install_app_release, list_firmware_releases, list_flash_drives, prepare_flash,
-  request_rov_config, save_recording, send_custom_action, send_direction_vector, set_config,
-  set_desired_depth, set_rov_config, signal_flash_image, start_gamepad_stream,
+  initialize_log_listener, install_app_release, list_firmware_releases, list_flash_drives,
+  prepare_flash, request_rov_config, save_recording, send_custom_action, send_direction_vector,
+  set_config, set_desired_depth, set_rov_config, signal_flash_image, start_gamepad_stream,
   start_regulator_auto_tuning, start_thruster_test, toggle_auto_stabilization, toggle_depth_hold,
 };
 use config::ConfigSendChannelState;
@@ -225,6 +225,8 @@ fn setup_bundled_webkit() {
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
+  const SPLASHSCREEN_FALLBACK_SECONDS: u64 = 15;
+
   let raw_args: Vec<String> = std::env::args().collect();
   if raw_args.iter().any(|arg| arg == "--flash") {
     let exit_code = run_flasher_cli(&raw_args);
@@ -261,6 +263,7 @@ pub fn run() -> tauri::Result<()> {
       start_gamepad_stream,
       gamepad_vibrate,
       get_config,
+      initialize_log_listener,
       set_config,
       request_rov_config,
       set_rov_config,
@@ -292,6 +295,23 @@ pub fn run() -> tauri::Result<()> {
       #[cfg(target_os = "linux")]
       fix_gtk_dpi();
       setup_handlers(app);
+      let app_handle = app.handle().clone();
+      tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(SPLASHSCREEN_FALLBACK_SECONDS)).await;
+        if app_handle.get_webview_window("splashscreen").is_some() {
+          let message = format!(
+            "Splashscreen watchdog fired after {SPLASHSCREEN_FALLBACK_SECONDS}s on {}; revealing the main window",
+            std::env::consts::OS
+          );
+          log::log_startup_diagnostic(&message);
+          if let Err(error) = close_splashscreen(app_handle.clone()) {
+            let error_message = format!(
+              "Splashscreen watchdog failed to reveal the main window: {error}"
+            );
+            log::log_startup_diagnostic(&error_message);
+          }
+        }
+      });
       Ok(())
     });
 

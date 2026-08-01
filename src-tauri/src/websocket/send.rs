@@ -127,7 +127,7 @@ pub async fn handle_import_rov_config(
   state: &State<'_, MessageSendChannelState>,
   payload: serde_json::Value,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::ImportConfig(payload), "ImportConfig").await
+  send_message_and_wait(&state.tx, WebsocketMessage::ImportConfig(payload), "ImportConfig").await
 }
 
 /// # Errors

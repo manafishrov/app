@@ -1,3 +1,4 @@
+import { createSignal } from 'solid-js';
 import { unwrap } from 'solid-js/store';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
@@ -7,9 +8,15 @@ import { createListener, invokeCommand } from '@/tauri/core';
 const EVENT = 'rov_config_received';
 
 const resolveVoid: () => void = () => 0;
+const [rovConfigRevision, setRovConfigRevision] = createSignal(0);
+
+const applyRemoteRovConfig = (config: RovConfig): void => {
+  setRovConfigStore(config);
+  setRovConfigRevision((revision) => revision + 1);
+};
 
 export const setupRovConfigListener = (): Promise<() => void> =>
-  createListener<RovConfig>(EVENT, setRovConfigStore);
+  createListener<RovConfig>(EVENT, applyRemoteRovConfig);
 
 export const requestRovConfig = (): Promise<void> | undefined => {
   if (!connectionStatusStore.isConnected) {
@@ -35,3 +42,5 @@ export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void
 
 export const importRovConfig = (payload: unknown): Promise<void> =>
   invokeCommand('import_rov_config', { payload }).then(resolveVoid);
+
+export { rovConfigRevision };

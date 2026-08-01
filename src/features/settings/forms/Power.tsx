@@ -34,7 +34,6 @@ const formSchema = z
     regulatorLimit: z.array(z.number().min(0).max(MAX_POWER)),
     minBatteryVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
     maxBatteryVoltage: z.number().positive(m.validation_must_be_positive_voltage()),
-    internalResistance: z.number().min(0),
   })
   .refine((data) => data.minBatteryVoltage < data.maxBatteryVoltage, {
     message: m.validation_min_voltage_less_than_max(),
@@ -62,11 +61,7 @@ type PowerFieldApi = {
   }) => JSXElement;
 };
 
-type PowerFieldName =
-  | PowerSliderName
-  | 'minBatteryVoltage'
-  | 'maxBatteryVoltage'
-  | 'internalResistance';
+type PowerFieldName = PowerSliderName | 'minBatteryVoltage' | 'maxBatteryVoltage';
 
 type PowerFieldRenderer = (props: {
   name: PowerFieldName;
@@ -147,16 +142,6 @@ const PowerVoltageFields: Component<{ AppField: PowerFieldRenderer }> = (props) 
         />
       )}
     </props.AppField>
-    <props.AppField name='internalResistance'>
-      {(field) => (
-        <field.NumberInputField
-          label={m.power_internal_resistance_label()}
-          description={m.power_internal_resistance_description()}
-          min={0}
-          step={0.001}
-        />
-      )}
-    </props.AppField>
   </>
 );
 
@@ -215,7 +200,6 @@ const submitPowerSettings = (value: z.infer<typeof formSchema>): Promise<void> =
       regulatorLimit,
       minBatteryVoltage: value.minBatteryVoltage,
       maxBatteryVoltage: value.maxBatteryVoltage,
-      internalResistance: value.internalResistance,
     },
   });
 };
@@ -276,7 +260,6 @@ export const Power: Component = () => {
       regulatorLimit: [rovConfigStore.power.regulatorLimit],
       minBatteryVoltage: rovConfigStore.power.minBatteryVoltage,
       maxBatteryVoltage: rovConfigStore.power.maxBatteryVoltage,
-      internalResistance: rovConfigStore.power.internalResistance,
     },
     onSubmit: ({ value }): Promise<void> => submitPowerSettings(value),
   }));
