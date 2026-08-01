@@ -339,8 +339,6 @@
   "power_min_battery_voltage_description": "The voltage of the battery when it is fully depleted. This will show as 0% battery in the app. Leave at default value unless you change to another type of battery.",
   "power_max_battery_voltage_label": "Battery Maximum Voltage",
   "power_max_battery_voltage_description": "The voltage of the battery when it is fully charged. This will show as 100% battery in the app. Leave at default value unless you change to another type of battery.",
-  "power_internal_resistance_label": "Battery Internal Resistance (Ω)",
-  "power_internal_resistance_description": "The internal resistance of the battery in ohms. Used to compensate for voltage sag under load, improving battery percentage accuracy. Set to 0 to disable.",
   "power_high_power_warning_title": "High power can wear out the battery",
   "power_high_power_warning_description": "Setting this above 40% draws more than around 20A from the battery, which significantly reduces the number of useful charge cycles. The Manafish will still work, but the battery will wear out much faster. See the assembly guide for details.",
   "power_high_power_warning_confirm": "Keep high value",

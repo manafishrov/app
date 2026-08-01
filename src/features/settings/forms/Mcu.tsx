@@ -1,10 +1,8 @@
-import type { Component, JSXElement } from 'solid-js';
-
 import { createListCollection } from '@ark-ui/solid/collection';
 import { Button } from '@manafishrov/ui/button';
 import { type SelectFieldProps, useAppForm } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
-import { z } from 'zod';
+import { createMemo, type Component, type JSXElement } from 'solid-js';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
@@ -14,9 +12,17 @@ import {
   McuBoard,
   ThrusterProtocol,
   rovConfigStore,
-  type RovConfig,
 } from '@/stores/rovConfig';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
+
+import {
+  formSchema,
+  getCompatibleDshotSpeed,
+  getDshotSpeedFormValue,
+  parseDshotSpeed,
+  type McuFormValues,
+} from './mcu/schema';
+import { updateMcuConfig, type ResolvedMcuConfig } from './mcu/update';
 
 type SelectOption = { value: string; label: string; disabled?: boolean };
 type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
@@ -67,67 +73,6 @@ const createCurrentSensingModes = (): SelectCollection =>
     ],
   });
 
-const formSchema = z.object({
-  mcuBoard: z.array(z.enum([McuBoard.pico, McuBoard.pico2])).length(1),
-  thrusterProtocol: z.array(z.enum([ThrusterProtocol.pwm, ThrusterProtocol.dshot])).length(1),
-  dshotSpeed: z.array(z.enum(['150', '300', '600', '1200'])).length(1),
-  currentSensingMode: z
-    .array(z.enum([CurrentSensingMode.perMotor, CurrentSensingMode.sharedBus]))
-    .length(1),
-});
-
-type McuFormValues = z.infer<typeof formSchema>;
-
-const parseDshotSpeed = (
-  value: string | undefined,
-  fallback: (typeof DshotSpeed)[keyof typeof DshotSpeed],
-): (typeof DshotSpeed)[keyof typeof DshotSpeed] => {
-  switch (value ?? '') {
-    case '150': {
-      return DshotSpeed.dshot150;
-    }
-    case '300': {
-      return DshotSpeed.dshot300;
-    }
-    case '600': {
-      return DshotSpeed.dshot600;
-    }
-    case '1200': {
-      return DshotSpeed.dshot1200;
-    }
-    default: {
-      return fallback;
-    }
-  }
-};
-
-const getDshotSpeedFormValue = (
-  value: (typeof DshotSpeed)[keyof typeof DshotSpeed],
-): McuFormValues['dshotSpeed'][number] => {
-  switch (value) {
-    case DshotSpeed.dshot150: {
-      return '150';
-    }
-    case DshotSpeed.dshot300: {
-      return '300';
-    }
-    case DshotSpeed.dshot600: {
-      return '600';
-    }
-    case DshotSpeed.dshot1200: {
-      return '1200';
-    }
-    default: {
-      return '300';
-    }
-  }
-};
-
-type ResolvedMcuConfig = Pick<
-  RovConfig,
-  'mcuBoard' | 'thrusterProtocol' | 'dshotSpeed' | 'currentSensingMode'
->;
-
 const resolveFormValues = (value: McuFormValues): ResolvedMcuConfig => ({
   mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
   thrusterProtocol: value.thrusterProtocol[0] ?? rovConfigStore.thrusterProtocol,
@@ -135,18 +80,20 @@ const resolveFormValues = (value: McuFormValues): ResolvedMcuConfig => ({
   currentSensingMode: value.currentSensingMode[0] ?? rovConfigStore.currentSensingMode,
 });
 
+const flashMcuFirmwareWithLogging = (board: ResolvedMcuConfig['mcuBoard']): Promise<void> =>
+  flashMcuFirmware(board).catch((error: unknown): never => {
+    logError('Failed to flash MCU firmware:', error);
+    throw error;
+  });
+
 const submitMcuConfig = (value: McuFormValues): Promise<void> => {
   const resolved = resolveFormValues(value);
-  const boardChanged = resolved.mcuBoard !== rovConfigStore.mcuBoard;
-  const result = setRovConfig(resolved);
+  const previousBoard = rovConfigStore.mcuBoard;
 
-  if (boardChanged) {
-    flashMcuFirmware(resolved.mcuBoard).catch((error: unknown): void => {
-      logError('Failed to flash MCU firmware:', error);
-    });
-  }
-
-  return result;
+  return updateMcuConfig(
+    { config: resolved, previousBoard },
+    { setConfig: setRovConfig, flashFirmware: flashMcuFirmwareWithLogging },
+  );
 };
 
 type AppFieldContext = {
@@ -161,6 +108,7 @@ type AppFieldComponent = Component<{
 const McuBoardSelectField: Component<{
   AppField: AppFieldComponent;
   boards: SelectCollection;
+  onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
   onFlashFirmware: () => void;
 }> = (props) => (
   <props.AppField name='mcuBoard'>
@@ -170,6 +118,12 @@ const McuBoardSelectField: Component<{
         description={m.general_rov_settings_mcu_board_description()}
         collection={props.boards}
         placeholder={m.general_rov_settings_mcu_board_select_placeholder()}
+        onValueChange={(details): void => {
+          const [board] = details.value;
+          if (board === McuBoard.pico || board === McuBoard.pico2) {
+            props.onBoardChange(board);
+          }
+        }}
         trailingAddon={
           <Button
             class='w-20'
@@ -268,13 +222,24 @@ const handleFlashFirmware = (): void => {
 export const Mcu: Component = () => {
   const boards = createMcuBoards();
   const protocols = createThrusterProtocols();
-  const dshotSpeeds = createDshotSpeeds(rovConfigStore.mcuBoard);
   const currentSensingModes = createCurrentSensingModes();
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
     onSubmit: ({ value }: { value: McuFormValues }): Promise<void> => submitMcuConfig(value),
   }));
+  const selectedMcuBoard = form.useSelector(
+    (state) => state.values.mcuBoard[0] ?? rovConfigStore.mcuBoard,
+  );
+  const dshotSpeeds = createMemo(() => createDshotSpeeds(selectedMcuBoard()));
+  const handleMcuBoardChange = (board: McuFormValues['mcuBoard'][number]): void => {
+    const currentSpeed = form.getFieldValue('dshotSpeed')[0] ?? '300';
+    const compatibleSpeed = getCompatibleDshotSpeed(board, currentSpeed);
+    if (compatibleSpeed !== currentSpeed) {
+      form.setFieldValue('dshotSpeed', [compatibleSpeed]);
+    }
+    form.setFieldValue('mcuBoard', [board]);
+  };
 
   return (
     <form.AppForm>
@@ -282,12 +247,13 @@ export const Mcu: Component = () => {
         <McuBoardSelectField
           AppField={form.AppField}
           boards={boards}
+          onBoardChange={handleMcuBoardChange}
           onFlashFirmware={handleFlashFirmware}
         />
         <ThrusterProtocolSelectField AppField={form.AppField} protocols={protocols} />
         <DshotSpeedSelectField
           AppField={form.AppField}
-          speeds={dshotSpeeds}
+          speeds={dshotSpeeds()}
           disabled={rovConfigStore.thrusterProtocol !== ThrusterProtocol.dshot}
         />
         <CurrentSensingModeSelectField AppField={form.AppField} modes={currentSensingModes} />
