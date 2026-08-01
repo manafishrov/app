@@ -27,6 +27,7 @@ export class DisposableStack {
 
 export type ListenerOptions = {
   warnOnly?: boolean;
+  rejectOnSetupFailure?: boolean;
 };
 
 export const createListener = <Payload>(
@@ -53,6 +54,9 @@ export const createListener = <Payload>(
     } else {
       logError(errorMsg, error);
       toast.create({ title: m.toasts_listener_setup_failed({ event: eventName }), type: 'error' });
+    }
+    if (options && options.rejectOnSetupFailure === true) {
+      throw error;
     }
     return noop;
   });

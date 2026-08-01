@@ -2,6 +2,14 @@ import zod from 'zod';
 
 import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
+type McuBoardValue = (typeof McuBoard)[keyof typeof McuBoard];
+type DshotSpeedFormValue = '150' | '300' | '600' | '1200';
+
+export const getCompatibleDshotSpeed = (
+  board: McuBoardValue,
+  speed: DshotSpeedFormValue,
+): DshotSpeedFormValue => (board === McuBoard.pico && speed === '1200' ? '600' : speed);
+
 export const formSchema = zod
   .object({
     mcuBoard: zod.array(zod.enum([McuBoard.pico, McuBoard.pico2])).length(1),
@@ -12,7 +20,9 @@ export const formSchema = zod
       .length(1),
   })
   .superRefine((value, context): void => {
-    if (value.mcuBoard[0] === McuBoard.pico && value.dshotSpeed[0] === '1200') {
+    const [board] = value.mcuBoard;
+    const [speed] = value.dshotSpeed;
+    if (board && speed && getCompatibleDshotSpeed(board, speed) !== speed) {
       context.addIssue({
         code: 'custom',
         path: ['dshotSpeed'],
@@ -22,12 +32,6 @@ export const formSchema = zod
   });
 
 export type McuFormValues = zod.infer<typeof formSchema>;
-
-export const getCompatibleDshotSpeed = (
-  board: McuFormValues['mcuBoard'][number],
-  speed: McuFormValues['dshotSpeed'][number],
-): McuFormValues['dshotSpeed'][number] =>
-  board === McuBoard.pico && speed === '1200' ? '600' : speed;
 
 export const parseDshotSpeed = (
   value: string | undefined,
