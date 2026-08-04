@@ -13,9 +13,18 @@ import { rovConfigStore } from '@/stores/rovConfig';
 import { updateRovConnection } from '@/tauri';
 
 const MAX_PORT = 65_535;
+const LAST_ELEMENT_INDEX = -1;
+const IPV4_MAX_OCTET = 255;
+
+const isUsableIpv4Host = (value: string): boolean => {
+  const lastOctet = Number(value.split('.').at(LAST_ELEMENT_INDEX));
+  return lastOctet !== 0 && lastOctet !== IPV4_MAX_OCTET;
+};
 
 const formSchema = z.object({
-  ipAddress: z.ipv4(m.validation_invalid_ip_address()),
+  ipAddress: z
+    .ipv4(m.validation_invalid_ip_address())
+    .refine(isUsableIpv4Host, m.validation_invalid_ip_address()),
   websocketPort: z
     .number()
     .int()
