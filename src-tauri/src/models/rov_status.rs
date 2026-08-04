@@ -24,6 +24,8 @@ pub struct RovStatus {
 mod tests {
   use super::RovStatus;
 
+  /// # Panics
+  /// Panics if an older firmware status no longer deserializes with a safe default.
   #[test]
   fn older_firmware_status_defaults_pi_undervoltage_to_false() {
     let status: RovStatus = serde_json::from_str(
