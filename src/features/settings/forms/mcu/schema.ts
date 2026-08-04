@@ -33,6 +33,21 @@ export const formSchema = zod
 
 export type McuFormValues = zod.infer<typeof formSchema>;
 
+export const createMcuBoardChangeHandler =
+  (
+    getSpeed: () => DshotSpeedFormValue,
+    setSpeed: (speed: DshotSpeedFormValue) => void,
+    setBoard: (board: McuBoardValue) => void,
+  ): ((board: McuBoardValue) => void) =>
+  (board): void => {
+    const currentSpeed = getSpeed();
+    const compatibleSpeed = getCompatibleDshotSpeed(board, currentSpeed);
+    if (compatibleSpeed !== currentSpeed) {
+      setSpeed(compatibleSpeed);
+    }
+    setBoard(board);
+  };
+
 export const parseDshotSpeed = (
   value: string | undefined,
   fallback: (typeof DshotSpeed)[keyof typeof DshotSpeed],

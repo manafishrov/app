@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
 import {
+  createMcuBoardChangeHandler,
   formSchema,
   getCompatibleDshotSpeed,
   getDshotSpeedFormValue,
@@ -58,5 +59,20 @@ describe('MCU settings schema', () => {
 
     expect(parseDshotSpeed('invalid', DshotSpeed.dshot600)).toBe(DshotSpeed.dshot600);
     expect(parseDshotSpeed(missingValue, DshotSpeed.dshot150)).toBe(DshotSpeed.dshot150);
+  });
+});
+
+describe('MCU board changes', () => {
+  it('updates an incompatible board and speed together', () => {
+    const updates: string[] = [];
+    const handleBoardChange = createMcuBoardChangeHandler(
+      () => '1200',
+      (speed) => updates.push(`speed:${speed}`),
+      (board) => updates.push(`board:${board}`),
+    );
+
+    handleBoardChange(McuBoard.pico);
+
+    expect(updates).toEqual(['speed:600', 'board:pico']);
   });
 });
