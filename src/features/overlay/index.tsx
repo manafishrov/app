@@ -6,6 +6,7 @@ import { AttitudeIndicator } from './AttitudeIndicator';
 import { BatteryIndicator } from './BatteryIndicator';
 import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
 import { DepthIndicator } from './DepthIndicator';
+import { PiUndervoltageWarning } from './PiUndervoltageWarning';
 import { RecordingIndicator } from './RecordingIndicator';
 import { StabilizationIndicator } from './StabilizationIndicator';
 import { TemperatureIndicator } from './TemperatureIndicator';
@@ -31,6 +32,7 @@ const Overlay: Component = () => {
 
   return (
     <div class='pointer-events-none absolute inset-0 overflow-hidden'>
+      <PiUndervoltageWarning />
       <div class='absolute top-4 left-4'>
         <ZoomContent class='flex flex-col gap-2' scale={scaleMultiplier()}>
           <ConnectionStatusIndicator />
