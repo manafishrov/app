@@ -72,9 +72,11 @@ const useLowBatteryWarning = (): void => {
     const connected = connectionStatusStore.isConnected;
     const telemetryAvailable = rovStatusStore.health.mcuHealthy;
     const percentage = rovStatusStore.batteryPercentage;
-    if (!connected || !telemetryAvailable || percentage > BATTERY_WARNING_RESET_THRESHOLD) {
+    if (!connected || !telemetryAvailable || percentage > BATTERY_LOW_THRESHOLD) {
       cancelPendingWarning();
-      warningShown = false;
+      if (!connected || !telemetryAvailable || percentage > BATTERY_WARNING_RESET_THRESHOLD) {
+        warningShown = false;
+      }
     } else if (percentage <= BATTERY_LOW_THRESHOLD && !warningShown && warningTimer === null) {
       warningTimer = setTimeout(() => {
         warningTimer = null;
