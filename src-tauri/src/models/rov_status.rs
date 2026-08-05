@@ -10,6 +10,13 @@ pub struct SystemHealth {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct DeviceInfo {
+  pub mcu_firmware_version: String,
+  pub esc_firmware_versions: [Option<String>; 8],
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct RovStatus {
   pub auto_stabilization: bool,
   pub depth_hold: bool,
@@ -18,31 +25,51 @@ pub struct RovStatus {
   #[serde(default)]
   pub pi_undervoltage: bool,
   pub health: SystemHealth,
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub device_info: Option<DeviceInfo>,
 }
 
 #[cfg(test)]
 mod tests {
   use super::RovStatus;
 
-  /// # Panics
-  /// Panics if an older firmware status no longer deserializes with a safe default.
-  #[test]
-  fn older_firmware_status_defaults_pi_undervoltage_to_false() {
-    let status: RovStatus = serde_json::from_str(
-      r#"{
-        "autoStabilization": false,
-        "depthHold": false,
-        "batteryPercentage": 75,
-        "currentDraw": 4,
-        "health": {
-          "imuHealthy": true,
-          "pressureSensorHealthy": true,
-          "mcuHealthy": true
-        }
-      }"#,
-    )
-    .expect("older firmware status should deserialize");
+  const BASE_STATUS: &str = r#"{
+    "autoStabilization": false,
+    "depthHold": false,
+    "batteryPercentage": 75,
+    "currentDraw": 12,
+    "health": {
+      "imuHealthy": true,
+      "pressureSensorHealthy": true,
+      "mcuHealthy": true
+    }
+  }"#;
 
+  /// # Panics
+  /// Panics if a status with live device information cannot round-trip through JSON.
+  #[test]
+  fn preserves_live_device_info() {
+    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+    value["deviceInfo"] = serde_json::json!({
+      "mcuFirmwareVersion": "1.2.3",
+      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null]
+    });
+
+    let status: RovStatus = serde_json::from_value(value).unwrap();
+    let serialized = serde_json::to_value(&status).unwrap();
+
+    assert_eq!(serialized["deviceInfo"]["mcuFirmwareVersion"], "1.2.3");
+    assert_eq!(serialized["deviceInfo"]["escFirmwareVersions"][0], "2.20.0");
+  }
+
+  /// # Panics
+  /// Panics if a legacy status no longer deserializes with safe defaults.
+  #[test]
+  fn accepts_legacy_status_without_device_info() {
+    let status: RovStatus = serde_json::from_str(BASE_STATUS).unwrap();
+    let serialized = serde_json::to_value(&status).unwrap();
+
+    assert!(serialized.get("deviceInfo").is_none());
     assert!(!status.pi_undervoltage);
   }
 }

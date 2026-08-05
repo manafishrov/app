@@ -180,7 +180,16 @@ pub async fn handle_flash_mcu_firmware(
   state: &State<'_, MessageSendChannelState>,
   payload: McuBoard,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::FlashMcuFirmware(payload), "FlashMcuFirmware").await
+  send_message_and_wait(&state.tx, WebsocketMessage::FlashMcuFirmware(payload), "FlashMcuFirmware")
+    .await
+}
+
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
+pub async fn handle_flash_esc_firmware(
+  state: &State<'_, MessageSendChannelState>,
+) -> Result<(), String> {
+  send_message_and_wait(&state.tx, WebsocketMessage::FlashEscFirmware, "FlashEscFirmware").await
 }
 
 #[cfg(test)]

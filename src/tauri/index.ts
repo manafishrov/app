@@ -10,6 +10,7 @@ import { setupFirmwareDownloadListener, setupFirmwareFlashListener } from '@/tau
 import { setupToastListener } from '@/tauri/toast';
 
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
+export { flashEscFirmware } from '@/tauri/escFirmware';
 export { getConfig, setConfig } from '@/tauri/config';
 export { sendCustomAction } from '@/tauri/customAction';
 export { setDesiredDepth } from '@/tauri/desiredDepth';

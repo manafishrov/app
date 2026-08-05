@@ -114,6 +114,7 @@ export const ConfirmUpdateButton: Component<ConfirmUpdateButtonProps> = (props) 
   return (
     <>
       <Button
+        type='button'
         disabled={props.disabled}
         onClick={(): void => {
           setOpen(true);

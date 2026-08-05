@@ -1,5 +1,7 @@
 import { createStore, reconcile } from 'solid-js/store';
 
+import type { EscFirmwareVersions } from '@/stores/rovStatus';
+
 import * as m from '@/paraglide/messages';
 
 const McuBoard = {
@@ -151,7 +153,9 @@ type Camera = {
 
 type RovConfig = {
   firmwareVersion: string;
-  mcuFirmwareVersion: string;
+  // Compatibility fields supplied by older Pi firmware.
+  mcuFirmwareVersion?: string;
+  escFirmwareVersions?: EscFirmwareVersions;
   rovName: string;
   mcuBoard: McuBoard;
   thrusterProtocol: ThrusterProtocol;
@@ -200,6 +204,7 @@ const defaultThrusterAllocation: ThrusterAllocation = [
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
   mcuFirmwareVersion: m.common_not_available(),
+  escFirmwareVersions: [null, null, null, null, null, null, null, null],
   rovName: 'Manafish Nomad',
   mcuBoard: McuBoard.pico,
   thrusterProtocol: ThrusterProtocol.dshot,
