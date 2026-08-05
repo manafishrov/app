@@ -6,6 +6,22 @@ type SystemHealth = {
   mcuHealthy: boolean;
 };
 
+type EscFirmwareVersions = [
+  string | null,
+  string | null,
+  string | null,
+  string | null,
+  string | null,
+  string | null,
+  string | null,
+  string | null,
+];
+
+type DeviceInfo = {
+  mcuFirmwareVersion: string;
+  escFirmwareVersions: EscFirmwareVersions;
+};
+
 type RovStatus = {
   autoStabilization: boolean;
   depthHold: boolean;
@@ -13,14 +29,27 @@ type RovStatus = {
   currentDraw: number;
   piUndervoltage: boolean;
   health: SystemHealth;
+  deviceInfo?: DeviceInfo;
 };
 
-const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
+type RovStatusState = Omit<RovStatus, 'deviceInfo'> & {
+  deviceInfo: DeviceInfo;
+  deviceInfoAvailable: boolean;
+};
+
+const defaultDeviceInfo: DeviceInfo = {
+  mcuFirmwareVersion: '',
+  escFirmwareVersions: [null, null, null, null, null, null, null, null],
+};
+
+const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>({
   autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
   currentDraw: 0,
   piUndervoltage: false,
+  deviceInfo: defaultDeviceInfo,
+  deviceInfoAvailable: false,
   health: {
     imuHealthy: false,
     pressureSensorHealthy: false,
@@ -29,7 +58,14 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
 });
 
 const setRovStatusStore = (value: RovStatus): void => {
-  setRovStatusStoreInternal(reconcile(value));
+  const deviceInfoAvailable = Boolean(value.deviceInfo);
+  setRovStatusStoreInternal(
+    reconcile({
+      ...value,
+      deviceInfo: value.deviceInfo ?? defaultDeviceInfo,
+      deviceInfoAvailable,
+    }),
+  );
 };
 
 const setAutoStabilizationOptimistic = (value: boolean): void => {
@@ -45,6 +81,8 @@ export {
   setAutoStabilizationOptimistic,
   setDepthHoldOptimistic,
   setRovStatusStore,
+  type DeviceInfo,
+  type EscFirmwareVersions,
   type RovStatus,
   type SystemHealth,
 };

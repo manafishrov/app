@@ -19,6 +19,7 @@ pub use firmware::{
 pub use gamepad::{gamepad_vibrate, start_gamepad_stream};
 pub use recording::{append_recording_chunk, save_recording};
 pub use rov::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, flash_mcu_firmware, import_rov_config,
-  request_rov_config, set_rov_config, start_regulator_auto_tuning, start_thruster_test,
+  cancel_regulator_auto_tuning, cancel_thruster_test, flash_esc_firmware, flash_mcu_firmware,
+  import_rov_config, request_rov_config, set_rov_config, start_regulator_auto_tuning,
+  start_thruster_test,
 };

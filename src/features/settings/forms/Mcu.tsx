@@ -1,16 +1,16 @@
-import { Button } from '@manafishrov/ui/button';
 import { type SelectFieldProps, useAppForm } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
 import { createMemo, createSignal, type Component, type JSXElement } from 'solid-js';
 
+import { McuFirmwareVersionCard } from '@/features/settings/forms/McuFirmwareVersionCard';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { McuBoard, ThrusterProtocol, rovConfigStore } from '@/stores/rovConfig';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
 
 import {
-  createDshotSpeeds,
   createCurrentSensingModes,
+  createDshotSpeeds,
   createMcuBoards,
   createThrusterProtocols,
   type SelectCollection,
@@ -38,6 +38,12 @@ const flashMcuFirmwareWithLogging = (board: ResolvedMcuConfig['mcuBoard']): Prom
     logError('Failed to flash MCU firmware:', error);
     throw error;
   });
+
+const flashSelectedMcuFirmware = (board: ResolvedMcuConfig['mcuBoard']): void => {
+  flashMcuFirmware(board).catch((error: unknown): void => {
+    logError('Failed to flash MCU firmware:', error);
+  });
+};
 
 const submitMcuConfig = (value: McuFormValues): Promise<void> => {
   const resolved = resolveFormValues(value);
@@ -78,13 +84,11 @@ const McuBoardSelectField: Component<{
   AppField: AppFieldComponent;
   boards: SelectCollection;
   onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
-  onFlashFirmware: () => void;
 }> = (props) => (
   <props.AppField name='mcuBoard'>
     {(field: AppFieldContext): JSXElement => (
       <field.SelectField
-        label={m.general_rov_settings_mcu_board_title()}
-        description={m.general_rov_settings_mcu_board_description()}
+        aria-label={m.general_rov_settings_mcu_board_title()}
         collection={props.boards}
         placeholder={m.general_rov_settings_mcu_board_select_placeholder()}
         onValueChange={(details): void => {
@@ -93,17 +97,6 @@ const McuBoardSelectField: Component<{
             props.onBoardChange(board);
           }
         }}
-        trailingAddon={
-          <Button
-            class='w-20'
-            type='button'
-            variant='outline'
-            onClick={props.onFlashFirmware}
-            aria-label={m.general_rov_settings_mcu_board_title()}
-          >
-            {m.common_flash()}
-          </Button>
-        }
       >
         <For each={props.boards.items}>
           {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
@@ -182,12 +175,6 @@ const getDefaultFormValues = (): McuFormValues => ({
   currentSensingMode: [rovConfigStore.currentSensingMode],
 });
 
-const handleFlashFirmware = (): void => {
-  flashMcuFirmware(rovConfigStore.mcuBoard).catch((error: unknown): void => {
-    logError('Failed to flash MCU firmware:', error);
-  });
-};
-
 const McuFields: Component<{
   AppField: AppFieldComponent;
   boards: SelectCollection;
@@ -196,14 +183,21 @@ const McuFields: Component<{
   modes: SelectCollection;
   dshotDisabled: boolean;
   onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
+  onFlashFirmware: () => void;
+  afterFirmwareCard?: JSXElement;
 }> = (props) => (
   <>
-    <McuBoardSelectField
-      AppField={props.AppField}
-      boards={props.boards}
-      onBoardChange={props.onBoardChange}
-      onFlashFirmware={handleFlashFirmware}
+    <McuFirmwareVersionCard
+      boardField={
+        <McuBoardSelectField
+          AppField={props.AppField}
+          boards={props.boards}
+          onBoardChange={props.onBoardChange}
+        />
+      }
+      onFlashFirmware={props.onFlashFirmware}
     />
+    {props.afterFirmwareCard}
     <ThrusterProtocolSelectField AppField={props.AppField} protocols={props.protocols} />
     <DshotSpeedSelectField
       AppField={props.AppField}
@@ -214,11 +208,10 @@ const McuFields: Component<{
   </>
 );
 
-export const Mcu: Component = () => {
+export const Mcu: Component<{ afterFirmwareCard?: JSXElement }> = (props) => {
   const [showPowerCycleWarning, setShowPowerCycleWarning] = createSignal(false);
   const boards = createMcuBoards();
   const protocols = createThrusterProtocols();
-  const currentSensingModes = createCurrentSensingModes();
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
@@ -248,9 +241,13 @@ export const Mcu: Component = () => {
           boards={boards}
           protocols={protocols}
           speeds={dshotSpeeds()}
-          modes={currentSensingModes}
+          modes={createCurrentSensingModes()}
           dshotDisabled={selectedThrusterProtocol() !== ThrusterProtocol.dshot}
           onBoardChange={handleMcuBoardChange}
+          onFlashFirmware={() => {
+            flashSelectedMcuFirmware(selectedMcuBoard());
+          }}
+          afterFirmwareCard={props.afterFirmwareCard}
         />
         <form.AutoSubmit debounce={500} />
       </form.Form>

@@ -3,9 +3,9 @@ use tauri::{State, command};
 use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::MessageSendChannelState;
 use crate::websocket::send::{
-  handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_flash_mcu_firmware,
-  handle_import_rov_config, handle_request_rov_config, handle_set_rov_config,
-  handle_start_regulator_auto_tuning, handle_start_thruster_test,
+  handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_flash_esc_firmware,
+  handle_flash_mcu_firmware, handle_import_rov_config, handle_request_rov_config,
+  handle_set_rov_config, handle_start_regulator_auto_tuning, handle_start_thruster_test,
 };
 
 #[command]
@@ -81,4 +81,11 @@ pub async fn flash_mcu_firmware(
   payload: McuBoard,
 ) -> Result<(), String> {
   handle_flash_mcu_firmware(&state, payload).await
+}
+
+#[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
+pub async fn flash_esc_firmware(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
+  handle_flash_esc_firmware(&state).await
 }

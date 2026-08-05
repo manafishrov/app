@@ -31,4 +31,5 @@ pub enum WebsocketMessage {
   ToggleDepthHold,
   SetDesiredDepth(f32),
   FlashMcuFirmware(McuBoard),
+  FlashEscFirmware,
 }
