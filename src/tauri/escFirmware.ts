@@ -1,3 +1,3 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invokeCommand } from '@/tauri/core';
 
-export const flashEscFirmware = (): Promise<void> => invoke<undefined>('flash_esc_firmware');
+export const flashEscFirmware = (): Promise<void> => invokeCommand<undefined>('flash_esc_firmware');

@@ -39,11 +39,8 @@ const flashMcuFirmwareWithLogging = (board: ResolvedMcuConfig['mcuBoard']): Prom
     throw error;
   });
 
-const flashSelectedMcuFirmware = (board: ResolvedMcuConfig['mcuBoard']): void => {
-  flashMcuFirmware(board).catch((error: unknown): void => {
-    logError('Failed to flash MCU firmware:', error);
-  });
-};
+const flashSelectedMcuFirmware = (board: ResolvedMcuConfig['mcuBoard']): Promise<void> =>
+  flashMcuFirmwareWithLogging(board);
 
 const submitMcuConfig = (value: McuFormValues): Promise<void> => {
   const resolved = resolveFormValues(value);
@@ -183,7 +180,7 @@ const McuFields: Component<{
   modes: SelectCollection;
   dshotDisabled: boolean;
   onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
-  onFlashFirmware: () => void;
+  onFlashFirmware: () => Promise<void>;
   afterFirmwareCard?: JSXElement;
 }> = (props) => (
   <>
@@ -244,9 +241,7 @@ export const Mcu: Component<{ afterFirmwareCard?: JSXElement }> = (props) => {
           modes={createCurrentSensingModes()}
           dshotDisabled={selectedThrusterProtocol() !== ThrusterProtocol.dshot}
           onBoardChange={handleMcuBoardChange}
-          onFlashFirmware={() => {
-            flashSelectedMcuFirmware(selectedMcuBoard());
-          }}
+          onFlashFirmware={() => flashSelectedMcuFirmware(selectedMcuBoard())}
           afterFirmwareCard={props.afterFirmwareCard}
         />
         <form.AutoSubmit debounce={500} />

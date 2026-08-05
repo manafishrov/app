@@ -29,7 +29,7 @@ const getMcuFirmwareVersion = (): string => {
 
 export const McuFirmwareVersionCard: Component<{
   boardField: JSXElement;
-  onFlashFirmware: () => void;
+  onFlashFirmware: () => Promise<void>;
 }> = (props) => (
   <Card class='my-8'>
     <CardHeader>
@@ -37,7 +37,12 @@ export const McuFirmwareVersionCard: Component<{
       <CardDescription>{m.general_rov_settings_mcu_firmware_version_description()}</CardDescription>
       <CardAction class='flex flex-wrap gap-2'>
         <div class='w-32 [&_[data-slot=field-label]:empty]:hidden'>{props.boardField}</div>
-        <Button type='button' onClick={props.onFlashFirmware}>
+        <Button
+          type='button'
+          onClick={() => {
+            props.onFlashFirmware().catch(() => null);
+          }}
+        >
           {m.general_rov_settings_mcu_firmware_flash_button()}
         </Button>
       </CardAction>
