@@ -45,6 +45,8 @@ mod tests {
     }
   }"#;
 
+  /// # Panics
+  /// Panics if a status with live device information cannot round-trip through JSON.
   #[test]
   fn preserves_live_device_info() {
     let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
@@ -60,6 +62,8 @@ mod tests {
     assert_eq!(serialized["deviceInfo"]["escFirmwareVersions"][0], "2.20.0");
   }
 
+  /// # Panics
+  /// Panics if a legacy status no longer deserializes with safe defaults.
   #[test]
   fn accepts_legacy_status_without_device_info() {
     let status: RovStatus = serde_json::from_str(BASE_STATUS).unwrap();
