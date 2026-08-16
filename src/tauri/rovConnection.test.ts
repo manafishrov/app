@@ -62,7 +62,19 @@ describe('when ROV connection settings change', () => {
       });
   });
 
-  test('shares an in-flight update for identical connection settings', () => {
+  test('keeps the app on its current address when sending fails', () => {
+    mocks.setRovConfig.mockRejectedValue(new Error('send failed'));
+
+    return expect(updateRovConnection(changedConnection))
+      .rejects.toThrow('send failed')
+      .then(() => {
+        expect(mocks.setConfig).not.toHaveBeenCalled();
+      });
+  });
+});
+
+describe('when a connection update is already in flight', () => {
+  test('shares the update for identical connection settings', () => {
     const firstUpdate = updateRovConnection(changedConnection);
     const secondUpdate = updateRovConnection(changedConnection);
 
@@ -75,16 +87,6 @@ describe('when ROV connection settings change', () => {
       .then(() => Promise.all([firstUpdate, secondUpdate]))
       .then(() => {
         expect(mocks.setConfig).toHaveBeenCalledTimes(1);
-      });
-  });
-
-  test('keeps the app on its current address when sending fails', () => {
-    mocks.setRovConfig.mockRejectedValue(new Error('send failed'));
-
-    return expect(updateRovConnection(changedConnection))
-      .rejects.toThrow('send failed')
-      .then(() => {
-        expect(mocks.setConfig).not.toHaveBeenCalled();
       });
   });
 });
