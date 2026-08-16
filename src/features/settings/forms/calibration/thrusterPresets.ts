@@ -22,6 +22,20 @@ export type ThrusterPreset = {
 
 export const THRUSTER_PRESETS: ThrusterPreset[] = [
   {
+    name: m.thruster_preset_zero_name(),
+    description: m.thruster_preset_zero_description(),
+    rows: {
+      surge: [0, 0, 0, 0, 0, 0, 0, 0],
+      sway: [0, 0, 0, 0, 0, 0, 0, 0],
+      heave: [0, 0, 0, 0, 0, 0, 0, 0],
+      pitch: [0, 0, 0, 0, 0, 0, 0, 0],
+      yaw: [0, 0, 0, 0, 0, 0, 0, 0],
+      roll: [0, 0, 0, 0, 0, 0, 0, 0],
+      action1: [0, 0, 0, 0, 0, 0, 0, 0],
+      action2: [0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
     name: m.thruster_preset_default_movement_name(),
     description: m.thruster_preset_default_movement_description(),
     rows: {

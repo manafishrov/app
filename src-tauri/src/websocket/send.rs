@@ -80,19 +80,25 @@ pub async fn handle_send_custom_action(
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_toggle_auto_stabilization(
+pub async fn handle_set_auto_stabilization(
   state: &State<'_, MessageSendChannelState>,
+  enabled: bool,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::ToggleAutoStabilization, "ToggleAutoStabilization")
-    .await
+  send_message(
+    &state.tx,
+    WebsocketMessage::SetAutoStabilization(enabled),
+    "SetAutoStabilization",
+  )
+  .await
 }
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_toggle_depth_hold(
+pub async fn handle_set_depth_hold(
   state: &State<'_, MessageSendChannelState>,
+  enabled: bool,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::ToggleDepthHold, "ToggleDepthHold").await
+  send_message(&state.tx, WebsocketMessage::SetDepthHold(enabled), "SetDepthHold").await
 }
 
 /// # Errors

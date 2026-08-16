@@ -8,31 +8,21 @@ import { invokeCommand } from '@/tauri/core';
 export const toggleAutoStabilization = (): Promise<void> => {
   const newValue = !rovStatusStore.autoStabilization;
   setAutoStabilizationOptimistic(newValue);
-  return new Promise<void>((resolve) => {
-    invokeCommand('toggle_auto_stabilization').then(
-      () => {
-        resolve();
-      },
-      () => {
-        setAutoStabilizationOptimistic(!newValue);
-        resolve();
-      },
-    );
-  });
+  return invokeCommand<undefined>('set_auto_stabilization', { enabled: newValue }).catch(
+    (error: unknown): never => {
+      setAutoStabilizationOptimistic(!newValue);
+      throw error;
+    },
+  );
 };
 
 export const toggleDepthHold = (): Promise<void> => {
   const newValue = !rovStatusStore.depthHold;
   setDepthHoldOptimistic(newValue);
-  return new Promise<void>((resolve) => {
-    invokeCommand('toggle_depth_hold').then(
-      () => {
-        resolve();
-      },
-      () => {
-        setDepthHoldOptimistic(!newValue);
-        resolve();
-      },
-    );
-  });
+  return invokeCommand<undefined>('set_depth_hold', { enabled: newValue }).catch(
+    (error: unknown): never => {
+      setDepthHoldOptimistic(!newValue);
+      throw error;
+    },
+  );
 };

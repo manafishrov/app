@@ -27,9 +27,26 @@ pub enum WebsocketMessage {
   StatusUpdate(RovStatus),
   Telemetry(RovTelemetry),
   CustomAction(CustomAction),
-  ToggleAutoStabilization,
-  ToggleDepthHold,
+  SetAutoStabilization(bool),
+  SetDepthHold(bool),
   SetDesiredDepth(f32),
   FlashMcuFirmware(McuBoard),
   FlashEscFirmware,
+}
+
+#[cfg(test)]
+mod tests {
+  use super::WebsocketMessage;
+
+  #[test]
+  fn stabilization_messages_include_the_desired_state() {
+    assert_eq!(
+      serde_json::to_value(WebsocketMessage::SetAutoStabilization(true)).expect("serialize"),
+      serde_json::json!({"type": "setAutoStabilization", "payload": true})
+    );
+    assert_eq!(
+      serde_json::to_value(WebsocketMessage::SetDepthHold(false)).expect("serialize"),
+      serde_json::json!({"type": "setDepthHold", "payload": false})
+    );
+  }
 }
