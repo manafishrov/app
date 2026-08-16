@@ -71,6 +71,7 @@ fn run_gamepad_stream<R: Runtime>(
   sdl2::hint::set("SDL_JOYSTICK_RAWINPUT", "0");
 
   let sdl = sdl2::init()?;
+  let event_subsystem = sdl.event()?;
   let controller_subsystem = sdl.game_controller()?;
   let joystick_subsystem = sdl.joystick()?;
   let mut event_pump = sdl.event_pump()?;
@@ -85,8 +86,8 @@ fn run_gamepad_stream<R: Runtime>(
   // below, so discard only that startup backlog before opening them. Otherwise
   // the same physical controller is opened a second time with a new instance
   // id and appears twice in the app (and haptics may target the stale instance).
-  event_pump.flush_event(EventType::ControllerDeviceAdded);
-  event_pump.flush_event(EventType::JoyDeviceAdded);
+  event_subsystem.flush_event(EventType::ControllerDeviceAdded);
+  event_subsystem.flush_event(EventType::JoyDeviceAdded);
 
   let num = joystick_subsystem.num_joysticks().unwrap_or(0);
   for i in 0..num {
