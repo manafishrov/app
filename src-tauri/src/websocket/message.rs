@@ -39,6 +39,9 @@ mod tests {
   use super::WebsocketMessage;
 
   #[test]
+  /// # Panics
+  ///
+  /// Panics if a stabilization command does not serialize to its wire format.
   fn stabilization_messages_include_the_desired_state() {
     assert_eq!(
       serde_json::to_value(WebsocketMessage::SetAutoStabilization(true)).expect("serialize"),

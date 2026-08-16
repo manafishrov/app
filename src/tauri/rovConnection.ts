@@ -5,6 +5,7 @@ import { setRovConfig } from '@/tauri/rovConfig';
 
 const CONNECTION_APPLY_TIMEOUT_MS = 15_000;
 const CONNECTION_POLL_INTERVAL_MS = 50;
+const inFlightUpdates = new Map<string, Promise<void>>();
 
 export type RovConnectionConfig = {
   ipAddress: string;
@@ -36,16 +37,30 @@ const retargetApp = (connection: RovConnectionConfig): Promise<void> =>
     webSocketPort: connection.websocketPort,
   });
 
+const connectionKey = (connection: RovConnectionConfig): string =>
+  `${connection.ipAddress}\0${connection.websocketPort}`;
+
 export const updateRovConnection = (connection: RovConnectionConfig): Promise<void> => {
+  const key = connectionKey(connection);
+  const existingUpdate = inFlightUpdates.get(key);
+  if (existingUpdate) {
+    return existingUpdate;
+  }
+
   const connectionChanged =
     connection.ipAddress !== rovConfigStore.ipAddress ||
     connection.websocketPort !== rovConfigStore.websocketPort;
 
-  if (!connectionChanged) {
-    return retargetApp(connection);
-  }
-
-  return setRovConfig(connection)
-    .then(waitForRovDisconnect)
-    .then(() => retargetApp(connection));
+  const update = connectionChanged
+    ? setRovConfig(connection)
+        .then(waitForRovDisconnect)
+        .then(() => retargetApp(connection))
+    : retargetApp(connection);
+  const trackedUpdate = update.finally(() => {
+    if (inFlightUpdates.get(key) === trackedUpdate) {
+      inFlightUpdates.delete(key);
+    }
+  });
+  inFlightUpdates.set(key, trackedUpdate);
+  return trackedUpdate;
 };

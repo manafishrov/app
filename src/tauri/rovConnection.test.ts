@@ -62,6 +62,22 @@ describe('when ROV connection settings change', () => {
       });
   });
 
+  test('shares an in-flight update for identical connection settings', () => {
+    const firstUpdate = updateRovConnection(changedConnection);
+    const secondUpdate = updateRovConnection(changedConnection);
+
+    expect(secondUpdate).toBe(firstUpdate);
+    expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
+
+    mocks.connectionStatus.isConnected = false;
+    return vi
+      .advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+      .then(() => Promise.all([firstUpdate, secondUpdate]))
+      .then(() => {
+        expect(mocks.setConfig).toHaveBeenCalledTimes(1);
+      });
+  });
+
   test('keeps the app on its current address when sending fails', () => {
     mocks.setRovConfig.mockRejectedValue(new Error('send failed'));
 
