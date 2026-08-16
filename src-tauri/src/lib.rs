@@ -29,9 +29,9 @@ use commands::{
   fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
   import_rov_config, initialize_log_listener, install_app_release, list_firmware_releases,
   list_flash_drives, prepare_flash, request_rov_config, save_recording, send_custom_action,
-  send_direction_vector, set_config, set_desired_depth, set_rov_config, signal_flash_image,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
-  toggle_auto_stabilization, toggle_depth_hold,
+  send_direction_vector, set_auto_stabilization, set_config, set_depth_hold, set_desired_depth,
+  set_rov_config, signal_flash_image, start_gamepad_stream, start_regulator_auto_tuning,
+  start_thruster_test,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -275,10 +275,10 @@ pub fn run() -> tauri::Result<()> {
       cancel_regulator_auto_tuning,
       send_direction_vector,
       send_custom_action,
-      toggle_auto_stabilization,
+      set_auto_stabilization,
       set_desired_depth,
       append_recording_chunk,
-      toggle_depth_hold,
+      set_depth_hold,
       flash_mcu_firmware,
       flash_esc_firmware,
       list_firmware_releases,

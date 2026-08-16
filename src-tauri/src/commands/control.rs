@@ -3,8 +3,8 @@ use tauri::{State, command};
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
 use crate::websocket::send::{
-  handle_send_custom_action, handle_send_direction_vector, handle_set_desired_depth,
-  handle_toggle_auto_stabilization, handle_toggle_depth_hold,
+  handle_send_custom_action, handle_send_direction_vector, handle_set_auto_stabilization,
+  handle_set_depth_hold, handle_set_desired_depth,
 };
 
 #[command]
@@ -30,17 +30,21 @@ pub async fn send_custom_action(
 #[command]
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn toggle_auto_stabilization(
+pub async fn set_auto_stabilization(
   state: State<'_, MessageSendChannelState>,
+  enabled: bool,
 ) -> Result<(), String> {
-  handle_toggle_auto_stabilization(&state).await
+  handle_set_auto_stabilization(&state, enabled).await
 }
 
 #[command]
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn toggle_depth_hold(state: State<'_, MessageSendChannelState>) -> Result<(), String> {
-  handle_toggle_depth_hold(&state).await
+pub async fn set_depth_hold(
+  state: State<'_, MessageSendChannelState>,
+  enabled: bool,
+) -> Result<(), String> {
+  handle_set_depth_hold(&state, enabled).await
 }
 
 #[command]

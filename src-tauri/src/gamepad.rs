@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use sdl2::controller::{Axis, Button, GameController};
-use sdl2::event::Event;
+use sdl2::event::{Event, EventType};
 use sdl2::joystick::Joystick;
 use serde_json::json;
 use tauri::{AppHandle, Emitter, Runtime};
@@ -71,6 +71,7 @@ fn run_gamepad_stream<R: Runtime>(
   sdl2::hint::set("SDL_JOYSTICK_RAWINPUT", "0");
 
   let sdl = sdl2::init()?;
+  let event_subsystem = sdl.event()?;
   let controller_subsystem = sdl.game_controller()?;
   let joystick_subsystem = sdl.joystick()?;
   let mut event_pump = sdl.event_pump()?;
@@ -79,6 +80,14 @@ fn run_gamepad_stream<R: Runtime>(
 
   let mut controllers: HashMap<u32, GameController> = HashMap::new();
   let mut joysticks: HashMap<u32, Joystick> = HashMap::new();
+
+  // SDL queues device-added events for controllers that were already present
+  // when the subsystem started. We enumerate those devices synchronously
+  // below, so discard only that startup backlog before opening them. Otherwise
+  // the same physical controller is opened a second time with a new instance
+  // id and appears twice in the app (and haptics may target the stale instance).
+  event_subsystem.flush_event(EventType::ControllerDeviceAdded);
+  event_subsystem.flush_event(EventType::JoyDeviceAdded);
 
   let num = joystick_subsystem.num_joysticks().unwrap_or(0);
   for i in 0..num {
@@ -102,7 +111,9 @@ fn run_gamepad_stream<R: Runtime>(
       if let Some(controller) = controllers.get_mut(&cmd.index) {
         let low = scale_rumble_frequency(cmd.low_freq);
         let high = scale_rumble_frequency(cmd.high_freq);
-        let _ = controller.set_rumble(low, high, cmd.duration_ms);
+        if let Err(error) = controller.set_rumble(low, high, cmd.duration_ms) {
+          log_warn!("Failed to vibrate gamepad {}: {error}", cmd.index);
+        }
       }
     }
 
