@@ -64,7 +64,7 @@ mod tests {
 
   /// # Panics
   /// Panics if development builds cannot express their nearest release and
-  /// commit distance as valid SemVer.
+  /// commit distance as valid `SemVer`.
   #[test]
   fn development_version_uses_release_ancestry() {
     assert_eq!(
