@@ -11,47 +11,20 @@ pub struct SystemHealth {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
-  #[serde(default)]
   pub mcu_firmware_version: String,
-  #[serde(default)]
   pub esc_firmware_versions: [Option<String>; 8],
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EscFirmwareUpdate {
-  #[serde(default)]
   pub active: bool,
-  #[serde(default)]
   pub origin: Option<String>,
-  #[serde(default = "default_esc_update_stage")]
   pub stage: String,
-  #[serde(default)]
   pub progress: u8,
-  #[serde(default)]
   pub current_esc: Option<u8>,
-  #[serde(default)]
   pub target_version: Option<String>,
-  #[serde(default)]
   pub error: Option<String>,
-}
-
-fn default_esc_update_stage() -> String {
-  "idle".to_string()
-}
-
-impl Default for EscFirmwareUpdate {
-  fn default() -> Self {
-    Self {
-      active: false,
-      origin: None,
-      stage: default_esc_update_stage(),
-      progress: 0,
-      current_esc: None,
-      target_version: None,
-      error: None,
-    }
-  }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -61,12 +34,9 @@ pub struct RovStatus {
   pub depth_hold: bool,
   pub battery_percentage: u8,
   pub current_draw: i32,
-  #[serde(default)]
   pub pi_undervoltage: bool,
   pub health: SystemHealth,
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub device_info: Option<DeviceInfo>,
-  #[serde(default)]
+  pub device_info: DeviceInfo,
   pub esc_firmware_update: EscFirmwareUpdate,
 }
 
@@ -74,15 +44,29 @@ pub struct RovStatus {
 mod tests {
   use super::RovStatus;
 
-  const BASE_STATUS: &str = r#"{
+  const CURRENT_STATUS: &str = r#"{
     "autoStabilization": false,
     "depthHold": false,
     "batteryPercentage": 75,
     "currentDraw": 12,
+    "piUndervoltage": false,
     "health": {
       "imuHealthy": true,
       "pressureSensorHealthy": true,
       "mcuHealthy": true
+    },
+    "deviceInfo": {
+      "mcuFirmwareVersion": "1.2.3-rc.1",
+      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null]
+    },
+    "escFirmwareUpdate": {
+      "active": false,
+      "origin": null,
+      "stage": "idle",
+      "progress": 0,
+      "currentEsc": null,
+      "targetVersion": null,
+      "error": null
     }
   }"#;
 
@@ -90,57 +74,45 @@ mod tests {
   /// Panics if a status with live device information cannot round-trip through JSON.
   #[test]
   fn preserves_live_device_info() {
-    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
-    value["deviceInfo"] = serde_json::json!({
-      "mcuFirmwareVersion": "1.2.3",
-      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null]
-    });
-
-    let status: RovStatus = serde_json::from_value(value).unwrap();
+    let status: RovStatus = serde_json::from_str(CURRENT_STATUS).unwrap();
     let serialized = serde_json::to_value(&status).unwrap();
 
-    assert_eq!(serialized["deviceInfo"]["mcuFirmwareVersion"], "1.2.3");
+    assert_eq!(serialized["deviceInfo"]["mcuFirmwareVersion"], "1.2.3-rc.1");
     assert_eq!(serialized["deviceInfo"]["escFirmwareVersions"][0], "2.20.0");
   }
 
   /// # Panics
-  /// Panics if a legacy status no longer deserializes with safe defaults.
+  /// Panics if the current status fixture cannot be parsed as JSON.
   #[test]
-  fn accepts_legacy_status_without_device_info() {
-    let status: RovStatus = serde_json::from_str(BASE_STATUS).unwrap();
-    let serialized = serde_json::to_value(&status).unwrap();
+  fn rejects_status_without_current_required_fields() {
+    for field in ["piUndervoltage", "deviceInfo", "escFirmwareUpdate"] {
+      let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+      value.as_object_mut().unwrap().remove(field);
 
-    assert!(serialized.get("deviceInfo").is_none());
-    assert!(!status.pi_undervoltage);
+      assert!(
+        serde_json::from_value::<RovStatus>(value).is_err(),
+        "status without {field} should be rejected"
+      );
+    }
   }
 
   /// # Panics
-  /// Panics if a partially populated device-info frame cannot be read safely.
+  /// Panics if the current status fixture cannot be parsed as JSON.
   #[test]
-  fn accepts_partial_device_info() {
-    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+  fn rejects_partial_device_info() {
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
     value["deviceInfo"] = serde_json::json!({});
-    let status: RovStatus =
-      serde_json::from_value(value).expect("partial device info should use safe defaults");
 
-    let device_info = status.device_info.expect("device info should be present");
-    assert!(device_info.mcu_firmware_version.is_empty());
-    assert!(device_info.esc_firmware_versions.iter().all(Option::is_none));
+    assert!(serde_json::from_value::<RovStatus>(value).is_err());
   }
 
   /// # Panics
-  /// Panics if a partial ESC update object cannot use safe field defaults.
+  /// Panics if the current status fixture cannot be parsed as JSON.
   #[test]
-  fn accepts_partial_esc_firmware_update() {
-    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+  fn rejects_partial_esc_firmware_update() {
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
     value["escFirmwareUpdate"] = serde_json::json!({"active": true, "progress": 40});
 
-    let status: RovStatus =
-      serde_json::from_value(value).expect("partial ESC update should use safe defaults");
-
-    assert!(status.esc_firmware_update.active);
-    assert_eq!(status.esc_firmware_update.progress, 40);
-    assert_eq!(status.esc_firmware_update.stage, "idle");
-    assert!(status.esc_firmware_update.origin.is_none());
+    assert!(serde_json::from_value::<RovStatus>(value).is_err());
   }
 }

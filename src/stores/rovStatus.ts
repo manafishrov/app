@@ -46,13 +46,7 @@ type RovStatus = {
   currentDraw: number;
   piUndervoltage: boolean;
   health: SystemHealth;
-  deviceInfo?: DeviceInfo;
-  escFirmwareUpdate?: EscFirmwareUpdate;
-};
-
-type RovStatusState = Omit<RovStatus, 'deviceInfo'> & {
   deviceInfo: DeviceInfo;
-  deviceInfoAvailable: boolean;
   escFirmwareUpdate: EscFirmwareUpdate;
 };
 
@@ -71,14 +65,13 @@ const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
   error: null,
 };
 
-const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>({
+const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
   currentDraw: 0,
   piUndervoltage: false,
   deviceInfo: defaultDeviceInfo,
-  deviceInfoAvailable: false,
   escFirmwareUpdate: defaultEscFirmwareUpdate,
   health: {
     imuHealthy: false,
@@ -88,15 +81,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>(
 });
 
 const setRovStatusStore = (value: RovStatus): void => {
-  const deviceInfoAvailable = Boolean(value.deviceInfo);
-  setRovStatusStoreInternal(
-    reconcile({
-      ...value,
-      deviceInfo: value.deviceInfo ?? defaultDeviceInfo,
-      deviceInfoAvailable,
-      escFirmwareUpdate: value.escFirmwareUpdate ?? defaultEscFirmwareUpdate,
-    }),
-  );
+  setRovStatusStoreInternal(reconcile(value));
 };
 
 const setAutoStabilizationOptimistic = (value: boolean): void => {

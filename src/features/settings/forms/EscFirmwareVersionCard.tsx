@@ -15,21 +15,8 @@ import * as m from '@/paraglide/messages';
 import { rovStatusStore, type EscFirmwareVersions } from '@/stores/rovStatus';
 import { flashEscFirmware } from '@/tauri';
 
-const unavailableVersions = (): EscFirmwareVersions => [
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-];
-
 const getEscFirmwareVersions = (): EscFirmwareVersions =>
-  rovStatusStore.deviceInfoAvailable
-    ? rovStatusStore.deviceInfo.escFirmwareVersions
-    : unavailableVersions();
+  rovStatusStore.deviceInfo.escFirmwareVersions;
 
 const getCommonEscFirmwareVersion = (): string | null => {
   const versions = getEscFirmwareVersions();
@@ -56,20 +43,14 @@ const handleFlashEscFirmware = (): Promise<void> =>
   });
 
 const EscFirmwareFlashAction: Component = () => (
-  <span
-    title={
-      rovStatusStore.deviceInfoAvailable
-        ? ''
-        : m.general_rov_settings_esc_firmware_flash_unsupported()
-    }
-  >
+  <span>
     <ConfirmUpdateButton
       buttonLabel={m.general_rov_settings_esc_firmware_flash_button()}
       confirmLabel={m.general_rov_settings_esc_firmware_flash_confirm_action()}
       title={m.general_rov_settings_esc_firmware_flash_confirm_title()}
       description={<p>{m.general_rov_settings_esc_firmware_flash_confirm_description()}</p>}
       pendingDescription={m.general_rov_settings_esc_firmware_flash_pending()}
-      disabled={!rovStatusStore.deviceInfoAvailable || rovStatusStore.escFirmwareUpdate.active}
+      disabled={rovStatusStore.escFirmwareUpdate.active}
       onConfirm={handleFlashEscFirmware}
     />
   </span>
