@@ -144,7 +144,7 @@ impl Default for Camera {
     Self {
       width: 1440,
       height: 1080,
-      framerate: 40,
+      framerate: 30,
       crop_fov: false,
       bitrate: 20_000_000,
       keyframe_interval: 30,
@@ -168,7 +168,6 @@ impl Default for Camera {
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
   pub firmware_version: String,
-  pub mcu_firmware_version: String,
   pub rov_name: String,
   pub mcu_board: McuBoard,
   pub thruster_protocol: ThrusterProtocol,
@@ -204,8 +203,6 @@ pub struct RegulatorSuggestions {
 pub struct PartialRovConfig {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub firmware_version: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub mcu_firmware_version: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub rov_name: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -317,7 +314,6 @@ mod tests {
   fn sample_rov_config() -> RovConfig {
     RovConfig {
       firmware_version: "1.2.3".to_string(),
-      mcu_firmware_version: "4.5.6".to_string(),
       rov_name: "Manafish".to_string(),
       mcu_board: McuBoard::Pico2,
       thruster_protocol: ThrusterProtocol::Dshot,
@@ -519,7 +515,7 @@ mod tests {
 
     assert_eq!(deserialized.camera.width, 1440);
     assert_eq!(deserialized.camera.height, 1080);
-    assert_eq!(deserialized.camera.framerate, 40);
+    assert_eq!(deserialized.camera.framerate, 30);
   }
 
   /// # Panics
@@ -567,7 +563,6 @@ mod tests {
     let partial = PartialRovConfig::default();
 
     assert!(partial.firmware_version.is_none());
-    assert!(partial.mcu_firmware_version.is_none());
     assert!(partial.rov_name.is_none());
     assert!(partial.mcu_board.is_none());
     assert!(partial.thruster_protocol.is_none());

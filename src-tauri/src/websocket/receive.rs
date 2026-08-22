@@ -3,10 +3,11 @@ use tokio_tungstenite::tungstenite::Message;
 
 use crate::log_warn;
 use crate::models::log::LogEntry;
-use crate::models::rov_config::{RegulatorSuggestions, RovConfig};
+use crate::models::rov_config::RegulatorSuggestions;
 use crate::models::rov_status::RovStatus;
 use crate::models::rov_telemetry::RovTelemetry;
 use crate::models::toast::Toast;
+use crate::websocket::message::ConfigResponse;
 
 fn emit_event<T: serde::Serialize + Clone>(app: &AppHandle, event: &str, payload: &T) {
   if let Err(error) = app.emit(event, payload) {
@@ -34,7 +35,7 @@ pub fn handle_status_update(app: &AppHandle, payload: &RovStatus) -> Option<Mess
   None
 }
 
-pub fn handle_config(app: &AppHandle, payload: &RovConfig) -> Option<Message> {
+pub fn handle_config(app: &AppHandle, payload: &ConfigResponse) -> Option<Message> {
   emit_event(app, "rov_config_received", payload);
   None
 }

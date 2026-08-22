@@ -22,6 +22,23 @@ type DeviceInfo = {
   escFirmwareVersions: EscFirmwareVersions;
 };
 
+type EscFirmwareUpdate = {
+  active: boolean;
+  origin: 'automatic' | 'manual' | null;
+  stage:
+    | 'idle'
+    | 'preflight'
+    | 'uploading'
+    | 'programming'
+    | 'awaitingTelemetry'
+    | 'succeeded'
+    | 'failed';
+  progress: number;
+  currentEsc: number | null;
+  targetVersion: string | null;
+  error: string | null;
+};
+
 type RovStatus = {
   autoStabilization: boolean;
   depthHold: boolean;
@@ -30,16 +47,28 @@ type RovStatus = {
   piUndervoltage: boolean;
   health: SystemHealth;
   deviceInfo?: DeviceInfo;
+  escFirmwareUpdate?: EscFirmwareUpdate;
 };
 
 type RovStatusState = Omit<RovStatus, 'deviceInfo'> & {
   deviceInfo: DeviceInfo;
   deviceInfoAvailable: boolean;
+  escFirmwareUpdate: EscFirmwareUpdate;
 };
 
 const defaultDeviceInfo: DeviceInfo = {
   mcuFirmwareVersion: '',
   escFirmwareVersions: [null, null, null, null, null, null, null, null],
+};
+
+const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
+  active: false,
+  origin: null,
+  stage: 'idle',
+  progress: 0,
+  currentEsc: null,
+  targetVersion: null,
+  error: null,
 };
 
 const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>({
@@ -50,6 +79,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>(
   piUndervoltage: false,
   deviceInfo: defaultDeviceInfo,
   deviceInfoAvailable: false,
+  escFirmwareUpdate: defaultEscFirmwareUpdate,
   health: {
     imuHealthy: false,
     pressureSensorHealthy: false,
@@ -64,6 +94,7 @@ const setRovStatusStore = (value: RovStatus): void => {
       ...value,
       deviceInfo: value.deviceInfo ?? defaultDeviceInfo,
       deviceInfoAvailable,
+      escFirmwareUpdate: value.escFirmwareUpdate ?? defaultEscFirmwareUpdate,
     }),
   );
 };
@@ -83,6 +114,7 @@ export {
   setRovStatusStore,
   type DeviceInfo,
   type EscFirmwareVersions,
+  type EscFirmwareUpdate,
   type RovStatus,
   type SystemHealth,
 };

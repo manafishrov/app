@@ -1,6 +1,5 @@
 import type { Component, JSXElement } from 'solid-js';
 
-import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import {
   Card,
@@ -11,20 +10,18 @@ import {
   CardTitle,
 } from '@manafishrov/ui/card';
 
+import { VersionBadge } from '@/components/VersionBadge';
 import * as m from '@/paraglide/messages';
-import { rovConfigStore } from '@/stores/rovConfig';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 const getMcuFirmwareVersion = (): string => {
   const { deviceInfo, deviceInfoAvailable } = rovStatusStore;
-  const version = deviceInfoAvailable
-    ? deviceInfo.mcuFirmwareVersion
-    : (rovConfigStore.mcuFirmwareVersion ?? '');
+  const version = deviceInfoAvailable ? deviceInfo.mcuFirmwareVersion : '';
   if (version === '' || version === m.common_not_available()) {
     return m.common_not_available();
   }
 
-  return `v${version}`;
+  return version;
 };
 
 export const McuFirmwareVersionCard: Component<{
@@ -49,9 +46,7 @@ export const McuFirmwareVersionCard: Component<{
     </CardHeader>
     <CardContent class='flex flex-col gap-4'>
       <div class='flex flex-wrap items-center gap-3'>
-        <Badge class='bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
-          {getMcuFirmwareVersion()}
-        </Badge>
+        <VersionBadge version={getMcuFirmwareVersion()} />
       </div>
     </CardContent>
   </Card>

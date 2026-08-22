@@ -11,8 +11,47 @@ pub struct SystemHealth {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
+  #[serde(default)]
   pub mcu_firmware_version: String,
+  #[serde(default)]
   pub esc_firmware_versions: [Option<String>; 8],
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EscFirmwareUpdate {
+  #[serde(default)]
+  pub active: bool,
+  #[serde(default)]
+  pub origin: Option<String>,
+  #[serde(default = "default_esc_update_stage")]
+  pub stage: String,
+  #[serde(default)]
+  pub progress: u8,
+  #[serde(default)]
+  pub current_esc: Option<u8>,
+  #[serde(default)]
+  pub target_version: Option<String>,
+  #[serde(default)]
+  pub error: Option<String>,
+}
+
+fn default_esc_update_stage() -> String {
+  "idle".to_string()
+}
+
+impl Default for EscFirmwareUpdate {
+  fn default() -> Self {
+    Self {
+      active: false,
+      origin: None,
+      stage: default_esc_update_stage(),
+      progress: 0,
+      current_esc: None,
+      target_version: None,
+      error: None,
+    }
+  }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -27,6 +66,8 @@ pub struct RovStatus {
   pub health: SystemHealth,
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub device_info: Option<DeviceInfo>,
+  #[serde(default)]
+  pub esc_firmware_update: EscFirmwareUpdate,
 }
 
 #[cfg(test)]
@@ -71,5 +112,35 @@ mod tests {
 
     assert!(serialized.get("deviceInfo").is_none());
     assert!(!status.pi_undervoltage);
+  }
+
+  /// # Panics
+  /// Panics if a partially populated device-info frame cannot be read safely.
+  #[test]
+  fn accepts_partial_device_info() {
+    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+    value["deviceInfo"] = serde_json::json!({});
+    let status: RovStatus =
+      serde_json::from_value(value).expect("partial device info should use safe defaults");
+
+    let device_info = status.device_info.expect("device info should be present");
+    assert!(device_info.mcu_firmware_version.is_empty());
+    assert!(device_info.esc_firmware_versions.iter().all(Option::is_none));
+  }
+
+  /// # Panics
+  /// Panics if a partial ESC update object cannot use safe field defaults.
+  #[test]
+  fn accepts_partial_esc_firmware_update() {
+    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+    value["escFirmwareUpdate"] = serde_json::json!({"active": true, "progress": 40});
+
+    let status: RovStatus =
+      serde_json::from_value(value).expect("partial ESC update should use safe defaults");
+
+    assert!(status.esc_firmware_update.active);
+    assert_eq!(status.esc_firmware_update.progress, 40);
+    assert_eq!(status.esc_firmware_update.stage, "idle");
+    assert!(status.esc_firmware_update.origin.is_none());
   }
 }

@@ -11,14 +11,31 @@ permissions:
   id-token: write
 
 jobs:
+  validate-release:
+    name: Validate Release Identity
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate tag and embedded versions
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 scripts/validate-release-version.py "$TAG"
+
   create-release:
     name: Create Draft Release
+    needs: validate-release
     runs-on: ubuntu-24.04
     outputs:
       release_id: ${{ steps.create.outputs.release_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # Create the draft release once up front so the parallel build jobs only
       # upload assets to it. Creating it inside each build job races and can fail
@@ -27,10 +44,12 @@ jobs:
         id: create
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          tag="${{ github.ref_name }}"
-          repo="${{ github.repository }}"
+          tag="$TAG"
+          repo="$REPO"
           if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
             args=(--draft --title "$tag" --notes "")
             if [[ "$tag" == *-* ]]; then
@@ -48,6 +67,7 @@ jobs:
   # first release after a webkit version bump pays the ~4h build.
   webkitgtk:
     name: WebKitGTK (WebRTC)
+    needs: validate-release
     uses: ./.github/workflows/build-webkitgtk.yaml
     permissions:
       packages: write
@@ -70,6 +90,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set bun hash
         shell: bash
@@ -288,6 +310,75 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
+
+      # The updater key authenticates update archives, but Windows reputation
+      # requires Authenticode. Import the product certificate and configure
+      # Tauri with its actual thumbprint so both the app and installer are
+      # signed by the release build.
+      - name: Import Windows code-signing certificate
+        if: matrix.platform == 'windows-latest'
+        shell: powershell
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) {
+            throw 'WINDOWS_CERTIFICATE must contain the base64-encoded PFX certificate.'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) {
+            throw 'WINDOWS_CERTIFICATE_PASSWORD must contain the PFX password.'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_TIMESTAMP_URL)) {
+            throw 'WINDOWS_TIMESTAMP_URL must contain the certificate issuer timestamp URL.'
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'manafish-windows-signing.pfx'
+          [IO.File]::WriteAllBytes(
+            $certificatePath,
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE)
+          )
+          $password = ConvertTo-SecureString `
+            -String $env:WINDOWS_CERTIFICATE_PASSWORD `
+            -Force `
+            -AsPlainText
+          try {
+            $certificate = @(
+              Import-PfxCertificate `
+                -FilePath $certificatePath `
+                -CertStoreLocation Cert:\CurrentUser\My `
+                -Password $password
+            ) | Where-Object HasPrivateKey | Select-Object -First 1
+          } finally {
+            Remove-Item -Force $certificatePath -ErrorAction SilentlyContinue
+          }
+          if ($null -eq $certificate) {
+            throw 'The imported Windows certificate does not contain a private key.'
+          }
+
+          $configPath = 'src-tauri/tauri.windows.conf.json'
+          $config = Get-Content -Raw $configPath | ConvertFrom-Json
+          if ($null -eq $config.bundle.windows) {
+            $config.bundle | Add-Member `
+              -NotePropertyName windows `
+              -NotePropertyValue ([PSCustomObject]@{}) `
+              -Force
+          }
+          $config.bundle.windows | Add-Member `
+            -NotePropertyName certificateThumbprint `
+            -NotePropertyValue $certificate.Thumbprint `
+            -Force
+          $config.bundle.windows | Add-Member `
+            -NotePropertyName digestAlgorithm `
+            -NotePropertyValue 'sha256' `
+            -Force
+          $config.bundle.windows | Add-Member `
+            -NotePropertyName timestampUrl `
+            -NotePropertyValue $env:WINDOWS_TIMESTAMP_URL `
+            -Force
+          $json = $config | ConvertTo-Json -Depth 10
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [IO.File]::WriteAllText($configPath, $json, $utf8NoBom)
 
       - name: Import Apple Developer certificate
         if: matrix.platform == 'macos-latest'

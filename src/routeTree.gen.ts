@@ -21,6 +21,7 @@ import { Route as SettingsSdCardIndexRouteImport } from './routes/settings/sd-ca
 import { Route as SettingsRovCalibrationIndexRouteImport } from './routes/settings/rov/calibration/index'
 import { Route as SettingsRovCameraIndexRouteImport } from './routes/settings/rov/camera/index'
 import { Route as SettingsRovConnectionIndexRouteImport } from './routes/settings/rov/connection/index'
+import { Route as SettingsRovFirmwareIndexRouteImport } from './routes/settings/rov/firmware/index'
 import { Route as SettingsRovMcuIndexRouteImport } from './routes/settings/rov/mcu/index'
 import { Route as SettingsRovPowerIndexRouteImport } from './routes/settings/rov/power/index'
 import { Route as SettingsRovRegulatorIndexRouteImport } from './routes/settings/rov/regulator/index'
@@ -89,6 +90,12 @@ const SettingsRovConnectionIndexRoute =
     path: '/rov/connection/',
     getParentRoute: () => SettingsRouteRoute,
   } as any)
+const SettingsRovFirmwareIndexRoute =
+  SettingsRovFirmwareIndexRouteImport.update({
+    id: '/rov/firmware/',
+    path: '/rov/firmware/',
+    getParentRoute: () => SettingsRouteRoute,
+  } as any)
 const SettingsRovMcuIndexRoute = SettingsRovMcuIndexRouteImport.update({
   id: '/rov/mcu/',
   path: '/rov/mcu/',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera/': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/firmware/': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
@@ -141,6 +149,7 @@ export interface FileRoutesByTo {
   '/settings/rov/calibration': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/firmware': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator': typeof SettingsRovRegulatorIndexRoute
@@ -160,6 +169,7 @@ export interface FileRoutesById {
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera/': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
+  '/settings/rov/firmware/': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration/'
     | '/settings/rov/camera/'
     | '/settings/rov/connection/'
+    | '/settings/rov/firmware/'
     | '/settings/rov/mcu/'
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration'
     | '/settings/rov/camera'
     | '/settings/rov/connection'
+    | '/settings/rov/firmware'
     | '/settings/rov/mcu'
     | '/settings/rov/power'
     | '/settings/rov/regulator'
@@ -215,6 +227,7 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration/'
     | '/settings/rov/camera/'
     | '/settings/rov/connection/'
+    | '/settings/rov/firmware/'
     | '/settings/rov/mcu/'
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
@@ -312,6 +325,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsRovConnectionIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/rov/firmware/': {
+      id: '/settings/rov/firmware/'
+      path: '/rov/firmware'
+      fullPath: '/settings/rov/firmware/'
+      preLoaderRoute: typeof SettingsRovFirmwareIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/rov/mcu/': {
       id: '/settings/rov/mcu/'
       path: '/rov/mcu'
@@ -354,6 +374,7 @@ interface SettingsRouteRouteChildren {
   SettingsRovCalibrationIndexRoute: typeof SettingsRovCalibrationIndexRoute
   SettingsRovCameraIndexRoute: typeof SettingsRovCameraIndexRoute
   SettingsRovConnectionIndexRoute: typeof SettingsRovConnectionIndexRoute
+  SettingsRovFirmwareIndexRoute: typeof SettingsRovFirmwareIndexRoute
   SettingsRovMcuIndexRoute: typeof SettingsRovMcuIndexRoute
   SettingsRovPowerIndexRoute: typeof SettingsRovPowerIndexRoute
   SettingsRovRegulatorIndexRoute: typeof SettingsRovRegulatorIndexRoute
@@ -371,6 +392,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsRovCalibrationIndexRoute: SettingsRovCalibrationIndexRoute,
   SettingsRovCameraIndexRoute: SettingsRovCameraIndexRoute,
   SettingsRovConnectionIndexRoute: SettingsRovConnectionIndexRoute,
+  SettingsRovFirmwareIndexRoute: SettingsRovFirmwareIndexRoute,
   SettingsRovMcuIndexRoute: SettingsRovMcuIndexRoute,
   SettingsRovPowerIndexRoute: SettingsRovPowerIndexRoute,
   SettingsRovRegulatorIndexRoute: SettingsRovRegulatorIndexRoute,

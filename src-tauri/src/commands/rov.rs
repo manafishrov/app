@@ -21,8 +21,9 @@ pub async fn request_rov_config(state: State<'_, MessageSendChannelState>) -> Re
 pub async fn set_rov_config(
   state: State<'_, MessageSendChannelState>,
   payload: PartialRovConfig,
+  mutation_id: String,
 ) -> Result<(), String> {
-  handle_set_rov_config(&state, payload).await
+  handle_set_rov_config(&state, payload, mutation_id).await
 }
 
 #[command]
@@ -31,8 +32,9 @@ pub async fn set_rov_config(
 pub async fn import_rov_config(
   state: State<'_, MessageSendChannelState>,
   payload: serde_json::Value,
+  mutation_id: String,
 ) -> Result<(), String> {
-  handle_import_rov_config(&state, payload).await
+  handle_import_rov_config(&state, payload, mutation_id).await
 }
 
 #[command]

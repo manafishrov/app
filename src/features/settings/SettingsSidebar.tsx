@@ -28,6 +28,7 @@ import SettingsIcon from '~icons/material-symbols/settings';
 import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
 import SpeedIcon from '~icons/material-symbols/speed';
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
+import SystemUpdateAltIcon from '~icons/material-symbols/system-update-alt';
 
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
@@ -79,6 +80,12 @@ const ROV_ITEMS = [
     ariaLabel: (): string => m.aria_labels_system_rov_button(),
     to: '/settings/rov/system',
     Icon: Drone2Icon,
+  },
+  {
+    label: (): string => m.settings_rov_firmware(),
+    ariaLabel: (): string => m.aria_labels_firmware_rov_button(),
+    to: '/settings/rov/firmware',
+    Icon: SystemUpdateAltIcon,
   },
   {
     label: (): string => m.settings_rov_mcu(),

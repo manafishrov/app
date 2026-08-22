@@ -2,16 +2,21 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const POLL_INTERVAL_MS = 50;
 const APPLY_TIMEOUT_MS = 15_000;
+const RECONNECT_TIMEOUT_MS = 20_000;
+const SECOND_CALL = 2;
 const changedConnection = { ipAddress: '10.10.11.10', websocketPort: 9100 };
+const secondConnection = { ipAddress: '10.10.12.10', websocketPort: 9200 };
 
 const mocks = vi.hoisted(() => ({
   connectionStatus: { isConnected: true },
+  config: { ipAddress: '10.10.10.10', webSocketPort: 9000 },
   rovConfig: { ipAddress: '10.10.10.10', websocketPort: 9000 },
   setConfig: vi.fn(),
   setRovConfig: vi.fn(),
 }));
 
 vi.mock('@/stores/connectionStatus', () => ({ connectionStatusStore: mocks.connectionStatus }));
+vi.mock('@/stores/config', () => ({ configStore: mocks.config }));
 vi.mock('@/stores/rovConfig', () => ({ rovConfigStore: mocks.rovConfig }));
 vi.mock('@/tauri/config', () => ({ setConfig: mocks.setConfig }));
 vi.mock('@/tauri/rovConfig', () => ({ setRovConfig: mocks.setRovConfig }));
@@ -24,7 +29,13 @@ beforeEach(() => {
   mocks.connectionStatus.isConnected = true;
   mocks.rovConfig.ipAddress = '10.10.10.10';
   mocks.rovConfig.websocketPort = 9000;
-  mocks.setRovConfig.mockImplementation((): Promise<void> => Promise.resolve());
+  mocks.config.ipAddress = '10.10.10.10';
+  mocks.config.webSocketPort = 9000;
+  mocks.setRovConfig.mockImplementation((connection: typeof changedConnection): Promise<void> => {
+    mocks.rovConfig.ipAddress = connection.ipAddress;
+    mocks.rovConfig.websocketPort = connection.websocketPort;
+    return Promise.resolve();
+  });
   mocks.setConfig.mockImplementation((): Promise<void> => Promise.resolve());
 });
 
@@ -35,8 +46,10 @@ afterEach(() => {
 describe('when ROV connection settings change', () => {
   test('retargets the app only after the ROV disconnects', () => {
     const calls: string[] = [];
-    mocks.setRovConfig.mockImplementation((): Promise<void> => {
+    mocks.setRovConfig.mockImplementation((connection: typeof changedConnection): Promise<void> => {
       calls.push('rov');
+      mocks.rovConfig.ipAddress = connection.ipAddress;
+      mocks.rovConfig.websocketPort = connection.websocketPort;
       return Promise.resolve();
     });
     mocks.setConfig.mockImplementation((): Promise<void> => {
@@ -49,6 +62,11 @@ describe('when ROV connection settings change', () => {
       .then(() => {
         expect(calls).toEqual(['rov']);
         mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        expect(calls).toEqual(['rov', 'app']);
+        mocks.connectionStatus.isConnected = true;
         return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
       })
       .then(() => update)
@@ -79,15 +97,51 @@ describe('when a connection update is already in flight', () => {
     const secondUpdate = updateRovConnection(changedConnection);
 
     expect(secondUpdate).toBe(firstUpdate);
-    expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
-
-    mocks.connectionStatus.isConnected = false;
-    return vi
-      .advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+    return Promise.resolve()
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        mocks.connectionStatus.isConnected = true;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
       .then(() => Promise.all([firstUpdate, secondUpdate]))
       .then(() => {
         expect(mocks.setConfig).toHaveBeenCalledTimes(1);
       });
+  });
+});
+
+describe('when connection updates target different endpoints', () => {
+  test('serializes different connection settings through reconnect', () => {
+    const firstUpdate = updateRovConnection(changedConnection);
+    const secondUpdate = updateRovConnection(secondConnection);
+
+    return Promise.resolve()
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
+        expect(mocks.setRovConfig).toHaveBeenLastCalledWith(changedConnection);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        mocks.connectionStatus.isConnected = true;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => firstUpdate)
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(SECOND_CALL);
+        expect(mocks.setRovConfig).toHaveBeenLastCalledWith(secondConnection);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        mocks.connectionStatus.isConnected = true;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => secondUpdate);
   });
 });
 
@@ -116,5 +170,22 @@ describe('when applying or reconciling connection settings', () => {
         webSocketPort: changedConnection.websocketPort,
       });
     });
+  });
+
+  test('restores the previous app endpoint when the new address never reconnects', () => {
+    const update = updateRovConnection(changedConnection);
+    const rejection = expect(update).rejects.toThrow('did not reconnect');
+    mocks.connectionStatus.isConnected = false;
+
+    return vi
+      .advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+      .then(() => vi.advanceTimersByTimeAsync(RECONNECT_TIMEOUT_MS))
+      .then(() => rejection)
+      .then(() => {
+        expect(mocks.setConfig).toHaveBeenLastCalledWith({
+          ipAddress: '10.10.10.10',
+          webSocketPort: 9000,
+        });
+      });
   });
 });

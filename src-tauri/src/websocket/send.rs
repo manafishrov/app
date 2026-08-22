@@ -7,6 +7,7 @@ use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::{
   DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
 };
+use crate::websocket::message::ConfigMutation;
 use crate::websocket::message::WebsocketMessage;
 
 /// # Errors
@@ -123,8 +124,17 @@ pub async fn handle_request_rov_config(
 pub async fn handle_set_rov_config(
   state: &State<'_, MessageSendChannelState>,
   payload: PartialRovConfig,
+  mutation_id: String,
 ) -> Result<(), String> {
-  send_message_and_wait(&state.tx, WebsocketMessage::SetConfig(payload), "SetConfig").await
+  send_message_and_wait(
+    &state.tx,
+    WebsocketMessage::SetConfig(ConfigMutation {
+      mutation_id,
+      config: payload,
+    }),
+    "SetConfig",
+  )
+  .await
 }
 
 /// # Errors
@@ -132,8 +142,17 @@ pub async fn handle_set_rov_config(
 pub async fn handle_import_rov_config(
   state: &State<'_, MessageSendChannelState>,
   payload: serde_json::Value,
+  mutation_id: String,
 ) -> Result<(), String> {
-  send_message_and_wait(&state.tx, WebsocketMessage::ImportConfig(payload), "ImportConfig").await
+  send_message_and_wait(
+    &state.tx,
+    WebsocketMessage::ImportConfig(ConfigMutation {
+      mutation_id,
+      config: payload,
+    }),
+    "ImportConfig",
+  )
+  .await
 }
 
 /// # Errors

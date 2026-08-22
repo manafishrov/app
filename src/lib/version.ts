@@ -1,45 +1,16 @@
+type PrereleaseIdentifier = number | string;
+
 type ParsedVersion = {
   numbers: [number, number, number];
-  prerelease?: string;
+  prerelease: PrereleaseIdentifier[];
 };
 
-const MAJOR_VERSION_INDEX = 0;
-const MINOR_VERSION_INDEX = 1;
-const PATCH_VERSION_INDEX = 2;
 const VERSION_GREATER_THAN = 1;
 const VERSION_LESS_THAN = -1;
 const VERSION_PARTS = 3;
-const VERSION_SPLIT_LIMIT = 2;
-
-const parseNumericParts = (version: string): number[] =>
-  version
-    .split('.')
-    .slice(0, VERSION_PARTS)
-    .map((part) => Math.trunc(Number(part)));
-
-const hasInvalidNumericParts = (numericParts: number[]): boolean =>
-  numericParts.some((part) => Number.isNaN(part));
-
-const padNumericParts = (numericParts: number[]): void => {
-  while (numericParts.length < VERSION_PARTS) {
-    numericParts.push(0);
-  }
-};
-
-const buildVersionNumbers = (numericParts: number[]): [number, number, number] => [
-  numericParts[MAJOR_VERSION_INDEX] ?? 0,
-  numericParts[MINOR_VERSION_INDEX] ?? 0,
-  numericParts[PATCH_VERSION_INDEX] ?? 0,
-];
-
-const createParsedVersion = (numericParts: number[], prerelease: string): ParsedVersion => {
-  const numbers = buildVersionNumbers(numericParts);
-  if (prerelease === '') {
-    return { numbers };
-  }
-
-  return { numbers, prerelease };
-};
+const STRICT_SEMVER_PATTERN =
+  /^v?(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+(?<build>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+const RELEASE_CANDIDATE_PATTERN = /^rc\.[1-9]\d*$/;
 
 const compareNumberParts = (left: ParsedVersion, right: ParsedVersion): number => {
   for (let index = 0; index < VERSION_PARTS; index += 1) {
@@ -53,47 +24,87 @@ const compareNumberParts = (left: ParsedVersion, right: ParsedVersion): number =
   return 0;
 };
 
-const comparePrerelease = (left?: string, right?: string): number => {
+const comparePrereleaseIdentifier = (
+  left: PrereleaseIdentifier,
+  right: PrereleaseIdentifier,
+): number => {
   if (left === right) {
     return 0;
   }
-
-  if (typeof left !== 'string') {
+  if (typeof left === 'number' && typeof right === 'string') {
+    return VERSION_LESS_THAN;
+  }
+  if (typeof left === 'string' && typeof right === 'number') {
     return VERSION_GREATER_THAN;
   }
+  return left > right ? VERSION_GREATER_THAN : VERSION_LESS_THAN;
+};
 
-  if (typeof right !== 'string') {
+const comparePrereleaseParts = (
+  left: PrereleaseIdentifier[],
+  right: PrereleaseIdentifier[],
+): number => {
+  const sharedLength = Math.min(left.length, right.length);
+  for (let index = 0; index < sharedLength; index += 1) {
+    const leftPart = left[index] ?? 0;
+    const rightPart = right[index] ?? 0;
+    const comparison = comparePrereleaseIdentifier(leftPart, rightPart);
+    if (comparison !== 0) {
+      return comparison;
+    }
+  }
+  if (left.length === right.length) {
+    return 0;
+  }
+  return left.length > right.length ? VERSION_GREATER_THAN : VERSION_LESS_THAN;
+};
+
+const comparePrerelease = (left: PrereleaseIdentifier[], right: PrereleaseIdentifier[]): number => {
+  if (left.length === 0 && right.length === 0) {
+    return 0;
+  }
+  if (left.length === 0) {
+    return VERSION_GREATER_THAN;
+  }
+  if (right.length === 0) {
     return VERSION_LESS_THAN;
   }
 
-  return left.localeCompare(right);
+  return comparePrereleaseParts(left, right);
 };
 
-const isUnavailableVersion = (version: string): boolean =>
-  version === '' || version.toUpperCase() === 'N/A';
+const parsePrerelease = (value: string | undefined): PrereleaseIdentifier[] | undefined => {
+  if (typeof value !== 'string') {
+    return [];
+  }
+  if (value.toLowerCase().startsWith('rc') && !RELEASE_CANDIDATE_PATTERN.test(value)) {
+    return;
+  }
+  return value
+    .split('.')
+    .map((identifier) => (/^\d+$/.test(identifier) ? Number(identifier) : identifier));
+};
 
-const normalizeVersion = (version: string): ParsedVersion | undefined => {
+export const parseVersion = (version: string): ParsedVersion | undefined => {
   const trimmed = version.trim();
-  if (isUnavailableVersion(trimmed)) {
+  const match = STRICT_SEMVER_PATTERN.exec(trimmed);
+  if (!match || !match.groups) {
     return;
   }
-
-  const withoutPrefix = trimmed.replace(/^v/i, '');
-  const [coreVersion = '', prerelease = ''] = withoutPrefix.split('-', VERSION_SPLIT_LIMIT);
-  const numericParts = parseNumericParts(coreVersion);
-
-  if (hasInvalidNumericParts(numericParts)) {
+  const { groups } = match;
+  const prerelease = parsePrerelease(groups['prerelease']);
+  if (!prerelease) {
     return;
   }
-
-  padNumericParts(numericParts);
-
-  return createParsedVersion(numericParts, prerelease);
+  return {
+    numbers: [Number(groups['major']), Number(groups['minor']), Number(groups['patch'])],
+    prerelease,
+  };
 };
 
 export const compareVersions = (left: string, right: string): number | undefined => {
-  const normalizedLeft = normalizeVersion(left);
-  const normalizedRight = normalizeVersion(right);
+  const normalizedLeft = parseVersion(left);
+  const normalizedRight = parseVersion(right);
   if (!normalizedLeft || !normalizedRight) {
     return;
   }
@@ -109,4 +120,12 @@ export const compareVersions = (left: string, right: string): number | undefined
 export const isNewerVersion = (latestVersion: string, currentVersion: string): boolean => {
   const comparison = compareVersions(latestVersion, currentVersion);
   return typeof comparison === 'number' && comparison > 0;
+};
+
+export const isPrereleaseVersion = (version: string): boolean | null => {
+  const parsed = parseVersion(version);
+  if (!parsed) {
+    return null;
+  }
+  return parsed.prerelease.length > 0;
 };

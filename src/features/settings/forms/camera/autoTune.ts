@@ -41,21 +41,35 @@ const updateAutomaticBitrate = (form: CameraTuningForm, framerate: number): void
   ]);
 };
 
-// Whenever the resolution or Crop FOV changes, the frame rate is pushed to the new highest possible value for that combination - never left at a stale rate that might now be too high (invalid) or needlessly low.
-// When Automatic bitrate is on, the bitrate is recalculated for the resulting combination too.
+const applyResolutionConstraints = (
+  form: CameraTuningForm,
+  resolutionKey: string,
+  cropFov: boolean,
+): void => {
+  const resolution = resolveResolutionOption(resolutionKey);
+  if (!resolution) {
+    return;
+  }
+  const currentFramerate = form.getFieldValue('framerate');
+  const framerate = Math.min(
+    currentFramerate,
+    getMaxFramerate(resolution.width, resolution.height, cropFov),
+  );
+  if (framerate !== currentFramerate) {
+    form.setFramerate(framerate);
+  }
+  if (form.getFieldValue('automaticBitrate')) {
+    form.setBitrateMbps([
+      computeAutomaticBitrateMbps(resolution.width, resolution.height, framerate),
+    ]);
+  }
+};
+
+// Preserve the user's frame rate when changing resolution or crop mode. Only
+// Clamp it when the new combination cannot support the existing value.
 export const createCameraAutoTune = (form: CameraTuningForm): CameraAutoTune => {
   const applyForResolutionAndCropFov = (resolutionKey: string, cropFov: boolean): void => {
-    const resolution = resolveResolutionOption(resolutionKey);
-    if (!resolution) {
-      return;
-    }
-    const framerate = getMaxFramerate(resolution.width, resolution.height, cropFov);
-    form.setFramerate(framerate);
-    if (form.getFieldValue('automaticBitrate')) {
-      form.setBitrateMbps([
-        computeAutomaticBitrateMbps(resolution.width, resolution.height, framerate),
-      ]);
-    }
+    applyResolutionConstraints(form, resolutionKey, cropFov);
   };
 
   const handleResolutionChange = (resolutionKey: string): void => {
