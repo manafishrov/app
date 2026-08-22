@@ -13,7 +13,6 @@ struct GitHubRelease {
   tag_name: String,
   published_at: Option<String>,
   draft: bool,
-  prerelease: bool,
   body: Option<String>,
 }
 
@@ -60,13 +59,22 @@ fn version_from_tag(tag: &str) -> &str {
   tag.strip_prefix('v').unwrap_or(tag)
 }
 
-fn manifest_matches_tag(expected: &Version, manifest: &Version) -> bool {
-  manifest == expected
-    || (!expected.pre.is_empty()
-      && manifest.pre.is_empty()
-      && manifest.major == expected.major
-      && manifest.minor == expected.minor
-      && manifest.patch == expected.patch)
+fn is_canonical_release_candidate(version: &Version) -> bool {
+  let prerelease = version.pre.as_str();
+  if !prerelease.to_ascii_lowercase().starts_with("rc") {
+    return true;
+  }
+  let Some(number) = prerelease.strip_prefix("rc.") else {
+    return false;
+  };
+  !number.is_empty()
+    && !number.starts_with('0')
+    && number.bytes().all(|character| character.is_ascii_digit())
+}
+
+fn parse_release_version(tag: &str) -> Option<Version> {
+  let version = Version::parse(version_from_tag(tag)).ok()?;
+  is_canonical_release_candidate(&version).then_some(version)
 }
 
 /// # Errors
@@ -93,11 +101,9 @@ fn to_app_release(release: GitHubRelease) -> Option<AppRelease> {
   if release.draft {
     return None;
   }
-  let version = version_from_tag(&release.tag_name).to_string();
-  if Version::parse(&version).is_err() {
-    return None;
-  }
-  let prerelease = release.prerelease;
+  let parsed = parse_release_version(&release.tag_name)?;
+  let version = parsed.to_string();
+  let prerelease = !parsed.pre.is_empty();
   let release_notes =
     release.body.map(|body| body.trim().to_string()).filter(|body| !body.is_empty());
   release.published_at.map(|published_at| AppRelease {
@@ -142,7 +148,8 @@ pub async fn install_app_release(
   tag: String,
   on_progress: Channel<InstallProgress>,
 ) -> Result<(), String> {
-  let expected = Version::parse(version_from_tag(&tag)).map_err(|e| e.to_string())?;
+  let expected = parse_release_version(&tag)
+    .ok_or_else(|| format!("Release tag {tag} is not a supported SemVer version"))?;
   let endpoint = latest_json_url_for_tag(&tag)?;
 
   let comparator_expected = expected.clone();
@@ -150,9 +157,7 @@ pub async fn install_app_release(
     .updater_builder()
     .endpoints(vec![endpoint])
     .map_err(|e| e.to_string())?
-    .version_comparator(move |_current, release| {
-      manifest_matches_tag(&comparator_expected, &release.version)
-    })
+    .version_comparator(move |_current, release| release.version == comparator_expected)
     .build()
     .map_err(|e| e.to_string())?;
 
@@ -188,42 +193,15 @@ mod tests {
   use super::*;
 
   /// # Panics
-  /// Panics if stable manifest matching accepts a different version.
+  /// Panics if release tags and updater manifests do not require exact identity.
   #[test]
-  fn stable_tags_require_an_exact_manifest_version() {
-    let expected = Version::parse("1.2.3").expect("test version should be valid");
-
-    assert!(manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.3").expect("test version should be valid")
-    ));
-    assert!(!manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.4").expect("test version should be valid")
-    ));
-  }
-
-  /// # Panics
-  /// Panics if prerelease tags do not accept the same release's stable manifest version.
-  #[test]
-  fn prerelease_tags_accept_release_builds_with_the_same_core_version() {
-    let expected = Version::parse("1.2.3-rc2").expect("test version should be valid");
-
-    assert!(manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.3-rc2").expect("test version should be valid")
-    ));
-    assert!(manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.3").expect("test version should be valid")
-    ));
-    assert!(!manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.3-rc1").expect("test version should be valid")
-    ));
-    assert!(!manifest_matches_tag(
-      &expected,
-      &Version::parse("1.2.4").expect("test version should be valid")
-    ));
+  fn release_versions_require_canonical_rc_identity() {
+    assert!(parse_release_version("v1.2.3").is_some());
+    assert!(parse_release_version("v1.2.3-rc.2").is_some());
+    assert!(parse_release_version("v1.2.3-beta.2").is_some());
+    assert!(parse_release_version("v1.2.3-rc2").is_none());
+    assert!(parse_release_version("v1.2.3-rc-2").is_none());
+    assert!(parse_release_version("v1.2.3-rc.02").is_none());
+    assert!(parse_release_version("v1.2.3-RC.2").is_none());
   }
 }

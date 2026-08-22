@@ -18,8 +18,8 @@ import {
 } from './mcu/options';
 import { PowerCycleWarningDialog } from './mcu/PowerCycleWarningDialog';
 import {
-  createMcuBoardChangeHandler,
   formSchema,
+  getCompatibleDshotSpeed,
   getDshotSpeedFormValue,
   parseDshotSpeed,
   type McuFormValues,
@@ -174,27 +174,12 @@ const getDefaultFormValues = (): McuFormValues => ({
 
 const McuFields: Component<{
   AppField: AppFieldComponent;
-  boards: SelectCollection;
   protocols: SelectCollection;
   speeds: SelectCollection;
   modes: SelectCollection;
   dshotDisabled: boolean;
-  onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
-  onFlashFirmware: () => Promise<void>;
-  afterFirmwareCard?: JSXElement;
 }> = (props) => (
   <>
-    <McuFirmwareVersionCard
-      boardField={
-        <McuBoardSelectField
-          AppField={props.AppField}
-          boards={props.boards}
-          onBoardChange={props.onBoardChange}
-        />
-      }
-      onFlashFirmware={props.onFlashFirmware}
-    />
-    {props.afterFirmwareCard}
     <ThrusterProtocolSelectField AppField={props.AppField} protocols={props.protocols} />
     <DshotSpeedSelectField
       AppField={props.AppField}
@@ -205,9 +190,8 @@ const McuFields: Component<{
   </>
 );
 
-export const Mcu: Component<{ afterFirmwareCard?: JSXElement }> = (props) => {
+export const Mcu: Component = () => {
   const [showPowerCycleWarning, setShowPowerCycleWarning] = createSignal(false);
-  const boards = createMcuBoards();
   const protocols = createThrusterProtocols();
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
@@ -221,28 +205,15 @@ export const Mcu: Component<{ afterFirmwareCard?: JSXElement }> = (props) => {
   const selectedThrusterProtocol = form.useSelector(
     (state) => state.values.thrusterProtocol[0] ?? rovConfigStore.thrusterProtocol,
   );
-  const handleMcuBoardChange = createMcuBoardChangeHandler(
-    () => form.getFieldValue('dshotSpeed')[0] ?? '300',
-    (speed) => {
-      form.setFieldValue('dshotSpeed', [speed]);
-    },
-    (board) => {
-      form.setFieldValue('mcuBoard', [board]);
-    },
-  );
   return (
     <form.AppForm>
       <form.Form>
         <McuFields
           AppField={form.AppField}
-          boards={boards}
           protocols={protocols}
           speeds={dshotSpeeds()}
           modes={createCurrentSensingModes()}
           dshotDisabled={selectedThrusterProtocol() !== ThrusterProtocol.dshot}
-          onBoardChange={handleMcuBoardChange}
-          onFlashFirmware={() => flashSelectedMcuFirmware(selectedMcuBoard())}
-          afterFirmwareCard={props.afterFirmwareCard}
         />
         <form.AutoSubmit debounce={500} />
       </form.Form>
@@ -250,6 +221,50 @@ export const Mcu: Component<{ afterFirmwareCard?: JSXElement }> = (props) => {
         open={showPowerCycleWarning()}
         onClose={() => setShowPowerCycleWarning(false)}
       />
+    </form.AppForm>
+  );
+};
+
+const flashSelectedBoard = (board: ResolvedMcuConfig['mcuBoard']): Promise<void> => {
+  const compatibleSpeed = parseDshotSpeed(
+    getCompatibleDshotSpeed(board, getDshotSpeedFormValue(rovConfigStore.dshotSpeed)),
+    rovConfigStore.dshotSpeed,
+  );
+  const configChanged =
+    board !== rovConfigStore.mcuBoard || compatibleSpeed !== rovConfigStore.dshotSpeed;
+  const saveTarget = configChanged
+    ? setRovConfig({ mcuBoard: board, dshotSpeed: compatibleSpeed })
+    : Promise.resolve();
+  return saveTarget.then(() => flashSelectedMcuFirmware(board));
+};
+
+export const McuFirmware: Component = () => {
+  const boards = createMcuBoards();
+  const form = useAppForm(() => ({
+    validators: { onChange: formSchema },
+    defaultValues: getDefaultFormValues(),
+  }));
+  const selectedMcuBoard = form.useSelector(
+    (state) => state.values.mcuBoard[0] ?? rovConfigStore.mcuBoard,
+  );
+  const handleMcuBoardChange = (board: McuFormValues['mcuBoard'][number]): void => {
+    form.setFieldValue('mcuBoard', [board]);
+  };
+
+  return (
+    <form.AppForm>
+      <form.Form>
+        <McuFirmwareVersionCard
+          boardField={
+            <McuBoardSelectField
+              AppField={form.AppField}
+              boards={boards}
+              onBoardChange={handleMcuBoardChange}
+            />
+          }
+          onFlashFirmware={() => flashSelectedBoard(selectedMcuBoard())}
+        />
+      </form.Form>
     </form.AppForm>
   );
 };
