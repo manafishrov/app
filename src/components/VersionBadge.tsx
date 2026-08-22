@@ -2,18 +2,18 @@ import type { Component, JSXElement } from 'solid-js';
 
 import { Badge } from '@manafishrov/ui/badge';
 
-import { isPrereleaseVersion } from '@/lib/version';
+import { formatVersionForDisplay, isPrereleaseVersion } from '@/lib/version';
 
 const stableClass = 'bg-primary/10 text-primary';
 const prereleaseClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
 const unknownClass = 'bg-muted text-muted-foreground';
 
-const displayVersion = (version: string): string => {
+const exactVersionTitle = (version: string): string | undefined => {
   const trimmed = version.trim();
-  if (trimmed === '' || trimmed.toUpperCase() === 'N/A' || trimmed.startsWith('v')) {
-    return trimmed;
+  if (!trimmed.includes('+')) {
+    return;
   }
-  return `v${trimmed}`;
+  return trimmed.startsWith('v') ? trimmed : `v${trimmed}`;
 };
 
 const versionClass = (version: string): string => {
@@ -31,7 +31,8 @@ export const VersionBadge: Component<{
 }> = (props) => (
   <Badge
     class={`${versionClass(props.version)} px-3 py-1 text-sm font-medium ${props.class ?? ''}`}
+    title={exactVersionTitle(props.version)}
   >
-    {props.children ?? displayVersion(props.version)}
+    {props.children ?? formatVersionForDisplay(props.version)}
   </Badge>
 );

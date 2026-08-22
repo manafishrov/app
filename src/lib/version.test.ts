@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { compareVersions, isPrereleaseVersion, parseVersion } from './version';
+import {
+  compareVersions,
+  formatVersionForDisplay,
+  isPrereleaseVersion,
+  parseVersion,
+} from './version';
 
 const VERSION_GREATER_THAN = 1;
 const VERSION_LESS_THAN = -1;
 
 describe('version parsing', () => {
+  it('hides development build metadata from the displayed version', () => {
+    expect(formatVersionForDisplay('1.0.17-rc.7+4.ge6196a8')).toBe('v1.0.17-rc.7');
+    expect(formatVersionForDisplay('v1.0.17-rc.7')).toBe('v1.0.17-rc.7');
+    expect(formatVersionForDisplay('N/A')).toBe('N/A');
+  });
+
   it.each(['1.2.3-rc1', '1.2.3-rc-1', '1.2.3-RC.1', 'v1.2.3-rc1', '1.2', '1.2.03'])(
     'rejects non-canonical version %s',
     (version) => {
