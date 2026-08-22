@@ -3,6 +3,9 @@ import { configStore } from '@/stores/config';
 import { setRecordingStore } from '@/stores/recording';
 
 const RETRY_DELAY_MS = 3000;
+// Cap how far the receiver's jitter buffer is allowed to grow, since left unbounded the browser lets it balloon under transient jitter and never fully re-tightens, so latency creeps up over a connection's life instead of recovering.
+// A low cap forces the browser to keep catching up to near-live, trading occasional stutter for bounded latency.
+const JITTER_BUFFER_TARGET_MS = 50;
 const ICE_RECONNECT_STATES = new Set<RTCIceConnectionState>(['failed', 'disconnected', 'closed']);
 
 type WebRTCConnection = { dispose: () => void; setup: () => void };
@@ -92,6 +95,13 @@ const preferH264 = (transceiver: RTCRtpTransceiver): void => {
     transceiver.setCodecPreferences([codec]);
   }
 };
+const capJitterBuffer = (transceiver: RTCRtpTransceiver): void => {
+  const { receiver } = transceiver;
+  if (!('jitterBufferTarget' in receiver)) {
+    return;
+  }
+  receiver.jitterBufferTarget = JITTER_BUFFER_TARGET_MS;
+};
 const createOffer = (connection: RTCPeerConnection): Promise<StreamOffer> =>
   connection
     .createOffer()
@@ -144,6 +154,7 @@ const createPeerConnection = (context: ConnectContext): RTCPeerConnection => {
   bindConnectionEvents(connection, context);
   const transceiver = connection.addTransceiver('video', { direction: 'recvonly' });
   preferH264(transceiver);
+  capJitterBuffer(transceiver);
   return connection;
 };
 const connectWebRTC = (context: ConnectContext): Promise<void> => {
