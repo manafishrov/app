@@ -13,29 +13,42 @@ const status = {
     pressureSensorHealthy: true,
     mcuHealthy: true,
   },
+  deviceInfo: {
+    mcuFirmwareVersion: '1.2.3-rc.1',
+    escFirmwareVersions: [
+      '2.20.0',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ] as EscFirmwareVersions,
+  },
+  escFirmwareUpdate: {
+    active: false,
+    origin: null,
+    stage: 'idle' as const,
+    progress: 0,
+    currentEsc: null,
+    targetVersion: null,
+    error: null,
+  },
 };
 
-describe('ROV status device information compatibility', () => {
-  test('tracks whether live device information is supported', () => {
+describe('ROV status device information', () => {
+  test('stores the required live device information', () => {
     setRovStatusStore(status);
-    expect(rovStatusStore.deviceInfoAvailable).toBe(false);
-    expect(rovStatusStore.deviceInfo.escFirmwareVersions).toEqual([
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-    ]);
+    expect(rovStatusStore.deviceInfo.mcuFirmwareVersion).toBe('1.2.3-rc.1');
+    expect(rovStatusStore.deviceInfo.escFirmwareVersions[0]).toBe('2.20.0');
 
     setRovStatusStore({
       ...status,
       deviceInfo: {
-        mcuFirmwareVersion: '1.2.3',
+        mcuFirmwareVersion: '1.2.4-rc.1',
         escFirmwareVersions: [
-          '2.20.0',
+          '2.21.0-rc.2',
           null,
           null,
           null,
@@ -46,7 +59,7 @@ describe('ROV status device information compatibility', () => {
         ] as EscFirmwareVersions,
       },
     });
-    expect(rovStatusStore.deviceInfoAvailable).toBe(true);
-    expect(rovStatusStore.deviceInfo.escFirmwareVersions[0]).toBe('2.20.0');
+    expect(rovStatusStore.deviceInfo.mcuFirmwareVersion).toBe('1.2.4-rc.1');
+    expect(rovStatusStore.deviceInfo.escFirmwareVersions[0]).toBe('2.21.0-rc.2');
   });
 });

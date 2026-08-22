@@ -15,8 +15,7 @@ import * as m from '@/paraglide/messages';
 import { rovStatusStore } from '@/stores/rovStatus';
 
 const getMcuFirmwareVersion = (): string => {
-  const { deviceInfo, deviceInfoAvailable } = rovStatusStore;
-  const version = deviceInfoAvailable ? deviceInfo.mcuFirmwareVersion : '';
+  const version = rovStatusStore.deviceInfo.mcuFirmwareVersion;
   if (version === '' || version === m.common_not_available()) {
     return m.common_not_available();
   }

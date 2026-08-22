@@ -178,7 +178,6 @@
   "general_rov_settings_esc_firmware_flash_confirm_action": "Flash all ESCs",
   "general_rov_settings_esc_firmware_flash_pending": "The update continues on the ROV. Keep the main battery connected.",
   "general_rov_settings_esc_firmware_flash_progress": "ESC firmware update: {percent}%",
-  "general_rov_settings_esc_firmware_flash_unsupported": "Update the ROV system firmware to view and update electronic speed controller firmware.",
   "general_rov_settings_mcu_page_title": "ESC",
   "general_rov_settings_mcu_page_description": "Configure the thruster protocol, DShot speed, and ESC current sensing mode.",
   "general_rov_settings_firmware_page_title": "Firmware",
