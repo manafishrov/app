@@ -12,6 +12,19 @@ const STRICT_SEMVER_PATTERN =
   /^v?(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+(?<build>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const RELEASE_CANDIDATE_PATTERN = /^rc\.[1-9]\d*$/;
 
+export const formatVersionForDisplay = (version: string): string => {
+  const trimmed = version.trim();
+  const [releaseVersion = trimmed] = trimmed.split('+', 1);
+  if (
+    releaseVersion === '' ||
+    releaseVersion.toUpperCase() === 'N/A' ||
+    releaseVersion.startsWith('v')
+  ) {
+    return releaseVersion;
+  }
+  return `v${releaseVersion}`;
+};
+
 const compareNumberParts = (left: ParsedVersion, right: ParsedVersion): number => {
   for (let index = 0; index < VERSION_PARTS; index += 1) {
     const leftPart = left.numbers[index] ?? 0;

@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::version::current_app_version;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum KeyboardKey {
   KeyA,
@@ -318,7 +320,7 @@ impl Default for KeyboardBindings {
 impl Default for Config {
   fn default() -> Self {
     Config {
-      app_version: env!("CARGO_PKG_VERSION").to_string(),
+      app_version: current_app_version(),
       overlay_scale: 2,
       attitude_indicator: AttitudeIndicator::Scientific,
       display: DisplayConfig {
@@ -376,7 +378,7 @@ mod tests {
   fn config_default_has_expected_values() {
     let config = Config::default();
 
-    assert_eq!(config.app_version, env!("CARGO_PKG_VERSION"));
+    assert_eq!(config.app_version, current_app_version());
     assert_eq!(config.overlay_scale, 2);
     assert!(matches!(config.attitude_indicator, AttitudeIndicator::Scientific));
     assert!(!config.display.work_indicator);
