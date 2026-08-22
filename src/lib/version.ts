@@ -122,7 +122,10 @@ export const isNewerVersion = (latestVersion: string, currentVersion: string): b
   return typeof comparison === 'number' && comparison > 0;
 };
 
-export const isPrereleaseVersion = (version: string): boolean => {
+export const isPrereleaseVersion = (version: string): boolean | null => {
   const parsed = parseVersion(version);
-  return Boolean(parsed && parsed.prerelease.length > 0);
+  if (!parsed) {
+    return null;
+  }
+  return parsed.prerelease.length > 0;
 };

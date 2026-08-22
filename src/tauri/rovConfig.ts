@@ -10,26 +10,34 @@ const CONFIG_RESPONSE_TIMEOUT_MS = 5000;
 const resolveVoid: () => void = () => 0;
 const noopCancel: (error: Error) => void = () => 0;
 const [rovConfigRevision, setRovConfigRevision] = createSignal(0);
+
+type ConfigResponse = {
+  mutationId?: string;
+  config: RovConfig;
+};
+
 type ConfigWaiter = {
-  baselineRevision: number;
   resolve: (config: RovConfig) => void;
   reject: (error: Error) => void;
   timeout: ReturnType<typeof globalThis.setTimeout>;
 };
-const configWaiters = new Set<ConfigWaiter>();
+
+const configWaiters = new Map<string, ConfigWaiter>();
 let mutationTail: Promise<unknown> = Promise.resolve();
 
-const applyRemoteRovConfig = (config: RovConfig): void => {
-  setRovConfigStore(config);
-  const revision = rovConfigRevision() + 1;
-  setRovConfigRevision(revision);
-  for (const waiter of configWaiters) {
-    if (revision > waiter.baselineRevision) {
-      globalThis.clearTimeout(waiter.timeout);
-      configWaiters.delete(waiter);
-      waiter.resolve(config);
-    }
+const applyRemoteRovConfig = (response: ConfigResponse): void => {
+  setRovConfigStore(response.config);
+  setRovConfigRevision((revision) => revision + 1);
+  if (typeof response.mutationId !== 'string' || response.mutationId === '') {
+    return;
   }
+  const waiter = configWaiters.get(response.mutationId);
+  if (!waiter) {
+    return;
+  }
+  globalThis.clearTimeout(waiter.timeout);
+  configWaiters.delete(response.mutationId);
+  waiter.resolve(response.config);
 };
 
 type PendingConfig = {
@@ -37,22 +45,21 @@ type PendingConfig = {
   cancel: (error: Error) => void;
 };
 
-const waitForRemoteConfig = (baselineRevision: number): PendingConfig => {
+const waitForRemoteConfig = (mutationId: string): PendingConfig => {
   let cancel = noopCancel;
   const promise = new Promise<RovConfig>((resolve, reject) => {
-    const waiter: ConfigWaiter = {
-      baselineRevision,
-      resolve,
-      reject,
-      timeout: 0,
-    };
-    waiter.timeout = globalThis.setTimeout(() => {
-      configWaiters.delete(waiter);
+    const timeout = globalThis.setTimeout(() => {
+      configWaiters.delete(mutationId);
       reject(new Error('Timed out waiting for the ROV to confirm its configuration'));
     }, CONFIG_RESPONSE_TIMEOUT_MS);
-    configWaiters.add(waiter);
+    const waiter: ConfigWaiter = {
+      resolve,
+      reject,
+      timeout,
+    };
+    configWaiters.set(mutationId, waiter);
     cancel = (error: Error): void => {
-      if (!configWaiters.delete(waiter)) {
+      if (!configWaiters.delete(mutationId)) {
         return;
       }
       globalThis.clearTimeout(waiter.timeout);
@@ -62,9 +69,10 @@ const waitForRemoteConfig = (baselineRevision: number): PendingConfig => {
   return { promise, cancel };
 };
 
-const runConfirmedMutation = (send: () => Promise<unknown>): Promise<void> => {
-  const pending = waitForRemoteConfig(rovConfigRevision());
-  const sent = send().catch((error: unknown) => {
+const runConfirmedMutation = (send: (mutationId: string) => Promise<unknown>): Promise<void> => {
+  const mutationId = globalThis.crypto.randomUUID();
+  const pending = waitForRemoteConfig(mutationId);
+  const sent = send(mutationId).catch((error: unknown) => {
     const resolvedError = error instanceof Error ? error : new Error(String(error));
     pending.cancel(resolvedError);
     throw resolvedError;
@@ -72,7 +80,7 @@ const runConfirmedMutation = (send: () => Promise<unknown>): Promise<void> => {
   return Promise.all([sent, pending.promise]).then(resolveVoid);
 };
 
-const enqueueMutation = (send: () => Promise<unknown>): Promise<void> => {
+const enqueueMutation = (send: (mutationId: string) => Promise<unknown>): Promise<void> => {
   const mutation = mutationTail.then(
     () => runConfirmedMutation(send),
     () => runConfirmedMutation(send),
@@ -82,7 +90,7 @@ const enqueueMutation = (send: () => Promise<unknown>): Promise<void> => {
 };
 
 export const setupRovConfigListener = (): Promise<() => void> =>
-  createListener<RovConfig>(EVENT, applyRemoteRovConfig);
+  createListener<ConfigResponse>(EVENT, applyRemoteRovConfig);
 
 export const requestRovConfig = (): Promise<void> | undefined => {
   if (!connectionStatusStore.isConnected) {
@@ -93,9 +101,11 @@ export const requestRovConfig = (): Promise<void> | undefined => {
 };
 
 export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void> =>
-  enqueueMutation(() => invokeCommand('set_rov_config', { payload: newConfigOptions }));
+  enqueueMutation((mutationId) =>
+    invokeCommand('set_rov_config', { payload: newConfigOptions, mutationId }),
+  );
 
 export const importRovConfig = (payload: unknown): Promise<void> =>
-  enqueueMutation(() => invokeCommand('import_rov_config', { payload }));
+  enqueueMutation((mutationId) => invokeCommand('import_rov_config', { payload, mutationId }));
 
 export { rovConfigRevision };

@@ -13,6 +13,7 @@ mod models {
 }
 
 mod recording;
+mod version;
 mod websocket;
 
 mod config;

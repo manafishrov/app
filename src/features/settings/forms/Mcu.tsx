@@ -233,7 +233,12 @@ const flashSelectedBoard = (board: ResolvedMcuConfig['mcuBoard']): Promise<void>
   const configChanged =
     board !== rovConfigStore.mcuBoard || compatibleSpeed !== rovConfigStore.dshotSpeed;
   const saveTarget = configChanged
-    ? setRovConfig({ mcuBoard: board, dshotSpeed: compatibleSpeed })
+    ? setRovConfig({ mcuBoard: board, dshotSpeed: compatibleSpeed }).catch(
+        (error: unknown): never => {
+          logError('Failed to save MCU board before flashing:', error);
+          throw error;
+        },
+      )
     : Promise.resolve();
   return saveTarget.then(() => flashSelectedMcuFirmware(board));
 };

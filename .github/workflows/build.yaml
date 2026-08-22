@@ -17,9 +17,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Validate tag and embedded versions
-        run: python3 scripts/validate-release-version.py "${{ github.ref_name }}"
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 scripts/validate-release-version.py "$TAG"
 
   create-release:
     name: Create Draft Release
@@ -30,6 +34,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # Create the draft release once up front so the parallel build jobs only
       # upload assets to it. Creating it inside each build job races and can fail
@@ -38,10 +44,12 @@ jobs:
         id: create
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          tag="${{ github.ref_name }}"
-          repo="${{ github.repository }}"
+          tag="$TAG"
+          repo="$REPO"
           if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
             args=(--draft --title "$tag" --notes "")
             if [[ "$tag" == *-* ]]; then
@@ -82,6 +90,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set bun hash
         shell: bash
@@ -366,7 +376,9 @@ jobs:
             -NotePropertyName timestampUrl `
             -NotePropertyValue $env:WINDOWS_TIMESTAMP_URL `
             -Force
-          $config | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 $configPath
+          $json = $config | ConvertTo-Json -Depth 10
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [IO.File]::WriteAllText($configPath, $json, $utf8NoBom)
 
       - name: Import Apple Developer certificate
         if: matrix.platform == 'macos-latest'

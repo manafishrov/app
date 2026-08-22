@@ -28,6 +28,7 @@ describe('version parsing', () => {
   it('identifies prereleases from their version instead of release metadata', () => {
     expect(isPrereleaseVersion('1.2.3-rc.1')).toBe(true);
     expect(isPrereleaseVersion('1.2.3')).toBe(false);
-    expect(isPrereleaseVersion('1.2.3-rc1')).toBe(false);
+    expect(isPrereleaseVersion('1.2.3-rc1')).toBeNull();
+    expect(isPrereleaseVersion('N/A')).toBeNull();
   });
 });

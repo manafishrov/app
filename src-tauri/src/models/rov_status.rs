@@ -20,13 +20,24 @@ pub struct DeviceInfo {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EscFirmwareUpdate {
+  #[serde(default)]
   pub active: bool,
+  #[serde(default)]
   pub origin: Option<String>,
+  #[serde(default = "default_esc_update_stage")]
   pub stage: String,
+  #[serde(default)]
   pub progress: u8,
+  #[serde(default)]
   pub current_esc: Option<u8>,
+  #[serde(default)]
   pub target_version: Option<String>,
+  #[serde(default)]
   pub error: Option<String>,
+}
+
+fn default_esc_update_stage() -> String {
+  "idle".to_string()
 }
 
 impl Default for EscFirmwareUpdate {
@@ -34,7 +45,7 @@ impl Default for EscFirmwareUpdate {
     Self {
       active: false,
       origin: None,
-      stage: "idle".to_string(),
+      stage: default_esc_update_stage(),
       progress: 0,
       current_esc: None,
       target_version: None,
@@ -115,5 +126,21 @@ mod tests {
     let device_info = status.device_info.expect("device info should be present");
     assert!(device_info.mcu_firmware_version.is_empty());
     assert!(device_info.esc_firmware_versions.iter().all(Option::is_none));
+  }
+
+  /// # Panics
+  /// Panics if a partial ESC update object cannot use safe field defaults.
+  #[test]
+  fn accepts_partial_esc_firmware_update() {
+    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
+    value["escFirmwareUpdate"] = serde_json::json!({"active": true, "progress": 40});
+
+    let status: RovStatus =
+      serde_json::from_value(value).expect("partial ESC update should use safe defaults");
+
+    assert!(status.esc_firmware_update.active);
+    assert_eq!(status.esc_firmware_update.progress, 40);
+    assert_eq!(status.esc_firmware_update.stage, "idle");
+    assert!(status.esc_firmware_update.origin.is_none());
   }
 }

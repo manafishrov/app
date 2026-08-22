@@ -7,6 +7,7 @@ use tauri_plugin_updater::UpdaterExt;
 use url::Url;
 
 use crate::constants::{APP_REPO_NAME, APP_REPO_OWNER, MAX_PRERELEASES, MAX_STABLE_RELEASES};
+use crate::version::parse_release_version;
 
 #[derive(Deserialize)]
 struct GitHubRelease {
@@ -55,28 +56,6 @@ fn latest_json_url_for_tag(tag: &str) -> Result<Url, String> {
   Ok(url)
 }
 
-fn version_from_tag(tag: &str) -> &str {
-  tag.strip_prefix('v').unwrap_or(tag)
-}
-
-fn is_canonical_release_candidate(version: &Version) -> bool {
-  let prerelease = version.pre.as_str();
-  if !prerelease.to_ascii_lowercase().starts_with("rc") {
-    return true;
-  }
-  let Some(number) = prerelease.strip_prefix("rc.") else {
-    return false;
-  };
-  !number.is_empty()
-    && !number.starts_with('0')
-    && number.bytes().all(|character| character.is_ascii_digit())
-}
-
-fn parse_release_version(tag: &str) -> Option<Version> {
-  let version = Version::parse(version_from_tag(tag)).ok()?;
-  is_canonical_release_candidate(&version).then_some(version)
-}
-
 /// # Errors
 /// Returns an error if the `GitHub` releases cannot be fetched or parsed.
 #[command]
@@ -97,7 +76,7 @@ pub async fn fetch_app_releases() -> Result<Vec<AppRelease>, String> {
   Ok(select_releases(all))
 }
 
-fn to_app_release(release: GitHubRelease) -> Option<AppRelease> {
+fn to_app_release(release: GitHubRelease) -> Option<(Version, AppRelease)> {
   if release.draft {
     return None;
   }
@@ -106,12 +85,17 @@ fn to_app_release(release: GitHubRelease) -> Option<AppRelease> {
   let prerelease = !parsed.pre.is_empty();
   let release_notes =
     release.body.map(|body| body.trim().to_string()).filter(|body| !body.is_empty());
-  release.published_at.map(|published_at| AppRelease {
-    version,
-    tag: release.tag_name,
-    published_at,
-    prerelease,
-    release_notes,
+  release.published_at.map(|published_at| {
+    (
+      parsed,
+      AppRelease {
+        version,
+        tag: release.tag_name,
+        published_at,
+        prerelease,
+        release_notes,
+      },
+    )
   })
 }
 
@@ -122,18 +106,18 @@ fn select_releases(all: Vec<GitHubRelease>) -> Vec<AppRelease> {
   let mut stable = Vec::new();
   let mut prerelease = Vec::new();
   for release in all.into_iter().filter_map(to_app_release) {
-    if release.prerelease {
-      if prerelease.len() < MAX_PRERELEASES {
-        prerelease.push(release);
-      }
-    } else if stable.len() < MAX_STABLE_RELEASES {
+    if release.1.prerelease {
+      prerelease.push(release);
+    } else {
       stable.push(release);
     }
-    if stable.len() >= MAX_STABLE_RELEASES && prerelease.len() >= MAX_PRERELEASES {
-      break;
-    }
   }
-  let mut selected: Vec<AppRelease> = stable.into_iter().chain(prerelease).collect();
+  stable.sort_by(|a, b| b.0.cmp(&a.0));
+  stable.truncate(MAX_STABLE_RELEASES);
+  prerelease.sort_by(|a, b| b.0.cmp(&a.0));
+  prerelease.truncate(MAX_PRERELEASES);
+  let mut selected: Vec<AppRelease> =
+    stable.into_iter().chain(prerelease).map(|(_, release)| release).collect();
   selected.sort_by(|a, b| b.published_at.cmp(&a.published_at));
   selected
 }

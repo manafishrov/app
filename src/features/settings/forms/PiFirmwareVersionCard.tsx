@@ -15,7 +15,15 @@ const newerVersionAvailable = (): string | undefined => {
   if (installed === '' || installed === m.common_not_available()) {
     return;
   }
-  const latestStable = sdFlashStore.versions.find((entry) => !entry.prerelease);
+  let latestStable: (typeof sdFlashStore.versions)[number] | null = null;
+  for (const entry of sdFlashStore.versions) {
+    if (
+      !entry.prerelease &&
+      (latestStable === null || isNewerVersion(entry.version, latestStable.version))
+    ) {
+      latestStable = entry;
+    }
+  }
   if (!latestStable || !isNewerVersion(latestStable.version, installed)) {
     return;
   }

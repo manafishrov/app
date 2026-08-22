@@ -8,7 +8,8 @@ const mocks = vi.hoisted(() => ({
   connectionStatus: { isConnected: true },
   createListener: vi.fn(),
   invokeCommand: vi.fn(),
-  listeners: [] as ((config: RovConfig) => void)[],
+  listeners: [] as ((response: { mutationId?: string; config: RovConfig }) => void)[],
+  mutationIds: [] as string[],
   setRovConfigStore: vi.fn(),
 }));
 
@@ -95,9 +96,20 @@ const resolveVoid: () => void = () => 0;
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.listeners.length = 0;
-  mocks.invokeCommand.mockResolvedValue(null);
+  mocks.mutationIds.length = 0;
+  mocks.invokeCommand.mockImplementation(
+    (_command: string, args?: { mutationId?: unknown }): Promise<null> => {
+      if (typeof args === 'object' && typeof args.mutationId === 'string') {
+        mocks.mutationIds.push(args.mutationId);
+      }
+      return Promise.resolve(null);
+    },
+  );
   mocks.createListener.mockImplementation(
-    (_event: string, listener: (config: RovConfig) => void): Promise<() => void> => {
+    (
+      _event: string,
+      listener: (response: { mutationId?: string; config: RovConfig }) => void,
+    ): Promise<() => void> => {
       mocks.listeners.push(listener);
       return Promise.resolve(resolveVoid);
     },
@@ -105,12 +117,20 @@ beforeEach(() => {
   return setupRovConfigListener();
 });
 
-const confirmLatestConfig = (): void => {
+const latestMutationId = (): string => {
+  const mutationId = mocks.mutationIds[mocks.mutationIds.length - LAST_ITEM_OFFSET];
+  if (typeof mutationId !== 'string' || mutationId === '') {
+    throw new TypeError('Config mutation did not include an identifier');
+  }
+  return mutationId;
+};
+
+const confirmLatestConfig = (mutationId = latestMutationId()): void => {
   const listener = mocks.listeners[mocks.listeners.length - LAST_ITEM_OFFSET];
   if (!listener) {
     throw new Error('ROV config listener was not installed');
   }
-  listener(confirmedConfig);
+  listener({ mutationId, config: confirmedConfig });
 };
 
 describe('ROV config mutations', () => {
@@ -122,8 +142,10 @@ describe('ROV config mutations', () => {
 
     return Promise.resolve()
       .then(() => {
+        const mutationId = latestMutationId();
         expect(mocks.invokeCommand).toHaveBeenCalledWith('set_rov_config', {
           payload: { rovName: 'Requested ROV' },
+          mutationId,
         });
         expect(resolved).toBe(false);
         confirmLatestConfig();
@@ -142,22 +164,45 @@ describe('ROV config mutations', () => {
     return Promise.resolve()
       .then(() => {
         expect(mocks.invokeCommand).toHaveBeenCalledTimes(1);
-        confirmLatestConfig();
+        const firstMutationId = latestMutationId();
+        confirmLatestConfig(firstMutationId);
         return first;
       })
       .then(resolveVoid)
       .then(() => {
+        const secondMutationId = latestMutationId();
         expect(mocks.invokeCommand).toHaveBeenNthCalledWith(SECOND_CALL, 'import_rov_config', {
           payload: { rovName: 'Second' },
+          mutationId: secondMutationId,
         });
-        confirmLatestConfig();
+        confirmLatestConfig(secondMutationId);
         return second;
       });
   });
+});
 
+describe('when a ROV config mutation fails or receives another response', () => {
   it('rejects immediately when the command cannot be sent', () => {
     mocks.invokeCommand.mockRejectedValueOnce(new Error('send failed'));
 
     return expect(setRovConfig({ rovName: 'Requested ROV' })).rejects.toThrow('send failed');
+  });
+
+  it('does not resolve a mutation from an unrelated config response', () => {
+    let resolved = false;
+    const update = setRovConfig({ rovName: 'Requested ROV' }).then(() => {
+      resolved = true;
+    });
+
+    return Promise.resolve()
+      .then(() => {
+        confirmLatestConfig('unrelated-mutation');
+        expect(resolved).toBe(false);
+        confirmLatestConfig();
+        return update;
+      })
+      .then(() => {
+        expect(resolved).toBe(true);
+      });
   });
 });

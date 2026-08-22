@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const POLL_INTERVAL_MS = 50;
 const APPLY_TIMEOUT_MS = 15_000;
 const RECONNECT_TIMEOUT_MS = 20_000;
+const SECOND_CALL = 2;
 const changedConnection = { ipAddress: '10.10.11.10', websocketPort: 9100 };
+const secondConnection = { ipAddress: '10.10.12.10', websocketPort: 9200 };
 
 const mocks = vi.hoisted(() => ({
   connectionStatus: { isConnected: true },
@@ -95,11 +97,12 @@ describe('when a connection update is already in flight', () => {
     const secondUpdate = updateRovConnection(changedConnection);
 
     expect(secondUpdate).toBe(firstUpdate);
-    expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
-
-    mocks.connectionStatus.isConnected = false;
-    return vi
-      .advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+    return Promise.resolve()
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
       .then(() => {
         mocks.connectionStatus.isConnected = true;
         return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
@@ -108,6 +111,37 @@ describe('when a connection update is already in flight', () => {
       .then(() => {
         expect(mocks.setConfig).toHaveBeenCalledTimes(1);
       });
+  });
+});
+
+describe('when connection updates target different endpoints', () => {
+  test('serializes different connection settings through reconnect', () => {
+    const firstUpdate = updateRovConnection(changedConnection);
+    const secondUpdate = updateRovConnection(secondConnection);
+
+    return Promise.resolve()
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(1);
+        expect(mocks.setRovConfig).toHaveBeenLastCalledWith(changedConnection);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        mocks.connectionStatus.isConnected = true;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => firstUpdate)
+      .then(() => {
+        expect(mocks.setRovConfig).toHaveBeenCalledTimes(SECOND_CALL);
+        expect(mocks.setRovConfig).toHaveBeenLastCalledWith(secondConnection);
+        mocks.connectionStatus.isConnected = false;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => {
+        mocks.connectionStatus.isConnected = true;
+        return vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      })
+      .then(() => secondUpdate);
   });
 });
 

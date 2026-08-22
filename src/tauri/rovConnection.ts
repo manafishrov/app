@@ -8,6 +8,8 @@ const CONNECTION_APPLY_TIMEOUT_MS = 15_000;
 const CONNECTION_RECONNECT_TIMEOUT_MS = 20_000;
 const CONNECTION_POLL_INTERVAL_MS = 50;
 const inFlightUpdates = new Map<string, Promise<void>>();
+const resolveVoid: () => void = () => 0;
+let connectionUpdateTail: Promise<unknown> = Promise.resolve();
 
 export type RovConnectionConfig = {
   ipAddress: string;
@@ -74,13 +76,7 @@ const retargetAppWithFallback = (
 const connectionKey = (connection: RovConnectionConfig): string =>
   `${connection.ipAddress}\0${connection.websocketPort}`;
 
-export const updateRovConnection = (connection: RovConnectionConfig): Promise<void> => {
-  const key = connectionKey(connection);
-  const existingUpdate = inFlightUpdates.get(key);
-  if (existingUpdate) {
-    return existingUpdate;
-  }
-
+const performConnectionUpdate = (connection: RovConnectionConfig): Promise<void> => {
   const connectionChanged =
     connection.ipAddress !== rovConfigStore.ipAddress ||
     connection.websocketPort !== rovConfigStore.websocketPort;
@@ -99,11 +95,26 @@ export const updateRovConnection = (connection: RovConnectionConfig): Promise<vo
         })
         .then(() => retargetAppWithFallback(connection, previousAppConnection))
     : retargetApp(connection);
+  return update;
+};
+
+export const updateRovConnection = (connection: RovConnectionConfig): Promise<void> => {
+  const key = connectionKey(connection);
+  const existingUpdate = inFlightUpdates.get(key);
+  if (existingUpdate) {
+    return existingUpdate;
+  }
+
+  const update = connectionUpdateTail.then(
+    () => performConnectionUpdate(connection),
+    () => performConnectionUpdate(connection),
+  );
   const trackedUpdate = update.finally(() => {
     if (inFlightUpdates.get(key) === trackedUpdate) {
       inFlightUpdates.delete(key);
     }
   });
   inFlightUpdates.set(key, trackedUpdate);
+  connectionUpdateTail = trackedUpdate.catch(resolveVoid);
   return trackedUpdate;
 };
