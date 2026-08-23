@@ -372,7 +372,8 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
 
-      # Windows: direct downloads own their own updates.
+      # Windows: direct downloads own their own updates. Build only NSIS because
+      # WiX/MSI rejects canonical SemVer prereleases such as `1.0.17-rc.8`.
       - name: Build and upload Windows to draft release
         if: matrix.platform == 'windows-latest'
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
@@ -383,6 +384,7 @@ jobs:
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --bundles nsis
 
       # Linux deb/rpm: package-manager owned, so the in-app updater is
       # compiled out (it can only replace an AppImage in place; touching a
