@@ -29,12 +29,14 @@ pub struct EscFirmwareUpdate {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+#[allow(clippy::struct_excessive_bools)] // Wire DTO mirrors independent firmware status flags.
 pub struct RovStatus {
   pub auto_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
   pub current_draw: i32,
   pub pi_undervoltage: bool,
+  pub thruster_control_ready: bool,
   pub health: SystemHealth,
   pub device_info: DeviceInfo,
   pub esc_firmware_update: EscFirmwareUpdate,
@@ -50,6 +52,7 @@ mod tests {
     "batteryPercentage": 75,
     "currentDraw": 12,
     "piUndervoltage": false,
+    "thrusterControlReady": true,
     "health": {
       "imuHealthy": true,
       "pressureSensorHealthy": true,
@@ -85,7 +88,12 @@ mod tests {
   /// Panics if the current status fixture cannot be parsed as JSON.
   #[test]
   fn rejects_status_without_current_required_fields() {
-    for field in ["piUndervoltage", "deviceInfo", "escFirmwareUpdate"] {
+    for field in [
+      "piUndervoltage",
+      "thrusterControlReady",
+      "deviceInfo",
+      "escFirmwareUpdate",
+    ] {
       let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
       value.as_object_mut().unwrap().remove(field);
 

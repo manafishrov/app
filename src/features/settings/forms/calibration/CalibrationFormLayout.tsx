@@ -23,6 +23,7 @@ import RestartAltIcon from '~icons/material-symbols/restart-alt';
 
 import { ThrusterRpm } from '@/components/ThrusterRpm';
 import * as m from '@/paraglide/messages';
+import { rovStatusStore } from '@/stores/rovStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { AllocationTable } from './AllocationTable';
@@ -49,6 +50,9 @@ type AllocationProps = {
   form: ComponentProps<typeof IdentifierSelect>['form'];
 };
 type LayoutProps = SharedProps & PinSetupProps & AllocationProps;
+
+const formatSignalQuality = (quality: number | null | undefined): string =>
+  typeof quality === 'number' ? `${quality.toFixed(1)}%` : '—';
 
 const TooltipTableHead: Component<{ label: string; tooltip: string; class?: string }> = (props) => (
   <TableHead class={props.class}>
@@ -188,7 +192,9 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
             <Button
               type='button'
               variant='outline'
-              disabled={props.testDisabled()[index()] ?? false}
+              disabled={
+                (props.testDisabled()[index()] ?? false) || !rovStatusStore.thrusterControlReady
+              }
               onClick={() => {
                 props.onTestThruster(index());
               }}
@@ -203,7 +209,7 @@ const PinSetupRows: Component<PinSetupProps> = (props) => (
           </TableCell>
           <TableCell class='w-20 text-right'>
             <span class='font-mono'>
-              {(rovTelemetryStore.thrusterSignalQualities[index()] ?? 0).toFixed(1)}%
+              {formatSignalQuality(rovTelemetryStore.thrusterSignalQualities[index()])}
             </span>
           </TableCell>
         </TableRow>
@@ -234,6 +240,11 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
         <p class='mb-4 text-sm text-muted-foreground'>
           {m.calibration_thruster_pin_setup_description()}
         </p>
+        {!rovStatusStore.thrusterControlReady && (
+          <p class='mb-4 text-sm text-amber-600 dark:text-amber-400'>
+            {m.calibration_thruster_test_unavailable()}
+          </p>
+        )}
         <PinSetupTable
           pinNumbers={props.pinNumbers}
           testDisabled={props.testDisabled}
