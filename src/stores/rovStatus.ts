@@ -45,6 +45,7 @@ type RovStatus = {
   batteryPercentage: number;
   currentDraw: number;
   piUndervoltage: boolean;
+  thrusterControlReady: boolean;
   health: SystemHealth;
   deviceInfo: DeviceInfo;
   escFirmwareUpdate: EscFirmwareUpdate;
@@ -71,6 +72,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   batteryPercentage: 0,
   currentDraw: 0,
   piUndervoltage: false,
+  thrusterControlReady: false,
   deviceInfo: defaultDeviceInfo,
   escFirmwareUpdate: defaultEscFirmwareUpdate,
   health: {

@@ -8,6 +8,7 @@ const status = {
   batteryPercentage: 75,
   currentDraw: 12,
   piUndervoltage: false,
+  thrusterControlReady: true,
   health: {
     imuHealthy: true,
     pressureSensorHealthy: true,
@@ -41,6 +42,7 @@ describe('ROV status device information', () => {
   test('stores the required live device information', () => {
     setRovStatusStore(status);
     expect(rovStatusStore.deviceInfo.mcuFirmwareVersion).toBe('1.2.3-rc.1');
+    expect(rovStatusStore.thrusterControlReady).toBe(true);
     expect(rovStatusStore.deviceInfo.escFirmwareVersions[0]).toBe('2.20.0');
 
     setRovStatusStore({
