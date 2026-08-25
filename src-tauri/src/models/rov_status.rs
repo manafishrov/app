@@ -24,6 +24,7 @@ pub struct EscFirmwareUpdate {
   pub current_esc: Option<u8>,
   pub target_version: Option<String>,
   pub error: Option<String>,
+  pub recovery_required: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -67,7 +68,8 @@ mod tests {
       "progress": 0,
       "currentEsc": null,
       "targetVersion": null,
-      "error": null
+      "error": null,
+      "recoveryRequired": false
     }
   }"#;
 

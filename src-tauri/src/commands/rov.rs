@@ -3,9 +3,10 @@ use tauri::{State, command};
 use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::MessageSendChannelState;
 use crate::websocket::send::{
-  handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_flash_esc_firmware,
-  handle_flash_mcu_firmware, handle_import_rov_config, handle_request_rov_config,
-  handle_set_rov_config, handle_start_regulator_auto_tuning, handle_start_thruster_test,
+  handle_cancel_regulator_auto_tuning, handle_cancel_thruster_test, handle_confirm_rov_config,
+  handle_flash_esc_firmware, handle_flash_mcu_firmware, handle_import_rov_config,
+  handle_request_rov_config, handle_set_rov_config, handle_start_regulator_auto_tuning,
+  handle_start_thruster_test,
 };
 
 #[command]
@@ -35,6 +36,16 @@ pub async fn import_rov_config(
   mutation_id: String,
 ) -> Result<(), String> {
   handle_import_rov_config(&state, payload, mutation_id).await
+}
+
+#[command]
+/// # Errors
+/// Returns an error if the canonical config acknowledgement cannot reach the ROV.
+pub async fn confirm_rov_config(
+  state: State<'_, MessageSendChannelState>,
+  mutation_id: String,
+) -> Result<(), String> {
+  handle_confirm_rov_config(&state, mutation_id).await
 }
 
 #[command]

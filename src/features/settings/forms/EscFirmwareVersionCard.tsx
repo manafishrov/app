@@ -12,7 +12,11 @@ import { VersionBadge } from '@/components/VersionBadge';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { rovStatusStore, type EscFirmwareVersions } from '@/stores/rovStatus';
+import {
+  rovStatusStore,
+  type EscFirmwareUpdate,
+  type EscFirmwareVersions,
+} from '@/stores/rovStatus';
 import { flashEscFirmware } from '@/tauri';
 
 const getEscFirmwareVersions = (): EscFirmwareVersions =>
@@ -27,7 +31,32 @@ const getCommonEscFirmwareVersion = (): string | null => {
 const hasReportedEscFirmwareVersion = (): boolean =>
   getEscFirmwareVersions().some((version) => version !== null);
 
+const ESC_UPDATE_STATUS_MESSAGES: Partial<Record<EscFirmwareUpdate['stage'], () => string>> = {
+  awaitingTelemetry: m.general_rov_settings_esc_firmware_status_confirming,
+  versionMismatch: m.general_rov_settings_esc_firmware_status_version_mismatch,
+  unconfirmed: m.general_rov_settings_esc_firmware_status_unconfirmed,
+};
+
+const getEscFirmwareUpdateStatus = (): string | null => {
+  const update = rovStatusStore.escFirmwareUpdate;
+  if (update.recoveryRequired) {
+    return m.general_rov_settings_esc_firmware_status_recovery();
+  }
+  const statusMessage = ESC_UPDATE_STATUS_MESSAGES[update.stage];
+  if (statusMessage) {
+    return statusMessage();
+  }
+  if (update.stage === 'failed' && update.error !== null) {
+    return update.error;
+  }
+  return null;
+};
+
 const getEscFirmwareVersionStatus = (): string => {
+  const updateStatus = getEscFirmwareUpdateStatus();
+  if (updateStatus !== null) {
+    return updateStatus;
+  }
   if (!hasReportedEscFirmwareVersion()) {
     return m.general_rov_settings_esc_firmware_version_status_waiting();
   }
@@ -50,7 +79,10 @@ const EscFirmwareFlashAction: Component = () => (
       title={m.general_rov_settings_esc_firmware_flash_confirm_title()}
       description={<p>{m.general_rov_settings_esc_firmware_flash_confirm_description()}</p>}
       pendingDescription={m.general_rov_settings_esc_firmware_flash_pending()}
-      disabled={rovStatusStore.escFirmwareUpdate.active}
+      disabled={
+        rovStatusStore.escFirmwareUpdate.active ||
+        rovStatusStore.escFirmwareUpdate.stage === 'awaitingTelemetry'
+      }
       onConfirm={handleFlashEscFirmware}
     />
   </span>

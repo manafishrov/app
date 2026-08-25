@@ -143,8 +143,29 @@ export const createDirectionVectorLoop = (
   pressedKeys: Set<string>,
   transport: DirectionVectorTransport,
 ): CleanupFn => {
+  let inFlight = false;
+  let queuedVector: DirectionVector | null = null;
+  let stopped = false;
+
   const sendVector = (vector: DirectionVector): void => {
-    transport.send(vector).catch(ignorePromiseRejection);
+    if (inFlight) {
+      queuedVector = vector;
+      return;
+    }
+    inFlight = true;
+    transport
+      .send(vector)
+      .catch(ignorePromiseRejection)
+      .finally(() => {
+        inFlight = false;
+        if (stopped || queuedVector === null) {
+          return;
+        }
+        const nextVector = queuedVector;
+        queuedVector = null;
+        sendVector(nextVector);
+      })
+      .catch(ignorePromiseRejection);
   };
 
   const sendCurrentInput = (): void => {
@@ -156,6 +177,8 @@ export const createDirectionVectorLoop = (
   const interval = globalThis.setInterval(sendCurrentInput, DIRECTION_VECTOR_SEND_INTERVAL_MS);
 
   return (): void => {
+    stopped = true;
+    queuedVector = null;
     globalThis.clearInterval(interval);
     transport.deactivate().catch(ignorePromiseRejection);
   };

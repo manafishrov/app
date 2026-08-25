@@ -12,8 +12,9 @@ use crate::websocket::send::{
 /// Returns an error if the websocket send channel is unavailable.
 pub async fn deactivate_direction_vector(
   state: State<'_, DirectionVectorSendChannelState>,
+  sequence: u64,
 ) -> Result<(), String> {
-  handle_deactivate_direction_vector(&state).await
+  handle_deactivate_direction_vector(&state, sequence).await
 }
 
 #[command]
@@ -22,8 +23,9 @@ pub async fn deactivate_direction_vector(
 pub async fn send_direction_vector(
   state: State<'_, DirectionVectorSendChannelState>,
   payload: DirectionVector,
+  sequence: u64,
 ) -> Result<(), String> {
-  handle_send_direction_vector(&state, payload).await
+  handle_send_direction_vector(&state, payload, sequence).await
 }
 
 #[command]

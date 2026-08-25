@@ -26,6 +26,7 @@ const getMcuFirmwareVersion = (): string => {
 export const McuFirmwareVersionCard: Component<{
   boardField: JSXElement;
   onFlashFirmware: () => Promise<void>;
+  disabled?: boolean;
 }> = (props) => (
   <Card class='my-8'>
     <CardHeader>
@@ -35,6 +36,7 @@ export const McuFirmwareVersionCard: Component<{
         <div class='w-32 [&_[data-slot=field-label]:empty]:hidden'>{props.boardField}</div>
         <Button
           type='button'
+          disabled={props.disabled}
           onClick={() => {
             props.onFlashFirmware().catch(() => null);
           }}

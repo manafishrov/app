@@ -22,17 +22,19 @@ mod log;
 mod toast;
 
 use std::sync::Arc;
+use std::sync::atomic::AtomicU64;
 
 use commands::firmware::FlashControl;
 use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  cleanup_firmware_cache, close_splashscreen, deactivate_direction_vector,
+  cleanup_firmware_cache, close_splashscreen, confirm_rov_config, deactivate_direction_vector,
   download_firmware_update, fetch_app_releases, fetch_firmware_manifest, flash_esc_firmware,
   flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config, initialize_log_listener,
   install_app_release, list_firmware_releases, list_flash_drives, prepare_flash,
   request_rov_config, save_recording, send_custom_action, send_direction_vector,
   set_auto_stabilization, set_config, set_depth_hold, set_desired_depth, set_rov_config,
-  signal_flash_image, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  signal_flash_image, stage_config, start_gamepad_stream, start_regulator_auto_tuning,
+  start_thruster_test,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -65,6 +67,7 @@ fn setup_handlers(app: &mut App) {
   let (direction_vector_tx, direction_vector_rx) = watch::channel(DirectionVectorInput::inactive());
   app.manage(DirectionVectorSendChannelState {
     tx: direction_vector_tx,
+    last_sequence: AtomicU64::new(0),
   });
   spawn(async move {
     start_websocket_client(websocket_handle, config_rx, message_rx, direction_vector_rx).await;
@@ -267,9 +270,11 @@ pub fn run() -> tauri::Result<()> {
       get_config,
       initialize_log_listener,
       set_config,
+      stage_config,
       request_rov_config,
       set_rov_config,
       import_rov_config,
+      confirm_rov_config,
       start_thruster_test,
       cancel_thruster_test,
       start_regulator_auto_tuning,

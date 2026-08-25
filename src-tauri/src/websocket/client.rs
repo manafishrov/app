@@ -1,3 +1,4 @@
+use std::sync::atomic::AtomicU64;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use futures_util::{Sink, SinkExt, StreamExt};
@@ -38,6 +39,7 @@ pub struct OutboundMessage {
 
 pub struct DirectionVectorSendChannelState {
   pub tx: watch::Sender<DirectionVectorInput>,
+  pub last_sequence: AtomicU64,
 }
 
 #[derive(Clone, Copy, Debug)]
