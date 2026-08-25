@@ -8,7 +8,7 @@ import { Overlay } from '@/features/overlay';
 import { VideoStream } from '@/features/videoStream';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
-import { sendDirectionVector } from '@/tauri';
+import { deactivateDirectionVector, sendDirectionVector } from '@/tauri';
 
 const FULLSCREEN_POLL_INTERVAL = 500;
 const ASPECT_RATIO_WIDTH = 4;
@@ -16,6 +16,10 @@ const ASPECT_RATIO_HEIGHT = 3;
 const ASPECT_RATIO = ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT;
 
 const INVALID_INTERVAL = -1;
+const DIRECTION_TRANSPORT = {
+  deactivate: deactivateDirectionVector,
+  send: sendDirectionVector,
+};
 
 const noop = function noop(): void {
   // Noop
@@ -36,7 +40,7 @@ const useHomePageSetup = (setIsFullscreen: (val: boolean) => unknown): void => {
     const { pressedKeys, cleanup } = createKeyboardTracker();
     keyboardCleanup = cleanup;
 
-    directionCleanup = createDirectionVectorLoop(configStore, pressedKeys, sendDirectionVector);
+    directionCleanup = createDirectionVectorLoop(configStore, pressedKeys, DIRECTION_TRANSPORT);
 
     stateCleanup = createStateToggleLoop(
       configStore,

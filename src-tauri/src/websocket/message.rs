@@ -32,6 +32,7 @@ pub enum WebsocketMessage {
   SetConfig(ConfigMutation<PartialRovConfig>),
   ImportConfig(ConfigMutation<serde_json::Value>),
   Config(ConfigResponse),
+  ConfirmConfig(String),
   StartThrusterTest(ThrusterTest),
   CancelThrusterTest(ThrusterTest),
   StartRegulatorAutoTuning,
@@ -65,6 +66,18 @@ mod tests {
     assert_eq!(
       serde_json::to_value(WebsocketMessage::SetDepthHold(false)).expect("serialize"),
       serde_json::json!({"type": "setDepthHold", "payload": false})
+    );
+  }
+
+  #[test]
+  /// # Panics
+  ///
+  /// Panics if a config acknowledgement does not serialize to its wire format.
+  fn config_confirmation_includes_the_mutation_id() {
+    assert_eq!(
+      serde_json::to_value(WebsocketMessage::ConfirmConfig("mutation-1".to_string()))
+        .expect("serialize"),
+      serde_json::json!({"type": "confirmConfig", "payload": "mutation-1"})
     );
   }
 }

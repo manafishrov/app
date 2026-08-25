@@ -1,7 +1,8 @@
+import { logError } from '@/lib/log';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
-import { setConfig } from '@/tauri/config';
+import { setConfig, stageConfig } from '@/tauri/config';
 import { setRovConfig } from '@/tauri/rovConfig';
 
 const CONNECTION_APPLY_TIMEOUT_MS = 15_000;
@@ -61,18 +62,6 @@ const retargetApp = (connection: RovConnectionConfig): Promise<void> =>
     webSocketPort: connection.websocketPort,
   });
 
-const retargetAppWithFallback = (
-  connection: RovConnectionConfig,
-  previousConnection: RovConnectionConfig,
-): Promise<void> =>
-  retargetApp(connection)
-    .then(waitForRovReconnect)
-    .catch((error: unknown) =>
-      retargetApp(previousConnection).then(() => {
-        throw error;
-      }),
-    );
-
 const connectionKey = (connection: RovConnectionConfig): string =>
   `${connection.ipAddress}\0${connection.websocketPort}`;
 
@@ -85,15 +74,41 @@ const performConnectionUpdate = (connection: RovConnectionConfig): Promise<void>
     ipAddress: configStore.ipAddress,
     websocketPort: configStore.webSocketPort,
   };
+  let appTargetStaged = false;
   const update = connectionChanged
-    ? setRovConfig(connection)
+    ? setRovConfig(connection, {
+        beforeConfirm: (confirmedConfig) => {
+          if (!connectionMatches(confirmedConfig, connection)) {
+            return Promise.reject(new Error('The ROV rejected the requested connection settings'));
+          }
+          return stageConfig({
+            ipAddress: connection.ipAddress,
+            webSocketPort: connection.websocketPort,
+          }).then(() => {
+            appTargetStaged = true;
+          });
+        },
+      })
         .then(() => {
           if (!connectionMatches(rovConfigStore, connection)) {
             throw new Error('The ROV rejected the requested connection settings');
           }
           return waitForRovDisconnect(connection);
         })
-        .then(() => retargetAppWithFallback(connection, previousAppConnection))
+        .then(() => retargetApp(connection))
+        .then(waitForRovReconnect)
+        .catch((error: unknown) => {
+          if (!appTargetStaged) {
+            throw error;
+          }
+          return retargetApp(previousAppConnection)
+            .catch((rollbackError: unknown) => {
+              logError('Failed to restore the previous app connection:', rollbackError);
+            })
+            .then(() => {
+              throw error;
+            });
+        })
     : retargetApp(connection);
   return update;
 };

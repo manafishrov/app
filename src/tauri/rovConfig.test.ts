@@ -90,7 +90,7 @@ const confirmedConfig: RovConfig = {
   websocketPort: 9000,
 };
 const LAST_ITEM_OFFSET = 1;
-const SECOND_CALL = 2;
+const THIRD_CALL = 3;
 const resolveVoid: () => void = () => 0;
 
 beforeEach(() => {
@@ -171,7 +171,7 @@ describe('ROV config mutations', () => {
       .then(resolveVoid)
       .then(() => {
         const secondMutationId = latestMutationId();
-        expect(mocks.invokeCommand).toHaveBeenNthCalledWith(SECOND_CALL, 'import_rov_config', {
+        expect(mocks.invokeCommand).toHaveBeenNthCalledWith(THIRD_CALL, 'import_rov_config', {
           payload: { rovName: 'Second' },
           mutationId: secondMutationId,
         });

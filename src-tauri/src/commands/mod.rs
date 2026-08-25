@@ -6,11 +6,11 @@ pub mod gamepad;
 pub mod recording;
 pub mod rov;
 
-pub use app::{close_splashscreen, get_config, initialize_log_listener, set_config};
+pub use app::{close_splashscreen, get_config, initialize_log_listener, set_config, stage_config};
 pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{
-  send_custom_action, send_direction_vector, set_auto_stabilization, set_depth_hold,
-  set_desired_depth,
+  deactivate_direction_vector, send_custom_action, send_direction_vector, set_auto_stabilization,
+  set_depth_hold, set_desired_depth,
 };
 pub use firmware::{
   cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_firmware_manifest,
@@ -19,7 +19,7 @@ pub use firmware::{
 pub use gamepad::{gamepad_vibrate, start_gamepad_stream};
 pub use recording::{append_recording_chunk, save_recording};
 pub use rov::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, flash_esc_firmware, flash_mcu_firmware,
-  import_rov_config, request_rov_config, set_rov_config, start_regulator_auto_tuning,
-  start_thruster_test,
+  cancel_regulator_auto_tuning, cancel_thruster_test, confirm_rov_config, flash_esc_firmware,
+  flash_mcu_firmware, import_rov_config, request_rov_config, set_rov_config,
+  start_regulator_auto_tuning, start_thruster_test,
 };

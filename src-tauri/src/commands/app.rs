@@ -1,6 +1,8 @@
 use tauri::{AppHandle, Manager, State, command};
 
-use crate::config::{ConfigSendChannelState, get_config_from_file, set_config_to_file};
+use crate::config::{
+  ConfigSendChannelState, get_config_from_file, set_config_to_file, stage_config_to_file,
+};
 use crate::models::config::Config;
 use crate::models::log::LogEntry;
 
@@ -40,4 +42,11 @@ pub async fn set_config(
   payload: Config,
 ) -> Result<(), String> {
   set_config_to_file(&state, payload).await
+}
+
+#[command]
+/// # Errors
+/// Returns an error if staging the config file fails.
+pub fn stage_config(payload: Config) -> Result<(), String> {
+  stage_config_to_file(payload)
 }

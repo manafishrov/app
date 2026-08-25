@@ -3,9 +3,19 @@ use tauri::{State, command};
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::websocket::client::{DirectionVectorSendChannelState, MessageSendChannelState};
 use crate::websocket::send::{
-  handle_send_custom_action, handle_send_direction_vector, handle_set_auto_stabilization,
-  handle_set_depth_hold, handle_set_desired_depth,
+  handle_deactivate_direction_vector, handle_send_custom_action, handle_send_direction_vector,
+  handle_set_auto_stabilization, handle_set_depth_hold, handle_set_desired_depth,
 };
+
+#[command]
+/// # Errors
+/// Returns an error if the websocket send channel is unavailable.
+pub async fn deactivate_direction_vector(
+  state: State<'_, DirectionVectorSendChannelState>,
+  sequence: u64,
+) -> Result<(), String> {
+  handle_deactivate_direction_vector(&state, sequence).await
+}
 
 #[command]
 /// # Errors
@@ -13,8 +23,9 @@ use crate::websocket::send::{
 pub async fn send_direction_vector(
   state: State<'_, DirectionVectorSendChannelState>,
   payload: DirectionVector,
+  sequence: u64,
 ) -> Result<(), String> {
-  handle_send_direction_vector(&state, payload).await
+  handle_send_direction_vector(&state, payload, sequence).await
 }
 
 #[command]

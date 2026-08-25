@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { rovStatusStore, setRovStatusStore, type EscFirmwareVersions } from './rovStatus';
+import {
+  isEscFirmwareUpdatePending,
+  rovStatusStore,
+  setRovStatusStore,
+  type EscFirmwareVersions,
+} from './rovStatus';
 
 const status = {
   autoStabilization: false,
@@ -29,16 +34,26 @@ const status = {
   },
   escFirmwareUpdate: {
     active: false,
-    origin: null,
     stage: 'idle' as const,
     progress: 0,
     currentEsc: null,
     targetVersion: null,
     error: null,
+    recoveryRequired: false,
   },
 };
 
 describe('ROV status device information', () => {
+  test('keeps firmware controls locked during live version confirmation', () => {
+    expect(
+      isEscFirmwareUpdatePending({
+        active: false,
+        recoveryRequired: false,
+        stage: 'awaitingTelemetry',
+      }),
+    ).toBe(true);
+  });
+
   test('stores the required live device information', () => {
     setRovStatusStore(status);
     expect(rovStatusStore.deviceInfo.mcuFirmwareVersion).toBe('1.2.3-rc.1');

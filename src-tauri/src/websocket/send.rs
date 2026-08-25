@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicU64, Ordering};
 use tauri::State;
 use tokio::sync::{mpsc::Sender, oneshot};
 
@@ -5,10 +6,51 @@ use crate::log_error;
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::{
-  DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
+  DirectionVectorInput, DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
 };
 use crate::websocket::message::ConfigMutation;
 use crate::websocket::message::WebsocketMessage;
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+fn publish_direction_vector(
+  tx: &tokio::sync::watch::Sender<DirectionVectorInput>,
+  last_sequence: &AtomicU64,
+  payload: DirectionVector,
+  sequence: u64,
+) -> Result<(), String> {
+  if !accept_direction_sequence(last_sequence, sequence) {
+    return Ok(());
+  }
+  tx.send(DirectionVectorInput::active(payload)).map_err(|error| {
+    log_error!("Failed to publish DirectionVector: {error}");
+    error.to_string()
+  })
+}
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+fn deactivate_direction_vector(
+  tx: &tokio::sync::watch::Sender<DirectionVectorInput>,
+  last_sequence: &AtomicU64,
+  sequence: u64,
+) -> Result<(), String> {
+  if !accept_direction_sequence(last_sequence, sequence) {
+    return Ok(());
+  }
+  tx.send(DirectionVectorInput::inactive()).map_err(|error| {
+    log_error!("Failed to deactivate DirectionVector: {error}");
+    error.to_string()
+  })
+}
+
+fn accept_direction_sequence(last_sequence: &AtomicU64, sequence: u64) -> bool {
+  last_sequence
+    .fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+      (sequence > current).then_some(sequence)
+    })
+    .is_ok()
+}
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
@@ -59,15 +101,18 @@ async fn send_message_and_wait(
 pub async fn handle_send_direction_vector(
   state: &State<'_, DirectionVectorSendChannelState>,
   payload: DirectionVector,
+  sequence: u64,
 ) -> Result<(), String> {
-  state
-    .tx
-    .send(WebsocketMessage::DirectionVector(payload))
-    .await
-    .map_err(|error| {
-      log_error!("Failed to send DirectionVector: {error}");
-      error.to_string()
-    })
+  publish_direction_vector(&state.tx, &state.last_sequence, payload, sequence)
+}
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+pub async fn handle_deactivate_direction_vector(
+  state: &State<'_, DirectionVectorSendChannelState>,
+  sequence: u64,
+) -> Result<(), String> {
+  deactivate_direction_vector(&state.tx, &state.last_sequence, sequence)
 }
 
 /// # Errors
@@ -85,7 +130,7 @@ pub async fn handle_set_auto_stabilization(
   state: &State<'_, MessageSendChannelState>,
   enabled: bool,
 ) -> Result<(), String> {
-  send_message(
+  send_message_and_wait(
     &state.tx,
     WebsocketMessage::SetAutoStabilization(enabled),
     "SetAutoStabilization",
@@ -99,7 +144,7 @@ pub async fn handle_set_depth_hold(
   state: &State<'_, MessageSendChannelState>,
   enabled: bool,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::SetDepthHold(enabled), "SetDepthHold").await
+  send_message_and_wait(&state.tx, WebsocketMessage::SetDepthHold(enabled), "SetDepthHold").await
 }
 
 /// # Errors
@@ -153,6 +198,16 @@ pub async fn handle_import_rov_config(
     "ImportConfig",
   )
   .await
+}
+
+/// # Errors
+/// Returns an error if the config acknowledgement cannot reach the ROV.
+pub async fn handle_confirm_rov_config(
+  state: &State<'_, MessageSendChannelState>,
+  mutation_id: String,
+) -> Result<(), String> {
+  send_message_and_wait(&state.tx, WebsocketMessage::ConfirmConfig(mutation_id), "ConfirmConfig")
+    .await
 }
 
 /// # Errors
@@ -220,6 +275,47 @@ pub async fn handle_flash_esc_firmware(
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if publishing fails or the receiver does not observe the latest input.
+  #[tokio::test]
+  async fn direction_vector_channel_keeps_only_the_latest_input() {
+    let (tx, mut rx) = tokio::sync::watch::channel(DirectionVectorInput::inactive());
+    let first = [0.1; 8];
+    let latest = [0.9; 8];
+
+    let last_sequence = AtomicU64::new(0);
+    publish_direction_vector(&tx, &last_sequence, first, 1).expect("publish first input");
+    publish_direction_vector(&tx, &last_sequence, latest, 2).expect("publish latest input");
+    rx.changed().await.expect("observe changed input");
+
+    let (observed, active) =
+      rx.borrow_and_update().vector_for_tick(false, std::time::Instant::now());
+    let observed = observed.expect("active direction vector");
+    assert!(active);
+    assert!(
+      observed
+        .iter()
+        .zip(latest)
+        .all(|(actual, expected)| (*actual - expected).abs() < f32::EPSILON)
+    );
+  }
+
+  /// # Panics
+  /// Panics if an older send can override a newer deactivation command.
+  #[tokio::test]
+  async fn stale_direction_vector_cannot_reactivate_input() {
+    let (tx, rx) = tokio::sync::watch::channel(DirectionVectorInput::inactive());
+    let last_sequence = AtomicU64::new(0);
+
+    publish_direction_vector(&tx, &last_sequence, [0.8; 8], 2).expect("publish input");
+    deactivate_direction_vector(&tx, &last_sequence, 3).expect("deactivate input");
+    publish_direction_vector(&tx, &last_sequence, [0.9; 8], 1).expect("drop stale input");
+
+    let (observed, active) = rx.borrow().vector_for_tick(true, std::time::Instant::now());
+    assert_eq!(observed, Some([0.0; 8]));
+    assert!(!active);
+  }
 
   /// # Panics
   /// Panics if the message isn't queued, acknowledged, or completed successfully.

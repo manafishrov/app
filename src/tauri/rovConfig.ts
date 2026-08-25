@@ -20,24 +20,45 @@ type ConfigWaiter = {
   resolve: (config: RovConfig) => void;
   reject: (error: Error) => void;
   timeout: ReturnType<typeof globalThis.setTimeout>;
+  beforeConfirm: (config: RovConfig) => Promise<void>;
 };
 
 const configWaiters = new Map<string, ConfigWaiter>();
 let mutationTail: Promise<unknown> = Promise.resolve();
 
+const confirmConfigWaiter = (waiter: ConfigWaiter, config: RovConfig, mutationId: string): void => {
+  waiter
+    .beforeConfirm(config)
+    .then(() => invokeCommand('confirm_rov_config', { mutationId }))
+    .then(() => {
+      waiter.resolve(config);
+    })
+    .catch((error: unknown) => {
+      waiter.reject(error instanceof Error ? error : new Error(String(error)));
+    });
+};
+
+const takeConfigWaiter = (mutationId: string): ConfigWaiter | undefined => {
+  const waiter = configWaiters.get(mutationId);
+  if (waiter) {
+    globalThis.clearTimeout(waiter.timeout);
+    configWaiters.delete(mutationId);
+  }
+  return waiter;
+};
+
 const applyRemoteRovConfig = (response: ConfigResponse): void => {
-  setRovConfigStore(response.config);
+  const { config, mutationId } = response;
+  setRovConfigStore(config);
   setRovConfigRevision((revision) => revision + 1);
-  if (typeof response.mutationId !== 'string' || response.mutationId === '') {
+  if (typeof mutationId !== 'string' || mutationId === '') {
     return;
   }
-  const waiter = configWaiters.get(response.mutationId);
+  const waiter = takeConfigWaiter(mutationId);
   if (!waiter) {
     return;
   }
-  globalThis.clearTimeout(waiter.timeout);
-  configWaiters.delete(response.mutationId);
-  waiter.resolve(response.config);
+  confirmConfigWaiter(waiter, config, mutationId);
 };
 
 type PendingConfig = {
@@ -45,7 +66,10 @@ type PendingConfig = {
   cancel: (error: Error) => void;
 };
 
-const waitForRemoteConfig = (mutationId: string): PendingConfig => {
+const waitForRemoteConfig = (
+  mutationId: string,
+  beforeConfirm: (config: RovConfig) => Promise<void>,
+): PendingConfig => {
   let cancel = noopCancel;
   const promise = new Promise<RovConfig>((resolve, reject) => {
     const timeout = globalThis.setTimeout(() => {
@@ -56,6 +80,7 @@ const waitForRemoteConfig = (mutationId: string): PendingConfig => {
       resolve,
       reject,
       timeout,
+      beforeConfirm,
     };
     configWaiters.set(mutationId, waiter);
     cancel = (error: Error): void => {
@@ -69,9 +94,19 @@ const waitForRemoteConfig = (mutationId: string): PendingConfig => {
   return { promise, cancel };
 };
 
-const runConfirmedMutation = (send: (mutationId: string) => Promise<unknown>): Promise<void> => {
+type MutationOptions = {
+  beforeConfirm?: (config: RovConfig) => Promise<void>;
+};
+
+const runConfirmedMutation = (
+  send: (mutationId: string) => Promise<unknown>,
+  options: MutationOptions,
+): Promise<void> => {
   const mutationId = globalThis.crypto.randomUUID();
-  const pending = waitForRemoteConfig(mutationId);
+  const pending = waitForRemoteConfig(
+    mutationId,
+    options.beforeConfirm ?? ((): Promise<void> => Promise.resolve()),
+  );
   const sent = send(mutationId).catch((error: unknown) => {
     const resolvedError = error instanceof Error ? error : new Error(String(error));
     pending.cancel(resolvedError);
@@ -80,10 +115,13 @@ const runConfirmedMutation = (send: (mutationId: string) => Promise<unknown>): P
   return Promise.all([sent, pending.promise]).then(resolveVoid);
 };
 
-const enqueueMutation = (send: (mutationId: string) => Promise<unknown>): Promise<void> => {
+const enqueueMutation = (
+  send: (mutationId: string) => Promise<unknown>,
+  options: MutationOptions = {},
+): Promise<void> => {
   const mutation = mutationTail.then(
-    () => runConfirmedMutation(send),
-    () => runConfirmedMutation(send),
+    () => runConfirmedMutation(send, options),
+    () => runConfirmedMutation(send, options),
   );
   mutationTail = mutation.catch(resolveVoid);
   return mutation;
@@ -100,9 +138,13 @@ export const requestRovConfig = (): Promise<void> | undefined => {
   return invokeCommand('request_rov_config');
 };
 
-export const setRovConfig = (newConfigOptions: Partial<RovConfig>): Promise<void> =>
-  enqueueMutation((mutationId) =>
-    invokeCommand('set_rov_config', { payload: newConfigOptions, mutationId }),
+export const setRovConfig = (
+  newConfigOptions: Partial<RovConfig>,
+  options: MutationOptions = {},
+): Promise<void> =>
+  enqueueMutation(
+    (mutationId) => invokeCommand('set_rov_config', { payload: newConfigOptions, mutationId }),
+    options,
   );
 
 export const importRovConfig = (payload: unknown): Promise<void> =>

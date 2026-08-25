@@ -6,6 +6,7 @@ import { McuFirmwareVersionCard } from '@/features/settings/forms/McuFirmwareVer
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { McuBoard, ThrusterProtocol, rovConfigStore } from '@/stores/rovConfig';
+import { isEscFirmwareUpdatePending, rovStatusStore } from '@/stores/rovStatus';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
 
 import {
@@ -25,6 +26,7 @@ import {
   type McuFormValues,
 } from './mcu/schema';
 import { updateMcuConfig, type ResolvedMcuConfig } from './mcu/update';
+import { mcuConfigMatches } from './mcu/verify';
 
 const resolveFormValues = (value: McuFormValues): ResolvedMcuConfig => ({
   mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
@@ -39,8 +41,12 @@ const flashMcuFirmwareWithLogging = (board: ResolvedMcuConfig['mcuBoard']): Prom
     throw error;
   });
 
-const flashSelectedMcuFirmware = (board: ResolvedMcuConfig['mcuBoard']): Promise<void> =>
-  flashMcuFirmwareWithLogging(board);
+const setMcuConfigAndVerify = (config: ResolvedMcuConfig): Promise<void> =>
+  setRovConfig(config).then(() => {
+    if (!mcuConfigMatches(config, rovConfigStore)) {
+      throw new Error('The ROV rejected the MCU configuration');
+    }
+  });
 
 const submitMcuConfig = (value: McuFormValues): Promise<void> => {
   const resolved = resolveFormValues(value);
@@ -48,7 +54,7 @@ const submitMcuConfig = (value: McuFormValues): Promise<void> => {
 
   return updateMcuConfig(
     { config: resolved, previousBoard },
-    { setConfig: setRovConfig, flashFirmware: flashMcuFirmwareWithLogging },
+    { setConfig: setMcuConfigAndVerify, flashFirmware: flashMcuFirmwareWithLogging },
   );
 };
 
@@ -81,6 +87,7 @@ const McuBoardSelectField: Component<{
   AppField: AppFieldComponent;
   boards: SelectCollection;
   onBoardChange: (board: McuFormValues['mcuBoard'][number]) => void;
+  disabled?: boolean;
 }> = (props) => (
   <props.AppField name='mcuBoard'>
     {(field: AppFieldContext): JSXElement => (
@@ -88,6 +95,7 @@ const McuBoardSelectField: Component<{
         aria-label={m.general_rov_settings_mcu_board_title()}
         collection={props.boards}
         placeholder={m.general_rov_settings_mcu_board_select_placeholder()}
+        disabled={props.disabled}
         onValueChange={(details): void => {
           const [board] = details.value;
           if (board === McuBoard.pico || board === McuBoard.pico2) {
@@ -106,6 +114,7 @@ const McuBoardSelectField: Component<{
 const ThrusterProtocolSelectField: Component<{
   AppField: AppFieldComponent;
   protocols: SelectCollection;
+  disabled?: boolean;
 }> = (props) => (
   <props.AppField name='thrusterProtocol'>
     {(field: AppFieldContext): JSXElement => (
@@ -114,6 +123,7 @@ const ThrusterProtocolSelectField: Component<{
         description={m.general_rov_settings_thruster_protocol_description()}
         collection={props.protocols}
         placeholder={m.general_rov_settings_thruster_protocol_select_placeholder()}
+        disabled={props.disabled}
       >
         <For each={props.protocols.items}>
           {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
@@ -178,13 +188,18 @@ const McuFields: Component<{
   speeds: SelectCollection;
   modes: SelectCollection;
   dshotDisabled: boolean;
+  disruptiveSettingsDisabled: boolean;
 }> = (props) => (
   <>
-    <ThrusterProtocolSelectField AppField={props.AppField} protocols={props.protocols} />
+    <ThrusterProtocolSelectField
+      AppField={props.AppField}
+      protocols={props.protocols}
+      disabled={props.disruptiveSettingsDisabled}
+    />
     <DshotSpeedSelectField
       AppField={props.AppField}
       speeds={props.speeds}
-      disabled={props.dshotDisabled}
+      disabled={props.dshotDisabled || props.disruptiveSettingsDisabled}
     />
     <CurrentSensingModeSelectField AppField={props.AppField} modes={props.modes} />
   </>
@@ -214,6 +229,7 @@ export const Mcu: Component = () => {
           speeds={dshotSpeeds()}
           modes={createCurrentSensingModes()}
           dshotDisabled={selectedThrusterProtocol() !== ThrusterProtocol.dshot}
+          disruptiveSettingsDisabled={isEscFirmwareUpdatePending(rovStatusStore.escFirmwareUpdate)}
         />
         <form.AutoSubmit debounce={500} />
       </form.Form>
@@ -240,7 +256,12 @@ const flashSelectedBoard = (board: ResolvedMcuConfig['mcuBoard']): Promise<void>
         },
       )
     : Promise.resolve();
-  return saveTarget.then(() => flashSelectedMcuFirmware(board));
+  return saveTarget.then(() => {
+    if (rovConfigStore.mcuBoard !== board || rovConfigStore.dshotSpeed !== compatibleSpeed) {
+      throw new Error('The ROV rejected the MCU firmware target');
+    }
+    return flashMcuFirmwareWithLogging(board);
+  });
 };
 
 export const McuFirmware: Component = () => {
@@ -265,9 +286,11 @@ export const McuFirmware: Component = () => {
               AppField={form.AppField}
               boards={boards}
               onBoardChange={handleMcuBoardChange}
+              disabled={isEscFirmwareUpdatePending(rovStatusStore.escFirmwareUpdate)}
             />
           }
           onFlashFirmware={() => flashSelectedBoard(selectedMcuBoard())}
+          disabled={isEscFirmwareUpdatePending(rovStatusStore.escFirmwareUpdate)}
         />
       </form.Form>
     </form.AppForm>

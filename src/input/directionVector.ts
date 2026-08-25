@@ -9,12 +9,21 @@ import { isInputSuppressed } from '@/stores/inputState';
 const EMPTY_INPUT: DirectionVector = [0, 0, 0, 0, 0, 0, 0, 0];
 const MIN_AXIS_VALUE = -1;
 const MAX_AXIS_VALUE = 1;
+const MILLISECONDS_PER_SECOND = 1000;
+const DIRECTION_VECTOR_SEND_FREQUENCY_HZ = 60;
+export const DIRECTION_VECTOR_SEND_INTERVAL_MS =
+  MILLISECONDS_PER_SECOND / DIRECTION_VECTOR_SEND_FREQUENCY_HZ;
 
 const ignorePromiseRejection = (): boolean => false;
 
 const clamp = (value: number): number => Math.max(MIN_AXIS_VALUE, Math.min(MAX_AXIS_VALUE, value));
 
 type OptionalInput<InputType> = InputType | null | undefined;
+export type DirectionVectorConfig = Pick<Config, 'keyboard' | 'selectedGamepadId' | 'gamepad'>;
+export type DirectionVectorTransport = {
+  deactivate: () => Promise<void>;
+  send: (vector: DirectionVector) => Promise<void>;
+};
 
 const AxisBindingName = {
   surgeForward: 'surgeForward',
@@ -105,7 +114,7 @@ const computeAxisValue = (
 };
 
 export const computeDirectionVector = (
-  config: Config,
+  config: DirectionVectorConfig,
   pressedKeys: Set<string>,
 ): DirectionVector => {
   const { keyboard, selectedGamepadId } = config;
@@ -130,28 +139,47 @@ export const computeDirectionVector = (
 };
 
 export const createDirectionVectorLoop = (
-  config: Config,
+  config: DirectionVectorConfig,
   pressedKeys: Set<string>,
-  sendFn: (vector: DirectionVector) => Promise<void>,
+  transport: DirectionVectorTransport,
 ): CleanupFn => {
-  let frame = 0;
+  let inFlight = false;
+  let queuedVector: DirectionVector | null = null;
+  let stopped = false;
 
   const sendVector = (vector: DirectionVector): void => {
-    sendFn(vector).catch(ignorePromiseRejection);
+    if (inFlight) {
+      queuedVector = vector;
+      return;
+    }
+    inFlight = true;
+    transport
+      .send(vector)
+      .catch(ignorePromiseRejection)
+      .finally(() => {
+        inFlight = false;
+        if (stopped || queuedVector === null) {
+          return;
+        }
+        const nextVector = queuedVector;
+        queuedVector = null;
+        sendVector(nextVector);
+      })
+      .catch(ignorePromiseRejection);
   };
 
-  const loop = (): void => {
+  const sendCurrentInput = (): void => {
     const vector = isInputSuppressed() ? EMPTY_INPUT : computeDirectionVector(config, pressedKeys);
     sendVector(vector);
-    frame = requestAnimationFrame(loop);
   };
 
-  loop();
+  sendCurrentInput();
+  const interval = globalThis.setInterval(sendCurrentInput, DIRECTION_VECTOR_SEND_INTERVAL_MS);
 
   return (): void => {
-    if (frame > 0) {
-      cancelAnimationFrame(frame);
-    }
-    sendVector(EMPTY_INPUT);
+    stopped = true;
+    queuedVector = null;
+    globalThis.clearInterval(interval);
+    transport.deactivate().catch(ignorePromiseRejection);
   };
 };

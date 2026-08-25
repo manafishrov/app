@@ -24,7 +24,6 @@ type DeviceInfo = {
 
 type EscFirmwareUpdate = {
   active: boolean;
-  origin: 'automatic' | 'manual' | null;
   stage:
     | 'idle'
     | 'preflight'
@@ -32,12 +31,19 @@ type EscFirmwareUpdate = {
     | 'programming'
     | 'awaitingTelemetry'
     | 'succeeded'
+    | 'unconfirmed'
+    | 'versionMismatch'
     | 'failed';
   progress: number;
   currentEsc: number | null;
   targetVersion: string | null;
   error: string | null;
+  recoveryRequired: boolean;
 };
+
+const isEscFirmwareUpdatePending = (
+  update: Pick<EscFirmwareUpdate, 'active' | 'recoveryRequired' | 'stage'>,
+): boolean => update.active || update.recoveryRequired || update.stage === 'awaitingTelemetry';
 
 type RovStatus = {
   autoStabilization: boolean;
@@ -58,12 +64,12 @@ const defaultDeviceInfo: DeviceInfo = {
 
 const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
   active: false,
-  origin: null,
   stage: 'idle',
   progress: 0,
   currentEsc: null,
   targetVersion: null,
   error: null,
+  recoveryRequired: false,
 };
 
 const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
@@ -96,6 +102,7 @@ const setDepthHoldOptimistic = (value: boolean): void => {
 
 export {
   rovStatusStore,
+  isEscFirmwareUpdatePending,
   setAutoStabilizationOptimistic,
   setDepthHoldOptimistic,
   setRovStatusStore,

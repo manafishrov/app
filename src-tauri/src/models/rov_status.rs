@@ -19,12 +19,12 @@ pub struct DeviceInfo {
 #[serde(rename_all = "camelCase")]
 pub struct EscFirmwareUpdate {
   pub active: bool,
-  pub origin: Option<String>,
   pub stage: String,
   pub progress: u8,
   pub current_esc: Option<u8>,
   pub target_version: Option<String>,
   pub error: Option<String>,
+  pub recovery_required: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -64,12 +64,12 @@ mod tests {
     },
     "escFirmwareUpdate": {
       "active": false,
-      "origin": null,
       "stage": "idle",
       "progress": 0,
       "currentEsc": null,
       "targetVersion": null,
-      "error": null
+      "error": null,
+      "recoveryRequired": false
     }
   }"#;
 

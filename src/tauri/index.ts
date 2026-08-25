@@ -11,7 +11,7 @@ import { setupToastListener } from '@/tauri/toast';
 
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { flashEscFirmware } from '@/tauri/escFirmware';
-export { getConfig, setConfig } from '@/tauri/config';
+export { getConfig, setConfig, stageConfig } from '@/tauri/config';
 export { sendCustomAction } from '@/tauri/customAction';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
@@ -30,7 +30,7 @@ export {
   selectFlashDrive,
   startFirmwareFlash,
 } from '@/tauri/sdFlash';
-export { sendDirectionVector } from '@/tauri/directionVector';
+export { deactivateDirectionVector, sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { playConfirmHaptic } from '@/tauri/gamepad';
 export {

@@ -1,20 +1,25 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::sync::atomic::AtomicU64;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use futures_util::{Sink, SinkExt, StreamExt};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{
   mpsc::{self, Receiver},
-  oneshot,
+  oneshot, watch,
 };
-use tokio::time::{interval, sleep, timeout};
+use tokio::time::{MissedTickBehavior, interval, sleep, timeout};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{self, Message};
 
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
 use crate::config::get_config_from_file;
+use crate::models::actions::DirectionVector;
 use crate::models::config::Config;
 use crate::{log_info, log_warn};
+
+const DIRECTION_VECTOR_SEND_INTERVAL: Duration = Duration::from_micros(16_667);
+const DIRECTION_VECTOR_INPUT_TIMEOUT: Duration = Duration::from_millis(200);
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +38,55 @@ pub struct OutboundMessage {
 }
 
 pub struct DirectionVectorSendChannelState {
-  pub tx: mpsc::Sender<WebsocketMessage>,
+  pub tx: watch::Sender<DirectionVectorInput>,
+  pub last_sequence: AtomicU64,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DirectionVectorInput {
+  vector: DirectionVector,
+  updated_at: Instant,
+  active: bool,
+}
+
+impl DirectionVectorInput {
+  pub(crate) fn active(vector: DirectionVector) -> Self {
+    Self {
+      vector,
+      updated_at: Instant::now(),
+      active: true,
+    }
+  }
+
+  pub(crate) fn inactive() -> Self {
+    Self {
+      vector: [0.0; 8],
+      updated_at: Instant::now(),
+      active: false,
+    }
+  }
+
+  fn current_vector(self, now: Instant) -> DirectionVector {
+    if now.duration_since(self.updated_at) <= DIRECTION_VECTOR_INPUT_TIMEOUT {
+      self.vector
+    } else {
+      [0.0; 8]
+    }
+  }
+
+  pub(crate) fn vector_for_tick(
+    self,
+    was_active: bool,
+    now: Instant,
+  ) -> (Option<DirectionVector>, bool) {
+    if self.active {
+      (Some(self.current_vector(now)), true)
+    } else if was_active {
+      (Some([0.0; 8]), false)
+    } else {
+      (None, false)
+    }
+  }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,6 +94,18 @@ enum MessageSendOutcome {
   Sent,
   SerializationFailed,
   ConnectionFailed,
+}
+
+fn direction_session_state_after_send(
+  current: bool,
+  next: bool,
+  outcome: MessageSendOutcome,
+) -> bool {
+  if outcome == MessageSendOutcome::Sent {
+    next
+  } else {
+    current
+  }
 }
 
 fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u128>) {
@@ -190,9 +255,10 @@ pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
   mut message_rx: Receiver<OutboundMessage>,
-  mut direction_vector_rx: Receiver<WebsocketMessage>,
+  direction_vector_rx: watch::Receiver<DirectionVectorInput>,
 ) {
   let mut config = get_config_from_file();
+  let mut direction_session_active = false;
 
   loop {
     let url = connection_url(&config);
@@ -227,6 +293,8 @@ pub async fn start_websocket_client(
     let ping_interval_duration = Duration::from_secs(2);
     let mut ping_timer = interval(ping_interval_duration);
     ping_timer.tick().await;
+    let mut direction_timer = interval(DIRECTION_VECTOR_SEND_INTERVAL);
+    direction_timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
     loop {
       tokio::select! {
@@ -251,14 +319,26 @@ pub async fn start_websocket_client(
                 break;
               }
           }
-          Some(direction_vector) = direction_vector_rx.recv() => {
-              if send_serialized_message(
+          _ = direction_timer.tick() => {
+              let (direction_vector, is_active) = direction_vector_rx
+                .borrow()
+                .vector_for_tick(direction_session_active, Instant::now());
+              let Some(direction_vector) = direction_vector else {
+                continue;
+              };
+              let outcome = send_serialized_message(
                 &mut write,
                 &app,
-                &direction_vector,
+                &WebsocketMessage::DirectionVector(direction_vector),
                 "direction vector",
                 " (direction vector)",
-              ).await == MessageSendOutcome::ConnectionFailed {
+              ).await;
+              direction_session_active = direction_session_state_after_send(
+                direction_session_active,
+                is_active,
+                outcome,
+              );
+              if outcome == MessageSendOutcome::ConnectionFailed {
                 break;
               }
           }
@@ -293,6 +373,57 @@ async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if stale control input is not replaced with a neutral vector.
+  #[test]
+  fn stale_direction_input_is_neutralized() {
+    let input = DirectionVectorInput {
+      vector: [0.75; 8],
+      updated_at: Instant::now(),
+      active: true,
+    };
+
+    let observed = input.current_vector(input.updated_at + Duration::from_millis(201));
+    assert!(observed.iter().all(|value| value.abs() < f32::EPSILON));
+  }
+
+  /// # Panics
+  /// Panics if an inactive control session emits more than one neutral vector.
+  #[test]
+  fn inactive_direction_session_emits_one_final_neutral_vector() {
+    let input = DirectionVectorInput::inactive();
+
+    let (final_vector, active) = input.vector_for_tick(true, Instant::now());
+    assert_eq!(final_vector, Some([0.0; 8]));
+    assert!(!active);
+
+    let (next_vector, active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
+    assert!(!active);
+  }
+
+  /// # Panics
+  /// Panics if a failed final-neutral write is not retried after reconnecting.
+  #[test]
+  fn failed_final_neutral_is_retried_after_reconnect() {
+    let input = DirectionVectorInput::inactive();
+    let mut active = true;
+
+    let (first_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(first_vector, Some([0.0; 8]));
+    active =
+      direction_session_state_after_send(active, next_active, MessageSendOutcome::ConnectionFailed);
+    assert!(active);
+
+    let (retry_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(retry_vector, Some([0.0; 8]));
+    active = direction_session_state_after_send(active, next_active, MessageSendOutcome::Sent);
+    assert!(!active);
+
+    let (next_vector, _) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
+  }
 
   /// # Panics
   /// Panics if serialization failure is not returned to the waiting sender.
