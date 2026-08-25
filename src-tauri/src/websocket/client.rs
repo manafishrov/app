@@ -44,21 +44,45 @@ pub struct DirectionVectorSendChannelState {
 pub struct DirectionVectorInput {
   vector: DirectionVector,
   updated_at: Instant,
+  active: bool,
 }
 
 impl DirectionVectorInput {
-  pub(crate) fn new(vector: DirectionVector) -> Self {
+  pub(crate) fn active(vector: DirectionVector) -> Self {
     Self {
       vector,
       updated_at: Instant::now(),
+      active: true,
     }
   }
 
-  pub(crate) fn current_vector(self, now: Instant) -> DirectionVector {
+  pub(crate) fn inactive() -> Self {
+    Self {
+      vector: [0.0; 8],
+      updated_at: Instant::now(),
+      active: false,
+    }
+  }
+
+  fn current_vector(self, now: Instant) -> DirectionVector {
     if now.duration_since(self.updated_at) <= DIRECTION_VECTOR_INPUT_TIMEOUT {
       self.vector
     } else {
       [0.0; 8]
+    }
+  }
+
+  pub(crate) fn vector_for_tick(
+    self,
+    was_active: bool,
+    now: Instant,
+  ) -> (Option<DirectionVector>, bool) {
+    if self.active {
+      (Some(self.current_vector(now)), true)
+    } else if was_active {
+      (Some([0.0; 8]), false)
+    } else {
+      (None, false)
     }
   }
 }
@@ -256,6 +280,7 @@ pub async fn start_websocket_client(
     ping_timer.tick().await;
     let mut direction_timer = interval(DIRECTION_VECTOR_SEND_INTERVAL);
     direction_timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
+    let mut direction_session_active = false;
 
     loop {
       tokio::select! {
@@ -281,9 +306,13 @@ pub async fn start_websocket_client(
               }
           }
           _ = direction_timer.tick() => {
-              let direction_vector = direction_vector_rx
+              let (direction_vector, is_active) = direction_vector_rx
                 .borrow()
-                .current_vector(Instant::now());
+                .vector_for_tick(direction_session_active, Instant::now());
+              direction_session_active = is_active;
+              let Some(direction_vector) = direction_vector else {
+                continue;
+              };
               if send_serialized_message(
                 &mut write,
                 &app,
@@ -333,10 +362,26 @@ mod tests {
     let input = DirectionVectorInput {
       vector: [0.75; 8],
       updated_at: Instant::now(),
+      active: true,
     };
 
     let observed = input.current_vector(input.updated_at + Duration::from_millis(201));
     assert!(observed.iter().all(|value| value.abs() < f32::EPSILON));
+  }
+
+  /// # Panics
+  /// Panics if an inactive control session emits more than one neutral vector.
+  #[test]
+  fn inactive_direction_session_emits_one_final_neutral_vector() {
+    let input = DirectionVectorInput::inactive();
+
+    let (final_vector, active) = input.vector_for_tick(true, Instant::now());
+    assert_eq!(final_vector, Some([0.0; 8]));
+    assert!(!active);
+
+    let (next_vector, active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
+    assert!(!active);
   }
 
   /// # Panics

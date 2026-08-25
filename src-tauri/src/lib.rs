@@ -26,13 +26,13 @@ use std::sync::Arc;
 use commands::firmware::FlashControl;
 use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_app_releases,
-  fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
-  import_rov_config, initialize_log_listener, install_app_release, list_firmware_releases,
-  list_flash_drives, prepare_flash, request_rov_config, save_recording, send_custom_action,
-  send_direction_vector, set_auto_stabilization, set_config, set_depth_hold, set_desired_depth,
-  set_rov_config, signal_flash_image, start_gamepad_stream, start_regulator_auto_tuning,
-  start_thruster_test,
+  cleanup_firmware_cache, close_splashscreen, deactivate_direction_vector,
+  download_firmware_update, fetch_app_releases, fetch_firmware_manifest, flash_esc_firmware,
+  flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config, initialize_log_listener,
+  install_app_release, list_firmware_releases, list_flash_drives, prepare_flash,
+  request_rov_config, save_recording, send_custom_action, send_direction_vector,
+  set_auto_stabilization, set_config, set_depth_hold, set_desired_depth, set_rov_config,
+  signal_flash_image, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -62,8 +62,7 @@ fn setup_handlers(app: &mut App) {
   app.manage(ConfigSendChannelState { tx: config_tx });
   let (message_tx, message_rx) = channel::<OutboundMessage>(1);
   app.manage(MessageSendChannelState { tx: message_tx });
-  let (direction_vector_tx, direction_vector_rx) =
-    watch::channel(DirectionVectorInput::new([0.0; 8]));
+  let (direction_vector_tx, direction_vector_rx) = watch::channel(DirectionVectorInput::inactive());
   app.manage(DirectionVectorSendChannelState {
     tx: direction_vector_tx,
   });
@@ -275,6 +274,7 @@ pub fn run() -> tauri::Result<()> {
       cancel_thruster_test,
       start_regulator_auto_tuning,
       cancel_regulator_auto_tuning,
+      deactivate_direction_vector,
       send_direction_vector,
       send_custom_action,
       set_auto_stabilization,

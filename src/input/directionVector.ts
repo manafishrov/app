@@ -20,6 +20,10 @@ const clamp = (value: number): number => Math.max(MIN_AXIS_VALUE, Math.min(MAX_A
 
 type OptionalInput<InputType> = InputType | null | undefined;
 export type DirectionVectorConfig = Pick<Config, 'keyboard' | 'selectedGamepadId' | 'gamepad'>;
+export type DirectionVectorTransport = {
+  deactivate: () => Promise<void>;
+  send: (vector: DirectionVector) => Promise<void>;
+};
 
 const AxisBindingName = {
   surgeForward: 'surgeForward',
@@ -137,10 +141,10 @@ export const computeDirectionVector = (
 export const createDirectionVectorLoop = (
   config: DirectionVectorConfig,
   pressedKeys: Set<string>,
-  sendFn: (vector: DirectionVector) => Promise<void>,
+  transport: DirectionVectorTransport,
 ): CleanupFn => {
   const sendVector = (vector: DirectionVector): void => {
-    sendFn(vector).catch(ignorePromiseRejection);
+    transport.send(vector).catch(ignorePromiseRejection);
   };
 
   const sendCurrentInput = (): void => {
@@ -153,6 +157,6 @@ export const createDirectionVectorLoop = (
 
   return (): void => {
     globalThis.clearInterval(interval);
-    sendVector(EMPTY_INPUT);
+    transport.deactivate().catch(ignorePromiseRejection);
   };
 };

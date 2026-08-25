@@ -9,8 +9,8 @@ pub mod rov;
 pub use app::{close_splashscreen, get_config, initialize_log_listener, set_config};
 pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{
-  send_custom_action, send_direction_vector, set_auto_stabilization, set_depth_hold,
-  set_desired_depth,
+  deactivate_direction_vector, send_custom_action, send_direction_vector, set_auto_stabilization,
+  set_depth_hold, set_desired_depth,
 };
 pub use firmware::{
   cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_firmware_manifest,

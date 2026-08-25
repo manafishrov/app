@@ -50,19 +50,21 @@ describe('createDirectionVectorLoop', () => {
 
   it('publishes input on a fixed timer instead of render frames', () => {
     const send = vi.fn<(vector: DirectionVector) => Promise<void>>().mockResolvedValue();
-    const cleanup = createDirectionVectorLoop(config, new Set(), send);
+    const deactivate = vi.fn<() => Promise<void>>().mockResolvedValue();
+    const cleanup = createDirectionVectorLoop(config, new Set(), { deactivate, send });
 
     expect(send).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(DIRECTION_VECTOR_SEND_INTERVAL_MS * INTERVALS_TO_ADVANCE);
     expect(send).toHaveBeenCalledTimes(INITIAL_SEND_COUNT + INTERVALS_TO_ADVANCE);
 
     cleanup();
-    expect(send).toHaveBeenLastCalledWith([0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(deactivate).toHaveBeenCalledOnce();
   });
 
   it('stops publishing after cleanup', () => {
     const send = vi.fn<(vector: DirectionVector) => Promise<void>>().mockResolvedValue();
-    const cleanup = createDirectionVectorLoop(config, new Set(), send);
+    const deactivate = vi.fn<() => Promise<void>>().mockResolvedValue();
+    const cleanup = createDirectionVectorLoop(config, new Set(), { deactivate, send });
     cleanup();
     const callCount = send.mock.calls.length;
 

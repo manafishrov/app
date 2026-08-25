@@ -16,8 +16,19 @@ fn publish_direction_vector(
   tx: &tokio::sync::watch::Sender<DirectionVectorInput>,
   payload: DirectionVector,
 ) -> Result<(), String> {
-  tx.send(DirectionVectorInput::new(payload)).map_err(|error| {
+  tx.send(DirectionVectorInput::active(payload)).map_err(|error| {
     log_error!("Failed to publish DirectionVector: {error}");
+    error.to_string()
+  })
+}
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+fn deactivate_direction_vector(
+  tx: &tokio::sync::watch::Sender<DirectionVectorInput>,
+) -> Result<(), String> {
+  tx.send(DirectionVectorInput::inactive()).map_err(|error| {
+    log_error!("Failed to deactivate DirectionVector: {error}");
     error.to_string()
   })
 }
@@ -73,6 +84,14 @@ pub async fn handle_send_direction_vector(
   payload: DirectionVector,
 ) -> Result<(), String> {
   publish_direction_vector(&state.tx, payload)
+}
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+pub async fn handle_deactivate_direction_vector(
+  state: &State<'_, DirectionVectorSendChannelState>,
+) -> Result<(), String> {
+  deactivate_direction_vector(&state.tx)
 }
 
 /// # Errors
@@ -230,7 +249,7 @@ mod tests {
   /// Panics if publishing fails or the receiver does not observe the latest input.
   #[tokio::test]
   async fn direction_vector_channel_keeps_only_the_latest_input() {
-    let (tx, mut rx) = tokio::sync::watch::channel(DirectionVectorInput::new([0.0; 8]));
+    let (tx, mut rx) = tokio::sync::watch::channel(DirectionVectorInput::inactive());
     let first = [0.1; 8];
     let latest = [0.9; 8];
 
@@ -238,7 +257,10 @@ mod tests {
     publish_direction_vector(&tx, latest).expect("publish latest input");
     rx.changed().await.expect("observe changed input");
 
-    let observed = rx.borrow_and_update().current_vector(std::time::Instant::now());
+    let (observed, active) =
+      rx.borrow_and_update().vector_for_tick(false, std::time::Instant::now());
+    let observed = observed.expect("active direction vector");
+    assert!(active);
     assert!(
       observed
         .iter()

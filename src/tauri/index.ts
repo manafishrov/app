@@ -30,7 +30,7 @@ export {
   selectFlashDrive,
   startFirmwareFlash,
 } from '@/tauri/sdFlash';
-export { sendDirectionVector } from '@/tauri/directionVector';
+export { deactivateDirectionVector, sendDirectionVector } from '@/tauri/directionVector';
 export { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 export { playConfirmHaptic } from '@/tauri/gamepad';
 export {
