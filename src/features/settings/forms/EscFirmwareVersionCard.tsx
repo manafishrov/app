@@ -13,6 +13,7 @@ import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
+  isEscFirmwareUpdatePending,
   rovStatusStore,
   type EscFirmwareUpdate,
   type EscFirmwareVersions,
@@ -79,10 +80,7 @@ const EscFirmwareFlashAction: Component = () => (
       title={m.general_rov_settings_esc_firmware_flash_confirm_title()}
       description={<p>{m.general_rov_settings_esc_firmware_flash_confirm_description()}</p>}
       pendingDescription={m.general_rov_settings_esc_firmware_flash_pending()}
-      disabled={
-        rovStatusStore.escFirmwareUpdate.active ||
-        rovStatusStore.escFirmwareUpdate.stage === 'awaitingTelemetry'
-      }
+      disabled={isEscFirmwareUpdatePending(rovStatusStore.escFirmwareUpdate)}
       onConfirm={handleFlashEscFirmware}
     />
   </span>

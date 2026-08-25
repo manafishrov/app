@@ -96,6 +96,18 @@ enum MessageSendOutcome {
   ConnectionFailed,
 }
 
+fn direction_session_state_after_send(
+  current: bool,
+  next: bool,
+  outcome: MessageSendOutcome,
+) -> bool {
+  if outcome == MessageSendOutcome::Sent {
+    next
+  } else {
+    current
+  }
+}
+
 fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u128>) {
   if let Err(error) = app.emit(
     "rov_connection_status_updated",
@@ -246,6 +258,7 @@ pub async fn start_websocket_client(
   direction_vector_rx: watch::Receiver<DirectionVectorInput>,
 ) {
   let mut config = get_config_from_file();
+  let mut direction_session_active = false;
 
   loop {
     let url = connection_url(&config);
@@ -282,7 +295,6 @@ pub async fn start_websocket_client(
     ping_timer.tick().await;
     let mut direction_timer = interval(DIRECTION_VECTOR_SEND_INTERVAL);
     direction_timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    let mut direction_session_active = false;
 
     loop {
       tokio::select! {
@@ -311,17 +323,22 @@ pub async fn start_websocket_client(
               let (direction_vector, is_active) = direction_vector_rx
                 .borrow()
                 .vector_for_tick(direction_session_active, Instant::now());
-              direction_session_active = is_active;
               let Some(direction_vector) = direction_vector else {
                 continue;
               };
-              if send_serialized_message(
+              let outcome = send_serialized_message(
                 &mut write,
                 &app,
                 &WebsocketMessage::DirectionVector(direction_vector),
                 "direction vector",
                 " (direction vector)",
-              ).await == MessageSendOutcome::ConnectionFailed {
+              ).await;
+              direction_session_active = direction_session_state_after_send(
+                direction_session_active,
+                is_active,
+                outcome,
+              );
+              if outcome == MessageSendOutcome::ConnectionFailed {
                 break;
               }
           }
@@ -384,6 +401,28 @@ mod tests {
     let (next_vector, active) = input.vector_for_tick(active, Instant::now());
     assert_eq!(next_vector, None);
     assert!(!active);
+  }
+
+  /// # Panics
+  /// Panics if a failed final-neutral write is not retried after reconnecting.
+  #[test]
+  fn failed_final_neutral_is_retried_after_reconnect() {
+    let input = DirectionVectorInput::inactive();
+    let mut active = true;
+
+    let (first_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(first_vector, Some([0.0; 8]));
+    active =
+      direction_session_state_after_send(active, next_active, MessageSendOutcome::ConnectionFailed);
+    assert!(active);
+
+    let (retry_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(retry_vector, Some([0.0; 8]));
+    active = direction_session_state_after_send(active, next_active, MessageSendOutcome::Sent);
+    assert!(!active);
+
+    let (next_vector, _) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
   }
 
   /// # Panics

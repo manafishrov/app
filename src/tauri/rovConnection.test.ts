@@ -20,8 +20,10 @@ const mocks = vi.hoisted(() => ({
   setConfig: vi.fn(),
   stageConfig: vi.fn(),
   setRovConfig: vi.fn<(connection: TestConnection, options?: ConfirmOptions) => Promise<void>>(),
+  logError: vi.fn(),
 }));
 
+vi.mock('@/lib/log', () => ({ logError: mocks.logError }));
 vi.mock('@/stores/connectionStatus', () => ({ connectionStatusStore: mocks.connectionStatus }));
 vi.mock('@/stores/config', () => ({ configStore: mocks.config }));
 vi.mock('@/stores/rovConfig', () => ({ rovConfigStore: mocks.rovConfig }));
@@ -218,6 +220,25 @@ describe('when applying or reconciling connection settings', () => {
           ipAddress: '10.10.10.10',
           webSocketPort: 9000,
         });
+      });
+  });
+});
+
+describe('when restoring the previous app endpoint fails', () => {
+  test('preserves the original connection error', () => {
+    mocks.setConfig.mockRejectedValue(new Error('rollback failed'));
+    const rejection = expect(updateRovConnection(changedConnection)).rejects.toThrow(
+      'ROV did not disconnect',
+    );
+
+    return vi
+      .advanceTimersByTimeAsync(APPLY_TIMEOUT_MS)
+      .then(() => rejection)
+      .then(() => {
+        expect(mocks.logError).toHaveBeenCalledWith(
+          'Failed to restore the previous app connection:',
+          expect.objectContaining({ message: 'rollback failed' }),
+        );
       });
   });
 });

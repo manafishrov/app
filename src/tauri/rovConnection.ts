@@ -1,3 +1,4 @@
+import { logError } from '@/lib/log';
 import { configStore } from '@/stores/config';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
@@ -100,9 +101,13 @@ const performConnectionUpdate = (connection: RovConnectionConfig): Promise<void>
           if (!appTargetStaged) {
             throw error;
           }
-          return retargetApp(previousAppConnection).then(() => {
-            throw error;
-          });
+          return retargetApp(previousAppConnection)
+            .catch((rollbackError: unknown) => {
+              logError('Failed to restore the previous app connection:', rollbackError);
+            })
+            .then(() => {
+              throw error;
+            });
         })
     : retargetApp(connection);
   return update;
