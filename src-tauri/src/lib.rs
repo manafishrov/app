@@ -41,12 +41,12 @@ use tauri::async_runtime::spawn;
 use tauri::webview::PageLoadEvent;
 use tauri::{App, Builder, Manager, generate_handler};
 use toast::toast_init;
-use tokio::sync::mpsc::channel;
+use tokio::sync::{mpsc::channel, watch};
 
 use websocket::client::{
-  DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage, start_websocket_client,
+  DirectionVectorInput, DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
+  start_websocket_client,
 };
-use websocket::message::WebsocketMessage;
 
 fn setup_handlers(app: &mut App) {
   let log_handle = app.app_handle().clone();
@@ -62,7 +62,8 @@ fn setup_handlers(app: &mut App) {
   app.manage(ConfigSendChannelState { tx: config_tx });
   let (message_tx, message_rx) = channel::<OutboundMessage>(1);
   app.manage(MessageSendChannelState { tx: message_tx });
-  let (direction_vector_tx, direction_vector_rx) = channel::<WebsocketMessage>(8);
+  let (direction_vector_tx, direction_vector_rx) =
+    watch::channel(DirectionVectorInput::new([0.0; 8]));
   app.manage(DirectionVectorSendChannelState {
     tx: direction_vector_tx,
   });

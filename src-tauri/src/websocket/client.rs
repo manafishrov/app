@@ -1,20 +1,24 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use futures_util::{Sink, SinkExt, StreamExt};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{
   mpsc::{self, Receiver},
-  oneshot,
+  oneshot, watch,
 };
-use tokio::time::{interval, sleep, timeout};
+use tokio::time::{MissedTickBehavior, interval, sleep, timeout};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{self, Message};
 
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
 use crate::config::get_config_from_file;
+use crate::models::actions::DirectionVector;
 use crate::models::config::Config;
 use crate::{log_info, log_warn};
+
+const DIRECTION_VECTOR_SEND_INTERVAL: Duration = Duration::from_micros(16_667);
+const DIRECTION_VECTOR_INPUT_TIMEOUT: Duration = Duration::from_millis(200);
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +37,30 @@ pub struct OutboundMessage {
 }
 
 pub struct DirectionVectorSendChannelState {
-  pub tx: mpsc::Sender<WebsocketMessage>,
+  pub tx: watch::Sender<DirectionVectorInput>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DirectionVectorInput {
+  vector: DirectionVector,
+  updated_at: Instant,
+}
+
+impl DirectionVectorInput {
+  pub(crate) fn new(vector: DirectionVector) -> Self {
+    Self {
+      vector,
+      updated_at: Instant::now(),
+    }
+  }
+
+  pub(crate) fn current_vector(self, now: Instant) -> DirectionVector {
+    if now.duration_since(self.updated_at) <= DIRECTION_VECTOR_INPUT_TIMEOUT {
+      self.vector
+    } else {
+      [0.0; 8]
+    }
+  }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -190,7 +217,7 @@ pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
   mut message_rx: Receiver<OutboundMessage>,
-  mut direction_vector_rx: Receiver<WebsocketMessage>,
+  direction_vector_rx: watch::Receiver<DirectionVectorInput>,
 ) {
   let mut config = get_config_from_file();
 
@@ -227,6 +254,8 @@ pub async fn start_websocket_client(
     let ping_interval_duration = Duration::from_secs(2);
     let mut ping_timer = interval(ping_interval_duration);
     ping_timer.tick().await;
+    let mut direction_timer = interval(DIRECTION_VECTOR_SEND_INTERVAL);
+    direction_timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
     loop {
       tokio::select! {
@@ -251,11 +280,14 @@ pub async fn start_websocket_client(
                 break;
               }
           }
-          Some(direction_vector) = direction_vector_rx.recv() => {
+          _ = direction_timer.tick() => {
+              let direction_vector = direction_vector_rx
+                .borrow()
+                .current_vector(Instant::now());
               if send_serialized_message(
                 &mut write,
                 &app,
-                &direction_vector,
+                &WebsocketMessage::DirectionVector(direction_vector),
                 "direction vector",
                 " (direction vector)",
               ).await == MessageSendOutcome::ConnectionFailed {
@@ -293,6 +325,19 @@ async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if stale control input is not replaced with a neutral vector.
+  #[test]
+  fn stale_direction_input_is_neutralized() {
+    let input = DirectionVectorInput {
+      vector: [0.75; 8],
+      updated_at: Instant::now(),
+    };
+
+    let observed = input.current_vector(input.updated_at + Duration::from_millis(201));
+    assert!(observed.iter().all(|value| value.abs() < f32::EPSILON));
+  }
 
   /// # Panics
   /// Panics if serialization failure is not returned to the waiting sender.

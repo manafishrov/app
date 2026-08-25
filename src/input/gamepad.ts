@@ -44,7 +44,7 @@ export const readGamepadInput = (input: GamepadInput | null, gamepad: Gamepad | 
 
 export const getGamepadBindings = (
   gamepad: Gamepad | null,
-  config: Config,
+  config: Pick<Config, 'selectedGamepadId' | 'gamepad'>,
 ): GamepadBindings | null => {
   if (!gamepad) {
     return null;

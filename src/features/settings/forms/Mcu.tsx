@@ -61,11 +61,13 @@ const createMcuSubmitHandler =
       (nextProtocol === ThrusterProtocol.dshot &&
         parseDshotSpeed(value.dshotSpeed[0], rovConfigStore.dshotSpeed) !==
           rovConfigStore.dshotSpeed);
-    return submitMcuConfig(value).then(() => {
-      if (signalSettingsChanged) {
-        onSignalSettingsChanged();
-      }
-    });
+    if (signalSettingsChanged) {
+      // The ESC detector may already react to a partially applied transition.
+      // Show the battery-cycle instruction immediately.
+      // This remains necessary if the asynchronous acknowledgement times out.
+      onSignalSettingsChanged();
+    }
+    return submitMcuConfig(value);
   };
 
 type AppFieldContext = {

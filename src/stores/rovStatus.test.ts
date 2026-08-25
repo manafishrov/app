@@ -29,7 +29,6 @@ const status = {
   },
   escFirmwareUpdate: {
     active: false,
-    origin: null,
     stage: 'idle' as const,
     progress: 0,
     currentEsc: null,

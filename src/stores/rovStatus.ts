@@ -24,7 +24,6 @@ type DeviceInfo = {
 
 type EscFirmwareUpdate = {
   active: boolean;
-  origin: 'automatic' | 'manual' | null;
   stage:
     | 'idle'
     | 'preflight'
@@ -58,7 +57,6 @@ const defaultDeviceInfo: DeviceInfo = {
 
 const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
   active: false,
-  origin: null,
   stage: 'idle',
   progress: 0,
   currentEsc: null,

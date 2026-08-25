@@ -5,10 +5,22 @@ use crate::log_error;
 use crate::models::actions::{CustomAction, DirectionVector};
 use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::{
-  DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
+  DirectionVectorInput, DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
 };
 use crate::websocket::message::ConfigMutation;
 use crate::websocket::message::WebsocketMessage;
+
+/// # Errors
+/// Returns an error if the WebSocket client has stopped receiving control input.
+fn publish_direction_vector(
+  tx: &tokio::sync::watch::Sender<DirectionVectorInput>,
+  payload: DirectionVector,
+) -> Result<(), String> {
+  tx.send(DirectionVectorInput::new(payload)).map_err(|error| {
+    log_error!("Failed to publish DirectionVector: {error}");
+    error.to_string()
+  })
+}
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
@@ -60,14 +72,7 @@ pub async fn handle_send_direction_vector(
   state: &State<'_, DirectionVectorSendChannelState>,
   payload: DirectionVector,
 ) -> Result<(), String> {
-  state
-    .tx
-    .send(WebsocketMessage::DirectionVector(payload))
-    .await
-    .map_err(|error| {
-      log_error!("Failed to send DirectionVector: {error}");
-      error.to_string()
-    })
+  publish_direction_vector(&state.tx, payload)
 }
 
 /// # Errors
@@ -220,6 +225,27 @@ pub async fn handle_flash_esc_firmware(
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if publishing fails or the receiver does not observe the latest input.
+  #[tokio::test]
+  async fn direction_vector_channel_keeps_only_the_latest_input() {
+    let (tx, mut rx) = tokio::sync::watch::channel(DirectionVectorInput::new([0.0; 8]));
+    let first = [0.1; 8];
+    let latest = [0.9; 8];
+
+    publish_direction_vector(&tx, first).expect("publish first input");
+    publish_direction_vector(&tx, latest).expect("publish latest input");
+    rx.changed().await.expect("observe changed input");
+
+    let observed = rx.borrow_and_update().current_vector(std::time::Instant::now());
+    assert!(
+      observed
+        .iter()
+        .zip(latest)
+        .all(|(actual, expected)| (*actual - expected).abs() < f32::EPSILON)
+    );
+  }
 
   /// # Panics
   /// Panics if the message isn't queued, acknowledged, or completed successfully.
