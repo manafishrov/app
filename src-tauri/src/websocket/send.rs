@@ -1,6 +1,8 @@
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
 use tauri::State;
 use tokio::sync::{mpsc::Sender, oneshot};
+use tokio::time::timeout;
 
 use crate::log_error;
 use crate::models::actions::{CustomAction, DirectionVector};
@@ -10,6 +12,9 @@ use crate::websocket::client::{
 };
 use crate::websocket::message::ConfigMutation;
 use crate::websocket::message::WebsocketMessage;
+
+const MESSAGE_QUEUE_TIMEOUT: Duration = Duration::from_secs(2);
+const MESSAGE_DELIVERY_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// # Errors
 /// Returns an error if the WebSocket client has stopped receiving control input.
@@ -59,11 +64,15 @@ async fn send_message(
   message: WebsocketMessage,
   label: &str,
 ) -> Result<(), String> {
-  tx.send(OutboundMessage {
-    message,
-    sent: None,
-  })
+  timeout(
+    MESSAGE_QUEUE_TIMEOUT,
+    tx.send(OutboundMessage {
+      message,
+      sent: None,
+    }),
+  )
   .await
+  .map_err(|_| format!("Timed out queueing {label}; reconnect to the ROV and try again"))?
   .map_err(|error| {
     log_error!("Failed to send {label}: {error}");
     error.to_string()
@@ -80,20 +89,27 @@ async fn send_message_and_wait(
   label: &str,
 ) -> Result<(), String> {
   let (sent_tx, sent_rx) = oneshot::channel();
-  tx.send(OutboundMessage {
-    message,
-    sent: Some(sent_tx),
-  })
+  timeout(
+    MESSAGE_QUEUE_TIMEOUT,
+    tx.send(OutboundMessage {
+      message,
+      sent: Some(sent_tx),
+    }),
+  )
   .await
+  .map_err(|_| format!("Timed out queueing {label}; reconnect to the ROV and try again"))?
   .map_err(|error| {
     log_error!("Failed to queue {label}: {error}");
     error.to_string()
   })?;
 
-  sent_rx.await.map_err(|error| {
-    log_error!("Failed to confirm {label} delivery: {error}");
-    error.to_string()
-  })?
+  timeout(MESSAGE_DELIVERY_TIMEOUT, sent_rx)
+    .await
+    .map_err(|_| format!("Timed out sending {label} to the ROV; the connection is being retried"))?
+    .map_err(|error| {
+      log_error!("Failed to confirm {label} delivery: {error}");
+      error.to_string()
+    })?
 }
 
 /// # Errors
@@ -216,7 +232,12 @@ pub async fn handle_start_thruster_test(
   state: &State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::StartThrusterTest(payload), "StartThrusterTest").await
+  send_message_and_wait(
+    &state.tx,
+    WebsocketMessage::StartThrusterTest(payload),
+    "StartThrusterTest",
+  )
+  .await
 }
 
 /// # Errors
@@ -225,7 +246,12 @@ pub async fn handle_cancel_thruster_test(
   state: &State<'_, MessageSendChannelState>,
   payload: ThrusterTest,
 ) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::CancelThrusterTest(payload), "CancelThrusterTest").await
+  send_message_and_wait(
+    &state.tx,
+    WebsocketMessage::CancelThrusterTest(payload),
+    "CancelThrusterTest",
+  )
+  .await
 }
 
 /// # Errors

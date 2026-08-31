@@ -14,6 +14,8 @@ const status = {
   currentDraw: 12,
   piUndervoltage: false,
   thrusterControlReady: true,
+  thrusterProtocolState: 'ready' as const,
+  thrusterProtocolError: null,
   health: {
     imuHealthy: true,
     pressureSensorHealthy: true,
@@ -21,6 +23,7 @@ const status = {
   },
   deviceInfo: {
     mcuFirmwareVersion: '1.2.3-rc.1',
+    mcuFirmwareVersionStatus: 'reported' as const,
     escFirmwareVersions: [
       '2.20.0',
       null,
@@ -31,6 +34,7 @@ const status = {
       null,
       null,
     ] as EscFirmwareVersions,
+    escFirmwareVersionStatus: 'reported' as const,
   },
   escFirmwareUpdate: {
     active: false,
@@ -64,6 +68,7 @@ describe('ROV status device information', () => {
       ...status,
       deviceInfo: {
         mcuFirmwareVersion: '1.2.4-rc.1',
+        mcuFirmwareVersionStatus: 'reported',
         escFirmwareVersions: [
           '2.21.0-rc.2',
           null,
@@ -74,6 +79,7 @@ describe('ROV status device information', () => {
           null,
           null,
         ] as EscFirmwareVersions,
+        escFirmwareVersionStatus: 'reported',
       },
     });
     expect(rovStatusStore.deviceInfo.mcuFirmwareVersion).toBe('1.2.4-rc.1');

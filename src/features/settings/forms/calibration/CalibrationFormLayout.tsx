@@ -242,7 +242,7 @@ export const CalibrationFormLayout: Component<LayoutProps> = (props) => (
         </p>
         {!rovStatusStore.thrusterControlReady && (
           <p class='mb-4 text-sm text-amber-600 dark:text-amber-400'>
-            {m.calibration_thruster_test_unavailable()}
+            {rovStatusStore.thrusterProtocolError ?? m.calibration_thruster_test_unavailable()}
           </p>
         )}
         <PinSetupTable

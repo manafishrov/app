@@ -20,6 +20,7 @@ use crate::{log_info, log_warn};
 
 const DIRECTION_VECTOR_SEND_INTERVAL: Duration = Duration::from_micros(16_667);
 const DIRECTION_VECTOR_INPUT_TIMEOUT: Duration = Duration::from_millis(200);
+const WEBSOCKET_WRITE_TIMEOUT: Duration = Duration::from_secs(3);
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -141,13 +142,19 @@ async fn send_text_message<S>(
 where
   S: Sink<Message, Error = tungstenite::Error> + Unpin,
 {
-  if let Err(error) = write.send(Message::Text(message_text.into())).await {
-    log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
-    emit_connection_status(app, false, None);
-    return false;
+  match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(Message::Text(message_text.into()))).await {
+    Ok(Ok(())) => true,
+    Ok(Err(error)) => {
+      log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
+      emit_connection_status(app, false, None);
+      false
+    },
+    Err(_) => {
+      log_warn!("Websocket send timed out{}. Reconnecting...", error_label);
+      emit_connection_status(app, false, None);
+      false
+    },
   }
-
-  true
 }
 
 async fn send_serialized_message<S>(
@@ -194,19 +201,29 @@ fn complete_outbound_message(
   outcome == MessageSendOutcome::ConnectionFailed
 }
 
+fn outbound_completion_cancelled(completion: Option<&oneshot::Sender<Result<(), String>>>) -> bool {
+  completion.is_some_and(oneshot::Sender::is_closed)
+}
+
 async fn send_ping<S>(write: &mut S, app: &AppHandle) -> bool
 where
   S: Sink<Message, Error = tungstenite::Error> + Unpin,
 {
   let ping_data = current_timestamp_ms().to_string().into_bytes();
 
-  if let Err(error) = write.send(Message::Ping(ping_data.into())).await {
-    log_warn!("Failed to send ping: {}. Reconnecting...", error);
-    emit_connection_status(app, false, None);
-    return false;
+  match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(Message::Ping(ping_data.into()))).await {
+    Ok(Ok(())) => true,
+    Ok(Err(error)) => {
+      log_warn!("Failed to send ping: {}. Reconnecting...", error);
+      emit_connection_status(app, false, None);
+      false
+    },
+    Err(_) => {
+      log_warn!("Timed out sending ping. Reconnecting...");
+      emit_connection_status(app, false, None);
+      false
+    },
   }
-
-  true
 }
 
 async fn handle_incoming_message<S>(
@@ -219,12 +236,20 @@ where
 {
   match message {
     Ok(message) if message.is_text() || message.is_binary() => {
-      if let Some(response) = handle_message(app, message).await
-        && let Err(error) = write.send(response).await
-      {
-        log_warn!("Websocket send error: {}. Reconnecting...", error);
-        emit_connection_status(app, false, None);
-        return false;
+      if let Some(response) = handle_message(app, message).await {
+        match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(response)).await {
+          Ok(Ok(())) => {},
+          Ok(Err(error)) => {
+            log_warn!("Websocket send error: {}. Reconnecting...", error);
+            emit_connection_status(app, false, None);
+            return false;
+          },
+          Err(_) => {
+            log_warn!("Websocket response send timed out. Reconnecting...");
+            emit_connection_status(app, false, None);
+            return false;
+          },
+        }
       }
     },
     Ok(message) if message.is_close() => {
@@ -308,6 +333,10 @@ pub async fn start_websocket_client(
             config = new_config;
           }
           Some(outbound) = message_rx.recv() => {
+              if outbound_completion_cancelled(outbound.sent.as_ref()) {
+                log_warn!("Dropping an outbound command after its caller timed out.");
+                continue;
+              }
               let outcome = send_serialized_message(
                 &mut write,
                 &app,
@@ -373,6 +402,18 @@ async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if an outbound command remains eligible after its waiting caller exits.
+  #[test]
+  fn cancelled_outbound_completion_is_detected() {
+    let (completion, receiver) = oneshot::channel::<Result<(), String>>();
+    let active = Some(completion);
+    assert!(!outbound_completion_cancelled(active.as_ref()));
+
+    drop(receiver);
+    assert!(outbound_completion_cancelled(active.as_ref()));
+  }
 
   /// # Panics
   /// Panics if stale control input is not replaced with a neutral vector.

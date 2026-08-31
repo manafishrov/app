@@ -1,4 +1,17 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
+/// Deserializes a nullable field while requiring the field to be present.
+///
+/// # Errors
+/// Returns the deserializer's error when the present value is neither `null`
+/// nor a valid `T`.
+fn deserialize_required_option<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+  D: Deserializer<'de>,
+  T: Deserialize<'de>,
+{
+  Option::<T>::deserialize(deserializer)
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -12,7 +25,9 @@ pub struct SystemHealth {
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
   pub mcu_firmware_version: String,
+  pub mcu_firmware_version_status: String,
   pub esc_firmware_versions: [Option<String>; 8],
+  pub esc_firmware_version_status: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -37,6 +52,9 @@ pub struct RovStatus {
   pub current_draw: i32,
   pub pi_undervoltage: bool,
   pub thruster_control_ready: bool,
+  pub thruster_protocol_state: String,
+  #[serde(deserialize_with = "deserialize_required_option")]
+  pub thruster_protocol_error: Option<String>,
   pub health: SystemHealth,
   pub device_info: DeviceInfo,
   pub esc_firmware_update: EscFirmwareUpdate,
@@ -53,6 +71,8 @@ mod tests {
     "currentDraw": 12,
     "piUndervoltage": false,
     "thrusterControlReady": true,
+    "thrusterProtocolState": "ready",
+    "thrusterProtocolError": null,
     "health": {
       "imuHealthy": true,
       "pressureSensorHealthy": true,
@@ -60,7 +80,9 @@ mod tests {
     },
     "deviceInfo": {
       "mcuFirmwareVersion": "1.2.3-rc.1",
-      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null]
+      "mcuFirmwareVersionStatus": "reported",
+      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null],
+      "escFirmwareVersionStatus": "reported"
     },
     "escFirmwareUpdate": {
       "active": false,
@@ -91,6 +113,8 @@ mod tests {
     for field in [
       "piUndervoltage",
       "thrusterControlReady",
+      "thrusterProtocolState",
+      "thrusterProtocolError",
       "deviceInfo",
       "escFirmwareUpdate",
     ] {

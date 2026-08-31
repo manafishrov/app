@@ -233,12 +233,12 @@ const defaultRovConfig: RovConfig = {
   },
   camera: {
     // A broadly supported default that leaves headroom for the Pi encoder.
-    width: 1440,
-    height: 1080,
+    width: 1024,
+    height: 768,
     framerate: 30,
     cropFov: false,
     // Width * height * framerate * 0.15 bits-per-pixel - the same formula camera/constants.ts uses to auto-tune the bitrate live.
-    bitrate: 9_331_200,
+    bitrate: 3_538_944,
     keyframeInterval: 30,
     profile: H264Profile.baseline,
     level: H264Level.level42,

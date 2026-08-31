@@ -1,6 +1,6 @@
 import { type SelectFieldProps, useAppForm } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
-import { createMemo, createSignal, type Component, type JSXElement } from 'solid-js';
+import { createMemo, type Component, type JSXElement } from 'solid-js';
 
 import { McuFirmwareVersionCard } from '@/features/settings/forms/McuFirmwareVersionCard';
 import { logError } from '@/lib/log';
@@ -17,7 +17,7 @@ import {
   type SelectCollection,
   type SelectOption,
 } from './mcu/options';
-import { PowerCycleWarningDialog } from './mcu/PowerCycleWarningDialog';
+import { requestPowerCycleWarning } from './mcu/powerCycleWarning';
 import {
   formSchema,
   getCompatibleDshotSpeed,
@@ -206,12 +206,11 @@ const McuFields: Component<{
 );
 
 export const Mcu: Component = () => {
-  const [showPowerCycleWarning, setShowPowerCycleWarning] = createSignal(false);
   const protocols = createThrusterProtocols();
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
-    onSubmit: createMcuSubmitHandler(() => setShowPowerCycleWarning(true)),
+    onSubmit: createMcuSubmitHandler(requestPowerCycleWarning),
   }));
   const selectedMcuBoard = form.useSelector(
     (state) => state.values.mcuBoard[0] ?? rovConfigStore.mcuBoard,
@@ -233,10 +232,6 @@ export const Mcu: Component = () => {
         />
         <form.AutoSubmit debounce={500} />
       </form.Form>
-      <PowerCycleWarningDialog
-        open={showPowerCycleWarning()}
-        onClose={() => setShowPowerCycleWarning(false)}
-      />
     </form.AppForm>
   );
 };

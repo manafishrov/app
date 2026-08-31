@@ -59,7 +59,9 @@ const getEscFirmwareVersionStatus = (): string => {
     return updateStatus;
   }
   if (!hasReportedEscFirmwareVersion()) {
-    return m.general_rov_settings_esc_firmware_version_status_waiting();
+    return rovStatusStore.deviceInfo.escFirmwareVersionStatus === 'notReported'
+      ? m.general_rov_settings_esc_firmware_version_status_not_reported()
+      : m.general_rov_settings_esc_firmware_version_status_waiting();
   }
   return getCommonEscFirmwareVersion() === null
     ? m.general_rov_settings_esc_firmware_version_status_mixed()

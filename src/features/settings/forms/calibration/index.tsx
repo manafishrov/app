@@ -186,11 +186,7 @@ const testThruster = (
     return next;
   });
   invoke('start_thruster_test', { payload: index })
-    .catch((error: unknown): void => {
-      logError('Failed to start thruster test:', error);
-      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
-    })
-    .finally((): void => {
+    .then((): void => {
       setTimeout(() => {
         setDisabled((previous) => {
           const next = [...previous];
@@ -198,6 +194,15 @@ const testThruster = (
           return next;
         });
       }, THRUSTER_TEST_TIMEOUT_MS);
+    })
+    .catch((error: unknown): void => {
+      logError('Failed to start thruster test:', error);
+      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
+      setDisabled((previous) => {
+        const next = [...previous];
+        next[index] = false;
+        return next;
+      });
     });
 };
 

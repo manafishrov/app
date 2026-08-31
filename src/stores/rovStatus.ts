@@ -19,7 +19,9 @@ type EscFirmwareVersions = [
 
 type DeviceInfo = {
   mcuFirmwareVersion: string;
+  mcuFirmwareVersionStatus: 'querying' | 'reported' | 'notReported';
   escFirmwareVersions: EscFirmwareVersions;
+  escFirmwareVersionStatus: 'discovering' | 'reported' | 'notReported';
 };
 
 type EscFirmwareUpdate = {
@@ -52,6 +54,8 @@ type RovStatus = {
   currentDraw: number;
   piUndervoltage: boolean;
   thrusterControlReady: boolean;
+  thrusterProtocolState: 'disconnected' | 'synchronizing' | 'applying' | 'ready' | 'failed';
+  thrusterProtocolError: string | null;
   health: SystemHealth;
   deviceInfo: DeviceInfo;
   escFirmwareUpdate: EscFirmwareUpdate;
@@ -59,7 +63,9 @@ type RovStatus = {
 
 const defaultDeviceInfo: DeviceInfo = {
   mcuFirmwareVersion: '',
+  mcuFirmwareVersionStatus: 'querying',
   escFirmwareVersions: [null, null, null, null, null, null, null, null],
+  escFirmwareVersionStatus: 'discovering',
 };
 
 const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
@@ -79,6 +85,8 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   currentDraw: 0,
   piUndervoltage: false,
   thrusterControlReady: false,
+  thrusterProtocolState: 'disconnected',
+  thrusterProtocolError: null,
   deviceInfo: defaultDeviceInfo,
   escFirmwareUpdate: defaultEscFirmwareUpdate,
   health: {
