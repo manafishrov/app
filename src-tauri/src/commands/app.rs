@@ -87,11 +87,18 @@ pub fn stage_config(payload: Config) -> Result<(), String> {
 mod tests {
   use super::write_log_export;
 
+  /// # Panics
+  /// Panics if cancelling the dialog is reported as a write or an error.
   #[test]
   fn cancelled_export_is_not_an_error() {
     assert_eq!(write_log_export(None, "unused"), Ok(false));
   }
 
+  /// # Errors
+  /// Returns temporary-directory and file IO errors.
+  ///
+  /// # Panics
+  /// Panics if export changes the bytes or leaves old file contents behind.
   #[test]
   fn export_preserves_bytes_and_replaces_existing_contents()
   -> Result<(), Box<dyn std::error::Error>> {
@@ -104,6 +111,11 @@ mod tests {
     Ok(())
   }
 
+  /// # Errors
+  /// Returns temporary-directory creation errors.
+  ///
+  /// # Panics
+  /// Panics if writing to a directory is not reported as an error.
   #[test]
   fn export_reports_write_failure() -> Result<(), Box<dyn std::error::Error>> {
     let directory = tempfile::tempdir()?;

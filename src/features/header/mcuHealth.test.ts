@@ -16,6 +16,12 @@ const readyStatus = (): Status => ({
   },
 });
 
+it('honors a disconnected protocol state even while USB health is stale', () => {
+  const status = readyStatus();
+  status.thrusterProtocolState = 'disconnected';
+  expect(getMcuHealth(status)).toBe('disconnected');
+});
+
 describe('MCU health', () => {
   it('is ready without any ESCs once USB, protocol and identity are ready', () => {
     expect(getMcuHealth(readyStatus())).toBe('ready');
