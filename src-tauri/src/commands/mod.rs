@@ -6,7 +6,9 @@ pub mod gamepad;
 pub mod recording;
 pub mod rov;
 
-pub use app::{close_splashscreen, get_config, initialize_log_listener, set_config, stage_config};
+pub use app::{
+  close_splashscreen, export_logs, get_config, initialize_log_listener, set_config, stage_config,
+};
 pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{
   deactivate_direction_vector, send_custom_action, send_direction_vector, set_auto_stabilization,

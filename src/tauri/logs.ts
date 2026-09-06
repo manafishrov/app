@@ -1,5 +1,6 @@
 import { createLogRecord, type LogEntry } from '@/lib/log';
 import { createListener, invokeCommand } from '@/tauri/core';
+import { recordLogSessionStart } from '@/tauri/logSession';
 
 const EVENT = 'log_message';
 const LISTENER_OPTIONS = { warnOnly: true, rejectOnSetupFailure: true } as const;
@@ -21,6 +22,7 @@ export const setupLogsListener = (): Promise<() => void> =>
   ).then((unlisten) =>
     invokeCommand<LogEntry[]>('initialize_log_listener', {}, INVOKE_OPTIONS)
       .then((entries) => Promise.all(entries.map((entry) => persistLogEntry(entry))))
+      .then(recordLogSessionStart)
       .then(() => unlisten)
       .catch(() => unlisten),
   );

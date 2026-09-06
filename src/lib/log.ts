@@ -190,11 +190,19 @@ const deleteOldLogRecords = (maxAgeDays = DEFAULT_LOG_RETENTION_DAYS): Promise<n
   });
 };
 
+const readStoredLogRecords = (database: IDBPDatabase<LogDatabase>): Promise<LogRecord[]> =>
+  database
+    .getAll(LOG_STORE_NAME)
+    .then((records) =>
+      records.filter((record): record is StoredLogRecord => isStoredLogRecord(record)),
+    );
+
+// Export must never prune or recover by deleting the database on a read failure.
+const getStoredLogRecords = (): Promise<LogRecord[]> => dbPromise.then(readStoredLogRecords);
+
 const getAllLogRecords = (): Promise<LogRecord[]> =>
   deleteOldLogRecords(DEFAULT_LOG_RETENTION_DAYS).then(() =>
-    withErrorHandling((database) => database.getAll(LOG_STORE_NAME)).then((records) =>
-      records.filter((record): record is StoredLogRecord => isStoredLogRecord(record)),
-    ),
+    withErrorHandling(readStoredLogRecords),
   );
 
 const clearAllLogRecords = (): Promise<void> =>
@@ -217,6 +225,7 @@ export {
   logWarn,
   logError,
   getAllLogRecords,
+  getStoredLogRecords,
   clearAllLogRecords,
   deleteOldLogRecords,
   createLogRecord,
