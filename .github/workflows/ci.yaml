@@ -97,14 +97,6 @@ jobs:
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: stable
-      - name: Inspect metadata before refresh
-        run: |
-          brew --version
-          if brew info --json=v2 ffmpeg@8 > "$RUNNER_TEMP/ffmpeg-before.json"; then
-            echo '[DEBUG-mac-index] FFmpeg 8 available before refresh'
-          else
-            echo '[DEBUG-mac-index] FFmpeg 8 unavailable before refresh'
-          fi
       - name: Install and bundle macOS FFmpeg
         run: bash .github/scripts/setup-macos-ffmpeg.sh
       - name: Compile native FFmpeg bindings
