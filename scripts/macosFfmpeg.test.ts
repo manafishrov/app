@@ -5,11 +5,11 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const EXECUTABLE_MODE = 0o755;
-const NOT_FOUND = -1;
 const folders: string[] = [];
 const stubs = {
   brew: `case "$*" in
-    'install ffmpeg@8') exit 0 ;;
+    'update') touch "$TEST_FFMPEG_PREFIX/refreshed" ;;
+    'install ffmpeg@8') test -f "$TEST_FFMPEG_PREFIX/refreshed" || { echo 'No available formula ffmpeg@8 in stale metadata' >&2; exit 1; } ;;
     '--prefix ffmpeg@8') printf '%s\\n' "$TEST_FFMPEG_PREFIX" ;;
     'deps ffmpeg@8') exit 0 ;;
     *) echo 'Unexpected unpinned Homebrew selection' >&2; exit 1 ;;
@@ -24,22 +24,8 @@ const stubs = {
 
 type Fixture = { folder: string; bin: string; prefix: string; environmentFile: string };
 
-const setupStep = (): string => {
-  const workflow = readFileSync(
-    new URL('../.github/workflows/build.yaml', import.meta.url),
-    'utf8',
-  );
-  const start = workflow.indexOf('      - name: Install macOS dependencies');
-  const end = workflow.indexOf('      - name: Install Linux dependencies', start);
-  if (start === NOT_FOUND || end === NOT_FOUND) {
-    throw new Error('Missing macOS dependency setup');
-  }
-  const [, step = ''] = workflow.slice(start, end).split('        run: |\n');
-  if (step.length === 0) {
-    throw new Error('Missing macOS setup script');
-  }
-  return step.replaceAll(/^ {10}/gm, '');
-};
+const setupStep = (): string =>
+  readFileSync(new URL('../.github/scripts/setup-macos-ffmpeg.sh', import.meta.url), 'utf8');
 
 const writeStubs = (bin: string): void => {
   for (const [name, body] of Object.entries(stubs)) {
@@ -99,8 +85,16 @@ afterEach(() => {
   }
 });
 
+it.each(['build', 'ci'])('%s workflow uses the tested macOS setup script', (workflow) => {
+  const source = readFileSync(
+    new URL(`../.github/workflows/${workflow}.yaml`, import.meta.url),
+    'utf8',
+  );
+  expect(source).toContain('run: bash .github/scripts/setup-macos-ffmpeg.sh');
+});
+
 describe.skipIf(process.platform === 'win32')('macOS release FFmpeg selection', () => {
-  it('selects the FFmpeg 8 keg for discovery and bundling over an inherited FFmpeg 9', () => {
+  it('refreshes stale metadata and selects FFmpeg 8 over an inherited FFmpeg 9', () => {
     const result = runSetup('62.28.100');
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);

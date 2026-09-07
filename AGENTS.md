@@ -75,10 +75,13 @@ and release notes back to the user before doing anything.**
 ### macOS FFmpeg
 
 When changing FFmpeg or macOS packaging, keep the Homebrew major, Rust bindings,
-and bundled dylibs compatible. The release workflow selects the versioned keg
-for both discovery and bundling; unversioned Homebrew FFmpeg can advance to an
-unsupported ABI. `scripts/macosFfmpeg.test.ts` exercises that workflow step with
-recording stubs, but a native macOS build is still required to verify compilation.
+and bundled dylibs compatible. CI and releases share
+`.github/scripts/setup-macos-ffmpeg.sh`, which refreshes Homebrew metadata and
+selects the versioned keg for discovery and bundling. Unversioned Homebrew
+FFmpeg can advance to an unsupported ABI. `scripts/macosFfmpeg.test.ts` covers
+setup behavior with stubs; `check-macos-ffmpeg` runs the script and compiles the
+Rust bindings natively. Require that check before tagging a macOS build change;
+a complete release build is still needed to validate application packaging.
 
 ### Bundled WebKitGTK (Linux)
 
