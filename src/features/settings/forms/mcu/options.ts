@@ -1,7 +1,7 @@
 import { createListCollection } from '@ark-ui/solid/collection';
 
 import * as m from '@/paraglide/messages';
-import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
+import { DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 export type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
@@ -19,20 +19,6 @@ export const createThrusterProtocols = (): SelectCollection =>
     items: [
       { value: ThrusterProtocol.pwm, label: m.general_rov_settings_thruster_protocol_pwm() },
       { value: ThrusterProtocol.dshot, label: m.general_rov_settings_thruster_protocol_dshot() },
-    ],
-  });
-
-export const createCurrentSensingModes = (): SelectCollection =>
-  createListCollection<SelectOption>({
-    items: [
-      {
-        value: CurrentSensingMode.sharedBus,
-        label: m.general_rov_settings_current_sensing_mode_shared_bus(),
-      },
-      {
-        value: CurrentSensingMode.perMotor,
-        label: m.general_rov_settings_current_sensing_mode_per_motor(),
-      },
     ],
   });
 

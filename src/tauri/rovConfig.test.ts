@@ -33,7 +33,6 @@ const confirmedConfig: RovConfig = {
   mcuBoard: 'pico',
   thrusterProtocol: 'dshot',
   dshotSpeed: 300,
-  currentSensingMode: 'sharedBus',
   fluidType: 'saltwater',
   smoothingFactor: 0,
   thrusterPinSetup: {

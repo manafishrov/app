@@ -16,13 +16,6 @@ pub enum ThrusterProtocol {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum CurrentSensingMode {
-  PerMotor,
-  SharedBus,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
 pub enum FluidType {
   Saltwater,
   Freshwater,
@@ -172,7 +165,6 @@ pub struct RovConfig {
   pub mcu_board: McuBoard,
   pub thruster_protocol: ThrusterProtocol,
   pub dshot_speed: u16,
-  pub current_sensing_mode: CurrentSensingMode,
   pub fluid_type: FluidType,
   pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
@@ -211,8 +203,6 @@ pub struct PartialRovConfig {
   pub thruster_protocol: Option<ThrusterProtocol>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub dshot_speed: Option<u16>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub current_sensing_mode: Option<CurrentSensingMode>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub fluid_type: Option<FluidType>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -318,7 +308,6 @@ mod tests {
       mcu_board: McuBoard::Pico2,
       thruster_protocol: ThrusterProtocol::Dshot,
       dshot_speed: 600,
-      current_sensing_mode: CurrentSensingMode::PerMotor,
       fluid_type: FluidType::Saltwater,
       smoothing_factor: 0.4,
       thruster_pin_setup: sample_thruster_pin_setup(),
@@ -567,7 +556,6 @@ mod tests {
     assert!(partial.mcu_board.is_none());
     assert!(partial.thruster_protocol.is_none());
     assert!(partial.dshot_speed.is_none());
-    assert!(partial.current_sensing_mode.is_none());
     assert!(partial.fluid_type.is_none());
     assert!(partial.smoothing_factor.is_none());
     assert!(partial.thruster_pin_setup.is_none());
@@ -589,6 +577,16 @@ mod tests {
   }
 
   /// # Panics
+  /// Panics if a legacy topology setting prevents loading or survives serialization.
+  #[test]
+  fn ignores_legacy_current_sensor_topology() {
+    let mut value = serde_json::to_value(sample_rov_config()).unwrap();
+    value["currentSensingMode"] = serde_json::json!("perMotor");
+    let config: RovConfig = serde_json::from_value(value).unwrap();
+    assert!(serde_json::to_value(config).unwrap().get("currentSensingMode").is_none());
+  }
+
+  /// # Panics
   /// Panics if enum variants do not serialize to the expected camelCase
   /// strings.
   #[test]
@@ -597,8 +595,6 @@ mod tests {
     assert_serializes_to_expected_string(McuBoard::Pico2, "pico2");
     assert_serializes_to_expected_string(ThrusterProtocol::Pwm, "pwm");
     assert_serializes_to_expected_string(ThrusterProtocol::Dshot, "dshot");
-    assert_serializes_to_expected_string(CurrentSensingMode::PerMotor, "perMotor");
-    assert_serializes_to_expected_string(CurrentSensingMode::SharedBus, "sharedBus");
     assert_serializes_to_expected_string(FluidType::Saltwater, "saltwater");
     assert_serializes_to_expected_string(FluidType::Freshwater, "freshwater");
     assert_serializes_to_expected_string(H264Profile::Baseline, "baseline");

@@ -27,13 +27,6 @@ const DshotSpeed = {
 type DshotSpeed = (typeof DshotSpeed)[keyof typeof DshotSpeed];
 /* oxlint-enable no-magic-numbers */
 
-const CurrentSensingMode = {
-  perMotor: 'perMotor',
-  sharedBus: 'sharedBus',
-} as const;
-
-type CurrentSensingMode = (typeof CurrentSensingMode)[keyof typeof CurrentSensingMode];
-
 const FluidType = {
   saltwater: 'saltwater',
   freshwater: 'freshwater',
@@ -155,7 +148,6 @@ type RovConfig = {
   mcuBoard: McuBoard;
   thrusterProtocol: ThrusterProtocol;
   dshotSpeed: DshotSpeed;
-  currentSensingMode: CurrentSensingMode;
   fluidType: FluidType;
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
@@ -207,7 +199,6 @@ const defaultRovConfig: RovConfig = {
   mcuBoard: McuBoard.pico,
   thrusterProtocol: ThrusterProtocol.dshot,
   dshotSpeed: DshotSpeed.dshot300,
-  currentSensingMode: CurrentSensingMode.sharedBus,
   fluidType: FluidType.saltwater,
   smoothingFactor: 0,
   thrusterPinSetup: {
@@ -268,7 +259,6 @@ export {
   rovConfigStore,
   setRovConfigStore,
   FluidType,
-  CurrentSensingMode,
   DshotSpeed,
   McuBoard,
   ThrusterProtocol,

@@ -2,6 +2,19 @@
 
 Control application for the Manafish ROV built with [Tauri](https://tauri.app), [SolidJS](https://solidjs.com), and Rust.
 
+## Current display
+
+Current is the sum of two MCU-calibrated board readings above idle. The MCU
+owns the fixed two-board shared-sensor layout; there is no per-motor/shared-bus
+setting. Auto-zero does not support other sensor layouts or validate sensor gain.
+Missing calibration or telemetry is shown as `— A`, not zero. No offset or
+board averaging is applied in the app.
+
+Install this nullable-current-capable app before the matching Pi firmware.
+Legacy Pi status with numeric current remains readable, but still represents
+its legacy current calculation. The new estimate is not absolute battery current
+or overcurrent protection.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh)

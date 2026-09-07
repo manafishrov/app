@@ -10,7 +10,6 @@ import { isEscFirmwareUpdatePending, rovStatusStore } from '@/stores/rovStatus';
 import { flashMcuFirmware, setRovConfig } from '@/tauri';
 
 import {
-  createCurrentSensingModes,
   createDshotSpeeds,
   createMcuBoards,
   createThrusterProtocols,
@@ -32,7 +31,6 @@ const resolveFormValues = (value: McuFormValues): ResolvedMcuConfig => ({
   mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
   thrusterProtocol: value.thrusterProtocol[0] ?? rovConfigStore.thrusterProtocol,
   dshotSpeed: parseDshotSpeed(value.dshotSpeed[0], rovConfigStore.dshotSpeed),
-  currentSensingMode: value.currentSensingMode[0] ?? rovConfigStore.currentSensingMode,
 });
 
 const flashMcuFirmwareWithLogging = (board: ResolvedMcuConfig['mcuBoard']): Promise<void> =>
@@ -79,7 +77,7 @@ type AppFieldContext = {
 };
 
 type AppFieldComponent = Component<{
-  name: 'mcuBoard' | 'thrusterProtocol' | 'dshotSpeed' | 'currentSensingMode';
+  name: 'mcuBoard' | 'thrusterProtocol' | 'dshotSpeed';
   children: (field: AppFieldContext) => JSXElement;
 }>;
 
@@ -155,38 +153,16 @@ const DshotSpeedSelectField: Component<{
   </props.AppField>
 );
 
-const CurrentSensingModeSelectField: Component<{
-  AppField: AppFieldComponent;
-  modes: SelectCollection;
-}> = (props) => (
-  <props.AppField name='currentSensingMode'>
-    {(field: AppFieldContext): JSXElement => (
-      <field.SelectField
-        label={m.general_rov_settings_current_sensing_mode_title()}
-        description={m.general_rov_settings_current_sensing_mode_description()}
-        collection={props.modes}
-        placeholder={m.general_rov_settings_current_sensing_mode_select_placeholder()}
-      >
-        <For each={props.modes.items}>
-          {(item: SelectOption): JSXElement => <SelectItem item={item}>{item.label}</SelectItem>}
-        </For>
-      </field.SelectField>
-    )}
-  </props.AppField>
-);
-
 const getDefaultFormValues = (): McuFormValues => ({
   mcuBoard: [rovConfigStore.mcuBoard],
   thrusterProtocol: [rovConfigStore.thrusterProtocol],
   dshotSpeed: [getDshotSpeedFormValue(rovConfigStore.dshotSpeed)],
-  currentSensingMode: [rovConfigStore.currentSensingMode],
 });
 
 const McuFields: Component<{
   AppField: AppFieldComponent;
   protocols: SelectCollection;
   speeds: SelectCollection;
-  modes: SelectCollection;
   dshotDisabled: boolean;
   disruptiveSettingsDisabled: boolean;
 }> = (props) => (
@@ -201,7 +177,6 @@ const McuFields: Component<{
       speeds={props.speeds}
       disabled={props.dshotDisabled || props.disruptiveSettingsDisabled}
     />
-    <CurrentSensingModeSelectField AppField={props.AppField} modes={props.modes} />
   </>
 );
 
@@ -226,7 +201,6 @@ export const Mcu: Component = () => {
           AppField={form.AppField}
           protocols={protocols}
           speeds={dshotSpeeds()}
-          modes={createCurrentSensingModes()}
           dshotDisabled={selectedThrusterProtocol() !== ThrusterProtocol.dshot}
           disruptiveSettingsDisabled={isEscFirmwareUpdatePending(rovStatusStore.escFirmwareUpdate)}
         />
