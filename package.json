@@ -58,6 +58,6 @@
     "unplugin-icons": "23.0.1",
     "vite": "8.1.5",
     "vite-plugin-solid": "2.11.13",
-    "vitest": "4.1.10"
+    "vitest": "5.0.0"
   }
 }
