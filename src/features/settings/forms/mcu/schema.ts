@@ -1,6 +1,6 @@
 import zod from 'zod';
 
-import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
+import { DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
 type McuBoardValue = (typeof McuBoard)[keyof typeof McuBoard];
 type DshotSpeedFormValue = '150' | '300' | '600' | '1200';
@@ -15,9 +15,6 @@ export const formSchema = zod
     mcuBoard: zod.array(zod.enum([McuBoard.pico, McuBoard.pico2])).length(1),
     thrusterProtocol: zod.array(zod.enum([ThrusterProtocol.pwm, ThrusterProtocol.dshot])).length(1),
     dshotSpeed: zod.array(zod.enum(['150', '300', '600', '1200'])).length(1),
-    currentSensingMode: zod
-      .array(zod.enum([CurrentSensingMode.perMotor, CurrentSensingMode.sharedBus]))
-      .length(1),
   })
   .superRefine((value, context): void => {
     const [board] = value.mcuBoard;

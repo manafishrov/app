@@ -51,7 +51,7 @@ type RovStatus = {
   autoStabilization: boolean;
   depthHold: boolean;
   batteryPercentage: number;
-  currentDraw: number;
+  currentDraw: number | null;
   piUndervoltage: boolean;
   thrusterControlReady: boolean;
   thrusterProtocolState: 'disconnected' | 'synchronizing' | 'applying' | 'ready' | 'failed';
@@ -82,7 +82,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
-  currentDraw: 0,
+  currentDraw: null,
   piUndervoltage: false,
   thrusterControlReady: false,
   thrusterProtocolState: 'disconnected',

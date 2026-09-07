@@ -49,7 +49,8 @@ pub struct RovStatus {
   pub auto_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
-  pub current_draw: i32,
+  #[serde(deserialize_with = "deserialize_required_option")]
+  pub current_draw: Option<f64>,
   pub pi_undervoltage: bool,
   pub thruster_control_ready: bool,
   pub thruster_protocol_state: String,
@@ -111,6 +112,7 @@ mod tests {
   #[test]
   fn rejects_status_without_current_required_fields() {
     for field in [
+      "currentDraw",
       "piUndervoltage",
       "thrusterControlReady",
       "thrusterProtocolState",
@@ -126,6 +128,29 @@ mod tests {
         "status without {field} should be rejected"
       );
     }
+  }
+
+  /// # Panics
+  /// Panics if missing calibration is confused with measured zero or legacy integers fail.
+  #[test]
+  fn preserves_nullable_current_and_accepts_legacy_numbers() {
+    let legacy: RovStatus = serde_json::from_str(CURRENT_STATUS).unwrap();
+    assert!(legacy.current_draw.is_some());
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+    value["currentDraw"] = serde_json::Value::Null;
+    let unknown: RovStatus = serde_json::from_value(value.clone()).unwrap();
+    assert!(unknown.current_draw.is_none());
+    assert!(serde_json::to_value(unknown).unwrap()["currentDraw"].is_null());
+    value["currentDraw"] = serde_json::json!(0.0);
+    let zero: RovStatus = serde_json::from_value(value.clone()).unwrap();
+    assert!(zero.current_draw.is_some());
+    assert_eq!(serde_json::to_value(zero).unwrap()["currentDraw"], serde_json::json!(0.0));
+    value["currentDraw"] = serde_json::json!(10.25);
+    let fractional: RovStatus = serde_json::from_value(value).unwrap();
+    assert_eq!(
+      serde_json::to_value(fractional).unwrap()["currentDraw"],
+      serde_json::json!(10.25)
+    );
   }
 
   /// # Panics
