@@ -144,8 +144,16 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
         run: |
-          brew install ffmpeg
-          for pkg in ffmpeg $(brew deps ffmpeg); do
+          set -euo pipefail
+          brew install ffmpeg@8
+          export FFMPEG_DIR="$(brew --prefix ffmpeg@8)"
+          export PKG_CONFIG_PATH="${FFMPEG_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+          if [[ "$(pkg-config --modversion libavcodec)" != 62.* ]]; then
+            echo "Expected FFmpeg 8 (libavcodec 62)" >&2
+            exit 1
+          fi
+          printf 'FFMPEG_DIR=%s\nPKG_CONFIG_PATH=%s\n' "$FFMPEG_DIR" "$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
+          for pkg in ffmpeg@8 $(brew deps ffmpeg@8); do
             pkg_lib="$(brew --prefix "$pkg")/lib"
             [ -d "$pkg_lib" ] || continue
             for dylib in "$pkg_lib"/*.dylib; do
