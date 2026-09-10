@@ -483,6 +483,7 @@
   "toasts_failed_to_set_config_reverted": "Failed to set config. Changes reverted.",
   "toasts_failed_to_start_recording": "Failed to start recording",
   "toasts_failed_to_start_thruster_test": "Failed to start thruster test",
+  "toasts_failed_to_cancel_thruster_test": "Failed to cancel thruster test",
   "toasts_app_config_parse_failed_using_default": "Failed to parse app config, using default config instead",
   "toasts_app_config_set_success": "Config set successfully",
   "toasts_recording_converting_to_mp4": "Converting recording to MP4...",
