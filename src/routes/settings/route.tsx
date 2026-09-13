@@ -12,11 +12,6 @@ import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/sol
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createEffect, createSignal, onCleanup, onMount, Show, type Component } from 'solid-js';
 
-import {
-  dismissPowerCycleWarning,
-  powerCycleWarningOpen,
-} from '@/features/settings/forms/mcu/powerCycleWarning';
-import { PowerCycleWarningDialog } from '@/features/settings/forms/mcu/PowerCycleWarningDialog';
 import { SettingsSidebar } from '@/features/settings/SettingsSidebar';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { requestRovConfig, rovConfigRevision } from '@/tauri';
@@ -67,7 +62,6 @@ const SettingsLayout: Component = () => {
 
   return (
     <SidebarProvider defaultOpen>
-      <PowerCycleWarningDialog open={powerCycleWarningOpen()} onClose={dismissPowerCycleWarning} />
       <SidebarLayout class={cn('size-full', !isFullscreen() && 'pt-7')}>
         <SettingsSidebar isFullscreen={isFullscreen()} />
         <SidebarInset class={cn(isFullscreen() && 'mt-6')}>
