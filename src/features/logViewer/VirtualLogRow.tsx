@@ -9,18 +9,22 @@ import { formatTimestamp } from './logViewerUtils';
 export type VirtualLogRowProps = {
   index: number;
   start: number;
-  size: number;
+  measureElement: (element: HTMLDivElement) => void;
   log: LogRecord;
 };
 
 export const VirtualLogRow: Component<VirtualLogRowProps> = (props) => (
   <div
+    ref={(element): void => {
+      queueMicrotask(() => {
+        props.measureElement(element);
+      });
+    }}
     data-index={props.index}
     style={{
       position: 'absolute',
       top: 0,
       left: 0,
-      height: `${props.size}px`,
       transform: `translateY(${props.start}px)`,
       width: '100%',
     }}

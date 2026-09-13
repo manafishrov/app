@@ -4,6 +4,7 @@ import { type Accessor, createMemo, createSignal } from 'solid-js';
 import type { LogLevel, LogOrigin, LogRecord } from '@/lib/log';
 
 import { ROW_ESTIMATE, estimateRowHeight } from './logViewerUtils';
+import { createLogWindowOptions } from './logWindowOptions';
 
 export type ViewerSignals = {
   viewportRef: Accessor<HTMLDivElement | undefined>;
@@ -20,6 +21,10 @@ export type ViewerSignals = {
   setPaused: (value: boolean) => void;
   pendingCount: Accessor<number>;
   setPendingCount: (value: number) => void;
+  hasOlder: Accessor<boolean>;
+  setHasOlder: (value: boolean) => void;
+  loadError: Accessor<boolean>;
+  setLoadError: (value: boolean) => void;
   isLoading: Accessor<boolean>;
   setIsLoading: (value: boolean) => void;
   sourceFilters: Accessor<Record<LogOrigin, boolean>>;
@@ -55,6 +60,16 @@ const createFilterSignals = (): Pick<
   return { sourceFilters, setSourceFilters, levelFilters, setLevelFilters };
 };
 
+const createLoadingSignals = (): Pick<
+  ViewerSignals,
+  'hasOlder' | 'setHasOlder' | 'loadError' | 'setLoadError' | 'isLoading' | 'setIsLoading'
+> => {
+  const [isLoading, setIsLoading] = createSignal(true);
+  const [hasOlder, setHasOlder] = createSignal(false);
+  const [loadError, setLoadError] = createSignal(false);
+  return { isLoading, setIsLoading, hasOlder, setHasOlder, loadError, setLoadError };
+};
+
 export const createViewerSignals = (): ViewerSignals => {
   const [viewportRef, setViewportRef] = createSignal<HTMLDivElement | undefined>();
   const [viewportWidth, setViewportWidth] = createSignal(0);
@@ -63,7 +78,6 @@ export const createViewerSignals = (): ViewerSignals => {
   const [followTail, setFollowTail] = createSignal(true);
   const [paused, setPaused] = createSignal(false);
   const [pendingCount, setPendingCount] = createSignal(0);
-  const [isLoading, setIsLoading] = createSignal(true);
   const filters = createFilterSignals();
 
   return {
@@ -81,8 +95,7 @@ export const createViewerSignals = (): ViewerSignals => {
     setPaused,
     pendingCount,
     setPendingCount,
-    isLoading,
-    setIsLoading,
+    ...createLoadingSignals(),
     ...filters,
   };
 };
@@ -131,23 +144,18 @@ const createScrollToBottom =
   };
 
 const createRemeasureAndFollowTail =
-  (virtualizer: VirtualizerType, followTail: Accessor<boolean>, scrollToBottom: () => void) =>
-  (): void => {
+  (followTail: Accessor<boolean>, scrollToBottom: () => void, scrollToStart: () => void) =>
+  (position?: 'start'): void => {
     queueMicrotask((): void => {
-      virtualizer.measure();
-      if (followTail()) {
+      if (position === 'start') {
+        scrollToStart();
+      } else if (followTail()) {
         scrollToBottom();
       }
-      requestAnimationFrame((): void => {
-        virtualizer.measure();
-        if (followTail()) {
-          scrollToBottom();
-        }
-      });
     });
   };
 
-// Pretext computes the exact wrapped height per row from its text and the current viewport width, so no DOM measurement happens on the scroll path and the scrollbar stays accurate from the first render.
+// Estimate off-screen rows; visible rows use actual DOM heights.
 const createEstimateSize =
   (filteredLogs: Accessor<LogRecord[]>, viewportWidth: Accessor<number>) =>
   (index: number): number => {
@@ -167,31 +175,31 @@ export const createVirtualizerTools = (args: {
   setFollowTail: (value: boolean) => void;
 }): {
   virtualizer: VirtualizerType;
-  remeasureAndFollowTail: () => void;
+  remeasureAndFollowTail: (position?: 'start') => void;
 } => {
+  const windowOptions = createLogWindowOptions(args.filteredLogs);
   const virtualizer = createVirtualizer<HTMLDivElement, Element>({
     get count() {
-      return args.filteredLogs().length;
+      return windowOptions.count;
+    },
+    get getItemKey() {
+      return windowOptions.getItemKey;
     },
     get enabled() {
       return Boolean(args.viewportRef());
     },
     getScrollElement: () => args.viewportRef() ?? null,
     estimateSize: createEstimateSize(args.filteredLogs, args.viewportWidth),
-    getItemKey: (index: number): number | string => {
-      const item = args.filteredLogs()[index];
-      if (!item) {
-        return index;
-      }
-      return `${item.timestamp.toISOString()}-${item.origin}-${item.level}-${index}`;
-    },
+    useAnimationFrameWithResizeObserver: true,
   });
 
   const scrollToBottom = createScrollToBottom(virtualizer, args.filteredLogs, args.setFollowTail);
   const remeasureAndFollowTail = createRemeasureAndFollowTail(
-    virtualizer,
     args.followTail,
     scrollToBottom,
+    () => {
+      virtualizer.scrollToIndex(0, { align: 'start' });
+    },
   );
 
   return { virtualizer, remeasureAndFollowTail };

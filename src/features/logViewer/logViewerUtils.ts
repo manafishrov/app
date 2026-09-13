@@ -30,6 +30,7 @@ export const ROW_ESTIMATE = ROW_LINE_HEIGHT + ROW_VERTICAL_PADDING;
 
 const supportsCanvasMeasurement = 'Segmenter' in Intl && 'OffscreenCanvas' in globalThis;
 
+const MAX_PREPARED_ROWS = 1000;
 const preparedCache = new Map<string, PreparedText>();
 
 export const formatTimestamp = (date: Date): string => {
@@ -51,6 +52,9 @@ const getPrepared = (key: string, text: string): PreparedText => {
   }
 
   const prepared = prepare(text, ROW_FONT, { whiteSpace: 'pre-wrap' });
+  if (preparedCache.size >= MAX_PREPARED_ROWS) {
+    preparedCache.clear();
+  }
   preparedCache.set(key, prepared);
   return prepared;
 };
@@ -68,7 +72,9 @@ const fallbackRowHeight = (text: string, contentWidth: number): number => {
     1,
     Math.floor(contentWidth / (ROW_FONT_SIZE * MONO_CHAR_WIDTH_RATIO)),
   );
-  const lineCount = Math.max(1, Math.ceil(text.length / charsPerLine));
+  const lineCount = text
+    .split(/\r\n|\r|\n/u)
+    .reduce((count, line) => count + Math.max(1, Math.ceil(line.length / charsPerLine)), 0);
   return lineCount * ROW_LINE_HEIGHT + ROW_VERTICAL_PADDING;
 };
 

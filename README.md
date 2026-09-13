@@ -15,6 +15,20 @@ Legacy Pi status with numeric current remains readable, but still represents
 its legacy current calculation. The new estimate is not absolute battery current
 or overcurrent protection.
 
+## Logs
+
+The debug viewer displays pages of up to 500 records. Search and filters apply
+only to the current page; older pages pause live display until returning to
+Latest logs. Export captures all records still stored, regardless of the viewer.
+It never runs retention cleanup or resets the database on a read failure.
+
+Logs retain the seven-day age policy. Successful writes schedule background
+cleanup, at most once per hour after a sweep finishes. Each transaction deletes
+at most 200 expired records through the timestamp index, with a one-second delay
+before the first batch and between batches. Viewer reads and writes do not await
+cleanup. Expired records can remain until maintenance catches up; a failed sweep
+waits for a later write after the hourly cooldown rather than resetting storage.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh)
