@@ -41,6 +41,11 @@ bun run test             # vitest
 
 Auto-fix variants: `fmt`, `lint:fix`, `fmt:rs`, `lint:rs:fix`.
 
+For mounted component and DOM event tests, add `// @vitest-environment happy-dom`
+above the imports. Other tests use Vitest's default Node environment.
+`vitest.config.ts` selects Solid's browser exports and inlines `solid-js` so
+renderers and hooks share one client lifecycle and owner graph.
+
 ## Rules
 
 - Never access OS/hardware from the frontend — go through Tauri commands in

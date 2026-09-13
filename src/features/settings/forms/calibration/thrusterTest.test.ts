@@ -1,86 +1,25 @@
-import { invoke } from '@tauri-apps/api/core';
 // @vitest-environment happy-dom
-import { createComponent } from 'solid-js';
-import { render } from 'solid-js/web';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { receiveThrusterTestToast } from '@/tauri/thrusterTest';
 
-import { useThrusterTest } from './thrusterTest';
-
-vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
-vi.mock('@manafishrov/ui/toaster', () => ({ toast: { create: vi.fn() } }));
-vi.mock('@/lib/log', () => ({ logError: vi.fn() }));
-vi.mock('@/paraglide/messages', () => ({
-  toasts_failed_to_start_thruster_test: (): string => 'Start failed',
-  toasts_failed_to_cancel_thruster_test: (): string => 'Cancel failed',
-}));
+import {
+  START,
+  CANCEL,
+  invokeMock,
+  unmountAll,
+  mountTest,
+  deferred,
+  finish,
+  escape,
+  expectCommands,
+  expectCancelSent,
+  expectSettledCommands,
+  focusedDialogControl,
+} from './thrusterTestFixture';
 
 const TEST_DURATION_MS = 10_000;
 const RETRY_INTERVAL_MS = 1000;
-const THRUSTER_COUNT = 8;
-const START = 'start_thruster_test';
-const CANCEL = 'cancel_thruster_test';
-const invokeMock = vi.mocked(invoke);
-const disposers: (() => void)[] = [];
-
-const unmountAll = (): void => {
-  for (const dispose of disposers.splice(0)) {
-    dispose();
-  }
-};
-
-const mountTest = (): ReturnType<typeof useThrusterTest> => {
-  const state: { controller: ReturnType<typeof useThrusterTest> | null } = { controller: null };
-  const host = document.createElement('div');
-  document.body.append(host);
-  const Probe = (): HTMLElement => {
-    state.controller = useThrusterTest(THRUSTER_COUNT);
-    return document.createElement('div');
-  };
-  const dispose = render(() => createComponent(Probe, {}), host);
-  disposers.push(() => {
-    dispose();
-    host.remove();
-  });
-  if (state.controller === null) {
-    throw new Error('Test component did not mount');
-  }
-  return state.controller;
-};
-
-const deferred = (): {
-  promise: Promise<null>;
-  resolve: (value: null) => void;
-  reject: (reason: Error) => void;
-} => {
-  let resolve: (value: null) => void = vi.fn();
-  let reject: (reason: Error) => void = vi.fn();
-  const promise = new Promise<null>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, resolve, reject };
-};
-
-const finish = (messageKey = 'toasts_thruster_test_completed'): void => {
-  receiveThrusterTestToast({ identifier: 'thruster-test', content: { messageKey } });
-};
-
-const escape = (target: EventTarget = globalThis, repeat = false): KeyboardEvent => {
-  const event = new KeyboardEvent('keydown', {
-    key: 'Escape',
-    bubbles: true,
-    cancelable: true,
-    repeat,
-  });
-  target.dispatchEvent(event);
-  return event;
-};
-
-const expectCommands = (...commands: string[]): void => {
-  expect(invokeMock.mock.calls.map(([command]) => command)).toEqual(commands);
-};
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -92,6 +31,84 @@ afterEach(() => {
   unmountAll();
   vi.useRealTimers();
 });
+
+it('queues Escape behind the pending start and coalesces presses while waiting', () => {
+  const pending = deferred();
+  invokeMock.mockReturnValueOnce(pending.promise);
+  const controller = mountTest();
+  controller.start(0);
+  escape();
+  return vi
+    .advanceTimersByTimeAsync(RETRY_INTERVAL_MS)
+    .then(() => {
+      escape();
+      expectCommands(START);
+      expect(controller.disabled().every(Boolean)).toBe(true);
+      pending.resolve(null);
+      return expectSettledCommands(START, CANCEL);
+    })
+    .then(() => {
+      escape();
+      return expectSettledCommands(START, CANCEL);
+    })
+    .then(() => {
+      expect(controller.disabled().every(Boolean)).toBe(true);
+      finish('toasts_thruster_test_cancelled');
+      expect(controller.disabled().some(Boolean)).toBe(false);
+    });
+});
+
+it('does not send a queued cancellation when the start fails', () => {
+  const pending = deferred();
+  invokeMock.mockReturnValueOnce(pending.promise);
+  const controller = mountTest();
+  controller.start(0);
+  escape();
+  pending.reject(new Error('Start failed'));
+  return expectSettledCommands(START).then(() => {
+    expect(controller.disabled().some(Boolean)).toBe(false);
+    escape();
+    return expectSettledCommands(START);
+  });
+});
+
+it('does not cancel a newer same-index request from an old start continuation', () => {
+  const pending = deferred();
+  invokeMock.mockReturnValueOnce(pending.promise);
+  const controller = mountTest();
+  controller.start(0);
+  escape();
+  finish();
+  controller.start(0);
+  pending.resolve(null);
+  return expectSettledCommands(START, START).then(() => {
+    expect(controller.disabled().every(Boolean)).toBe(true);
+    escape();
+    return expectSettledCommands(START, START, CANCEL);
+  });
+});
+
+it.each(['resolve', 'reject'] as const)(
+  'drops queued Escape after disposal when start will %s',
+  (outcome) => {
+    const pending = deferred();
+    invokeMock.mockReturnValueOnce(pending.promise);
+    mountTest().start(0);
+    escape();
+    unmountAll();
+    if (outcome === 'resolve') {
+      pending.resolve(null);
+    } else {
+      pending.reject(new Error('Unmounted start failed'));
+    }
+    return expectSettledCommands(START).then(() => {
+      expect(vi.getTimerCount()).toBe(0);
+      mountTest().start(0);
+      escape();
+      return expectSettledCommands(START, START, CANCEL);
+    });
+  },
+);
 
 it('does nothing when idle or for other keys', () => {
   const controller = mountTest();
@@ -108,7 +125,7 @@ it('keeps a queued test cancellable beyond ten seconds without a server terminal
   return vi.advanceTimersByTimeAsync(TEST_DURATION_MS).then(() => {
     expect(controller.disabled().every(Boolean)).toBe(true);
     escape();
-    expect(invokeMock).toHaveBeenLastCalledWith(CANCEL, { payload: 0 });
+    return expectCancelSent();
   });
 });
 
@@ -120,7 +137,9 @@ it('does not let an old same-index timer clear a newer test', () => {
     .then(() => {
       expect(controller.disabled().every(Boolean)).toBe(true);
       escape();
-      expect(invokeMock).toHaveBeenLastCalledWith(CANCEL, { payload: 0 });
+      return expectCancelSent();
+    })
+    .then(() => {
       finish('toasts_thruster_test_cancelled');
       controller.start(0);
       return vi.advanceTimersByTimeAsync(TEST_DURATION_MS - RETRY_INTERVAL_MS);
@@ -129,7 +148,7 @@ it('does not let an old same-index timer clear a newer test', () => {
       expect(controller.disabled().every(Boolean)).toBe(true);
       expect(vi.getTimerCount()).toBe(0);
       escape();
-      expectCommands(START, CANCEL, START, CANCEL);
+      return expectSettledCommands(START, CANCEL, START, CANCEL);
     });
 });
 
@@ -177,13 +196,14 @@ it('ignores a late start rejection for an older request at the same index', () =
   invokeMock.mockReturnValueOnce(pending.promise);
   const controller = mountTest();
   controller.start(0);
+  escape();
   finish();
   controller.start(0);
   pending.reject(new Error('Old enqueue failed'));
   return vi.advanceTimersByTimeAsync(0).then(() => {
     expect(controller.disabled().every(Boolean)).toBe(true);
     escape();
-    expect(invokeMock).toHaveBeenLastCalledWith(CANCEL, { payload: 0 });
+    return expectCancelSent();
   });
 });
 
@@ -205,8 +225,8 @@ it('allows an immediate retry after cancel enqueue failure', () => {
   escape();
   return vi.advanceTimersByTimeAsync(0).then(() => {
     escape();
-    expectCommands(START, CANCEL, CANCEL);
     expect(controller.disabled().every(Boolean)).toBe(true);
+    return expectSettledCommands(START, CANCEL, CANCEL);
   });
 });
 
@@ -235,31 +255,9 @@ it('ignores held/rapid Escape but permits retry when enqueue success has no serv
       escape(globalThis, true);
       expectCommands(START, CANCEL);
       escape();
-      expectCommands(START, CANCEL, CANCEL);
+      return expectSettledCommands(START, CANCEL, CANCEL);
     });
 });
-
-const focusedDialogControl = (
-  tag: string,
-): {
-  control: HTMLElement;
-  dismiss: ReturnType<typeof vi.fn>;
-} => {
-  const dialog = document.createElement('dialog');
-  dialog.open = true;
-  const control = document.createElement(tag);
-  dialog.append(control);
-  document.body.append(dialog);
-  control.focus();
-  const dismiss = vi.fn((event: KeyboardEvent): void => {
-    event.stopPropagation();
-  });
-  dialog.addEventListener('keydown', dismiss);
-  disposers.push(() => {
-    dialog.remove();
-  });
-  return { control, dismiss };
-};
 
 it.each(['input', 'button'])('sees focused %s Escape without blocking dialog dismissal', (tag) => {
   const controller = mountTest();
@@ -269,7 +267,7 @@ it.each(['input', 'button'])('sees focused %s Escape without blocking dialog dis
   expect(document.activeElement).toBe(control);
   expect(dismiss).toHaveBeenCalledOnce();
   expect(event.defaultPrevented).toBe(false);
-  expect(invokeMock).toHaveBeenLastCalledWith(CANCEL, { payload: 0 });
+  return expectCancelSent();
 });
 
 it('cleans up the mounted component listener/subscription and late promises without timers', () => {
@@ -288,6 +286,6 @@ it('cleans up the mounted component listener/subscription and late promises with
     expect(vi.getTimerCount()).toBe(0);
     mountTest().start(1);
     escape();
-    expectCommands(START, START, CANCEL);
+    return expectSettledCommands(START, START, CANCEL);
   });
 });

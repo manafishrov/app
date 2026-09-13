@@ -8,7 +8,12 @@ import { subscribeThrusterTestEnd } from '@/tauri/thrusterTest';
 
 const CANCEL_RETRY_INTERVAL_MS = 1000;
 
-type TestRequest = { index: number; cancelling: boolean; retryAfter: number };
+type TestRequest = {
+  index: number;
+  cancelling: boolean;
+  retryAfter: number;
+  startCompleted: Promise<boolean>;
+};
 type ThrusterTest = { disabled: Accessor<boolean[]>; start: (index: number) => void };
 
 const createCancelHandler =
@@ -28,10 +33,18 @@ const createCancelHandler =
       return;
     }
     request.cancelling = true;
-    request.retryAfter = performance.now() + CANCEL_RETRY_INTERVAL_MS;
     // Keep Escape available until a terminal server toast arrives.
     // Rate-limit fresh presses, but allow retry if the command never reaches firmware.
-    invoke('cancel_thruster_test', { payload: request.index })
+    // Wait for start completion before invoking cancel; async Tauri commands can reorder.
+    // This local ordering does not acknowledge motor output.
+    request.startCompleted
+      .then((started): Promise<unknown> | null => {
+        if (started && isCurrent(request)) {
+          request.retryAfter = performance.now() + CANCEL_RETRY_INTERVAL_MS;
+          return invoke('cancel_thruster_test', { payload: request.index });
+        }
+        return null;
+      })
       .catch((error: unknown): void => {
         if (!isCurrent(request)) {
           return;
@@ -56,17 +69,23 @@ export const useThrusterTest = (count: number): ThrusterTest => {
     if (disposed || active() !== null) {
       return;
     }
-    const request: TestRequest = { index, cancelling: false, retryAfter: 0 };
+    // Invoke success confirms the local WebSocket write, not firmware acceptance.
+    const request: TestRequest = {
+      index,
+      cancelling: false,
+      retryAfter: 0,
+      startCompleted: invoke('start_thruster_test', { payload: index })
+        .then((): boolean => true)
+        .catch((error: unknown): boolean => {
+          if (isCurrent(request)) {
+            setActive(null);
+            logError('Failed to start thruster test:', error);
+            toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
+          }
+          return false;
+        }),
+    };
     setActive(request);
-    // Invoke success means queued, not that the motor has started (or even been accepted).
-    invoke('start_thruster_test', { payload: index }).catch((error: unknown): void => {
-      if (!isCurrent(request)) {
-        return;
-      }
-      setActive(null);
-      logError('Failed to start thruster test:', error);
-      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
-    });
   };
 
   onMount(() => {
