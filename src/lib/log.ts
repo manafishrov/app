@@ -1,5 +1,7 @@
 import { type DBSchema, type IDBPDatabase, type OpenDBCallbacks, deleteDB, openDB } from 'idb';
 
+import { createLogRetentionScheduler, RETENTION_BATCH_SIZE } from './logRetention';
+
 const LogLevel = {
   info: 'info',
   warn: 'warn',
@@ -112,23 +114,6 @@ const dispatchLogAddedEvent = (record: LogRecord): void => {
 const isStoredLogRecord = (value: unknown): value is StoredLogRecord =>
   value instanceof Object && 'id' in value && typeof value.id === 'number';
 
-const createLogRecord = (logEntry: LogEntry): Promise<void> =>
-  withErrorHandling((database) => {
-    const newRecord: NewLogRecord = {
-      ...logEntry,
-      timestamp: new Date(),
-    };
-
-    return database
-      .add(LOG_STORE_NAME, newRecord)
-      .then((recordId) => database.get(LOG_STORE_NAME, recordId))
-      .then((fullRecord) => {
-        if (isStoredLogRecord(fullRecord)) {
-          dispatchLogAddedEvent(fullRecord);
-        }
-      });
-  });
-
 const formatLog = (...args: unknown[]): string =>
   args
     .map((arg) => {
@@ -148,24 +133,17 @@ const formatLog = (...args: unknown[]): string =>
     })
     .join(' ');
 
-const writeLog = (level: LogLevel, ...args: unknown[]): void => {
-  createLogRecord({
-    message: formatLog(...args),
-    level,
-    origin: 'frontend',
-  }).catch(ignorePromiseRejection);
-};
-
 const createRetentionCutoff = (maxAgeDays: number): Date =>
   new Date(
     Date.now() -
       maxAgeDays * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND,
   );
 
-const deleteOldLogRecords = (maxAgeDays = DEFAULT_LOG_RETENTION_DAYS): Promise<number> => {
-  const cutoffDate = createRetentionCutoff(maxAgeDays);
+// Maintenance must not recover a failed operation by deleting the database.
+export const deleteExpiredLogBatch = (): Promise<boolean> => {
+  const cutoffDate = createRetentionCutoff(DEFAULT_LOG_RETENTION_DAYS);
 
-  return withErrorHandling((database) => {
+  return dbPromise.then((database) => {
     const transaction = database.transaction(LOG_STORE_NAME, 'readwrite');
     const store = transaction.objectStore(LOG_STORE_NAME);
     const index = store.index('timestamp');
@@ -174,9 +152,9 @@ const deleteOldLogRecords = (maxAgeDays = DEFAULT_LOG_RETENTION_DAYS): Promise<n
       const deleteFromCursor = (
         currentCursor: typeof initialCursor,
         deletedCount: number,
-      ): Promise<number> => {
-        if (currentCursor === null) {
-          return transaction.done.then(() => deletedCount);
+      ): Promise<boolean> => {
+        if (currentCursor === null || deletedCount >= RETENTION_BATCH_SIZE) {
+          return transaction.done.then(() => currentCursor !== null);
         }
 
         return currentCursor
@@ -190,6 +168,34 @@ const deleteOldLogRecords = (maxAgeDays = DEFAULT_LOG_RETENTION_DAYS): Promise<n
   });
 };
 
+const scheduleLogRetention = createLogRetentionScheduler(deleteExpiredLogBatch);
+
+const createLogRecord = (logEntry: LogEntry): Promise<void> =>
+  withErrorHandling((database) => {
+    const newRecord: NewLogRecord = {
+      ...logEntry,
+      timestamp: new Date(),
+    };
+
+    return database
+      .add(LOG_STORE_NAME, newRecord)
+      .then((recordId) => database.get(LOG_STORE_NAME, recordId))
+      .then((fullRecord) => {
+        if (isStoredLogRecord(fullRecord)) {
+          dispatchLogAddedEvent(fullRecord);
+          scheduleLogRetention();
+        }
+      });
+  });
+
+const writeLog = (level: LogLevel, ...args: unknown[]): void => {
+  createLogRecord({
+    message: formatLog(...args),
+    level,
+    origin: 'frontend',
+  }).catch(ignorePromiseRejection);
+};
+
 const readStoredLogRecords = (database: IDBPDatabase<LogDatabase>): Promise<LogRecord[]> =>
   database
     .getAll(LOG_STORE_NAME)
@@ -200,10 +206,36 @@ const readStoredLogRecords = (database: IDBPDatabase<LogDatabase>): Promise<LogR
 // Export must never prune or recover by deleting the database on a read failure.
 const getStoredLogRecords = (): Promise<LogRecord[]> => dbPromise.then(readStoredLogRecords);
 
-const getAllLogRecords = (): Promise<LogRecord[]> =>
-  deleteOldLogRecords(DEFAULT_LOG_RETENTION_DAYS).then(() =>
-    withErrorHandling(readStoredLogRecords),
-  );
+export const LOG_PAGE_SIZE = 500;
+
+// Read only one page by primary key; opening the viewer must not scan retention or all records.
+export const getLogRecordPage = (
+  before?: number,
+): Promise<{ records: LogRecord[]; hasOlder: boolean }> =>
+  dbPromise.then((database) => {
+    const transaction = database.transaction(LOG_STORE_NAME);
+    const range = typeof before === 'number' ? IDBKeyRange.upperBound(before, true) : null;
+    const records: LogRecord[] = [];
+    return transaction.store.openCursor(range, 'prev').then((initialCursor) => {
+      const readCursor = (
+        cursor: typeof initialCursor,
+      ): Promise<{ records: LogRecord[]; hasOlder: boolean }> => {
+        if (!cursor || records.length >= LOG_PAGE_SIZE) {
+          return transaction.done.then(() => ({
+            // ES2022 WebViews lack toReversed; records belongs only to this read.
+            // eslint-disable-next-line unicorn/no-array-reverse
+            records: records.reverse(),
+            hasOlder: cursor !== null,
+          }));
+        }
+        if (isStoredLogRecord(cursor.value)) {
+          records.push(cursor.value);
+        }
+        return cursor.continue().then(readCursor);
+      };
+      return readCursor(initialCursor);
+    });
+  });
 
 const clearAllLogRecords = (): Promise<void> =>
   withErrorHandling((database) => database.clear(LOG_STORE_NAME));
@@ -224,10 +256,8 @@ export {
   logInfo,
   logWarn,
   logError,
-  getAllLogRecords,
   getStoredLogRecords,
   clearAllLogRecords,
-  deleteOldLogRecords,
   createLogRecord,
   type LogRecord,
   type LogEntry,

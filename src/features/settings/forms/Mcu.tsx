@@ -16,7 +16,6 @@ import {
   type SelectCollection,
   type SelectOption,
 } from './mcu/options';
-import { requestPowerCycleWarning } from './mcu/powerCycleWarning';
 import {
   formSchema,
   getCompatibleDshotSpeed,
@@ -55,22 +54,6 @@ const submitMcuConfig = (value: McuFormValues): Promise<void> => {
     { setConfig: setMcuConfigAndVerify, flashFirmware: flashMcuFirmwareWithLogging },
   );
 };
-
-const createMcuSubmitHandler =
-  (onSignalSettingsChanged: () => void) =>
-  ({ value }: { value: McuFormValues }): Promise<void> => {
-    const nextProtocol = value.thrusterProtocol[0] ?? rovConfigStore.thrusterProtocol;
-    const signalSettingsChanged =
-      nextProtocol !== rovConfigStore.thrusterProtocol ||
-      (nextProtocol === ThrusterProtocol.dshot &&
-        parseDshotSpeed(value.dshotSpeed[0], rovConfigStore.dshotSpeed) !==
-          rovConfigStore.dshotSpeed);
-    return submitMcuConfig(value).then(() => {
-      if (signalSettingsChanged) {
-        onSignalSettingsChanged();
-      }
-    });
-  };
 
 type AppFieldContext = {
   SelectField: Component<SelectFieldProps>;
@@ -185,7 +168,7 @@ export const Mcu: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
-    onSubmit: createMcuSubmitHandler(requestPowerCycleWarning),
+    onSubmit: ({ value }): Promise<void> => submitMcuConfig(value),
   }));
   const selectedMcuBoard = form.useSelector(
     (state) => state.values.mcuBoard[0] ?? rovConfigStore.mcuBoard,

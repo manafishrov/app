@@ -21,6 +21,9 @@ type LogViewerHeaderProps = {
     toggleSourceFilter: (source: LogOrigin) => void;
     toggleLevelFilter: (level: LogLevel) => void;
     togglePause: () => void;
+    loadLogs: () => Promise<void>;
+    loadOlder: () => Promise<void>;
+    retry: () => Promise<void>;
     clearLogs: () => Promise<void>;
   };
 };
@@ -156,10 +159,54 @@ const ViewerControls: Component<LogViewerHeaderProps> = (props) => (
   </div>
 );
 
+const runPageAction = (action: () => Promise<void>): void => {
+  action().catch((error: unknown): void => {
+    logError('Failed to update logs', error);
+  });
+};
+
+const PageControls: Component<LogViewerHeaderProps> = (props) => (
+  <div class='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+    <span>{m.debug_window_notice()}</span>
+    <Button
+      size='sm'
+      variant='outline'
+      disabled={props.signals.isLoading() || !props.signals.hasOlder()}
+      onClick={() => {
+        runPageAction(props.actions.loadOlder);
+      }}
+    >
+      {m.debug_load_older()}
+    </Button>
+    <Button
+      size='sm'
+      variant='outline'
+      disabled={props.signals.isLoading()}
+      onClick={() => {
+        runPageAction(props.actions.loadLogs);
+      }}
+    >
+      {m.debug_latest()}
+    </Button>
+    <Show when={props.signals.loadError()}>
+      <span role='alert'>{m.debug_load_error()}</span>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => {
+          runPageAction(props.actions.retry);
+        }}
+      >
+        {m.debug_retry()}
+      </Button>
+    </Show>
+  </div>
+);
+
 const LogViewerHeader: Component<LogViewerHeaderProps> = (props) => (
   <div class='flex shrink-0 flex-col gap-2 p-2'>
-    <div class='flex items-center gap-2'>
-      <InputGroup class='flex-1'>
+    <div class='flex flex-wrap items-center gap-2'>
+      <InputGroup class='min-w-40 flex-1'>
         <InputGroupAddon>
           <SearchIcon aria-hidden='true' />
         </InputGroupAddon>
@@ -179,6 +226,7 @@ const LogViewerHeader: Component<LogViewerHeaderProps> = (props) => (
       <SourceFilters signals={props.signals} actions={props.actions} />
       <LevelFilters signals={props.signals} actions={props.actions} />
     </div>
+    <PageControls {...props} />
   </div>
 );
 

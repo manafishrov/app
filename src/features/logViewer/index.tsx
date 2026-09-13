@@ -65,15 +65,16 @@ const remeasureAfterFontsLoad = (virtualizer: VirtualizerType): void => {
 
 const useLogViewerLifecycle = (actions: ViewerActions, virtualizer: VirtualizerType): void => {
   onMount((): void => {
+    globalThis.addEventListener('log:added', actions.handleLogAdded);
     actions.loadLogs().catch((error: unknown): void => {
       logError('Failed to load logs', error);
     });
-    globalThis.addEventListener('log:added', actions.handleLogAdded);
     remeasureAfterFontsLoad(virtualizer);
   });
 
   onCleanup((): void => {
     globalThis.removeEventListener('log:added', actions.handleLogAdded);
+    actions.dispose();
   });
 };
 
@@ -96,7 +97,7 @@ const LogViewer: Component<LogViewerProps> = (props) => {
   useLogViewerLifecycle(actions, virtualizer);
 
   return (
-    <div class={cn('flex h-full flex-col', props.class)}>
+    <div class={cn('flex h-full min-h-64 min-w-0 flex-col', props.class)}>
       <LogViewerHeader signals={signals} actions={actions} />
       <LogViewerContent
         signals={signals}

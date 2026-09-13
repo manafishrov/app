@@ -53,21 +53,22 @@ const LogList: Component<LogViewerContentProps> = (props) => (
     }}
   >
     <For each={props.virtualizer.getVirtualItems()}>
-      {(virtualItem): JSXElement | undefined => {
-        const log = props.filteredLogs()[virtualItem.index];
-        if (!log) {
-          return;
-        }
-
-        return (
-          <VirtualLogRow
-            index={virtualItem.index}
-            start={virtualItem.start}
-            size={virtualItem.size}
-            log={log}
-          />
-        );
-      }}
+      {(virtualItem): JSXElement => (
+        // The Solid adapter reconciles virtual items by index, not record ID.
+        // Rebind the row when a rolling window or filter puts a new record at that index.
+        <Show when={props.filteredLogs()[virtualItem.index]} keyed>
+          {(log) => (
+            <VirtualLogRow
+              index={virtualItem.index}
+              start={virtualItem.start}
+              measureElement={(element): void => {
+                props.virtualizer.measureElement(element);
+              }}
+              log={log}
+            />
+          )}
+        </Show>
+      )}
     </For>
   </div>
 );
