@@ -1,11 +1,7 @@
 import type { Component, JSXElement } from 'solid-js';
 
 import { useAppForm } from '@manafishrov/ui/form';
-import { toast } from '@manafishrov/ui/toaster';
-import { invoke } from '@tauri-apps/api/core';
 
-import { logError } from '@/lib/log';
-import * as m from '@/paraglide/messages';
 import {
   type NullspaceVectors,
   type Row,
@@ -37,7 +33,6 @@ import {
   THRUSTER_7,
   THRUSTER_COLUMNS,
   THRUSTER_INDICES,
-  THRUSTER_TEST_TIMEOUT_MS,
   ZERO,
 } from './constants';
 import { createIdentifierCollection } from './FieldRenderers';
@@ -48,6 +43,7 @@ import {
   type IdentifierValue,
   type SpinDirectionValue,
 } from './schema';
+import { useThrusterTest } from './thrusterTest';
 const DEFAULT_IDENTIFIER_VALUE: IdentifierValue = '0';
 type AllocationFieldPath = `thrusterAllocation[${number}][${number}]`;
 const identifierCollection = createIdentifierCollection(THRUSTER_INDICES, ONE);
@@ -176,36 +172,6 @@ const submitCalibrationForm = (value: FormValues): Promise<void> => {
   return setRovConfig({ thrusterPinSetup, thrusterAllocation, nullspaceVectors });
 };
 
-const testThruster = (
-  setDisabled: (setter: (previous: boolean[]) => boolean[]) => boolean[],
-  index: number,
-): void => {
-  setDisabled((previous) => {
-    const next = [...previous];
-    next[index] = true;
-    return next;
-  });
-  invoke('start_thruster_test', { payload: index })
-    .then((): void => {
-      setTimeout(() => {
-        setDisabled((previous) => {
-          const next = [...previous];
-          next[index] = false;
-          return next;
-        });
-      }, THRUSTER_TEST_TIMEOUT_MS);
-    })
-    .catch((error: unknown): void => {
-      logError('Failed to start thruster test:', error);
-      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
-      setDisabled((previous) => {
-        const next = [...previous];
-        next[index] = false;
-        return next;
-      });
-    });
-};
-
 const applyPresetToForm = (
   form: { setFieldValue: (field: AllocationFieldPath, value: number) => void },
   presetRows: ThrusterPresetRow,
@@ -235,8 +201,7 @@ const resetAllocationInForm = (
 };
 
 export const Calibration: Component = (): JSXElement => {
-  const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
-  const [testDisabled, setTestDisabled] = createSignal(defaultDisabled);
+  const thrusterTest = useThrusterTest(PIN_NUMBERS.length);
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: createCalibrationFormValues(),
@@ -255,10 +220,8 @@ export const Calibration: Component = (): JSXElement => {
       rowLabelTooltips={ROW_LABEL_TOOLTIPS}
       identifierCollection={identifierCollection}
       zeroValue={ZERO}
-      testDisabled={testDisabled}
-      onTestThruster={(index): void => {
-        testThruster(setTestDisabled, index);
-      }}
+      testDisabled={thrusterTest.disabled}
+      onTestThruster={thrusterTest.start}
       onApplyPreset={(presetRows): void => {
         applyPresetToForm(form, presetRows);
       }}

@@ -7,7 +7,6 @@ const ZERO = Number('0');
 const ONE = Number('1');
 const DECIMAL_RADIX = Number('10');
 const DECIMAL_PRECISION_FACTOR = Number('100');
-const THRUSTER_TEST_TIMEOUT_MS = Number('2000');
 const ALLOCATION_FIELD_STEP = Number('0.01');
 const DEADZONE_FIELD_STEP = Number('0.01');
 const DEADZONE_THRESHOLD = Number('0.2');
@@ -86,6 +85,5 @@ export {
   THRUSTER_7,
   THRUSTER_COLUMNS,
   THRUSTER_INDICES,
-  THRUSTER_TEST_TIMEOUT_MS,
   ZERO,
 };
