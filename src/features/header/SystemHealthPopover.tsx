@@ -22,12 +22,46 @@ import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
+import { getMcuHealth, type McuHealth } from './mcuHealth';
+
 const HealthItem = (props: { label: string; healthy: boolean }): JSXElement => (
   <div class='flex items-center justify-between gap-3'>
     <span class='text-xs text-muted-foreground'>{props.label}</span>
     <div class={`h-2 w-2 rounded-full ${props.healthy ? 'bg-green-500' : 'bg-destructive'}`} />
   </div>
 );
+
+const mcuHealthDescriptions: Record<McuHealth, () => string> = {
+  disconnected: m.controls_system_health_mcu_disconnected,
+  protocolFailed: m.controls_system_health_mcu_protocol_failed,
+  initializing: m.controls_system_health_mcu_initializing,
+  identityMissing: m.controls_system_health_mcu_identity_missing,
+  ready: m.controls_system_health_mcu_ready,
+};
+
+const mcuHealthColors: Record<McuHealth, string> = {
+  disconnected: 'bg-destructive',
+  protocolFailed: 'bg-yellow-500',
+  initializing: 'bg-yellow-500',
+  identityMissing: 'bg-yellow-500',
+  ready: 'bg-green-500',
+};
+
+const McuHealthItem = (): JSXElement => {
+  const health = createMemo(() => getMcuHealth(rovStatusStore));
+  return (
+    <div class='space-y-1'>
+      <div class='flex items-center justify-between gap-3'>
+        <span class='text-xs text-muted-foreground'>{m.controls_system_health_mcu()}</span>
+        <div
+          aria-hidden='true'
+          class={`h-2 w-2 shrink-0 rounded-full ${mcuHealthColors[health()]}`}
+        />
+      </div>
+      <p class='text-xs text-muted-foreground'>{mcuHealthDescriptions[health()]()}</p>
+    </div>
+  );
+};
 
 const SystemHealthPopoverContent = (): JSXElement => (
   <PopoverPositioner>
@@ -44,10 +78,7 @@ const SystemHealthPopoverContent = (): JSXElement => (
             label={m.controls_system_health_pressure_sensor()}
             healthy={rovStatusStore.health.pressureSensorHealthy}
           />
-          <HealthItem
-            label={m.controls_system_health_mcu()}
-            healthy={rovStatusStore.health.mcuHealthy}
-          />
+          <McuHealthItem />
         </div>
       </div>
     </PopoverContent>

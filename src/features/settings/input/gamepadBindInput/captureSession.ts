@@ -1,5 +1,7 @@
 import type { Accessor } from 'solid-js';
 
+import { toast } from '@manafishrov/ui/toaster';
+
 import type { GamepadInput } from '@/stores/config';
 
 import {
@@ -11,6 +13,9 @@ import {
   normalizeBindValue,
   roundToBindIncrement,
 } from '@/input';
+import * as m from '@/paraglide/messages';
+
+import { hasUsableBindingRange } from './bindingRange';
 type GamepadBindCaptureOptions = {
   value: Accessor<GamepadInput | null>;
   selectedGamepadId: Accessor<string | null>;
@@ -197,6 +202,10 @@ const commitCapturedBinding = (options: GamepadBindCaptureOptions, state: Captur
     getSnapshotRawInputValue(state.initialSnapshot, state.changedInput),
   );
   const maxValue = roundToBindIncrement(getGamepadRawInputValue(state.changedInput, finalGamepad));
+  if (!hasUsableBindingRange(minValue, maxValue)) {
+    toast.create({ title: m.toasts_gamepad_binding_range_invalid(), type: 'warning' });
+    return;
+  }
   options.onChange({ input: state.changedInput, minValue, maxValue });
 };
 const scheduleSettledCommit = (

@@ -10,6 +10,8 @@ import BoltIcon from '~icons/material-symbols/bolt';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
+import { formatCurrentDraw } from './currentDraw';
+
 const BATTERY_HIGH_THRESHOLD = 70;
 const BATTERY_MEDIUM_THRESHOLD = 40;
 const BATTERY_LOW_THRESHOLD = 10;
@@ -61,7 +63,7 @@ const BatteryIndicator: Component = () => (
       <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
         <BoltIcon class='size-full' />
       </span>
-      {rovStatusStore.currentDraw.toFixed(0)}A
+      {formatCurrentDraw(rovStatusStore.currentDraw)}
     </Badge>
     <Badge
       variant={

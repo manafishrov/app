@@ -7,6 +7,7 @@ use tokio::sync::mpsc::Sender;
 use crate::models::config::Config;
 use crate::models::toast::ToastContent;
 use crate::toast::{toast_success, toast_warn};
+use crate::version::current_app_version;
 use crate::{log_error, log_warn};
 
 pub struct ConfigSendChannelState {
@@ -113,9 +114,9 @@ pub fn get_config_from_file() -> Config {
 
   let stored_version = raw.get("appVersion").and_then(|v| v.as_str()).unwrap_or("0.0.0");
 
-  let current_version = env!("CARGO_PKG_VERSION");
+  let current_version = current_app_version();
 
-  if stored_version_is_newer(stored_version, current_version) {
+  if stored_version_is_newer(stored_version, &current_version) {
     // Downgrade: keep what this build understands, drop newer-only fields.
     log_warn!(
       "Config was written by a newer app version ({stored_version} > {current_version}). \
@@ -143,22 +144,9 @@ pub fn get_config_from_file() -> Config {
 /// client task.
 pub async fn set_config_to_file(
   state: &ConfigSendChannelState,
-  mut payload: Config,
+  payload: Config,
 ) -> Result<(), String> {
-  let Some(config_path) = get_config_path() else {
-    log_error!("Failed to get config directory. Could not save config file.");
-    return Err("Failed to get config directory.".to_string());
-  };
-
-  if let Some(parent) = config_path.parent() {
-    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-  }
-
-  payload.app_version = env!("CARGO_PKG_VERSION").to_string();
-
-  let content = serde_json::to_string(&payload).map_err(|e| e.to_string())?;
-  fs::write(&config_path, &content).map_err(|e| e.to_string())?;
-
+  let payload = persist_config(payload)?;
   state.tx.send(payload).await.map_err(|e| e.to_string())?;
 
   toast_success(
@@ -173,6 +161,33 @@ pub async fn set_config_to_file(
   );
 
   Ok(())
+}
+
+/// Persist a future connection target without notifying the active WebSocket task.
+///
+/// # Errors
+/// Returns an error if the config directory cannot be found or written.
+pub fn stage_config_to_file(payload: Config) -> Result<(), String> {
+  persist_config(payload).map(|_| ())
+}
+
+/// # Errors
+/// Returns an error if the config path cannot be created, serialized, or written.
+fn persist_config(mut payload: Config) -> Result<Config, String> {
+  let Some(config_path) = get_config_path() else {
+    log_error!("Failed to get config directory. Could not save config file.");
+    return Err("Failed to get config directory.".to_string());
+  };
+
+  if let Some(parent) = config_path.parent() {
+    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+  }
+
+  payload.app_version = current_app_version();
+
+  let content = serde_json::to_string(&payload).map_err(|e| e.to_string())?;
+  fs::write(&config_path, &content).map_err(|e| e.to_string())?;
+  Ok(payload)
 }
 
 #[cfg(test)]

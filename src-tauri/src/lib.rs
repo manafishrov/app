@@ -13,6 +13,7 @@ mod models {
 }
 
 mod recording;
+mod version;
 mod websocket;
 
 mod config;
@@ -21,16 +22,18 @@ mod log;
 mod toast;
 
 use std::sync::Arc;
+use std::sync::atomic::AtomicU64;
 
 use commands::firmware::FlashControl;
 use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  cleanup_firmware_cache, close_splashscreen, download_firmware_update, fetch_app_releases,
-  fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
-  import_rov_config, initialize_log_listener, install_app_release, list_firmware_releases,
-  list_flash_drives, prepare_flash, request_rov_config, save_recording, send_custom_action,
-  send_direction_vector, set_auto_stabilization, set_config, set_depth_hold, set_desired_depth,
-  set_rov_config, signal_flash_image, start_gamepad_stream, start_regulator_auto_tuning,
+  cleanup_firmware_cache, close_splashscreen, confirm_rov_config, deactivate_direction_vector,
+  download_firmware_update, export_logs, fetch_app_releases, fetch_firmware_manifest,
+  flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config,
+  initialize_log_listener, install_app_release, list_firmware_releases, list_flash_drives,
+  prepare_flash, request_rov_config, save_recording, send_custom_action, send_direction_vector,
+  set_auto_stabilization, set_config, set_depth_hold, set_desired_depth, set_rov_config,
+  signal_flash_image, stage_config, start_gamepad_stream, start_regulator_auto_tuning,
   start_thruster_test,
 };
 use config::ConfigSendChannelState;
@@ -40,12 +43,12 @@ use tauri::async_runtime::spawn;
 use tauri::webview::PageLoadEvent;
 use tauri::{App, Builder, Manager, generate_handler};
 use toast::toast_init;
-use tokio::sync::mpsc::channel;
+use tokio::sync::{mpsc::channel, watch};
 
 use websocket::client::{
-  DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage, start_websocket_client,
+  DirectionVectorInput, DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
+  start_websocket_client,
 };
-use websocket::message::WebsocketMessage;
 
 fn setup_handlers(app: &mut App) {
   let log_handle = app.app_handle().clone();
@@ -59,11 +62,12 @@ fn setup_handlers(app: &mut App) {
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
   app.manage(ConfigSendChannelState { tx: config_tx });
-  let (message_tx, message_rx) = channel::<OutboundMessage>(1);
+  let (message_tx, message_rx) = channel::<OutboundMessage>(16);
   app.manage(MessageSendChannelState { tx: message_tx });
-  let (direction_vector_tx, direction_vector_rx) = channel::<WebsocketMessage>(8);
+  let (direction_vector_tx, direction_vector_rx) = watch::channel(DirectionVectorInput::inactive());
   app.manage(DirectionVectorSendChannelState {
     tx: direction_vector_tx,
+    last_sequence: AtomicU64::new(0),
   });
   spawn(async move {
     start_websocket_client(websocket_handle, config_rx, message_rx, direction_vector_rx).await;
@@ -265,14 +269,18 @@ pub fn run() -> tauri::Result<()> {
       gamepad_vibrate,
       get_config,
       initialize_log_listener,
+      export_logs,
       set_config,
+      stage_config,
       request_rov_config,
       set_rov_config,
       import_rov_config,
+      confirm_rov_config,
       start_thruster_test,
       cancel_thruster_test,
       start_regulator_auto_tuning,
       cancel_regulator_auto_tuning,
+      deactivate_direction_vector,
       send_direction_vector,
       send_custom_action,
       set_auto_stabilization,

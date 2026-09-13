@@ -72,6 +72,17 @@ and release notes back to the user before doing anything.**
   and creates a **draft** GitHub release. Edit and publish manually.
 - Pre-releases use `vX.Y.Z-rc.N` (or similar) and are auto-marked prerelease.
 
+### macOS FFmpeg
+
+When changing FFmpeg or macOS packaging, keep the Homebrew major, Rust bindings,
+and bundled dylibs compatible. CI and releases share
+`.github/scripts/setup-macos-ffmpeg.sh`, which refreshes Homebrew metadata and
+selects the versioned keg for discovery and bundling. Unversioned Homebrew
+FFmpeg can advance to an unsupported ABI. `scripts/macosFfmpeg.test.ts` covers
+setup behavior with stubs; `check-macos-ffmpeg` runs the script and compiles the
+Rust bindings natively. Require that check before tagging a macOS build change;
+a complete release build is still needed to validate application packaging.
+
 ### Bundled WebKitGTK (Linux)
 
 Linux packages bundle a custom WebKitGTK built with `ENABLE_WEB_RTC` (distro

@@ -1,16 +1,17 @@
 use reqwest::Client;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::{
   ASSETS_MARKER_END, ASSETS_MARKER_START, MAX_PRERELEASES, MAX_STABLE_RELEASES,
 };
+use crate::version::parse_release_version;
 
 #[derive(Deserialize)]
 struct GitHubRelease {
   tag_name: String,
   published_at: Option<String>,
   draft: bool,
-  prerelease: bool,
   body: Option<String>,
 }
 
@@ -76,20 +77,26 @@ pub async fn fetch_releases(repo_url: &str) -> Result<Vec<FirmwareRelease>, Stri
 
 /// Convert a single `GitHub` release into a `FirmwareRelease`, dropping drafts
 /// and releases without a publish date.
-fn to_firmware_release(release: GitHubRelease) -> Option<FirmwareRelease> {
+fn to_firmware_release(release: GitHubRelease) -> Option<(Version, FirmwareRelease)> {
   if release.draft {
     return None;
   }
-  let prerelease = release.prerelease;
+  let parsed = parse_release_version(&release.tag_name)?;
+  let prerelease = !parsed.pre.is_empty();
   let release_notes = release
     .body
     .map(|body| strip_artifacts_section(&body))
     .filter(|body| !body.is_empty());
-  release.published_at.map(|published_at| FirmwareRelease {
-    version: release.tag_name,
-    published_at,
-    prerelease,
-    release_notes,
+  release.published_at.map(|published_at| {
+    (
+      parsed,
+      FirmwareRelease {
+        version: release.tag_name,
+        published_at,
+        prerelease,
+        release_notes,
+      },
+    )
   })
 }
 
@@ -97,18 +104,18 @@ fn select_releases(all: Vec<GitHubRelease>) -> Vec<FirmwareRelease> {
   let mut stable = Vec::new();
   let mut prerelease = Vec::new();
   for release in all.into_iter().filter_map(to_firmware_release) {
-    if release.prerelease {
-      if prerelease.len() < MAX_PRERELEASES {
-        prerelease.push(release);
-      }
-    } else if stable.len() < MAX_STABLE_RELEASES {
+    if release.1.prerelease {
+      prerelease.push(release);
+    } else {
       stable.push(release);
     }
-    if stable.len() >= MAX_STABLE_RELEASES && prerelease.len() >= MAX_PRERELEASES {
-      break;
-    }
   }
-  let mut selected: Vec<FirmwareRelease> = stable.into_iter().chain(prerelease).collect();
+  stable.sort_by(|a, b| b.0.cmp(&a.0));
+  stable.truncate(MAX_STABLE_RELEASES);
+  prerelease.sort_by(|a, b| b.0.cmp(&a.0));
+  prerelease.truncate(MAX_PRERELEASES);
+  let mut selected: Vec<FirmwareRelease> =
+    stable.into_iter().chain(prerelease).map(|(_, release)| release).collect();
   selected.sort_by(|a, b| b.published_at.cmp(&a.published_at));
   selected
 }

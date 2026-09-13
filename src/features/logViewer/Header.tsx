@@ -13,6 +13,8 @@ import * as m from '@/paraglide/messages';
 
 import type { ViewerSignals } from './logViewerPrimitives';
 
+import { ExportLogsButton } from './ExportLogsButton';
+
 type LogViewerHeaderProps = {
   signals: ViewerSignals;
   actions: {
@@ -110,6 +112,7 @@ const LevelFilters: Component<LogViewerHeaderProps> = (props) => (
 
 const ViewerControls: Component<LogViewerHeaderProps> = (props) => (
   <div class='flex items-center gap-1'>
+    <ExportLogsButton />
     <Toggle
       size='sm'
       variant='outline'

@@ -11,14 +11,45 @@ permissions:
   id-token: write
 
 jobs:
-  create-release:
-    name: Create Draft Release
+  validate-release:
+    name: Validate Release Identity
     runs-on: ubuntu-24.04
     outputs:
-      release_id: ${{ steps.create.outputs.release_id }}
+      prerelease: ${{ steps.validate.outputs.prerelease }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate tag and embedded versions
+        id: validate
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-release-version.py "$TAG"
+
+          version="${TAG#v}"
+          version_without_build="${version%%+*}"
+          if [[ "$version_without_build" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-release:
+    name: Create Draft Release
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+      prerelease: ${{ needs.validate-release.outputs.prerelease }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # Create the draft release once up front so the parallel build jobs only
       # upload assets to it. Creating it inside each build job races and can fail
@@ -27,13 +58,16 @@ jobs:
         id: create
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.validate-release.outputs.prerelease }}
         run: |
           set -euo pipefail
-          tag="${{ github.ref_name }}"
-          repo="${{ github.repository }}"
+          tag="$TAG"
+          repo="$REPO"
           if ! gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
             args=(--draft --title "$tag" --notes "")
-            if [[ "$tag" == *-* ]]; then
+            if [[ "$PRERELEASE" == "true" ]]; then
               args+=(--prerelease)
             fi
             gh release create "$tag" -R "$repo" "${args[@]}"
@@ -48,6 +82,7 @@ jobs:
   # first release after a webkit version bump pays the ~4h build.
   webkitgtk:
     name: WebKitGTK (WebRTC)
+    needs: validate-release
     uses: ./.github/workflows/build-webkitgtk.yaml
     permissions:
       packages: write
@@ -70,6 +105,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set bun hash
         shell: bash
@@ -106,23 +143,7 @@ jobs:
 
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
-        run: |
-          brew install ffmpeg
-          for pkg in ffmpeg $(brew deps ffmpeg); do
-            pkg_lib="$(brew --prefix "$pkg")/lib"
-            [ -d "$pkg_lib" ] || continue
-            for dylib in "$pkg_lib"/*.dylib; do
-              [ -L "$dylib" ] && continue
-              [ -f "$dylib" ] || continue
-              install_name_tool -id "@rpath/$(basename "$dylib")" "$dylib"
-              for dep in $(otool -L "$dylib" | grep /opt/homebrew | awk '{print $1}'); do
-                install_name_tool -change "$dep" "@rpath/$(basename "$dep")" "$dylib"
-              done
-            done
-            cp -P "$pkg_lib"/*.dylib src-tauri/ 2>/dev/null || true
-          done
-          DYLIBS_JSON=$(ls src-tauri/*.dylib | sed 's|src-tauri/|./|' | sed 's|^|"|' | sed 's|$|"|' | tr '\n' ',' | sed 's/,$//')
-          bun -e "console.log(JSON.stringify({bundle: {macOS: {frameworks: [$DYLIBS_JSON]}}}))" > src-tauri/tauri.macos.conf.json
+        run: bash .github/scripts/setup-macos-ffmpeg.sh
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
@@ -350,7 +371,9 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
 
-      # Windows: direct downloads own their own updates.
+      # Windows: direct downloads own their own updates. WiX/MSI rejects
+      # canonical SemVer prereleases such as `1.0.17-rc.8`, so prereleases use
+      # NSIS only while stable releases publish both installer formats.
       - name: Build and upload Windows to draft release
         if: matrix.platform == 'windows-latest'
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
@@ -361,6 +384,7 @@ jobs:
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ needs.create-release.outputs.prerelease == 'true' && '--bundles nsis' || '--bundles nsis,msi' }}
 
       # Linux deb/rpm: package-manager owned, so the in-app updater is
       # compiled out (it can only replace an AppImage in place; touching a

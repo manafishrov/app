@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
+import { DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
 import { updateMcuConfig, type ResolvedMcuConfig } from './update';
 
@@ -8,7 +8,6 @@ const config: ResolvedMcuConfig = {
   mcuBoard: McuBoard.pico2,
   thrusterProtocol: ThrusterProtocol.dshot,
   dshotSpeed: DshotSpeed.dshot1200,
-  currentSensingMode: CurrentSensingMode.perMotor,
 };
 
 describe('changed MCU board', () => {

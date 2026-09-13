@@ -1,9 +1,6 @@
 import type { RovConfig } from '@/stores/rovConfig';
 
-export type ResolvedMcuConfig = Pick<
-  RovConfig,
-  'mcuBoard' | 'thrusterProtocol' | 'dshotSpeed' | 'currentSensingMode'
->;
+export type ResolvedMcuConfig = Pick<RovConfig, 'mcuBoard' | 'thrusterProtocol' | 'dshotSpeed'>;
 
 type McuConfigUpdate = {
   config: ResolvedMcuConfig;

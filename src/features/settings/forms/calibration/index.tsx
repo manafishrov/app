@@ -1,11 +1,7 @@
 import type { Component, JSXElement } from 'solid-js';
 
 import { useAppForm } from '@manafishrov/ui/form';
-import { toast } from '@manafishrov/ui/toaster';
-import { invoke } from '@tauri-apps/api/core';
 
-import { logError } from '@/lib/log';
-import * as m from '@/paraglide/messages';
 import {
   type NullspaceVectors,
   type Row,
@@ -37,8 +33,6 @@ import {
   THRUSTER_7,
   THRUSTER_COLUMNS,
   THRUSTER_INDICES,
-  THRUSTER_TEST_DURATION_MS,
-  THRUSTER_TEST_TIMEOUT_MS,
   ZERO,
 } from './constants';
 import { createIdentifierCollection } from './FieldRenderers';
@@ -49,6 +43,7 @@ import {
   type IdentifierValue,
   type SpinDirectionValue,
 } from './schema';
+import { useThrusterTest } from './thrusterTest';
 const DEFAULT_IDENTIFIER_VALUE: IdentifierValue = '0';
 type AllocationFieldPath = `thrusterAllocation[${number}][${number}]`;
 const identifierCollection = createIdentifierCollection(THRUSTER_INDICES, ONE);
@@ -177,81 +172,6 @@ const submitCalibrationForm = (value: FormValues): Promise<void> => {
   return setRovConfig({ thrusterPinSetup, thrusterAllocation, nullspaceVectors });
 };
 
-type ActiveTestIndexSetter = (setter: (previous: number | null) => number | null) => number | null;
-
-const testThruster = (
-  setDisabled: (setter: (previous: boolean[]) => boolean[]) => boolean[],
-  setActiveTestIndex: ActiveTestIndexSetter,
-  index: number,
-): void => {
-  setDisabled((previous) => {
-    const next = [...previous];
-    next[index] = true;
-    return next;
-  });
-  setActiveTestIndex(() => index);
-  invoke('start_thruster_test', { payload: index })
-    .then((): void => {
-      setTimeout(() => {
-        setActiveTestIndex((previous) => (previous === index ? null : previous));
-      }, THRUSTER_TEST_DURATION_MS);
-    })
-    .catch((error: unknown): void => {
-      logError('Failed to start thruster test:', error);
-      toast.create({ title: m.toasts_failed_to_start_thruster_test(), type: 'error' });
-      setActiveTestIndex((previous) => (previous === index ? null : previous));
-    })
-    .finally((): void => {
-      setTimeout(() => {
-        setDisabled((previous) => {
-          const next = [...previous];
-          next[index] = false;
-          return next;
-        });
-      }, THRUSTER_TEST_TIMEOUT_MS);
-    });
-};
-
-const cancelActiveThrusterTest = (
-  activeTestIndex: () => number | null,
-  setActiveTestIndex: ActiveTestIndexSetter,
-  setDisabled: (setter: (previous: boolean[]) => boolean[]) => boolean[],
-): void => {
-  const index = activeTestIndex();
-  if (index === null) {
-    return;
-  }
-  setActiveTestIndex((previous) => (previous === index ? null : previous));
-  setDisabled((previous) => {
-    const next = [...previous];
-    next[index] = false;
-    return next;
-  });
-  invoke('cancel_thruster_test', { payload: index }).catch((error: unknown): void => {
-    logError('Failed to cancel thruster test:', error);
-    toast.create({ title: m.toasts_failed_to_cancel_thruster_test(), type: 'error' });
-  });
-};
-
-const useThrusterTestEscapeKeybind = (
-  activeTestIndex: () => number | null,
-  setActiveTestIndex: ActiveTestIndexSetter,
-  setDisabled: (setter: (previous: boolean[]) => boolean[]) => boolean[],
-): void => {
-  onMount(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') {
-        return;
-      }
-      cancelActiveThrusterTest(activeTestIndex, setActiveTestIndex, setDisabled);
-    };
-    globalThis.addEventListener('keydown', handleKeyDown);
-    onCleanup(() => {
-      globalThis.removeEventListener('keydown', handleKeyDown);
-    });
-  });
-};
-
 const applyPresetToForm = (
   form: { setFieldValue: (field: AllocationFieldPath, value: number) => void },
   presetRows: ThrusterPresetRow,
@@ -281,9 +201,7 @@ const resetAllocationInForm = (
 };
 
 export const Calibration: Component = (): JSXElement => {
-  const defaultDisabled = Array.from({ length: PIN_NUMBERS.length }, () => false);
-  const [testDisabled, setTestDisabled] = createSignal(defaultDisabled);
-  const [activeTestIndex, setActiveTestIndex] = createSignal<number | null>(null);
+  const thrusterTest = useThrusterTest(PIN_NUMBERS.length);
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: createCalibrationFormValues(),
@@ -292,8 +210,6 @@ export const Calibration: Component = (): JSXElement => {
         form.reset(value);
       }),
   }));
-
-  useThrusterTestEscapeKeybind(activeTestIndex, setActiveTestIndex, setTestDisabled);
 
   return (
     <CalibrationFormLayout
@@ -304,10 +220,8 @@ export const Calibration: Component = (): JSXElement => {
       rowLabelTooltips={ROW_LABEL_TOOLTIPS}
       identifierCollection={identifierCollection}
       zeroValue={ZERO}
-      testDisabled={testDisabled}
-      onTestThruster={(index): void => {
-        testThruster(setTestDisabled, setActiveTestIndex, index);
-      }}
+      testDisabled={thrusterTest.disabled}
+      onTestThruster={thrusterTest.start}
       onApplyPreset={(presetRows): void => {
         applyPresetToForm(form, presetRows);
       }}

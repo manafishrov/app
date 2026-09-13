@@ -1,20 +1,26 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::sync::atomic::AtomicU64;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use futures_util::{Sink, SinkExt, StreamExt};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{
   mpsc::{self, Receiver},
-  oneshot,
+  oneshot, watch,
 };
-use tokio::time::{interval, sleep, timeout};
+use tokio::time::{MissedTickBehavior, interval, sleep, timeout};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{self, Message};
 
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
 use crate::config::get_config_from_file;
+use crate::models::actions::DirectionVector;
 use crate::models::config::Config;
 use crate::{log_info, log_warn};
+
+const DIRECTION_VECTOR_SEND_INTERVAL: Duration = Duration::from_micros(16_667);
+const DIRECTION_VECTOR_INPUT_TIMEOUT: Duration = Duration::from_millis(200);
+const WEBSOCKET_WRITE_TIMEOUT: Duration = Duration::from_secs(3);
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +39,55 @@ pub struct OutboundMessage {
 }
 
 pub struct DirectionVectorSendChannelState {
-  pub tx: mpsc::Sender<WebsocketMessage>,
+  pub tx: watch::Sender<DirectionVectorInput>,
+  pub last_sequence: AtomicU64,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DirectionVectorInput {
+  vector: DirectionVector,
+  updated_at: Instant,
+  active: bool,
+}
+
+impl DirectionVectorInput {
+  pub(crate) fn active(vector: DirectionVector) -> Self {
+    Self {
+      vector,
+      updated_at: Instant::now(),
+      active: true,
+    }
+  }
+
+  pub(crate) fn inactive() -> Self {
+    Self {
+      vector: [0.0; 8],
+      updated_at: Instant::now(),
+      active: false,
+    }
+  }
+
+  fn current_vector(self, now: Instant) -> DirectionVector {
+    if now.duration_since(self.updated_at) <= DIRECTION_VECTOR_INPUT_TIMEOUT {
+      self.vector
+    } else {
+      [0.0; 8]
+    }
+  }
+
+  pub(crate) fn vector_for_tick(
+    self,
+    was_active: bool,
+    now: Instant,
+  ) -> (Option<DirectionVector>, bool) {
+    if self.active {
+      (Some(self.current_vector(now)), true)
+    } else if was_active {
+      (Some([0.0; 8]), false)
+    } else {
+      (None, false)
+    }
+  }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,6 +95,18 @@ enum MessageSendOutcome {
   Sent,
   SerializationFailed,
   ConnectionFailed,
+}
+
+fn direction_session_state_after_send(
+  current: bool,
+  next: bool,
+  outcome: MessageSendOutcome,
+) -> bool {
+  if outcome == MessageSendOutcome::Sent {
+    next
+  } else {
+    current
+  }
 }
 
 fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u128>) {
@@ -76,13 +142,19 @@ async fn send_text_message<S>(
 where
   S: Sink<Message, Error = tungstenite::Error> + Unpin,
 {
-  if let Err(error) = write.send(Message::Text(message_text.into())).await {
-    log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
-    emit_connection_status(app, false, None);
-    return false;
+  match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(Message::Text(message_text.into()))).await {
+    Ok(Ok(())) => true,
+    Ok(Err(error)) => {
+      log_warn!("Websocket send error{}: {}. Reconnecting...", error_label, error);
+      emit_connection_status(app, false, None);
+      false
+    },
+    Err(_) => {
+      log_warn!("Websocket send timed out{}. Reconnecting...", error_label);
+      emit_connection_status(app, false, None);
+      false
+    },
   }
-
-  true
 }
 
 async fn send_serialized_message<S>(
@@ -129,19 +201,29 @@ fn complete_outbound_message(
   outcome == MessageSendOutcome::ConnectionFailed
 }
 
+fn outbound_completion_cancelled(completion: Option<&oneshot::Sender<Result<(), String>>>) -> bool {
+  completion.is_some_and(oneshot::Sender::is_closed)
+}
+
 async fn send_ping<S>(write: &mut S, app: &AppHandle) -> bool
 where
   S: Sink<Message, Error = tungstenite::Error> + Unpin,
 {
   let ping_data = current_timestamp_ms().to_string().into_bytes();
 
-  if let Err(error) = write.send(Message::Ping(ping_data.into())).await {
-    log_warn!("Failed to send ping: {}. Reconnecting...", error);
-    emit_connection_status(app, false, None);
-    return false;
+  match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(Message::Ping(ping_data.into()))).await {
+    Ok(Ok(())) => true,
+    Ok(Err(error)) => {
+      log_warn!("Failed to send ping: {}. Reconnecting...", error);
+      emit_connection_status(app, false, None);
+      false
+    },
+    Err(_) => {
+      log_warn!("Timed out sending ping. Reconnecting...");
+      emit_connection_status(app, false, None);
+      false
+    },
   }
-
-  true
 }
 
 async fn handle_incoming_message<S>(
@@ -154,12 +236,20 @@ where
 {
   match message {
     Ok(message) if message.is_text() || message.is_binary() => {
-      if let Some(response) = handle_message(app, message).await
-        && let Err(error) = write.send(response).await
-      {
-        log_warn!("Websocket send error: {}. Reconnecting...", error);
-        emit_connection_status(app, false, None);
-        return false;
+      if let Some(response) = handle_message(app, message).await {
+        match timeout(WEBSOCKET_WRITE_TIMEOUT, write.send(response)).await {
+          Ok(Ok(())) => {},
+          Ok(Err(error)) => {
+            log_warn!("Websocket send error: {}. Reconnecting...", error);
+            emit_connection_status(app, false, None);
+            return false;
+          },
+          Err(_) => {
+            log_warn!("Websocket response send timed out. Reconnecting...");
+            emit_connection_status(app, false, None);
+            return false;
+          },
+        }
       }
     },
     Ok(message) if message.is_close() => {
@@ -190,9 +280,10 @@ pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
   mut message_rx: Receiver<OutboundMessage>,
-  mut direction_vector_rx: Receiver<WebsocketMessage>,
+  direction_vector_rx: watch::Receiver<DirectionVectorInput>,
 ) {
   let mut config = get_config_from_file();
+  let mut direction_session_active = false;
 
   loop {
     let url = connection_url(&config);
@@ -227,6 +318,8 @@ pub async fn start_websocket_client(
     let ping_interval_duration = Duration::from_secs(2);
     let mut ping_timer = interval(ping_interval_duration);
     ping_timer.tick().await;
+    let mut direction_timer = interval(DIRECTION_VECTOR_SEND_INTERVAL);
+    direction_timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
     loop {
       tokio::select! {
@@ -240,6 +333,10 @@ pub async fn start_websocket_client(
             config = new_config;
           }
           Some(outbound) = message_rx.recv() => {
+              if outbound_completion_cancelled(outbound.sent.as_ref()) {
+                log_warn!("Dropping an outbound command after its caller timed out.");
+                continue;
+              }
               let outcome = send_serialized_message(
                 &mut write,
                 &app,
@@ -251,14 +348,26 @@ pub async fn start_websocket_client(
                 break;
               }
           }
-          Some(direction_vector) = direction_vector_rx.recv() => {
-              if send_serialized_message(
+          _ = direction_timer.tick() => {
+              let (direction_vector, is_active) = direction_vector_rx
+                .borrow()
+                .vector_for_tick(direction_session_active, Instant::now());
+              let Some(direction_vector) = direction_vector else {
+                continue;
+              };
+              let outcome = send_serialized_message(
                 &mut write,
                 &app,
-                &direction_vector,
+                &WebsocketMessage::DirectionVector(direction_vector),
                 "direction vector",
                 " (direction vector)",
-              ).await == MessageSendOutcome::ConnectionFailed {
+              ).await;
+              direction_session_active = direction_session_state_after_send(
+                direction_session_active,
+                is_active,
+                outcome,
+              );
+              if outcome == MessageSendOutcome::ConnectionFailed {
                 break;
               }
           }
@@ -293,6 +402,69 @@ async fn wait_before_retry(rx: &mut Receiver<Config>) -> Option<Config> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// # Panics
+  /// Panics if an outbound command remains eligible after its waiting caller exits.
+  #[test]
+  fn cancelled_outbound_completion_is_detected() {
+    let (completion, receiver) = oneshot::channel::<Result<(), String>>();
+    let active = Some(completion);
+    assert!(!outbound_completion_cancelled(active.as_ref()));
+
+    drop(receiver);
+    assert!(outbound_completion_cancelled(active.as_ref()));
+  }
+
+  /// # Panics
+  /// Panics if stale control input is not replaced with a neutral vector.
+  #[test]
+  fn stale_direction_input_is_neutralized() {
+    let input = DirectionVectorInput {
+      vector: [0.75; 8],
+      updated_at: Instant::now(),
+      active: true,
+    };
+
+    let observed = input.current_vector(input.updated_at + Duration::from_millis(201));
+    assert!(observed.iter().all(|value| value.abs() < f32::EPSILON));
+  }
+
+  /// # Panics
+  /// Panics if an inactive control session emits more than one neutral vector.
+  #[test]
+  fn inactive_direction_session_emits_one_final_neutral_vector() {
+    let input = DirectionVectorInput::inactive();
+
+    let (final_vector, active) = input.vector_for_tick(true, Instant::now());
+    assert_eq!(final_vector, Some([0.0; 8]));
+    assert!(!active);
+
+    let (next_vector, active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
+    assert!(!active);
+  }
+
+  /// # Panics
+  /// Panics if a failed final-neutral write is not retried after reconnecting.
+  #[test]
+  fn failed_final_neutral_is_retried_after_reconnect() {
+    let input = DirectionVectorInput::inactive();
+    let mut active = true;
+
+    let (first_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(first_vector, Some([0.0; 8]));
+    active =
+      direction_session_state_after_send(active, next_active, MessageSendOutcome::ConnectionFailed);
+    assert!(active);
+
+    let (retry_vector, next_active) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(retry_vector, Some([0.0; 8]));
+    active = direction_session_state_after_send(active, next_active, MessageSendOutcome::Sent);
+    assert!(!active);
+
+    let (next_vector, _) = input.vector_for_tick(active, Instant::now());
+    assert_eq!(next_vector, None);
+  }
 
   /// # Panics
   /// Panics if serialization failure is not returned to the waiting sender.

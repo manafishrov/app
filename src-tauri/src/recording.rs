@@ -46,8 +46,10 @@ fn show_save_started(toast_id: &str) {
 
 fn show_save_success(toast_id: &str, output_path: &Path) {
   let mut description_args = HashMap::<String, Value>::new();
-  let _ =
-    description_args.insert("path".to_string(), Value::from(output_path.display().to_string()));
+  let display_name = output_path
+    .file_name()
+    .map_or_else(|| output_path.display().to_string(), |name| name.to_string_lossy().into_owned());
+  let _ = description_args.insert("path".to_string(), Value::from(display_name));
 
   toast_success(
     Some(toast_id.to_string()),

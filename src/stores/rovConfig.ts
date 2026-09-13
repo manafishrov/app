@@ -1,7 +1,5 @@
 import { createStore, reconcile } from 'solid-js/store';
 
-import type { EscFirmwareVersions } from '@/stores/rovStatus';
-
 import * as m from '@/paraglide/messages';
 
 const McuBoard = {
@@ -28,13 +26,6 @@ const DshotSpeed = {
 
 type DshotSpeed = (typeof DshotSpeed)[keyof typeof DshotSpeed];
 /* oxlint-enable no-magic-numbers */
-
-const CurrentSensingMode = {
-  perMotor: 'perMotor',
-  sharedBus: 'sharedBus',
-} as const;
-
-type CurrentSensingMode = (typeof CurrentSensingMode)[keyof typeof CurrentSensingMode];
 
 const FluidType = {
   saltwater: 'saltwater',
@@ -153,14 +144,10 @@ type Camera = {
 
 type RovConfig = {
   firmwareVersion: string;
-  // Compatibility fields supplied by older Pi firmware.
-  mcuFirmwareVersion?: string;
-  escFirmwareVersions?: EscFirmwareVersions;
   rovName: string;
   mcuBoard: McuBoard;
   thrusterProtocol: ThrusterProtocol;
   dshotSpeed: DshotSpeed;
-  currentSensingMode: CurrentSensingMode;
   fluidType: FluidType;
   smoothingFactor: number;
   thrusterPinSetup: ThrusterPinSetup;
@@ -188,7 +175,12 @@ const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({
   kd: 0.6,
   rate: 120,
 });
-const createDefaultDepthAxisConfig = (): AxisConfig => ({ kp: 2, ki: 0, kd: 0.5, rate: 0.5 });
+const createDefaultDepthAxisConfig = (): AxisConfig => ({
+  kp: 2,
+  ki: 0,
+  kd: 0.5,
+  rate: 0.5,
+});
 
 const defaultThrusterAllocation: ThrusterAllocation = [
   [1, 1, 0, 0, -1, 0, 0, 0],
@@ -203,13 +195,10 @@ const defaultThrusterAllocation: ThrusterAllocation = [
 
 const defaultRovConfig: RovConfig = {
   firmwareVersion: m.common_not_available(),
-  mcuFirmwareVersion: m.common_not_available(),
-  escFirmwareVersions: [null, null, null, null, null, null, null, null],
-  rovName: 'Manafish Nomad',
+  rovName: '',
   mcuBoard: McuBoard.pico,
   thrusterProtocol: ThrusterProtocol.dshot,
   dshotSpeed: DshotSpeed.dshot300,
-  currentSensingMode: CurrentSensingMode.sharedBus,
   fluidType: FluidType.saltwater,
   smoothingFactor: 0,
   thrusterPinSetup: {
@@ -234,13 +223,13 @@ const defaultRovConfig: RovConfig = {
     maxBatteryVoltage: 20.5,
   },
   camera: {
-    // Highest supported preset (see camera/constants.ts RESOLUTION_OPTIONS) at the full-FOV framerate ceiling for that resolution.
-    width: 1440,
-    height: 1080,
-    framerate: 40,
+    // A broadly supported default that leaves headroom for the Pi encoder.
+    width: 1024,
+    height: 768,
+    framerate: 30,
     cropFov: false,
     // Width * height * framerate * 0.15 bits-per-pixel - the same formula camera/constants.ts uses to auto-tune the bitrate live.
-    bitrate: 9_331_200,
+    bitrate: 3_538_944,
     keyframeInterval: 30,
     profile: H264Profile.baseline,
     level: H264Level.level42,
@@ -270,7 +259,6 @@ export {
   rovConfigStore,
   setRovConfigStore,
   FluidType,
-  CurrentSensingMode,
   DshotSpeed,
   McuBoard,
   ThrusterProtocol,

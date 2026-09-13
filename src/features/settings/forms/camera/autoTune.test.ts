@@ -7,8 +7,6 @@ const DEFAULT_FRAMERATE = 30;
 const UPDATED_FRAMERATE = 60;
 const EXPECTED_BITRATE_MBPS = 3;
 const MAX_FULL_FOV_FRAMERATE = 40;
-const MAX_CROP_FRAMERATE = 120;
-const CROP_BITRATE_MBPS = 6;
 const DEFAULT_BITRATE_MBPS = 1;
 
 type FormState = {
@@ -69,7 +67,7 @@ describe('camera automatic bitrate tuning', () => {
   });
 
   it('lowers the framerate ceiling when resolution increases', () => {
-    const form = createForm({ automaticBitrate: false, cropFov: true });
+    const form = createForm({ automaticBitrate: false, framerate: UPDATED_FRAMERATE });
     const autoTune = createCameraAutoTune(form);
 
     autoTune.handleResolutionChange(ResolutionKey.max);
@@ -78,14 +76,14 @@ describe('camera automatic bitrate tuning', () => {
     expect(form.setBitrateMbps).not.toHaveBeenCalled();
   });
 
-  it('raises framerate and retunes bitrate when crop FOV is enabled', () => {
+  it('preserves framerate and retunes bitrate when crop FOV is enabled', () => {
     const form = createForm({ automaticBitrate: true });
     const autoTune = createCameraAutoTune(form);
 
     autoTune.handleCropFovChange(true);
 
-    expect(form.setFramerate).toHaveBeenCalledWith(MAX_CROP_FRAMERATE);
-    expect(form.setBitrateMbps).toHaveBeenCalledWith([CROP_BITRATE_MBPS]);
+    expect(form.setFramerate).not.toHaveBeenCalled();
+    expect(form.setBitrateMbps).toHaveBeenCalledWith([DEFAULT_BITRATE_MBPS]);
   });
 
   it('retunes bitrate when automatic mode is enabled', () => {

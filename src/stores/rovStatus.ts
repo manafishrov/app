@@ -19,37 +19,76 @@ type EscFirmwareVersions = [
 
 type DeviceInfo = {
   mcuFirmwareVersion: string;
+  mcuFirmwareVersionStatus: 'querying' | 'reported' | 'notReported';
   escFirmwareVersions: EscFirmwareVersions;
+  escFirmwareVersionStatus: 'discovering' | 'reported' | 'notReported';
 };
+
+type EscFirmwareUpdate = {
+  active: boolean;
+  stage:
+    | 'idle'
+    | 'preflight'
+    | 'uploading'
+    | 'programming'
+    | 'awaitingTelemetry'
+    | 'succeeded'
+    | 'unconfirmed'
+    | 'versionMismatch'
+    | 'failed';
+  progress: number;
+  currentEsc: number | null;
+  targetVersion: string | null;
+  error: string | null;
+  recoveryRequired: boolean;
+};
+
+const isEscFirmwareUpdatePending = (
+  update: Pick<EscFirmwareUpdate, 'active' | 'recoveryRequired' | 'stage'>,
+): boolean => update.active || update.recoveryRequired || update.stage === 'awaitingTelemetry';
 
 type RovStatus = {
   autoStabilization: boolean;
   depthHold: boolean;
   batteryPercentage: number;
-  currentDraw: number;
+  currentDraw: number | null;
   piUndervoltage: boolean;
+  thrusterControlReady: boolean;
+  thrusterProtocolState: 'disconnected' | 'synchronizing' | 'applying' | 'ready' | 'failed';
+  thrusterProtocolError: string | null;
   health: SystemHealth;
-  deviceInfo?: DeviceInfo;
-};
-
-type RovStatusState = Omit<RovStatus, 'deviceInfo'> & {
   deviceInfo: DeviceInfo;
-  deviceInfoAvailable: boolean;
+  escFirmwareUpdate: EscFirmwareUpdate;
 };
 
 const defaultDeviceInfo: DeviceInfo = {
   mcuFirmwareVersion: '',
+  mcuFirmwareVersionStatus: 'querying',
   escFirmwareVersions: [null, null, null, null, null, null, null, null],
+  escFirmwareVersionStatus: 'discovering',
 };
 
-const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>({
+const defaultEscFirmwareUpdate: EscFirmwareUpdate = {
+  active: false,
+  stage: 'idle',
+  progress: 0,
+  currentEsc: null,
+  targetVersion: null,
+  error: null,
+  recoveryRequired: false,
+};
+
+const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatus>({
   autoStabilization: false,
   depthHold: false,
   batteryPercentage: 0,
-  currentDraw: 0,
+  currentDraw: null,
   piUndervoltage: false,
+  thrusterControlReady: false,
+  thrusterProtocolState: 'disconnected',
+  thrusterProtocolError: null,
   deviceInfo: defaultDeviceInfo,
-  deviceInfoAvailable: false,
+  escFirmwareUpdate: defaultEscFirmwareUpdate,
   health: {
     imuHealthy: false,
     pressureSensorHealthy: false,
@@ -58,14 +97,7 @@ const [rovStatusStore, setRovStatusStoreInternal] = createStore<RovStatusState>(
 });
 
 const setRovStatusStore = (value: RovStatus): void => {
-  const deviceInfoAvailable = Boolean(value.deviceInfo);
-  setRovStatusStoreInternal(
-    reconcile({
-      ...value,
-      deviceInfo: value.deviceInfo ?? defaultDeviceInfo,
-      deviceInfoAvailable,
-    }),
-  );
+  setRovStatusStoreInternal(reconcile(value));
 };
 
 const setAutoStabilizationOptimistic = (value: boolean): void => {
@@ -78,11 +110,13 @@ const setDepthHoldOptimistic = (value: boolean): void => {
 
 export {
   rovStatusStore,
+  isEscFirmwareUpdatePending,
   setAutoStabilizationOptimistic,
   setDepthHoldOptimistic,
   setRovStatusStore,
   type DeviceInfo,
   type EscFirmwareVersions,
+  type EscFirmwareUpdate,
   type RovStatus,
   type SystemHealth,
 };

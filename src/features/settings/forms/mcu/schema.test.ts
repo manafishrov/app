@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CurrentSensingMode, DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
+import { DshotSpeed, McuBoard, ThrusterProtocol } from '@/stores/rovConfig';
 
 import {
   createMcuBoardChangeHandler,
@@ -14,7 +14,6 @@ const values = {
   mcuBoard: [McuBoard.pico],
   thrusterProtocol: [ThrusterProtocol.dshot],
   dshotSpeed: ['1200'],
-  currentSensingMode: [CurrentSensingMode.perMotor],
 } as const;
 
 describe('MCU settings schema', () => {

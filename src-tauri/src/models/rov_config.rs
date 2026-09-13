@@ -16,13 +16,6 @@ pub enum ThrusterProtocol {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum CurrentSensingMode {
-  PerMotor,
-  SharedBus,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
 pub enum FluidType {
   Saltwater,
   Freshwater,
@@ -142,11 +135,11 @@ pub struct Camera {
 impl Default for Camera {
   fn default() -> Self {
     Self {
-      width: 1440,
-      height: 1080,
-      framerate: 40,
+      width: 1024,
+      height: 768,
+      framerate: 30,
       crop_fov: false,
-      bitrate: 20_000_000,
+      bitrate: 3_538_944,
       keyframe_interval: 30,
       profile: H264Profile::Baseline,
       level: H264Level::Level42,
@@ -168,12 +161,10 @@ impl Default for Camera {
 #[serde(rename_all = "camelCase")]
 pub struct RovConfig {
   pub firmware_version: String,
-  pub mcu_firmware_version: String,
   pub rov_name: String,
   pub mcu_board: McuBoard,
   pub thruster_protocol: ThrusterProtocol,
   pub dshot_speed: u16,
-  pub current_sensing_mode: CurrentSensingMode,
   pub fluid_type: FluidType,
   pub smoothing_factor: f32,
   pub thruster_pin_setup: ThrusterPinSetup,
@@ -205,8 +196,6 @@ pub struct PartialRovConfig {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub firmware_version: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub mcu_firmware_version: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
   pub rov_name: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub mcu_board: Option<McuBoard>,
@@ -214,8 +203,6 @@ pub struct PartialRovConfig {
   pub thruster_protocol: Option<ThrusterProtocol>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub dshot_speed: Option<u16>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub current_sensing_mode: Option<CurrentSensingMode>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub fluid_type: Option<FluidType>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -317,12 +304,10 @@ mod tests {
   fn sample_rov_config() -> RovConfig {
     RovConfig {
       firmware_version: "1.2.3".to_string(),
-      mcu_firmware_version: "4.5.6".to_string(),
       rov_name: "Manafish".to_string(),
       mcu_board: McuBoard::Pico2,
       thruster_protocol: ThrusterProtocol::Dshot,
       dshot_speed: 600,
-      current_sensing_mode: CurrentSensingMode::PerMotor,
       fluid_type: FluidType::Saltwater,
       smoothing_factor: 0.4,
       thruster_pin_setup: sample_thruster_pin_setup(),
@@ -517,9 +502,9 @@ mod tests {
       return;
     };
 
-    assert_eq!(deserialized.camera.width, 1440);
-    assert_eq!(deserialized.camera.height, 1080);
-    assert_eq!(deserialized.camera.framerate, 40);
+    assert_eq!(deserialized.camera.width, 1024);
+    assert_eq!(deserialized.camera.height, 768);
+    assert_eq!(deserialized.camera.framerate, 30);
   }
 
   /// # Panics
@@ -567,12 +552,10 @@ mod tests {
     let partial = PartialRovConfig::default();
 
     assert!(partial.firmware_version.is_none());
-    assert!(partial.mcu_firmware_version.is_none());
     assert!(partial.rov_name.is_none());
     assert!(partial.mcu_board.is_none());
     assert!(partial.thruster_protocol.is_none());
     assert!(partial.dshot_speed.is_none());
-    assert!(partial.current_sensing_mode.is_none());
     assert!(partial.fluid_type.is_none());
     assert!(partial.smoothing_factor.is_none());
     assert!(partial.thruster_pin_setup.is_none());
@@ -594,6 +577,16 @@ mod tests {
   }
 
   /// # Panics
+  /// Panics if a legacy topology setting prevents loading or survives serialization.
+  #[test]
+  fn ignores_legacy_current_sensor_topology() {
+    let mut value = serde_json::to_value(sample_rov_config()).unwrap();
+    value["currentSensingMode"] = serde_json::json!("perMotor");
+    let config: RovConfig = serde_json::from_value(value).unwrap();
+    assert!(serde_json::to_value(config).unwrap().get("currentSensingMode").is_none());
+  }
+
+  /// # Panics
   /// Panics if enum variants do not serialize to the expected camelCase
   /// strings.
   #[test]
@@ -602,8 +595,6 @@ mod tests {
     assert_serializes_to_expected_string(McuBoard::Pico2, "pico2");
     assert_serializes_to_expected_string(ThrusterProtocol::Pwm, "pwm");
     assert_serializes_to_expected_string(ThrusterProtocol::Dshot, "dshot");
-    assert_serializes_to_expected_string(CurrentSensingMode::PerMotor, "perMotor");
-    assert_serializes_to_expected_string(CurrentSensingMode::SharedBus, "sharedBus");
     assert_serializes_to_expected_string(FluidType::Saltwater, "saltwater");
     assert_serializes_to_expected_string(FluidType::Freshwater, "freshwater");
     assert_serializes_to_expected_string(H264Profile::Baseline, "baseline");

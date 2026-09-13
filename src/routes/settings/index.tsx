@@ -1,4 +1,3 @@
-import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import {
   Card,
@@ -20,6 +19,7 @@ import { createFileRoute } from '@tanstack/solid-router';
 import { Show, createSignal, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
 
+import { VersionBadge } from '@/components/VersionBadge';
 import { General } from '@/features/settings/forms/General';
 import { AppVersionList } from '@/features/update/AppVersionList';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
@@ -155,9 +155,7 @@ const AppVersionCard: Component = () => (
     </CardHeader>
     <CardContent class='flex flex-col gap-4'>
       <div class='flex flex-wrap items-center gap-3'>
-        <Badge class='bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
-          v{configStore.appVersion}
-        </Badge>
+        <VersionBadge version={configStore.appVersion} />
         <p class='text-sm text-muted-foreground'>
           {isUpdaterEnabled
             ? createAppUpdateStatusMessage()

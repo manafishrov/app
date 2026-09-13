@@ -23,3 +23,9 @@ export const setConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
       throw error;
     });
 };
+
+export const stageConfig = (newConfigOptions: Partial<Config>): Promise<void> => {
+  const currentConfig = structuredClone(unwrap(configStore));
+  const newConfig = { ...currentConfig, ...newConfigOptions };
+  return invokeCommand('stage_config', { payload: newConfig });
+};

@@ -1,4 +1,17 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
+/// Deserializes a nullable field while requiring the field to be present.
+///
+/// # Errors
+/// Returns the deserializer's error when the present value is neither `null`
+/// nor a valid `T`.
+fn deserialize_required_option<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+  D: Deserializer<'de>,
+  T: Deserialize<'de>,
+{
+  Option::<T>::deserialize(deserializer)
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -12,36 +25,74 @@ pub struct SystemHealth {
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
   pub mcu_firmware_version: String,
+  pub mcu_firmware_version_status: String,
   pub esc_firmware_versions: [Option<String>; 8],
+  pub esc_firmware_version_status: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct EscFirmwareUpdate {
+  pub active: bool,
+  pub stage: String,
+  pub progress: u8,
+  pub current_esc: Option<u8>,
+  pub target_version: Option<String>,
+  pub error: Option<String>,
+  pub recovery_required: bool,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::struct_excessive_bools)] // Wire DTO mirrors independent firmware status flags.
 pub struct RovStatus {
   pub auto_stabilization: bool,
   pub depth_hold: bool,
   pub battery_percentage: u8,
-  pub current_draw: i32,
-  #[serde(default)]
+  #[serde(deserialize_with = "deserialize_required_option")]
+  pub current_draw: Option<f64>,
   pub pi_undervoltage: bool,
+  pub thruster_control_ready: bool,
+  pub thruster_protocol_state: String,
+  #[serde(deserialize_with = "deserialize_required_option")]
+  pub thruster_protocol_error: Option<String>,
   pub health: SystemHealth,
-  #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub device_info: Option<DeviceInfo>,
+  pub device_info: DeviceInfo,
+  pub esc_firmware_update: EscFirmwareUpdate,
 }
 
 #[cfg(test)]
 mod tests {
   use super::RovStatus;
 
-  const BASE_STATUS: &str = r#"{
+  const CURRENT_STATUS: &str = r#"{
     "autoStabilization": false,
     "depthHold": false,
     "batteryPercentage": 75,
     "currentDraw": 12,
+    "piUndervoltage": false,
+    "thrusterControlReady": true,
+    "thrusterProtocolState": "ready",
+    "thrusterProtocolError": null,
     "health": {
       "imuHealthy": true,
       "pressureSensorHealthy": true,
       "mcuHealthy": true
+    },
+    "deviceInfo": {
+      "mcuFirmwareVersion": "1.2.3-rc.1",
+      "mcuFirmwareVersionStatus": "reported",
+      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null],
+      "escFirmwareVersionStatus": "reported"
+    },
+    "escFirmwareUpdate": {
+      "active": false,
+      "stage": "idle",
+      "progress": 0,
+      "currentEsc": null,
+      "targetVersion": null,
+      "error": null,
+      "recoveryRequired": false
     }
   }"#;
 
@@ -49,27 +100,76 @@ mod tests {
   /// Panics if a status with live device information cannot round-trip through JSON.
   #[test]
   fn preserves_live_device_info() {
-    let mut value: serde_json::Value = serde_json::from_str(BASE_STATUS).unwrap();
-    value["deviceInfo"] = serde_json::json!({
-      "mcuFirmwareVersion": "1.2.3",
-      "escFirmwareVersions": ["2.20.0", null, null, null, null, null, null, null]
-    });
-
-    let status: RovStatus = serde_json::from_value(value).unwrap();
+    let status: RovStatus = serde_json::from_str(CURRENT_STATUS).unwrap();
     let serialized = serde_json::to_value(&status).unwrap();
 
-    assert_eq!(serialized["deviceInfo"]["mcuFirmwareVersion"], "1.2.3");
+    assert_eq!(serialized["deviceInfo"]["mcuFirmwareVersion"], "1.2.3-rc.1");
     assert_eq!(serialized["deviceInfo"]["escFirmwareVersions"][0], "2.20.0");
   }
 
   /// # Panics
-  /// Panics if a legacy status no longer deserializes with safe defaults.
+  /// Panics if the current status fixture cannot be parsed as JSON.
   #[test]
-  fn accepts_legacy_status_without_device_info() {
-    let status: RovStatus = serde_json::from_str(BASE_STATUS).unwrap();
-    let serialized = serde_json::to_value(&status).unwrap();
+  fn rejects_status_without_current_required_fields() {
+    for field in [
+      "currentDraw",
+      "piUndervoltage",
+      "thrusterControlReady",
+      "thrusterProtocolState",
+      "thrusterProtocolError",
+      "deviceInfo",
+      "escFirmwareUpdate",
+    ] {
+      let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+      value.as_object_mut().unwrap().remove(field);
 
-    assert!(serialized.get("deviceInfo").is_none());
-    assert!(!status.pi_undervoltage);
+      assert!(
+        serde_json::from_value::<RovStatus>(value).is_err(),
+        "status without {field} should be rejected"
+      );
+    }
+  }
+
+  /// # Panics
+  /// Panics if missing calibration is confused with measured zero or legacy integers fail.
+  #[test]
+  fn preserves_nullable_current_and_accepts_legacy_numbers() {
+    let legacy: RovStatus = serde_json::from_str(CURRENT_STATUS).unwrap();
+    assert!(legacy.current_draw.is_some());
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+    value["currentDraw"] = serde_json::Value::Null;
+    let unknown: RovStatus = serde_json::from_value(value.clone()).unwrap();
+    assert!(unknown.current_draw.is_none());
+    assert!(serde_json::to_value(unknown).unwrap()["currentDraw"].is_null());
+    value["currentDraw"] = serde_json::json!(0.0);
+    let zero: RovStatus = serde_json::from_value(value.clone()).unwrap();
+    assert!(zero.current_draw.is_some());
+    assert_eq!(serde_json::to_value(zero).unwrap()["currentDraw"], serde_json::json!(0.0));
+    value["currentDraw"] = serde_json::json!(10.25);
+    let fractional: RovStatus = serde_json::from_value(value).unwrap();
+    assert_eq!(
+      serde_json::to_value(fractional).unwrap()["currentDraw"],
+      serde_json::json!(10.25)
+    );
+  }
+
+  /// # Panics
+  /// Panics if the current status fixture cannot be parsed as JSON.
+  #[test]
+  fn rejects_partial_device_info() {
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+    value["deviceInfo"] = serde_json::json!({});
+
+    assert!(serde_json::from_value::<RovStatus>(value).is_err());
+  }
+
+  /// # Panics
+  /// Panics if the current status fixture cannot be parsed as JSON.
+  #[test]
+  fn rejects_partial_esc_firmware_update() {
+    let mut value: serde_json::Value = serde_json::from_str(CURRENT_STATUS).unwrap();
+    value["escFirmwareUpdate"] = serde_json::json!({"active": true, "progress": 40});
+
+    assert!(serde_json::from_value::<RovStatus>(value).is_err());
   }
 }
