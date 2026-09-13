@@ -8,6 +8,7 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { playConfirmHaptic } from '@/tauri/gamepad';
+import { receiveThrusterTestToast } from '@/tauri/thrusterTest';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
@@ -242,6 +243,7 @@ const SETTINGS_SUCCESS_KEYS = new Set([
 ]);
 
 const handleToastPayload = (payload: ToastPayload): void => {
+  receiveThrusterTestToast(payload);
   const toastId = isNonEmptyString(payload.identifier) ? payload.identifier : '';
 
   if (toastId.length > 0) {
