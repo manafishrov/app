@@ -15,7 +15,7 @@ import {
 } from '@/input';
 import * as m from '@/paraglide/messages';
 
-import { hasUsableBindingRange } from './bindingRange';
+import { hasUsableBindingRange } from '../bindingRange';
 type GamepadBindCaptureOptions = {
   value: Accessor<GamepadInput | null>;
   selectedGamepadId: Accessor<string | null>;

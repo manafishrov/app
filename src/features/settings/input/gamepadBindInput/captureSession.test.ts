@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasUsableBindingRange } from './bindingRange';
+import { hasUsableBindingRange } from '../bindingRange';
 
 const MIDPOINT = 0.5;
 const REVERSED_MIN = -1;
