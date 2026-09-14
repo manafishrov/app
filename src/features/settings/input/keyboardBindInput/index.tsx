@@ -12,6 +12,7 @@ import {
 } from '@/input';
 
 import { KeyboardBindActionRow, KeyboardBindStats } from './Parts';
+import { saveKeyboardBinding } from './saveBinding';
 type KeyboardBindInputProps = {
   label: string;
   value: KeyboardInput | null;
@@ -95,11 +96,14 @@ const commitCapture = (context: CaptureSessionContext, changedKey: string): void
     return;
   }
   const latestSnapshot = new Set<string>(context.pressedKeys());
-  context.onChange({
-    key: changedKey,
-    minValue: toKeyboardValue(context.initialSnapshot.has(changedKey)),
-    maxValue: toKeyboardValue(latestSnapshot.has(changedKey)),
-  });
+  saveKeyboardBinding(
+    {
+      key: changedKey,
+      minValue: toKeyboardValue(context.initialSnapshot.has(changedKey)),
+      maxValue: toKeyboardValue(latestSnapshot.has(changedKey)),
+    },
+    context.onChange,
+  );
   context.stopRecording();
 };
 const scheduleSettleCapture = (context: ScheduleSettleContext): void => {

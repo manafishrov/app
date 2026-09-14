@@ -211,7 +211,14 @@ const addToastDescription = (options: ToastCreateOptions, payload: ToastPayload)
     payload.content.descriptionArgs,
   );
 
-  if (typeof description === 'string') {
+  if (
+    payload.identifier === 'thruster-test' &&
+    payload.content.messageKey === 'toasts_thruster_test_title'
+  ) {
+    options.description = [description, m.toasts_thruster_test_cancel_hint()]
+      .filter((part) => isNonEmptyString(part))
+      .join(' ');
+  } else if (typeof description === 'string') {
     options.description = description;
   }
 };
