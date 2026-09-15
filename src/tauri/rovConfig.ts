@@ -5,7 +5,8 @@ import { setRovConfigStore, type RovConfig } from '@/stores/rovConfig';
 import { createListener, invokeCommand } from '@/tauri/core';
 
 const EVENT = 'rov_config_received';
-const CONFIG_RESPONSE_TIMEOUT_MS = 5000;
+// Allow the Pi's 8s Pico apply transaction plus persistence and response delivery.
+const CONFIG_RESPONSE_TIMEOUT_MS = 12_000;
 
 const resolveVoid: () => void = () => 0;
 const noopCancel: (error: Error) => void = () => 0;
@@ -13,6 +14,7 @@ const [rovConfigRevision, setRovConfigRevision] = createSignal(0);
 
 type ConfigResponse = {
   mutationId?: string;
+  error?: string;
   config: RovConfig;
 };
 
@@ -26,7 +28,17 @@ type ConfigWaiter = {
 const configWaiters = new Map<string, ConfigWaiter>();
 let mutationTail: Promise<unknown> = Promise.resolve();
 
-const confirmConfigWaiter = (waiter: ConfigWaiter, config: RovConfig, mutationId: string): void => {
+const confirmConfigWaiter = (
+  waiter: ConfigWaiter,
+  response: ConfigResponse,
+  mutationId: string,
+): void => {
+  const { config, error: applyError } = response;
+  // A rejected apply still returns canonical state, but must never authorize success.
+  if (typeof applyError === 'string') {
+    waiter.reject(new Error(applyError));
+    return;
+  }
   waiter
     .beforeConfirm(config)
     .then(() => invokeCommand('confirm_rov_config', { mutationId }))
@@ -58,7 +70,7 @@ const applyRemoteRovConfig = (response: ConfigResponse): void => {
   if (!waiter) {
     return;
   }
-  confirmConfigWaiter(waiter, config, mutationId);
+  confirmConfigWaiter(waiter, response, mutationId);
 };
 
 type PendingConfig = {

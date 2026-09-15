@@ -21,6 +21,8 @@ pub struct ConfigMutation<T> {
 pub struct ConfigResponse {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub mutation_id: Option<String>,
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub error: Option<String>,
   pub config: RovConfig,
 }
 
