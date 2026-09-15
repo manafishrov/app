@@ -577,6 +577,28 @@ mod tests {
   }
 
   /// # Panics
+  /// Panics if config apply rejection is lost between the websocket and frontend event.
+  #[test]
+  fn config_response_preserves_optional_apply_error() {
+    use crate::websocket::message::WebsocketMessage;
+
+    for error in [None, Some("Pico apply ACK timed out")] {
+      let mut payload = json!({"mutationId": "apply-1", "config": sample_rov_config()});
+      if let Some(error) = error {
+        payload["error"] = json!(error);
+      }
+      let wire = json!({"type": "config", "payload": payload});
+      let message: WebsocketMessage = serde_json::from_value(wire.clone()).unwrap();
+      let WebsocketMessage::Config(response) = &message else {
+        panic!("expected Config response");
+      };
+      assert_eq!(response.error.as_deref(), error);
+      assert_eq!(serde_json::to_value(response).unwrap(), wire["payload"]);
+      assert_eq!(serde_json::to_value(message).unwrap(), wire);
+    }
+  }
+
+  /// # Panics
   /// Panics if a legacy topology setting prevents loading or survives serialization.
   #[test]
   fn ignores_legacy_current_sensor_topology() {
