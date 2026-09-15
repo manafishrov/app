@@ -71,6 +71,12 @@ and release notes back to the user before doing anything.**
   - `src-tauri/tauri.conf.json` → `"version"`
   - `src-tauri/com.manafishrov.manafish.metainfo.xml` → add a new `<release>` entry
     (required for Flathub; the AppStream listing reads it)
+  - `src-yolo/pyproject.toml` → `[project] version`
+  - `src-yolo/uv.lock` → `manafish` package version
+- Validate all six embedded versions before committing:
+  `python3 scripts/validate-release-version.py vX.Y.Z` (use the intended tag).
+  The release workflow requires the sandbox version metadata to match too;
+  a release bump does not require YOLO dependency or feature changes.
 - Commit message: `chore(release): vX.Y.Z`.
 - Tag: `git tag vX.Y.Z` then `git push --tags` — pushing the tag triggers
   `.github/workflows/build.yaml` which builds macOS/Linux/Windows artifacts
