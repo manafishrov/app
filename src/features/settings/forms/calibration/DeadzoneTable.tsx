@@ -41,6 +41,7 @@ import { rovConfigStore } from '@/stores/rovConfig';
 import { DEADZONE_FIELD_STEP, NEGATIVE_ONE, ONE, THRUSTER_COLUMNS, ZERO } from './constants';
 import { DeadzoneField } from './FieldRenderers';
 import { computeNullspaceFromAllocation } from './nullspaceComputation';
+import { validationMessages } from './validationMessages';
 
 type DeadzoneFieldForm = ComponentProps<typeof DeadzoneField>['form'];
 
@@ -249,7 +250,7 @@ export const DeadzoneTable: Component<DeadzoneTableProps> = (props) => {
                 }
               }}
             />
-            <FieldError errors={field().state.meta.errors} />
+            <FieldError errors={validationMessages(field().state.meta.errors)} />
           </Field>
           <GenerateConfirmDialog
             open={showConfirmDialog()}
