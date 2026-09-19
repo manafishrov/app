@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@chenglou/pretext": "0.0.9",
-    "@manafishrov/ui": "1.5.10",
+    "@manafishrov/ui": "1.5.13",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/router-plugin": "1.168.38",
     "@tanstack/solid-form": "1.33.5",
@@ -52,11 +52,11 @@
     "lefthook": "2.1.14",
     "oxfmt": "0.68.0",
     "oxlint": "1.83.0",
-    "oxlint-tsgolint": "7.0.2001",
+    "oxlint-tsgolint": "7.0.2002",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "unplugin-auto-import": "21.1.0",
-    "unplugin-icons": "23.0.1",
+    "unplugin-icons": "24.0.0",
     "vite": "8.3.0",
     "vite-plugin-solid": "2.11.14",
     "vitest": "4.1.11"
