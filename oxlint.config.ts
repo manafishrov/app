@@ -26,6 +26,8 @@ export default defineConfig({
   rules: {
     'sort-keys': 'off',
     'sort-imports': 'off',
+    // Keep separate declarations when new category-enabled rules are introduced.
+    'one-var': ['warn', 'never'],
     'no-debugger': 'error',
     'no-alert': 'error',
     'no-console': 'error',
@@ -73,6 +75,23 @@ export default defineConfig({
     'no-useless-return': 'off',
   },
   overrides: [
+    {
+      // These modules intentionally export a value and type with the same name.
+      // ESLint's rule rejects that legal pair; typeCheck still checks redeclarations.
+      files: [
+        'src/stores/configTypes.ts',
+        'src/stores/rovConfig.ts',
+        'src/input/directionVector.ts',
+        'src/tauri/toast.ts',
+        'src/lib/log.ts',
+        'src/stores/updates.ts',
+        'src/stores/sdFlash.ts',
+        'src/features/settings/forms/camera/constants.ts',
+      ],
+      rules: {
+        'no-redeclare': 'off',
+      },
+    },
     {
       files: ['*.{config}.ts'],
       env: {
