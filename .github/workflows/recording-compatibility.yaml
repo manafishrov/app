@@ -1,0 +1,70 @@
+name: Recording compatibility
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/recording-compatibility.yaml'
+      - '.github/workflows/build.yaml'
+      - 'src-tauri/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-recording:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      CARGO_BUILD_JOBS: 4
+      CMAKE_POLICY_VERSION_MINIMUM: '3.5'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri -> target
+          prefix-key: windows-recording-ffmpeg-7.1
+      - name: Install release-compatible FFmpeg
+        shell: pwsh
+        run: |
+          # Match the established Windows release dependency, without bundling or publishing.
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $clang = Join-Path $vs 'VC\Tools\LLVM\x64\bin'
+          if (!(Test-Path "$clang\libclang.dll")) { throw 'Visual Studio libclang is missing' }
+          "LIBCLANG_PATH=$clang" >> $env:GITHUB_ENV
+          $url = 'https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-full_build-shared.7z'
+          $archive = Join-Path $env:RUNNER_TEMP 'ffmpeg-7.1.7z'
+          Invoke-WebRequest $url -OutFile $archive
+          $expected = '01915dfe8591248be20d3d83453c91c1f71cfd10c07460e6fa2d2e667f513606'
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash -ne $expected) { throw 'FFmpeg archive checksum mismatch' }
+          7z x -y $archive "-o$env:RUNNER_TEMP"
+          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg extraction failed' }
+          $ffmpeg = Join-Path $env:RUNNER_TEMP 'ffmpeg-7.1-full_build-shared'
+          "FFMPEG_DIR=$ffmpeg" >> $env:GITHUB_ENV
+          "$ffmpeg\bin" >> $env:GITHUB_PATH
+          $version = & "$ffmpeg\bin\ffmpeg.exe" -version
+          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg failed to run' }
+          $version
+          if (($version -join "`n") -notmatch '(?m)^ffmpeg version 7\.1[- ]') { throw 'Unexpected FFmpeg version' }
+          if (($version -join "`n") -notmatch '(?m)^libavcodec\s+61\.') { throw 'Unexpected libavcodec ABI' }
+      - name: Record toolchain
+        run: |
+          rustc --version --verbose
+          cargo --version
+          cmake --version
+      - name: Compile Windows application and tests
+        working-directory: src-tauri
+        run: cargo build --locked --all-targets --all-features
+      - name: Test native recording failure, EOF and MP4 remux
+        working-directory: src-tauri
+        run: 'cargo test --locked --lib recording::tests:: -- --nocapture'
