@@ -451,8 +451,6 @@ mod tests {
     Ok(())
   }
 
-  /// # Panics
-  /// Panics if the temp recording suffix is not converted into an MP4 path.
   /// # Errors
   /// Returns an error if fixture I/O or MP4 conversion fails.
   /// # Panics
@@ -480,6 +478,8 @@ mod tests {
     Ok(())
   }
 
+  /// # Panics
+  /// Panics if the temp recording suffix is not converted into an MP4 path.
   #[test]
   fn output_path_for_replaces_temp_suffix_with_mp4() {
     assert_eq!(output_path_for("video_temp.webm"), "video.mp4");
