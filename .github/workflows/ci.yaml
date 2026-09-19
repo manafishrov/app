@@ -28,6 +28,10 @@ jobs:
           bun-version: latest
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Validate embedded release identities
+        run: |
+          python3 -m unittest discover -s scripts -p '*_test.py'
+          python3 scripts/validate-release-version.py "$(jq -r .version src-tauri/tauri.conf.json)"
       - name: Run formatting check
         run: bun run fmt:check
       - name: Build
