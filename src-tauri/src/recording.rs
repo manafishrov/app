@@ -161,7 +161,7 @@ fn create_output_context(
 }
 
 /// # Errors
-/// Returns an error if copying any FFmpeg packet into the output fails.
+/// Returns an error if reading or writing any FFmpeg packet fails.
 fn copy_packets(
   input_context: &mut ffmpeg::format::context::Input,
   output_context: &mut ffmpeg::format::context::Output,
@@ -169,7 +169,22 @@ fn copy_packets(
 ) -> Result<(), String> {
   let mut last_dts = HashMap::<usize, i64>::new();
 
-  for (stream, mut packet) in input_context.packets() {
+  loop {
+    let mut packet = ffmpeg::Packet::empty();
+    // The packet iterator hides non-EOF read failures as normal termination.
+    // Only clean EOF may allow finalization and deletion of the source recording.
+    match packet.read(input_context) {
+      Ok(()) => {},
+      Err(ffmpeg::Error::Eof) => break,
+      Err(error) => {
+        show_save_error(toast_id);
+        return Err(format!("Failed to read packet: {error}"));
+      },
+    }
+    let Some(stream) = input_context.stream(packet.stream()) else {
+      show_save_error(toast_id);
+      return Err(format!("Missing input stream for packet {}", packet.stream()));
+    };
     let Some(output_stream) = output_context.stream(stream.index()) else {
       show_save_error(toast_id);
       return Err(format!("Missing output stream for input stream {}", stream.index()));
@@ -244,6 +259,27 @@ fn remove_temp_file(temp_path: &str) {
 }
 
 /// # Errors
+/// Returns an error without deleting the source if remuxing or finalization fails.
+fn remux_recording(
+  temp_path: &str,
+  output_path: &Path,
+  toast_id: &str,
+  input_context: ffmpeg::format::context::Input,
+) -> Result<(), String> {
+  {
+    let mut input_context = input_context;
+    let mut output_context = create_output_context(&input_context, output_path, toast_id)?;
+    copy_packets(&mut input_context, &mut output_context, toast_id)?;
+    finalize_output(&mut output_context, toast_id)?;
+  }
+
+  remove_temp_file(temp_path);
+  log_info!("Recording conversion completed for {temp_path}");
+  show_save_success(toast_id, output_path);
+  Ok(())
+}
+
+/// # Errors
 /// Returns an error if FFmpeg cannot convert the temporary recording into an
 /// MP4 file.
 pub async fn convert(temp_path: String) -> Result<(), String> {
@@ -262,19 +298,8 @@ pub async fn convert(temp_path: String) -> Result<(), String> {
 
     initialize_ffmpeg(&toast_id_clone)?;
 
-    {
-      let mut input_context = open_input_context(&temp_path_clone, &toast_id_clone)?;
-      let mut output_context = create_output_context(&input_context, output_path, &toast_id_clone)?;
-      copy_packets(&mut input_context, &mut output_context, &toast_id_clone)?;
-      finalize_output(&mut output_context, &toast_id_clone)?;
-    }
-
-    remove_temp_file(&temp_path_clone);
-
-    log_info!("Recording conversion completed for {}", temp_path_clone);
-    show_save_success(&toast_id_clone, output_path);
-
-    Ok(())
+    let input_context = open_input_context(&temp_path_clone, &toast_id_clone)?;
+    remux_recording(&temp_path_clone, output_path, &toast_id_clone, input_context)
   })
   .await
   .map_err(|error| {
@@ -324,10 +349,137 @@ pub async fn append_chunk(temp_path: String, chunk: Vec<u8>) -> Result<(), Strin
 
 #[cfg(test)]
 mod tests {
+  use std::io::{Read, Seek, SeekFrom};
+  use std::sync::Arc;
+  use std::sync::atomic::{AtomicBool, Ordering};
+
   use super::*;
+
+  struct FailingRecording {
+    file: fs::File,
+    fail_reads: Arc<AtomicBool>,
+  }
+
+  impl Read for FailingRecording {
+    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+      if self.fail_reads.load(Ordering::Relaxed) {
+        return Err(std::io::Error::other("injected recording read failure"));
+      }
+      self.file.read(buffer)
+    }
+  }
+
+  impl Seek for FailingRecording {
+    fn seek(&mut self, position: SeekFrom) -> std::io::Result<u64> {
+      self.file.seek(position)
+    }
+  }
+
+  fn silent_wav() -> Vec<u8> {
+    // Long enough that stream probing cannot buffer the entire recording.
+    const SAMPLE_RATE: u32 = 44_100;
+    const DATA_SIZE: u32 = SAMPLE_RATE * 2 * 20;
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"RIFF");
+    bytes.extend_from_slice(&(DATA_SIZE + 36).to_le_bytes());
+    bytes.extend_from_slice(b"WAVEfmt ");
+    bytes.extend_from_slice(&16_u32.to_le_bytes());
+    bytes.extend_from_slice(&1_u16.to_le_bytes());
+    bytes.extend_from_slice(&1_u16.to_le_bytes());
+    bytes.extend_from_slice(&SAMPLE_RATE.to_le_bytes());
+    bytes.extend_from_slice(&(SAMPLE_RATE * 2).to_le_bytes());
+    bytes.extend_from_slice(&2_u16.to_le_bytes());
+    bytes.extend_from_slice(&16_u16.to_le_bytes());
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&DATA_SIZE.to_le_bytes());
+    bytes.resize(44 + DATA_SIZE as usize, 0);
+    bytes
+  }
+
+  /// # Errors
+  /// Returns an error if fixture I/O or FFmpeg setup fails.
+  /// # Panics
+  /// Panics if a read error is hidden or the original recording changes.
+  #[test]
+  fn read_failure_preserves_source_recording() -> Result<(), Box<dyn std::error::Error>> {
+    ffmpeg::init()?;
+    let directory = tempfile::tempdir()?;
+    let source = directory.path().join("recording_temp.wav");
+    let output = directory.path().join("recording.mkv");
+    let content = silent_wav();
+    fs::write(&source, &content)?;
+    let fail_reads = Arc::new(AtomicBool::new(false));
+    let reader = FailingRecording {
+      file: fs::File::open(&source)?,
+      fail_reads: Arc::clone(&fail_reads),
+    };
+    let stream = ffmpeg::format::context::StreamIo::from_read_seek(reader)?;
+    let input = ffmpeg::format::input_from_stream(stream, Some("recording.wav"), None)?;
+    // Opening succeeds; the injected I/O error is encountered during packet copy.
+    fail_reads.store(true, Ordering::Relaxed);
+    let result = remux_recording(&source.to_string_lossy(), &output, "read-failure", input);
+    assert!(
+      matches!(&result, Err(error) if error.starts_with("Failed to read packet:")),
+      "a read failure must not be reported as EOF/success: {result:?}"
+    );
+    assert_eq!(fs::read(&source)?, content, "preserve the recoverable recording");
+    Ok(())
+  }
+
+  /// # Errors
+  /// Returns an error if fixture I/O or native remuxing fails.
+  /// # Panics
+  /// Panics if clean EOF loses packets or fails to remove the source.
+  #[test]
+  fn clean_eof_finishes_output_before_removing_source() -> Result<(), Box<dyn std::error::Error>> {
+    ffmpeg::init()?;
+    let directory = tempfile::tempdir()?;
+    let source = directory.path().join("recording_temp.wav");
+    let output = directory.path().join("recording.mkv");
+    fs::write(&source, silent_wav())?;
+    let input = ffmpeg::format::input(&source)?;
+    let expected_bytes: usize = {
+      let mut original = ffmpeg::format::input(&source)?;
+      original.packets().map(|(_, packet)| packet.size()).sum()
+    };
+    remux_recording(&source.to_string_lossy(), &output, "clean-eof", input)?;
+    assert!(!source.exists(), "only a successful remux removes the input");
+    let mut saved = ffmpeg::format::input(&output)?;
+    let saved_bytes: usize = saved.packets().map(|(_, packet)| packet.size()).sum();
+    assert!(saved_bytes > 0);
+    assert_eq!(saved_bytes, expected_bytes, "all audio packets reach the output");
+    Ok(())
+  }
 
   /// # Panics
   /// Panics if the temp recording suffix is not converted into an MP4 path.
+  /// # Errors
+  /// Returns an error if fixture I/O or MP4 conversion fails.
+  /// # Panics
+  /// Panics if conversion loses a stream or does not remove the source.
+  #[tokio::test]
+  async fn converts_video_and_audio_to_mp4() -> Result<(), Box<dyn std::error::Error>> {
+    let directory = tempfile::tempdir()?;
+    let source = directory.path().join("recording_temp.mkv");
+    let output = directory.path().join("recording.mp4");
+    fs::write(&source, include_bytes!("../tests/fixtures/recording.mkv"))?;
+    convert(source.to_string_lossy().into_owned()).await?;
+    assert!(!source.exists());
+    let mut saved = ffmpeg::format::input(&output)?;
+    assert_eq!(saved.streams().count(), 2);
+    let mut packets_per_stream = [0_u32; 2];
+    loop {
+      let mut packet = ffmpeg::Packet::empty();
+      match packet.read(&mut saved) {
+        Ok(()) => packets_per_stream[packet.stream()] += 1,
+        Err(ffmpeg::Error::Eof) => break,
+        Err(error) => return Err(error.into()),
+      }
+    }
+    assert!(packets_per_stream.into_iter().all(|count| count > 0));
+    Ok(())
+  }
+
   #[test]
   fn output_path_for_replaces_temp_suffix_with_mp4() {
     assert_eq!(output_path_for("video_temp.webm"), "video.mp4");
