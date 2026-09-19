@@ -98,6 +98,14 @@ setup behavior with stubs; `check-macos-ffmpeg` runs the script and compiles the
 Rust bindings natively. Require that check before tagging a macOS build change;
 a complete release build is still needed to validate application packaging.
 
+### Windows recording compatibility
+
+`recording-compatibility.yaml` compiles the Windows app and runs native recording
+regressions on relevant pull requests without signing or publishing. Keep its
+pinned FFmpeg download aligned with the Windows release dependency. When changing
+FFmpeg or recording conversion, require this check as well as the existing CI:
+read failures must preserve the source, while clean EOF must produce a valid MP4.
+
 ### Bundled WebKitGTK (Linux)
 
 Linux packages bundle a custom WebKitGTK built with `ENABLE_WEB_RTC` (distro
