@@ -61,6 +61,20 @@ def embedded_versions() -> dict[str, str]:
     }
 
 
+def matches_embedded_version(path: str, embedded: str, version: str) -> bool:
+    if embedded == version:
+        return True
+
+    # uv writes canonical PEP 440 release candidates into its generated lock.
+    # Accept only this lossless spelling change, only in the lockfile. Other
+    # metadata must retain canonical SemVer; never discard prerelease/build IDs.
+    if path == "src-yolo/uv.lock":
+        candidate = re.fullmatch(r"(\d+\.\d+\.\d+)-rc\.([1-9]\d*)", version)
+        if candidate is not None:
+            return embedded == f"{candidate[1]}rc{candidate[2]}"
+    return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("tag", help="release tag, with or without the v prefix")
@@ -82,7 +96,7 @@ def main() -> int:
     mismatches = {
         path: embedded
         for path, embedded in embedded_versions().items()
-        if embedded != version
+        if not matches_embedded_version(path, embedded, version)
     }
     if mismatches:
         details = "\n".join(

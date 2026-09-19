@@ -37,6 +37,7 @@ bun run lint             # frontend (oxlint, type-aware)
 bun run fmt:rs:check     # rust
 bun run lint:rs          # rust (clippy)
 bun run test             # vitest
+python3 -m unittest discover -s scripts -p '*_test.py'  # release identity
 ```
 
 Auto-fix variants: `fmt`, `lint:fix`, `fmt:rs`, `lint:rs:fix`.
@@ -75,8 +76,11 @@ and release notes back to the user before doing anything.**
   - `src-yolo/uv.lock` → `manafish` package version
 - Validate all six embedded versions before committing:
   `python3 scripts/validate-release-version.py vX.Y.Z` (use the intended tag).
-  The release workflow requires the sandbox version metadata to match too;
-  a release bump does not require YOLO dependency or feature changes.
+  CI and the release workflow require the sandbox version identity to match too.
+  Only `src-yolo/uv.lock` may use uv's generated PEP 440 RC spelling
+  (`X.Y.ZrcN` for `X.Y.Z-rc.N`); do not hand-edit that generated spelling.
+  Other files retain canonical SemVer. A release bump does not require YOLO
+  dependency or feature changes.
 - Commit message: `chore(release): vX.Y.Z`.
 - Tag: `git tag vX.Y.Z` then `git push --tags` — pushing the tag triggers
   `.github/workflows/build.yaml` which builds macOS/Linux/Windows artifacts

@@ -9,3 +9,4 @@
 /dist
 /target
 *.tsbuildinfo
+__pycache__/
