@@ -77,13 +77,11 @@ const createVibrationActuator = (
 
 const createGamepadFromEvent = (event: GamepadData): Gamepad => {
   const { id, index, axes, connected, mapping, timestamp, vibrationActuator } = event;
-  const buttons: GamepadButton[] = event.buttons.map(
-    (btn): GamepadButton => ({
-      value: btn.value,
-      touched: btn.value > 0,
-      pressed: btn.pressed,
-    }),
-  );
+  const buttons: GamepadButton[] = event.buttons.map((btn): GamepadButton => ({
+    value: btn.value,
+    touched: btn.value > 0,
+    pressed: btn.pressed,
+  }));
   const vibrationActuatorObj = createVibrationActuator(index, vibrationActuator);
   const hapticActuators = vibrationActuator ? [vibrationActuatorObj] : [];
 
