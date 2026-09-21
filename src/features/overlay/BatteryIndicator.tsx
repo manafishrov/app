@@ -7,10 +7,10 @@ import BatteryMediumIcon from '~icons/material-symbols/battery-5-bar';
 import BatteryFullIcon from '~icons/material-symbols/battery-full';
 import BoltIcon from '~icons/material-symbols/bolt';
 
-import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
-import { formatCurrentDraw } from './currentDraw';
+import { formatCurrentDraw } from "./currentDraw";
+import { useOverlayContentVisible } from './OverlayPreview';
 
 const BATTERY_HIGH_THRESHOLD = 70;
 const BATTERY_MEDIUM_THRESHOLD = 40;
@@ -54,27 +54,31 @@ const getBatteryIcon = (percentage: number): JSXElement => {
   );
 };
 
-const BatteryIndicator: Component = () => (
-  <div class={connectionStatusStore.isConnected ? 'flex flex-col gap-1' : 'hidden'}>
-    <Badge
-      variant='secondary'
-      class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
-    >
-      <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
-        <BoltIcon class='size-full' />
-      </span>
-      {formatCurrentDraw(rovStatusStore.currentDraw)}
-    </Badge>
-    <Badge
-      variant={
-        rovStatusStore.batteryPercentage <= BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
-      }
-      class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
-    >
-      {getBatteryIcon(rovStatusStore.batteryPercentage)}
-      {rovStatusStore.batteryPercentage.toFixed(0)}%
-    </Badge>
-  </div>
-);
+const BatteryIndicator: Component = () => {
+  const isVisible = useOverlayContentVisible();
+
+  return (
+    <div class={isVisible() ? 'flex flex-col gap-1' : 'hidden'}>
+      <Badge
+        variant='secondary'
+        class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
+      >
+        <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
+          <BoltIcon class='size-full' />
+        </span>
+        {formatCurrentDraw(rovStatusStore.currentDraw)}
+      </Badge>
+      <Badge
+        variant={
+          rovStatusStore.batteryPercentage <= BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
+        }
+        class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
+      >
+        {getBatteryIcon(rovStatusStore.batteryPercentage)}
+        {rovStatusStore.batteryPercentage.toFixed(0)}%
+      </Badge>
+    </div>
+  );
+};
 
 export { BatteryIndicator };

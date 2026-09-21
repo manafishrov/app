@@ -1,15 +1,14 @@
 import type { Component } from 'solid-js';
 
-import { AttitudeIndicator as AttitudeIndicatorEnum, configStore } from '@/stores/config';
-import { connectionStatusStore } from '@/stores/connectionStatus';
+import { OVERLAY_REFERENCE_CELL, type OverlayWidget } from '@/stores/overlayTypes';
 import { rovStatusStore } from '@/stores/rovStatus';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
+import { AttitudeStyle } from './attitudeStyle';
 import { ClassicAttitudeIndicator } from './classicAttitudeIndicator';
 import { Model3DAttitudeIndicator } from './model3DAttitudeIndicator';
+import { useOverlayContentVisible } from './OverlayPreview';
 import { ScientificAttitudeIndicator } from './scientificAttitudeIndicator';
-
-const SCIENTIFIC_ATTITUDE_SIZE = 180;
 
 const PERCENTAGE_DIVISOR = 100;
 const MAX_SHADOW_BLUR = 20;
@@ -18,6 +17,7 @@ const MAX_SHADOW_OPACITY = 0.8;
 const HALF_INTENSITY = 0.5;
 const INTENSITY_MULTIPLIER = 2;
 const MAX_COLOR_VALUE = 255;
+const PLACEHOLDER_SIZE_REM = 1;
 
 const calculateShadowColor = (
   shadowIntensity: number,
@@ -49,66 +49,90 @@ const calculateShadowStyle = (workIndicatorPercentage: number): Record<string, s
   };
 };
 
-const AttitudeIndicatorContent: Component<{ style: Record<string, string> }> = (props) => (
+/**
+ * The indicator fills the grid rectangle it was given. Sizing from the span in
+ * *reference* pixels (rather than measuring) keeps it in step with the zoom the
+ * grid applies, so it lands exactly on its cells at any camera size.
+ */
+const indicatorSize = (widget: OverlayWidget): number =>
+  Math.min(widget.columnSpan, widget.rowSpan) * OVERLAY_REFERENCE_CELL;
+
+type SharedAttitudeProps = {
+  size: number;
+  pitch: number;
+  roll: number;
+  yaw: number;
+  desiredYaw: number;
+  autoStabilization: boolean;
+  style: Record<string, string>;
+};
+
+const AttitudeStyles: Component<{ style: AttitudeStyle; shared: SharedAttitudeProps }> = (
+  props,
+) => (
   <Switch
     fallback={
       <div
-        class='h-4 w-4 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm'
-        style={props.style}
+        class='rounded-full border border-border/50 bg-background/50 backdrop-blur-sm'
+        style={{
+          width: `${PLACEHOLDER_SIZE_REM}rem`,
+          height: `${PLACEHOLDER_SIZE_REM}rem`,
+          ...props.shared.style,
+        }}
       />
     }
   >
-    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.scientific}>
+    <Match when={props.style === AttitudeStyle.scientific}>
       <ScientificAttitudeIndicator
-        size={SCIENTIFIC_ATTITUDE_SIZE}
-        pitch={rovTelemetryStore.pitch}
-        roll={rovTelemetryStore.roll}
-        yaw={rovTelemetryStore.yaw}
+        {...props.shared}
         desiredPitch={rovTelemetryStore.desiredPitch}
         desiredRoll={rovTelemetryStore.desiredRoll}
-        desiredYaw={rovTelemetryStore.desiredYaw}
-        autoStabilization={rovStatusStore.autoStabilization}
-        style={props.style}
       />
     </Match>
-    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.model3D}>
-      <Model3DAttitudeIndicator
-        size={SCIENTIFIC_ATTITUDE_SIZE}
-        pitch={rovTelemetryStore.pitch}
-        roll={rovTelemetryStore.roll}
-        yaw={rovTelemetryStore.yaw}
-        desiredYaw={rovTelemetryStore.desiredYaw}
-        autoStabilization={rovStatusStore.autoStabilization}
-        style={props.style}
-      />
+    <Match when={props.style === AttitudeStyle.model3D}>
+      <Model3DAttitudeIndicator {...props.shared} />
     </Match>
-    <Match when={configStore.attitudeIndicator === AttitudeIndicatorEnum.classic}>
+    <Match when={props.style === AttitudeStyle.classic}>
       <ClassicAttitudeIndicator
-        size={SCIENTIFIC_ATTITUDE_SIZE}
-        pitch={rovTelemetryStore.pitch}
-        roll={rovTelemetryStore.roll}
-        yaw={rovTelemetryStore.yaw}
+        {...props.shared}
         desiredPitch={rovTelemetryStore.desiredPitch}
         desiredRoll={rovTelemetryStore.desiredRoll}
-        desiredYaw={rovTelemetryStore.desiredYaw}
-        autoStabilization={rovStatusStore.autoStabilization}
-        style={props.style}
       />
     </Match>
   </Switch>
 );
 
-const AttitudeIndicator: Component = () => {
+type AttitudeIndicatorProps = {
+  style: AttitudeStyle;
+  widget: OverlayWidget;
+};
+
+const AttitudeIndicator: Component<AttitudeIndicatorProps> = (props) => {
+  const isVisible = useOverlayContentVisible();
+
   const shadowStyle = createMemo(() => {
-    if (configStore.workIndicator && rovTelemetryStore.workIndicatorPercentage > 0) {
+    if (
+      props.widget.options.workIndicator === true &&
+      rovTelemetryStore.workIndicatorPercentage > 0
+    ) {
       return calculateShadowStyle(rovTelemetryStore.workIndicatorPercentage);
     }
     return {};
   });
 
+  const shared = createMemo<SharedAttitudeProps>(() => ({
+    size: indicatorSize(props.widget),
+    pitch: rovTelemetryStore.pitch,
+    roll: rovTelemetryStore.roll,
+    yaw: rovTelemetryStore.yaw,
+    desiredYaw: rovTelemetryStore.desiredYaw,
+    autoStabilization: rovStatusStore.autoStabilization,
+    style: shadowStyle(),
+  }));
+
   return (
-    <div class={connectionStatusStore.isConnected ? 'flex' : 'hidden'}>
-      <AttitudeIndicatorContent style={shadowStyle()} />
+    <div class={isVisible() ? 'flex' : 'hidden'}>
+      <AttitudeStyles style={props.style} shared={shared()} />
     </div>
   );
 };

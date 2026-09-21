@@ -2,15 +2,12 @@ import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
 import { createStore, reconcile } from 'solid-js/store';
 
+import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configTypes';
+
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import {
-  AttitudeIndicator,
-  type Config,
-  type GamepadBindings,
-  type KeyboardBindings,
-} from '@/stores/configTypes';
-export { AttitudeIndicator, CustomActionTrigger } from '@/stores/configTypes';
+import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
+export { CustomActionTrigger } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 
@@ -66,10 +63,7 @@ const createNullGamepadBindings = (): GamepadBindings => ({
 
 const defaultConfig: Config = {
   appVersion: m.common_not_available(),
-  overlayScale: 2,
-  attitudeIndicator: AttitudeIndicator.scientific,
-  workIndicator: false,
-  thrusterRpmOverlay: false,
+  overlay: createDefaultOverlayConfig(m.overlay_layout_default_name()),
   videoDirectory: '~/Movies/Manafish',
   checkForAppUpdatesOnStartup: true,
   ipAddress: '10.10.10.10',

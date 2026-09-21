@@ -4,7 +4,9 @@ use std::path::PathBuf;
 use semver::Version;
 use tokio::sync::mpsc::Sender;
 
-use crate::models::config::Config;
+use crate::models::config::{
+  Config, OverlayWidgetType, default_overlay_config, default_overlay_widgets,
+};
 use crate::models::toast::ToastContent;
 use crate::toast::{toast_success, toast_warn};
 use crate::version::current_app_version;
@@ -37,6 +39,68 @@ fn strip_unknown_fields(raw: &mut serde_json::Value) {
   }
 }
 
+/// Turn the old fixed-overlay settings (`overlayScale`, `attitudeIndicator`,
+/// `workIndicator`, `thrusterRpmOverlay`) into a grid layout that reproduces
+/// what the user was already seeing.
+///
+/// The old scale is intentionally dropped: overlay size is now derived from the
+/// camera size instead of being configured.
+fn migrate_overlay(object: &mut serde_json::Map<String, serde_json::Value>) {
+  let had_legacy_keys = object.contains_key("overlayScale")
+    || object.contains_key("attitudeIndicator")
+    || object.contains_key("workIndicator")
+    || object.contains_key("thrusterRpmOverlay");
+
+  let attitude_indicator = object
+    .remove("attitudeIndicator")
+    .and_then(|value| value.as_str().map(str::to_string));
+  let work_indicator = object.remove("workIndicator").and_then(|value| value.as_bool());
+  let thruster_rpm_overlay = object.remove("thrusterRpmOverlay").and_then(|value| value.as_bool());
+  object.remove("overlayScale");
+
+  // A config that already has a layout keeps it; only pre-grid configs are
+  // converted, and only once.
+  if object.contains_key("overlay") || !had_legacy_keys {
+    return;
+  }
+
+  let attitude_type = match attitude_indicator.as_deref() {
+    Some("model3D") => Some(OverlayWidgetType::AttitudeModel3D),
+    Some("classic") => Some(OverlayWidgetType::AttitudeClassic),
+    Some("disabled") => None,
+    // Missing or "scientific": the old default.
+    _ => Some(OverlayWidgetType::AttitudeScientific),
+  };
+
+  let mut overlay = default_overlay_config();
+  let mut widgets = default_overlay_widgets();
+
+  widgets.retain(|widget| match widget.widget_type {
+    OverlayWidgetType::AttitudeScientific => attitude_type.is_some(),
+    // The RPM overlay used to be off by default and opt-in.
+    OverlayWidgetType::ThrusterRpm => thruster_rpm_overlay.unwrap_or(false),
+    _ => true,
+  });
+
+  for widget in &mut widgets {
+    if widget.widget_type != OverlayWidgetType::AttitudeScientific {
+      continue;
+    }
+    if let Some(attitude_type) = attitude_type {
+      widget.widget_type = attitude_type;
+    }
+    widget.options.work_indicator = Some(work_indicator.unwrap_or(false));
+  }
+
+  if let Some(layout) = overlay.layouts.first_mut() {
+    layout.widgets = widgets;
+  }
+
+  if let Ok(value) = serde_json::to_value(overlay) {
+    object.insert("overlay".to_string(), value);
+  }
+}
+
 fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
   let stored_version = raw.get("appVersion").and_then(|v| v.as_str()).unwrap_or("0.0.0");
 
@@ -51,6 +115,7 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
 
   if let Some(object) = raw.as_object_mut() {
     object.remove("checkForFirmwareUpdatesOnConnect");
+    migrate_overlay(object);
   }
 
   raw
@@ -259,6 +324,92 @@ mod tests {
   }
 
   /// # Panics
+  /// Panics if the legacy overlay settings are not converted into an
+  /// equivalent grid layout.
+  #[test]
+  fn apply_migrations_converts_legacy_overlay_settings() {
+    let mut raw = sample_raw_config();
+    let object = raw.as_object_mut().expect("config is an object");
+    object.insert("attitudeIndicator".to_string(), json!("classic"));
+    object.insert("workIndicator".to_string(), json!(true));
+    object.insert("thrusterRpmOverlay".to_string(), json!(false));
+
+    let result = apply_migrations(raw);
+
+    // The retired settings are gone.
+    assert!(result.get("overlayScale").is_none());
+    assert!(result.get("attitudeIndicator").is_none());
+    assert!(result.get("workIndicator").is_none());
+    assert!(result.get("thrusterRpmOverlay").is_none());
+
+    let overlay = result.get("overlay").expect("overlay was created");
+    let layout = overlay
+      .get("layouts")
+      .and_then(|layouts| layouts.get(0))
+      .expect("a layout exists");
+    let widgets = layout
+      .get("widgets")
+      .and_then(serde_json::Value::as_array)
+      .expect("layout has widgets");
+
+    let types: Vec<&str> = widgets
+      .iter()
+      .filter_map(|widget| widget.get("type").and_then(serde_json::Value::as_str))
+      .collect();
+
+    // The chosen attitude style became the placed widget...
+    assert!(types.contains(&"attitudeClassic"));
+    assert!(!types.contains(&"attitudeScientific"));
+    // ...the disabled RPM overlay is simply not placed...
+    assert!(!types.contains(&"thrusterRpm"));
+    // ...and everything that was always on is still there.
+    assert!(types.contains(&"connectionStatus"));
+    assert!(types.contains(&"battery"));
+
+    // The work indicator became a per-widget option.
+    let attitude = widgets
+      .iter()
+      .find(|widget| widget.get("type") == Some(&json!("attitudeClassic")))
+      .expect("attitude widget exists");
+    assert_eq!(attitude.get("options").and_then(|o| o.get("workIndicator")), Some(&json!(true)));
+
+    // The migrated config round-trips through the strict `Config` type.
+    let mut migrated = result;
+    migrated["appVersion"] = json!(current_app_version());
+    assert!(serde_json::from_value::<Config>(migrated).is_ok());
+  }
+
+  /// # Panics
+  /// Panics if a config that already has a layout gets it overwritten.
+  #[test]
+  fn apply_migrations_keeps_an_existing_overlay_layout() {
+    let mut raw = sample_raw_config();
+    let object = raw.as_object_mut().expect("config is an object");
+    object.insert(
+      "overlay".to_string(),
+      serde_json::to_value(default_overlay_config()).expect("serialize overlay"),
+    );
+    object.insert("attitudeIndicator".to_string(), json!("disabled"));
+
+    let result = apply_migrations(raw);
+
+    let widgets = result
+      .get("overlay")
+      .and_then(|overlay| overlay.get("layouts"))
+      .and_then(|layouts| layouts.get(0))
+      .and_then(|layout| layout.get("widgets"))
+      .and_then(serde_json::Value::as_array)
+      .expect("layout has widgets");
+
+    // "disabled" did not strip the attitude widget from the stored layout.
+    assert!(
+      widgets
+        .iter()
+        .any(|widget| widget.get("type") == Some(&json!("attitudeScientific")))
+    );
+  }
+
+  /// # Panics
   /// Panics if stripping removes a recognised field, keeps an unknown field, or
   /// leaves a config that no longer deserializes.
   #[test]
@@ -278,7 +429,9 @@ mod tests {
     assert!(!object.contains_key("newFutureField"));
     // ...while recognised fields (including a flattened one) remain.
     assert!(object.contains_key("appVersion"));
-    assert!(object.contains_key("workIndicator"));
+    assert!(object.contains_key("overlay"));
+    // A flattened field still survives.
+    assert!(object.contains_key("checkForAppUpdatesOnStartup"));
     assert!(object.contains_key("ipAddress"));
 
     // The stripped config still deserializes despite `deny_unknown_fields`.

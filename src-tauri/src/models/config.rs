@@ -205,20 +205,83 @@ pub struct CustomActionBinding {
   pub gamepad: HashMap<String, Option<GamepadInput>>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+/// Every element that can be placed on the camera overlay. An element is shown
+/// if and only if a layout places it, so there are no enable/disable flags.
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub enum AttitudeIndicator {
-  Scientific,
-  Model3D,
-  Classic,
-  Disabled,
+pub enum OverlayWidgetType {
+  ConnectionStatus,
+  Recording,
+  AttitudeScientific,
+  #[serde(rename = "attitudeModel3D")]
+  AttitudeModel3D,
+  AttitudeClassic,
+  Stabilization,
+  ThrusterRpm,
+  Depth,
+  Temperature,
+  Battery,
+}
+
+/// Where a widget's content sits inside the grid rectangle it occupies.
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum OverlayAnchor {
+  TopLeft,
+  Top,
+  TopRight,
+  Left,
+  Center,
+  Right,
+  BottomLeft,
+  Bottom,
+  BottomRight,
+}
+
+/// Per-instance widget settings. Every field is optional so new options never
+/// invalidate a stored layout, and so a widget type can ignore the ones that do
+/// not apply to it.
+#[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct OverlayWidgetOptions {
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub work_indicator: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct DisplayConfig {
-  pub work_indicator: bool,
-  pub thruster_rpm_overlay: bool,
+pub struct OverlayWidget {
+  /// Stable instance id, so the same type can be placed more than once.
+  pub id: String,
+  #[serde(rename = "type")]
+  pub widget_type: OverlayWidgetType,
+  /// 1-based grid anchor cell.
+  pub column: u16,
+  pub row: u16,
+  pub column_span: u16,
+  pub row_span: u16,
+  pub anchor: OverlayAnchor,
+  #[serde(default)]
+  pub options: OverlayWidgetOptions,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OverlayLayout {
+  pub id: String,
+  pub name: String,
+  /// Grid resolution this layout was authored against, so the frontend can
+  /// rescale placements if the constants ever change.
+  pub columns: u16,
+  pub rows: u16,
+  pub widgets: Vec<OverlayWidget>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OverlayConfig {
+  pub active_layout_id: String,
+  pub layouts: Vec<OverlayLayout>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -231,10 +294,10 @@ pub struct UpdateCheckConfig {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
   pub app_version: String,
-  pub overlay_scale: i8,
-  pub attitude_indicator: AttitudeIndicator,
-  #[serde(flatten)]
-  pub display: DisplayConfig,
+  /// Fully user-arranged camera overlay. Stored app-side because it is an
+  /// operator/workstation preference, and because the overlay has to render
+  /// before any ROV is connected.
+  pub overlay: OverlayConfig,
   pub video_directory: String,
   #[serde(flatten)]
   pub update_checks: UpdateCheckConfig,
@@ -317,16 +380,112 @@ impl Default for KeyboardBindings {
   }
 }
 
+pub const DEFAULT_OVERLAY_LAYOUT_ID: &str = "default";
+pub const OVERLAY_GRID_COLUMNS: u16 = 12;
+pub const OVERLAY_GRID_ROWS: u16 = 9;
+
+fn overlay_widget(
+  id: &str,
+  widget_type: OverlayWidgetType,
+  column: u16,
+  row: u16,
+  column_span: u16,
+  row_span: u16,
+  anchor: OverlayAnchor,
+) -> OverlayWidget {
+  OverlayWidget {
+    id: id.to_string(),
+    widget_type,
+    column,
+    row,
+    column_span,
+    row_span,
+    anchor,
+    options: OverlayWidgetOptions::default(),
+  }
+}
+
+/// Reproduces the arrangement the overlay shipped with before it became
+/// customisable, so upgrading looks unchanged. Mirrors
+/// `src/stores/overlayDefaults.ts`; keep the two in step.
+pub fn default_overlay_widgets() -> Vec<OverlayWidget> {
+  vec![
+    overlay_widget(
+      "connection-status",
+      OverlayWidgetType::ConnectionStatus,
+      1,
+      1,
+      2,
+      1,
+      OverlayAnchor::TopLeft,
+    ),
+    overlay_widget("recording", OverlayWidgetType::Recording, 1, 2, 2, 1, OverlayAnchor::TopLeft),
+    overlay_widget(
+      "stabilization",
+      OverlayWidgetType::Stabilization,
+      1,
+      5,
+      1,
+      1,
+      OverlayAnchor::Left,
+    ),
+    OverlayWidget {
+      options: OverlayWidgetOptions {
+        work_indicator: Some(false),
+      },
+      ..overlay_widget(
+        "attitude",
+        OverlayWidgetType::AttitudeScientific,
+        1,
+        8,
+        2,
+        2,
+        OverlayAnchor::BottomLeft,
+      )
+    },
+    overlay_widget(
+      "thruster-rpm",
+      OverlayWidgetType::ThrusterRpm,
+      11,
+      4,
+      2,
+      3,
+      OverlayAnchor::Right,
+    ),
+    overlay_widget("depth", OverlayWidgetType::Depth, 7, 9, 2, 1, OverlayAnchor::BottomRight),
+    overlay_widget(
+      "temperature",
+      OverlayWidgetType::Temperature,
+      9,
+      9,
+      2,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget("battery", OverlayWidgetType::Battery, 11, 9, 2, 1, OverlayAnchor::BottomRight),
+  ]
+}
+
+pub fn default_overlay_config() -> OverlayConfig {
+  OverlayConfig {
+    active_layout_id: DEFAULT_OVERLAY_LAYOUT_ID.to_string(),
+    layouts: vec![OverlayLayout {
+      id: DEFAULT_OVERLAY_LAYOUT_ID.to_string(),
+      // Localised in the frontend; a stored layout keeps whatever the user
+      // renamed it to.
+      name: "Default".to_string(),
+      columns: OVERLAY_GRID_COLUMNS,
+      rows: OVERLAY_GRID_ROWS,
+      widgets: default_overlay_widgets(),
+    }],
+  }
+}
+
 impl Default for Config {
   fn default() -> Self {
     Config {
       app_version: current_app_version(),
-      overlay_scale: 2,
-      attitude_indicator: AttitudeIndicator::Scientific,
-      display: DisplayConfig {
-        work_indicator: false,
-        thruster_rpm_overlay: false,
-      },
+      overlay: default_overlay_config(),
       video_directory: default_video_directory(),
       update_checks: UpdateCheckConfig {
         check_for_app_updates_on_startup: true,
@@ -372,6 +531,62 @@ mod tests {
     assert_f32_eq(input.max_value, 1.0);
   }
 
+  /// Mirrored by `default overlay layout` in
+  /// `src/features/overlay/widgets/registry.test.ts`. If this list changes,
+  /// change the `TypeScript` one in the same commit.
+  ///
+  /// # Panics
+  /// Panics if the default layout drifts from the frontend's copy.
+  fn assert_default_overlay_layout(config: &Config) {
+    let Some(layout) = config.overlay.layouts.first() else {
+      panic!("default config has a layout");
+    };
+
+    assert_eq!(layout.columns, OVERLAY_GRID_COLUMNS);
+    assert_eq!(layout.rows, OVERLAY_GRID_ROWS);
+
+    let placement: Vec<(&str, &str)> = layout
+      .widgets
+      .iter()
+      .map(|widget| {
+        let type_name = match widget.widget_type {
+          OverlayWidgetType::ConnectionStatus => "connectionStatus",
+          OverlayWidgetType::Recording => "recording",
+          OverlayWidgetType::AttitudeScientific => "attitudeScientific",
+          OverlayWidgetType::AttitudeModel3D => "attitudeModel3D",
+          OverlayWidgetType::AttitudeClassic => "attitudeClassic",
+          OverlayWidgetType::Stabilization => "stabilization",
+          OverlayWidgetType::ThrusterRpm => "thrusterRpm",
+          OverlayWidgetType::Depth => "depth",
+          OverlayWidgetType::Temperature => "temperature",
+          OverlayWidgetType::Battery => "battery",
+        };
+        (widget.id.as_str(), type_name)
+      })
+      .collect();
+
+    assert_eq!(
+      placement,
+      vec![
+        ("connection-status", "connectionStatus"),
+        ("recording", "recording"),
+        ("stabilization", "stabilization"),
+        ("attitude", "attitudeScientific"),
+        ("thruster-rpm", "thrusterRpm"),
+        ("depth", "depth"),
+        ("temperature", "temperature"),
+        ("battery", "battery"),
+      ]
+    );
+
+    // Every widget stays inside the grid.
+    for widget in &layout.widgets {
+      assert!(widget.column >= 1 && widget.row >= 1);
+      assert!(widget.column + widget.column_span - 1 <= layout.columns);
+      assert!(widget.row + widget.row_span - 1 <= layout.rows);
+    }
+  }
+
   /// # Panics
   /// Panics if any default config value differs from the expected defaults.
   #[test]
@@ -379,10 +594,9 @@ mod tests {
     let config = Config::default();
 
     assert_eq!(config.app_version, current_app_version());
-    assert_eq!(config.overlay_scale, 2);
-    assert!(matches!(config.attitude_indicator, AttitudeIndicator::Scientific));
-    assert!(!config.display.work_indicator);
-    assert!(!config.display.thruster_rpm_overlay);
+    assert_eq!(config.overlay.active_layout_id, DEFAULT_OVERLAY_LAYOUT_ID);
+    assert_eq!(config.overlay.layouts.len(), 1);
+    assert_default_overlay_layout(&config);
     assert!(config.update_checks.check_for_app_updates_on_startup);
     assert_eq!(config.ip_address, "10.10.10.10");
     assert_eq!(config.webrtc_signaling_api_port, 1984);
@@ -514,10 +728,9 @@ mod tests {
     };
 
     assert!(serialized.get("appVersion").is_some());
-    assert!(serialized.get("overlayScale").is_some());
+    assert!(serialized.get("overlay").is_some());
     assert!(serialized.get("videoDirectory").is_some());
     assert!(serialized.get("app_version").is_none());
-    assert!(serialized.get("overlay_scale").is_none());
     assert!(serialized.get("video_directory").is_none());
 
     let deserialized = serde_json::from_value::<Config>(serialized.clone());

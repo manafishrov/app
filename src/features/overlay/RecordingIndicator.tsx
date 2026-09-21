@@ -5,6 +5,8 @@ import { Badge } from '@manafishrov/ui/badge';
 import * as m from '@/paraglide/messages';
 import { getDuration, recordingStore } from '@/stores/recording';
 
+import { useIsOverlayPreview } from './OverlayPreview';
+
 const SECONDS_PER_MINUTE = 60;
 const TIME_PAD_LENGTH = 2;
 const MS_PER_SECOND = 1000;
@@ -19,6 +21,7 @@ const formatTime = (seconds: number): string => {
 
 const RecordingIndicator: Component = () => {
   const [elapsed, setElapsed] = createSignal(0);
+  const isPreview = useIsOverlayPreview();
 
   createEffect(() => {
     if (!recordingStore.isRecording || recordingStore.startTime === undef) {
@@ -36,7 +39,7 @@ const RecordingIndicator: Component = () => {
   });
 
   return (
-    <div class={recordingStore.isRecording ? 'flex' : 'hidden'}>
+    <div class={isPreview() || recordingStore.isRecording ? 'flex' : 'hidden'}>
       <Badge
         variant='destructive'
         class='h-auto min-h-5 border-destructive bg-destructive/80 py-1 backdrop-blur-sm'
