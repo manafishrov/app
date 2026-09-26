@@ -13,7 +13,7 @@ permissions:
 jobs:
   validate-release:
     name: Validate Release Identity
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       prerelease: ${{ steps.validate.outputs.prerelease }}
     steps:
@@ -41,7 +41,7 @@ jobs:
   create-release:
     name: Create Draft Release
     needs: validate-release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       release_id: ${{ steps.create.outputs.release_id }}
       prerelease: ${{ needs.validate-release.outputs.prerelease }}
