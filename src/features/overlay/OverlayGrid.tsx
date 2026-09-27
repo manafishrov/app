@@ -1,78 +1,52 @@
-/**
- * Renders a layout's widgets onto the camera-sized grid.
- *
- * Shared by the live overlay and the settings editor so what you arrange is
- * exactly what you fly with.
- */
-
 import type { Component, JSXElement } from 'solid-js';
 
-import { OverlayAnchor, type OverlayLayout, type OverlayWidget } from '@/stores/overlayTypes';
+import type { OverlayLayout, OverlayWidget } from '@/stores/overlayTypes';
 
 import { getOverlayWidgetDefinition } from './widgets/Registry';
-
-const anchorClasses: Record<OverlayAnchor, string> = {
-  topLeft: 'items-start justify-start',
-  top: 'items-start justify-center',
-  topRight: 'items-start justify-end',
-  left: 'items-center justify-start',
-  center: 'items-center justify-center',
-  right: 'items-center justify-end',
-  bottomLeft: 'items-end justify-start',
-  bottom: 'items-end justify-center',
-  bottomRight: 'items-end justify-end',
-};
-
-export const overlayAnchorClass = (anchor: OverlayAnchor): string =>
-  anchorClasses[anchor] ?? anchorClasses[OverlayAnchor.topLeft];
+import { WidgetContent } from './widgets/WidgetContent';
+import './overlay.css';
 
 export const overlayGridArea = (widget: OverlayWidget): Record<string, string> => ({
   'grid-column': `${widget.column} / span ${widget.columnSpan}`,
   'grid-row': `${widget.row} / span ${widget.rowSpan}`,
 });
 
+const [undef] = [] as undefined[];
+
 type OverlayGridProps = {
   layout: OverlayLayout;
-  /** Ties widget size to camera size; see `overlayScaleForWidth`. */
-  scale: number;
-  class?: string;
-  /** Lets the editor wrap each widget with selection and drag affordances. */
+  guides?: boolean;
   renderWidget?: (widget: OverlayWidget, content: JSXElement) => JSXElement;
 };
 
+/** Placement, guides and pointer coordinates all use the full camera rectangle. */
 const OverlayGrid: Component<OverlayGridProps> = (props) => (
   <div
-    class={`grid h-full w-full ${props.class ?? ''}`}
+    class='overlay-grid'
+    data-overlay-grid
+    data-guides={props.guides === true ? '' : undef}
     style={{
-      'grid-template-columns': `repeat(${props.layout.columns}, 1fr)`,
-      'grid-template-rows': `repeat(${props.layout.rows}, 1fr)`,
+      '--overlay-columns': props.layout.columns,
+      '--overlay-rows': props.layout.rows,
     }}
   >
     <For each={props.layout.widgets}>
-      {(widget) => {
-        const definition = createMemo(() => getOverlayWidgetDefinition(widget.type));
-
-        return (
-          <Show when={definition()}>
-            {(resolved) => {
-              const content = (
-                <div style={{ zoom: props.scale }}>
-                  <Dynamic component={resolved().Render} widget={widget} />
-                </div>
-              );
-
-              return (
-                <div
-                  class={`flex min-h-0 min-w-0 ${overlayAnchorClass(widget.anchor)}`}
-                  style={overlayGridArea(widget)}
-                >
-                  {props.renderWidget ? props.renderWidget(widget, content) : content}
-                </div>
-              );
-            }}
-          </Show>
-        );
-      }}
+      {(widget) => (
+        <Show when={getOverlayWidgetDefinition(widget.type)}>
+          {(definition) => {
+            const content = (
+              <WidgetContent widget={widget} anchor={widget.anchor}>
+                <Dynamic component={definition().Render} widget={widget} />
+              </WidgetContent>
+            );
+            return (
+              <div class='overlay-cell' data-widget-id={widget.id} style={overlayGridArea(widget)}>
+                {props.renderWidget ? props.renderWidget(widget, content) : content}
+              </div>
+            );
+          }}
+        </Show>
+      )}
     </For>
   </div>
 );

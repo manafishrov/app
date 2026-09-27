@@ -106,7 +106,12 @@ const DesiredDepthPopoverContent = (): JSXElement => {
   );
 };
 
-export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement => {
+type DesiredDepthPopoverProps = {
+  children: JSXElement;
+  class?: string;
+};
+
+export const DesiredDepthPopover = (props: DesiredDepthPopoverProps): JSXElement => {
   const [containerRef, setContainerRef] = createSignal<HTMLDivElement>();
 
   createEffect(() => {
@@ -131,13 +136,11 @@ export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement
 
   return (
     <div
-      ref={(element): void => {
-        setContainerRef(element);
-      }}
-      class='pointer-events-auto relative inline-flex'
+      ref={setContainerRef}
+      class={`pointer-events-auto relative inline-flex ${props.class ?? ''}`}
     >
       <div
-        class='cursor-pointer'
+        class='w-full cursor-pointer'
         onClick={() => {
           if (desiredDepthPopupStore.isOpen) {
             closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);

@@ -212,10 +212,28 @@ pub struct CustomActionBinding {
 pub enum OverlayWidgetType {
   ConnectionStatus,
   Recording,
+  WorkIndicator,
   AttitudeScientific,
   #[serde(rename = "attitudeModel3D")]
   AttitudeModel3D,
   AttitudeClassic,
+  AutoStabilization,
+  DepthHold,
+  CurrentDepth,
+  DesiredDepth,
+  WaterTemperature,
+  ElectronicsTemperature,
+  BatteryLevel,
+  CurrentDraw,
+  ThrusterRpm1,
+  ThrusterRpm2,
+  ThrusterRpm3,
+  ThrusterRpm4,
+  ThrusterRpm5,
+  ThrusterRpm6,
+  ThrusterRpm7,
+  ThrusterRpm8,
+  // Legacy groups remain readable and are split by the frontend.
   Stabilization,
   ThrusterRpm,
   Depth,
@@ -381,8 +399,8 @@ impl Default for KeyboardBindings {
 }
 
 pub const DEFAULT_OVERLAY_LAYOUT_ID: &str = "default";
-pub const OVERLAY_GRID_COLUMNS: u16 = 12;
-pub const OVERLAY_GRID_ROWS: u16 = 9;
+pub const OVERLAY_GRID_COLUMNS: u16 = 32;
+pub const OVERLAY_GRID_ROWS: u16 = 24;
 
 fn overlay_widget(
   id: &str,
@@ -405,65 +423,157 @@ fn overlay_widget(
   }
 }
 
-/// Reproduces the arrangement the overlay shipped with before it became
-/// customisable, so upgrading looks unchanged. Mirrors
-/// `src/stores/overlayDefaults.ts`; keep the two in step.
-pub fn default_overlay_widgets() -> Vec<OverlayWidget> {
+fn default_thruster_widgets() -> Vec<OverlayWidget> {
   vec![
+    overlay_widget(
+      "thruster-rpm-1",
+      OverlayWidgetType::ThrusterRpm1,
+      28,
+      9,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-2",
+      OverlayWidgetType::ThrusterRpm2,
+      28,
+      10,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-3",
+      OverlayWidgetType::ThrusterRpm3,
+      28,
+      11,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-4",
+      OverlayWidgetType::ThrusterRpm4,
+      28,
+      12,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-5",
+      OverlayWidgetType::ThrusterRpm5,
+      28,
+      13,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-6",
+      OverlayWidgetType::ThrusterRpm6,
+      28,
+      14,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-7",
+      OverlayWidgetType::ThrusterRpm7,
+      28,
+      15,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+    overlay_widget(
+      "thruster-rpm-8",
+      OverlayWidgetType::ThrusterRpm8,
+      28,
+      16,
+      5,
+      1,
+      OverlayAnchor::BottomRight,
+    ),
+  ]
+}
+
+/// Operator-approved defaults, mirrored in src/stores/overlayDefaults.ts.
+pub fn default_overlay_widgets() -> Vec<OverlayWidget> {
+  let mut widgets = vec![
     overlay_widget(
       "connection-status",
       OverlayWidgetType::ConnectionStatus,
       1,
       1,
+      4,
+      1,
+      OverlayAnchor::TopRight,
+    ),
+    overlay_widget("recording", OverlayWidgetType::Recording, 5, 1, 4, 1, OverlayAnchor::TopRight),
+    overlay_widget(
+      "stabilization",
+      OverlayWidgetType::AutoStabilization,
+      1,
+      11,
       2,
+      2,
+      OverlayAnchor::Left,
+    ),
+    overlay_widget("depth-hold", OverlayWidgetType::DepthHold, 1, 13, 2, 2, OverlayAnchor::Left),
+    overlay_widget(
+      "attitude",
+      OverlayWidgetType::AttitudeScientific,
+      1,
+      18,
+      7,
+      7,
+      OverlayAnchor::BottomLeft,
+    ),
+    overlay_widget("depth", OverlayWidgetType::CurrentDepth, 18, 24, 5, 1, OverlayAnchor::TopLeft),
+    overlay_widget(
+      "target-depth",
+      OverlayWidgetType::DesiredDepth,
+      18,
+      23,
+      5,
       1,
       OverlayAnchor::TopLeft,
     ),
-    overlay_widget("recording", OverlayWidgetType::Recording, 1, 2, 2, 1, OverlayAnchor::TopLeft),
     overlay_widget(
-      "stabilization",
-      OverlayWidgetType::Stabilization,
-      1,
+      "water-temperature",
+      OverlayWidgetType::WaterTemperature,
+      23,
+      23,
       5,
       1,
-      1,
-      OverlayAnchor::Left,
-    ),
-    OverlayWidget {
-      options: OverlayWidgetOptions {
-        work_indicator: Some(false),
-      },
-      ..overlay_widget(
-        "attitude",
-        OverlayWidgetType::AttitudeScientific,
-        1,
-        8,
-        2,
-        2,
-        OverlayAnchor::BottomLeft,
-      )
-    },
-    overlay_widget(
-      "thruster-rpm",
-      OverlayWidgetType::ThrusterRpm,
-      11,
-      4,
-      2,
-      3,
       OverlayAnchor::Right,
     ),
-    overlay_widget("depth", OverlayWidgetType::Depth, 7, 9, 2, 1, OverlayAnchor::BottomRight),
     overlay_widget(
-      "temperature",
-      OverlayWidgetType::Temperature,
-      9,
-      9,
-      2,
+      "electronics-temperature",
+      OverlayWidgetType::ElectronicsTemperature,
+      23,
+      24,
+      5,
       1,
-      OverlayAnchor::BottomRight,
+      OverlayAnchor::Right,
     ),
-    overlay_widget("battery", OverlayWidgetType::Battery, 11, 9, 2, 1, OverlayAnchor::BottomRight),
-  ]
+    overlay_widget(
+      "current-draw",
+      OverlayWidgetType::CurrentDraw,
+      28,
+      23,
+      5,
+      1,
+      OverlayAnchor::Right,
+    ),
+    overlay_widget("battery", OverlayWidgetType::BatteryLevel, 28, 24, 5, 1, OverlayAnchor::Right),
+    overlay_widget("work", OverlayWidgetType::WorkIndicator, 1, 17, 4, 1, OverlayAnchor::Right),
+  ];
+  widgets.splice(5..5, default_thruster_widgets());
+  widgets
 }
 
 pub fn default_overlay_config() -> OverlayConfig {
@@ -552,10 +662,27 @@ mod tests {
         let type_name = match widget.widget_type {
           OverlayWidgetType::ConnectionStatus => "connectionStatus",
           OverlayWidgetType::Recording => "recording",
+          OverlayWidgetType::WorkIndicator => "workIndicator",
           OverlayWidgetType::AttitudeScientific => "attitudeScientific",
           OverlayWidgetType::AttitudeModel3D => "attitudeModel3D",
           OverlayWidgetType::AttitudeClassic => "attitudeClassic",
+          OverlayWidgetType::AutoStabilization => "autoStabilization",
+          OverlayWidgetType::DepthHold => "depthHold",
+          OverlayWidgetType::CurrentDepth => "currentDepth",
+          OverlayWidgetType::DesiredDepth => "desiredDepth",
+          OverlayWidgetType::WaterTemperature => "waterTemperature",
+          OverlayWidgetType::ElectronicsTemperature => "electronicsTemperature",
+          OverlayWidgetType::BatteryLevel => "batteryLevel",
+          OverlayWidgetType::CurrentDraw => "currentDraw",
           OverlayWidgetType::Stabilization => "stabilization",
+          OverlayWidgetType::ThrusterRpm1 => "thrusterRpm1",
+          OverlayWidgetType::ThrusterRpm2 => "thrusterRpm2",
+          OverlayWidgetType::ThrusterRpm3 => "thrusterRpm3",
+          OverlayWidgetType::ThrusterRpm4 => "thrusterRpm4",
+          OverlayWidgetType::ThrusterRpm5 => "thrusterRpm5",
+          OverlayWidgetType::ThrusterRpm6 => "thrusterRpm6",
+          OverlayWidgetType::ThrusterRpm7 => "thrusterRpm7",
+          OverlayWidgetType::ThrusterRpm8 => "thrusterRpm8",
           OverlayWidgetType::ThrusterRpm => "thrusterRpm",
           OverlayWidgetType::Depth => "depth",
           OverlayWidgetType::Temperature => "temperature",
@@ -570,12 +697,24 @@ mod tests {
       vec![
         ("connection-status", "connectionStatus"),
         ("recording", "recording"),
-        ("stabilization", "stabilization"),
+        ("stabilization", "autoStabilization"),
+        ("depth-hold", "depthHold"),
         ("attitude", "attitudeScientific"),
-        ("thruster-rpm", "thrusterRpm"),
-        ("depth", "depth"),
-        ("temperature", "temperature"),
-        ("battery", "battery"),
+        ("thruster-rpm-1", "thrusterRpm1"),
+        ("thruster-rpm-2", "thrusterRpm2"),
+        ("thruster-rpm-3", "thrusterRpm3"),
+        ("thruster-rpm-4", "thrusterRpm4"),
+        ("thruster-rpm-5", "thrusterRpm5"),
+        ("thruster-rpm-6", "thrusterRpm6"),
+        ("thruster-rpm-7", "thrusterRpm7"),
+        ("thruster-rpm-8", "thrusterRpm8"),
+        ("depth", "currentDepth"),
+        ("target-depth", "desiredDepth"),
+        ("water-temperature", "waterTemperature"),
+        ("electronics-temperature", "electronicsTemperature"),
+        ("current-draw", "currentDraw"),
+        ("battery", "batteryLevel"),
+        ("work", "workIndicator"),
       ]
     );
 

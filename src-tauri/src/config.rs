@@ -78,7 +78,16 @@ fn migrate_overlay(object: &mut serde_json::Map<String, serde_json::Value>) {
   widgets.retain(|widget| match widget.widget_type {
     OverlayWidgetType::AttitudeScientific => attitude_type.is_some(),
     // The RPM overlay used to be off by default and opt-in.
-    OverlayWidgetType::ThrusterRpm => thruster_rpm_overlay.unwrap_or(false),
+    OverlayWidgetType::ThrusterRpm
+    | OverlayWidgetType::ThrusterRpm1
+    | OverlayWidgetType::ThrusterRpm2
+    | OverlayWidgetType::ThrusterRpm3
+    | OverlayWidgetType::ThrusterRpm4
+    | OverlayWidgetType::ThrusterRpm5
+    | OverlayWidgetType::ThrusterRpm6
+    | OverlayWidgetType::ThrusterRpm7
+    | OverlayWidgetType::ThrusterRpm8 => thruster_rpm_overlay.unwrap_or(false),
+    OverlayWidgetType::WorkIndicator => work_indicator.unwrap_or(false),
     _ => true,
   });
 
@@ -89,7 +98,6 @@ fn migrate_overlay(object: &mut serde_json::Map<String, serde_json::Value>) {
     if let Some(attitude_type) = attitude_type {
       widget.widget_type = attitude_type;
     }
-    widget.options.work_indicator = Some(work_indicator.unwrap_or(false));
   }
 
   if let Some(layout) = overlay.layouts.first_mut() {
@@ -361,22 +369,41 @@ mod tests {
     assert!(types.contains(&"attitudeClassic"));
     assert!(!types.contains(&"attitudeScientific"));
     // ...the disabled RPM overlay is simply not placed...
-    assert!(!types.contains(&"thrusterRpm"));
+    assert!(!types.iter().any(|name| name.starts_with("thrusterRpm")));
     // ...and everything that was always on is still there.
     assert!(types.contains(&"connectionStatus"));
-    assert!(types.contains(&"battery"));
+    assert!(types.contains(&"batteryLevel"));
 
-    // The work indicator became a per-widget option.
+    // Work is a standalone widget, with no legacy glow left to split again.
+    assert_eq!(types.iter().filter(|name| **name == "workIndicator").count(), 1);
     let attitude = widgets
       .iter()
       .find(|widget| widget.get("type") == Some(&json!("attitudeClassic")))
       .expect("attitude widget exists");
-    assert_eq!(attitude.get("options").and_then(|o| o.get("workIndicator")), Some(&json!(true)));
+    assert_eq!(attitude.get("options").and_then(|o| o.get("workIndicator")), None);
 
     // The migrated config round-trips through the strict `Config` type.
     let mut migrated = result;
     migrated["appVersion"] = json!(current_app_version());
     assert!(serde_json::from_value::<Config>(migrated).is_ok());
+  }
+
+  #[test]
+  fn migration_keeps_work_disabled_and_splits_enabled_rpms() {
+    let mut raw = sample_raw_config();
+    raw["workIndicator"] = json!(false);
+    raw["thrusterRpmOverlay"] = json!(true);
+    let config: Config = serde_json::from_value(apply_migrations(raw)).expect("migrated config");
+    let widgets = &config.overlay.layouts[0].widgets;
+    assert!(
+      !widgets
+        .iter()
+        .any(|widget| widget.widget_type == OverlayWidgetType::WorkIndicator)
+    );
+    assert_eq!(
+      widgets.iter().filter(|widget| widget.id.starts_with("thruster-rpm-")).count(),
+      8
+    );
   }
 
   /// # Panics

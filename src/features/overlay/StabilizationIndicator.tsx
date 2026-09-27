@@ -49,7 +49,7 @@ const StabilizationToggle: Component<StabilizationToggleProps> = (props) => (
               event.currentTarget.blur();
             }
           }}
-          class='size-9 justify-center border-border/50 bg-background/50 p-0 text-muted-foreground backdrop-blur-sm hover:bg-background/60 hover:text-foreground data-pressed:border-emerald-300/30 data-pressed:bg-background/80 data-pressed:text-emerald-300'
+          class='overlay-control'
           tabindex={-1}
         >
           <span class='inline-flex size-5 items-center justify-center'>{props.icon}</span>
@@ -67,29 +67,33 @@ const StabilizationToggle: Component<StabilizationToggleProps> = (props) => (
   </Tooltip>
 );
 
-const StabilizationIndicator: Component = () => {
+const StabilizationIndicator: Component<{ depthHold: boolean }> = (props) => {
   const isVisible = useOverlayContentVisible();
 
   return (
-    <div class={isVisible() ? 'pointer-events-auto flex flex-col gap-2' : 'hidden'}>
-      <StabilizationToggle
-        active={rovStatusStore.autoStabilization}
-        label={m.controls_stabilization_stabilization()}
-        onToggle={() => {
-          playConfirmHaptic(configStore.selectedGamepadId);
-          toggleAutoStabilization().catch(handleToggleError);
-        }}
-        icon={<AutoStabilizationIcon class='size-full' />}
-      />
-      <StabilizationToggle
-        active={rovStatusStore.depthHold}
-        label={m.controls_stabilization_depth_hold()}
-        onToggle={() => {
-          playConfirmHaptic(configStore.selectedGamepadId);
-          toggleDepthHold().catch(handleToggleError);
-        }}
-        icon={<DepthHoldIcon class='size-full' />}
-      />
+    <div class={isVisible() ? 'overlay-surface overlay-controls pointer-events-auto' : 'hidden'}>
+      <Show when={!props.depthHold}>
+        <StabilizationToggle
+          active={rovStatusStore.autoStabilization}
+          label={m.controls_stabilization_stabilization()}
+          onToggle={() => {
+            playConfirmHaptic(configStore.selectedGamepadId);
+            toggleAutoStabilization().catch(handleToggleError);
+          }}
+          icon={<AutoStabilizationIcon class='size-full' />}
+        />
+      </Show>
+      <Show when={props.depthHold}>
+        <StabilizationToggle
+          active={rovStatusStore.depthHold}
+          label={m.controls_stabilization_depth_hold()}
+          onToggle={() => {
+            playConfirmHaptic(configStore.selectedGamepadId);
+            toggleDepthHold().catch(handleToggleError);
+          }}
+          icon={<DepthHoldIcon class='size-full' />}
+        />
+      </Show>
     </div>
   );
 };

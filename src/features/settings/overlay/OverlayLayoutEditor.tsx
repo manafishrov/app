@@ -1,15 +1,13 @@
 import type { Component } from 'solid-js';
 
-import { Button } from '@manafishrov/ui/button';
-import RestartAltIcon from '~icons/material-symbols/restart-alt';
-
 import type { GridCell } from '@/stores/overlayLayout';
 
 import * as m from '@/paraglide/messages';
 
-import { EditorSidebar } from './EditorSidebar';
 import { GridCanvas } from './GridCanvas';
-import { createLayoutDraft } from './layoutDraft';
+import { createLayoutDraft, type LayoutDraft } from './layoutDraft';
+import { WidgetInspector } from './WidgetInspector';
+import { WidgetPalette } from './WidgetPalette';
 
 const [undef] = [] as undefined[];
 
@@ -20,24 +18,31 @@ const ARROW_KEYS: Record<string, GridCell> = {
   ArrowDown: { column: 0, row: 1 },
 };
 
-const EditorHeader: Component<{ onReset: () => void }> = (props) => (
-  <div class='flex items-start justify-between gap-4'>
-    <div class='flex flex-col gap-1'>
-      <span class='text-sm font-medium'>{m.overlay_layout_title()}</span>
-      <span class='text-xs text-muted-foreground'>{m.overlay_layout_description()}</span>
-    </div>
-    <Button type='button' variant='outline' size='sm' class='gap-2' onClick={props.onReset}>
-      <RestartAltIcon class='size-4' />
-      {m.overlay_layout_reset()}
-    </Button>
+const SelectionControls: Component<{ draft: LayoutDraft }> = (props) => (
+  <div class='flex min-h-32 items-start rounded-md border border-border/60 px-3 py-2 sm:min-h-24'>
+    <Show
+      when={props.draft.selectedWidget()}
+      fallback={<p class='text-xs text-muted-foreground'>{m.overlay_layout_no_selection()}</p>}
+    >
+      {(widget) => (
+        <WidgetInspector
+          widget={widget()}
+          onSpanChange={props.draft.resizeSelected}
+          onRemove={props.draft.removeSelected}
+        />
+      )}
+    </Show>
   </div>
 );
 
-/** Arranges overlay widgets on a grid that mirrors the camera feed. */
-const OverlayLayoutEditor: Component = () => {
-  const draft = createLayoutDraft();
-
-  const handleKeyDown = (event: KeyboardEvent): void => {
+const handleEditorKey = (event: KeyboardEvent, draft: LayoutDraft): void => {
+  if (!(event.target instanceof HTMLElement) || !event.target.closest('[data-overlay-canvas]')) {
+    return;
+  }
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    event.preventDefault();
+    draft.removeSelected();
+  } else {
     const delta = ARROW_KEYS[event.key];
     if (delta === undef || draft.selectedWidget() === undef) {
       return;
@@ -45,37 +50,36 @@ const OverlayLayoutEditor: Component = () => {
 
     event.preventDefault();
     draft.nudgeSelected(delta);
-  };
+  }
+};
+
+/** Arranges overlay widgets on a grid that mirrors the camera feed. */
+const OverlayLayoutEditor: Component = () => {
+  const draft = createLayoutDraft();
 
   return (
-    <div class='flex flex-col gap-3' onKeyDown={handleKeyDown}>
-      <EditorHeader onReset={draft.reset} />
-
-      <div class='flex flex-col gap-4 lg:flex-row'>
-        <div class='min-w-0 flex-1'>
+    <div
+      class='flex flex-col gap-6'
+      onKeyDown={(event) => {
+        handleEditorKey(event, draft);
+      }}
+    >
+      <div class='mx-auto flex w-full max-w-3xl flex-col gap-2'>
+        <div class='min-w-0'>
           <GridCanvas
             layout={draft.layout}
             selectedId={draft.selectedId()}
             onSelect={draft.setSelectedId}
             onMove={draft.moveTo}
             onDrop={draft.commit}
+            onRemove={draft.remove}
+            onReset={draft.reset}
           />
         </div>
 
-        <EditorSidebar
-          selected={draft.selectedWidget()}
-          limits={{ maxColumnSpan: draft.layout.columns, maxRowSpan: draft.layout.rows }}
-          onAdd={draft.add}
-          onAnchorChange={(anchor) => {
-            draft.patchSelected({ anchor });
-          }}
-          onOptionsChange={(options) => {
-            draft.patchSelected({ options });
-          }}
-          onSpanChange={draft.resizeSelected}
-          onRemove={draft.removeSelected}
-        />
+        <SelectionControls draft={draft} />
       </div>
+      <WidgetPalette onAdd={draft.add} />
     </div>
   );
 };

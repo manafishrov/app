@@ -1,7 +1,5 @@
 import type { Component } from 'solid-js';
 
-import { Badge } from '@manafishrov/ui/badge';
-
 import * as m from '@/paraglide/messages';
 import { getDuration, recordingStore } from '@/stores/recording';
 
@@ -39,14 +37,16 @@ const RecordingIndicator: Component = () => {
   });
 
   return (
-    <div class={isPreview() || recordingStore.isRecording ? 'flex' : 'hidden'}>
-      <Badge
-        variant='destructive'
-        class='h-auto min-h-5 border-destructive bg-destructive/80 py-1 backdrop-blur-sm'
-      >
-        <div class='mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white' />
-        {m.overlay_recording_rec()} {formatTime(elapsed())}
-      </Badge>
+    <div
+      aria-label={m.overlay_widget_recording()}
+      class={
+        isPreview() || recordingStore.isRecording ? 'overlay-surface overlay-reading' : 'hidden'
+      }
+    >
+      <span class='flex items-center gap-2'>
+        <span class='size-1.5 rounded-full bg-destructive' />
+        <span class='overlay-value'>{formatTime(elapsed())}</span>
+      </span>
     </div>
   );
 };

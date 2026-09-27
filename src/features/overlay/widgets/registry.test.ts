@@ -21,19 +21,16 @@ describe('overlay widget placements', () => {
     }
   });
 
-  it('only offers size controls where resizing makes sense', () => {
-    // Badges are sized by content; only the attitude indicator fills its rect.
-    const resizable = Object.entries(overlayWidgetPlacements)
-      .filter(([, placement]) => placement.resizable)
-      .map(([type]) => type);
-
-    expect(new Set(resizable)).toEqual(
-      new Set([
-        OverlayWidgetType.attitudeClassic,
-        OverlayWidgetType.attitudeModel3D,
-        OverlayWidgetType.attitudeScientific,
-      ]),
-    );
+  it('keeps every attitude footprint square', () => {
+    for (const type of [
+      OverlayWidgetType.attitudeClassic,
+      OverlayWidgetType.attitudeModel3D,
+      OverlayWidgetType.attitudeScientific,
+    ]) {
+      for (const size of overlayWidgetPlacements[type].sizes) {
+        expect(size.columns).toBe(size.rows);
+      }
+    }
   });
 
   it('returns undefined for a type it does not know', () => {
@@ -66,21 +63,29 @@ describe('default overlay layout', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  /**
-   * Mirrored by `assert_default_overlay_layout` in
-   * `src-tauri/src/models/config.rs`. If this list changes, change the Rust one
-   * in the same commit.
-   */
+  // Mirrors the Rust default placement.
   it('matches the Rust-side default placement', () => {
     expect(layout.widgets.map((widget) => [widget.id, widget.type])).toEqual([
       ['connection-status', OverlayWidgetType.connectionStatus],
       ['recording', OverlayWidgetType.recording],
-      ['stabilization', OverlayWidgetType.stabilization],
+      ['stabilization', OverlayWidgetType.autoStabilization],
+      ['depth-hold', OverlayWidgetType.depthHold],
       ['attitude', OverlayWidgetType.attitudeScientific],
-      ['thruster-rpm', OverlayWidgetType.thrusterRpm],
-      ['depth', OverlayWidgetType.depth],
-      ['temperature', OverlayWidgetType.temperature],
-      ['battery', OverlayWidgetType.battery],
+      ['thruster-rpm-1', OverlayWidgetType.thrusterRpm1],
+      ['thruster-rpm-2', OverlayWidgetType.thrusterRpm2],
+      ['thruster-rpm-3', OverlayWidgetType.thrusterRpm3],
+      ['thruster-rpm-4', OverlayWidgetType.thrusterRpm4],
+      ['thruster-rpm-5', OverlayWidgetType.thrusterRpm5],
+      ['thruster-rpm-6', OverlayWidgetType.thrusterRpm6],
+      ['thruster-rpm-7', OverlayWidgetType.thrusterRpm7],
+      ['thruster-rpm-8', OverlayWidgetType.thrusterRpm8],
+      ['depth', OverlayWidgetType.currentDepth],
+      ['target-depth', OverlayWidgetType.desiredDepth],
+      ['water-temperature', OverlayWidgetType.waterTemperature],
+      ['electronics-temperature', OverlayWidgetType.electronicsTemperature],
+      ['current-draw', OverlayWidgetType.currentDraw],
+      ['battery', OverlayWidgetType.batteryLevel],
+      ['work', OverlayWidgetType.workIndicator],
     ]);
   });
 });

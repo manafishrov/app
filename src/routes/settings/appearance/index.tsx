@@ -1,10 +1,8 @@
 import type { Component } from 'solid-js';
 
-import { Separator } from '@manafishrov/ui/separator';
 import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
-import { Appearance } from '@/features/settings/forms/Appearance';
 import { OverlayLayoutEditor } from '@/features/settings/overlay/OverlayLayoutEditor';
 import * as m from '@/paraglide/messages';
 
@@ -14,8 +12,6 @@ const AppearanceSettingsPage: Component = () => (
       <H1>{m.settings_application_appearance()}</H1>
       <P>{m.appearance_page_description()}</P>
     </div>
-    <Appearance />
-    <Separator class='my-6' />
     <OverlayLayoutEditor />
   </>
 );

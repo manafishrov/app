@@ -1,223 +1,95 @@
 import type { Component } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
-import {
-  Switch as SwitchRoot,
-  SwitchControl,
-  SwitchLabel,
-  SwitchThumb,
-} from '@manafishrov/ui/switch';
 import DeleteIcon from '~icons/material-symbols/delete';
 
-import {
-  getOverlayWidgetDefinition,
-  OverlayWidgetOption,
-  type OverlayWidgetDefinition,
-} from '@/features/overlay/widgets/Registry';
-import * as m from '@/paraglide/messages';
-import {
-  OverlayAnchor,
-  type OverlayWidget,
-  type OverlayWidgetOptions,
-} from '@/stores/overlayTypes';
+import type { WidgetFootprint } from '@/features/overlay/widgets/definitions';
+import type { GridSpan } from '@/stores/overlayLayout';
+import type { OverlayWidget } from '@/stores/overlayTypes';
 
-const MIN_SPAN = 1;
+import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
+import * as m from '@/paraglide/messages';
 
 const [undef] = [] as undefined[];
 
-const anchorOrder: readonly OverlayAnchor[] = [
-  OverlayAnchor.topLeft,
-  OverlayAnchor.top,
-  OverlayAnchor.topRight,
-  OverlayAnchor.left,
-  OverlayAnchor.center,
-  OverlayAnchor.right,
-  OverlayAnchor.bottomLeft,
-  OverlayAnchor.bottom,
-  OverlayAnchor.bottomRight,
-];
-
-const anchorLabel = (anchor: OverlayAnchor): string => {
-  const labels: Record<OverlayAnchor, string> = {
-    topLeft: m.overlay_layout_anchor_top_left(),
-    top: m.overlay_layout_anchor_top(),
-    topRight: m.overlay_layout_anchor_top_right(),
-    left: m.overlay_layout_anchor_left(),
-    center: m.overlay_layout_anchor_center(),
-    right: m.overlay_layout_anchor_right(),
-    bottomLeft: m.overlay_layout_anchor_bottom_left(),
-    bottom: m.overlay_layout_anchor_bottom(),
-    bottomRight: m.overlay_layout_anchor_bottom_right(),
-  };
-  return labels[anchor];
-};
-
-type SpanLimits = { maxColumnSpan: number; maxRowSpan: number };
-
 type WidgetInspectorProps = {
   widget: OverlayWidget;
-  limits: SpanLimits;
-  onAnchorChange: (anchor: OverlayAnchor) => void;
-  onSpanChange: (span: { columnSpan: number; rowSpan: number }) => void;
-  onOptionsChange: (options: OverlayWidgetOptions) => void;
+  onSpanChange: (span: GridSpan) => void;
   onRemove: () => void;
 };
 
-const SpanStepper: Component<{
-  label: string;
-  value: number;
-  max: number;
-  onChange: (value: number) => void;
-}> = (props) => (
-  <div class='flex items-center justify-between gap-2'>
-    <span class='text-xs text-muted-foreground'>{props.label}</span>
-    <div class='flex items-center gap-1'>
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        aria-label={`${props.label} −`}
-        disabled={props.value <= MIN_SPAN}
-        onClick={() => {
-          props.onChange(props.value - 1);
-        }}
-      >
-        −
-      </Button>
-      <span class='w-6 text-center font-mono text-sm tabular-nums'>{props.value}</span>
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        aria-label={`${props.label} +`}
-        disabled={props.value >= props.max}
-        onClick={() => {
-          props.onChange(props.value + 1);
-        }}
-      >
-        +
-      </Button>
-    </div>
-  </div>
+const RemoveWidgetButton: Component<{ onRemove: () => void }> = (props) => (
+  <Button
+    type='button'
+    variant='ghost'
+    size='sm'
+    class='shrink-0'
+    title={m.overlay_layout_remove_widget()}
+    aria-label={m.overlay_layout_remove_widget()}
+    onClick={props.onRemove}
+  >
+    <DeleteIcon class='size-4' />
+    <span class='hidden sm:inline'>{m.overlay_layout_remove_widget()}</span>
+  </Button>
 );
 
-const AnchorPicker: Component<{
-  anchor: OverlayAnchor;
-  onChange: (anchor: OverlayAnchor) => void;
-}> = (props) => (
-  <div class='flex flex-col gap-2'>
-    <span class='text-xs text-muted-foreground'>{m.overlay_layout_anchor_title()}</span>
-    <div class='grid grid-cols-3 gap-1'>
-      <For each={anchorOrder}>
-        {(anchor) => (
-          <Button
-            type='button'
-            variant={props.anchor === anchor ? 'default' : 'outline'}
-            size='sm'
-            aria-label={anchorLabel(anchor)}
-            aria-pressed={props.anchor === anchor}
-            onClick={() => {
-              props.onChange(anchor);
-            }}
-          >
-            <span class='size-1.5 rounded-full bg-current' />
-          </Button>
-        )}
-      </For>
-    </div>
-  </div>
-);
-
-const SizeFields: Component<{
+const WidgetSizes: Component<{
   widget: OverlayWidget;
-  limits: SpanLimits;
-  onSpanChange: (span: { columnSpan: number; rowSpan: number }) => void;
+  sizes: readonly WidgetFootprint[];
+  onSpanChange: (span: GridSpan) => void;
 }> = (props) => (
-  <div class='flex flex-col gap-2'>
-    <span class='text-xs text-muted-foreground'>{m.overlay_layout_size_title()}</span>
-    <SpanStepper
-      label={m.overlay_layout_size_columns()}
-      value={props.widget.columnSpan}
-      max={props.limits.maxColumnSpan}
-      onChange={(columnSpan) => {
-        props.onSpanChange({ columnSpan, rowSpan: props.widget.rowSpan });
-      }}
-    />
-    <SpanStepper
-      label={m.overlay_layout_size_rows()}
-      value={props.widget.rowSpan}
-      max={props.limits.maxRowSpan}
-      onChange={(rowSpan) => {
-        props.onSpanChange({ columnSpan: props.widget.columnSpan, rowSpan });
-      }}
-    />
+  <div class='flex flex-wrap gap-1.5' role='group' aria-label={m.overlay_layout_size_title()}>
+    <For each={props.sizes}>
+      {(size) => (
+        <Button
+          type='button'
+          size='sm'
+          variant={
+            props.widget.columnSpan === size.columns && props.widget.rowSpan === size.rows
+              ? 'default'
+              : 'outline'
+          }
+          aria-pressed={
+            props.widget.columnSpan === size.columns && props.widget.rowSpan === size.rows
+          }
+          onClick={() => {
+            props.onSpanChange({ columnSpan: size.columns, rowSpan: size.rows });
+          }}
+        >
+          {size.columns} × {size.rows}
+        </Button>
+      )}
+    </For>
   </div>
 );
 
-const InspectorHeader: Component<{
-  definition: OverlayWidgetDefinition | undefined;
-  fallbackLabel: string;
-  onRemove: () => void;
-}> = (props) => (
-  <div class='flex items-center justify-between gap-2'>
-    <span class='truncate text-sm font-medium'>
-      {props.definition ? props.definition.label() : props.fallbackLabel}
-    </span>
-    <Button
-      type='button'
-      variant='ghost'
-      size='sm'
-      aria-label={m.overlay_layout_remove_widget()}
-      onClick={props.onRemove}
-    >
-      <DeleteIcon class='size-4' />
-    </Button>
-  </div>
-);
-
-/** Settings for the widget currently selected on the canvas. */
 const WidgetInspector: Component<WidgetInspectorProps> = (props) => {
   const definition = createMemo(() => getOverlayWidgetDefinition(props.widget.type));
 
-  const isResizable = createMemo(() => {
-    const resolved = definition();
-    return resolved !== undef && resolved.resizable;
-  });
-
-  const hasWorkIndicator = createMemo(() => {
-    const resolved = definition();
-    return resolved !== undef && resolved.options.includes(OverlayWidgetOption.workIndicator);
-  });
+  const label = (): string => {
+    const found = definition();
+    return found === undef ? props.widget.type : found.label();
+  };
+  const sizes = (): readonly WidgetFootprint[] => {
+    const found = definition();
+    /* oxlint-disable unicorn/no-array-sort -- ES2022; sort a fresh copy. */
+    return found === undef
+      ? []
+      : [...found.sizes].sort((left, right) => left.columns - right.columns);
+    /* oxlint-enable unicorn/no-array-sort */
+  };
 
   return (
-    <div class='flex flex-col gap-4'>
-      <InspectorHeader
-        definition={definition()}
-        fallbackLabel={props.widget.type}
-        onRemove={props.onRemove}
-      />
+    <section class='flex w-full flex-col gap-2' aria-label={label()}>
+      <div class='flex min-h-8 items-center justify-between gap-3'>
+        <span class='text-sm font-medium'>{label()}</span>
+        <RemoveWidgetButton onRemove={props.onRemove} />
+      </div>
 
-      <AnchorPicker anchor={props.widget.anchor} onChange={props.onAnchorChange} />
-
-      <Show when={isResizable()}>
-        <SizeFields widget={props.widget} limits={props.limits} onSpanChange={props.onSpanChange} />
+      <Show when={sizes().length > 1}>
+        <WidgetSizes widget={props.widget} sizes={sizes()} onSpanChange={props.onSpanChange} />
       </Show>
-
-      <Show when={hasWorkIndicator()}>
-        <SwitchRoot
-          size='sm'
-          checked={props.widget.options.workIndicator === true}
-          onCheckedChange={(details) => {
-            props.onOptionsChange({ ...props.widget.options, workIndicator: details.checked });
-          }}
-        >
-          <SwitchControl>
-            <SwitchThumb />
-          </SwitchControl>
-          <SwitchLabel class='text-xs'>{m.overlay_layout_option_work_indicator()}</SwitchLabel>
-        </SwitchRoot>
-      </Show>
-    </div>
+    </section>
   );
 };
 

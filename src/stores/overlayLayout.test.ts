@@ -9,7 +9,6 @@ import {
   getActiveLayout,
   moveWidget,
   normaliseLayout,
-  overlayScaleForWidth,
   removeWidget,
   replaceLayout,
   resizeWidget,
@@ -18,9 +17,6 @@ import {
 import {
   OVERLAY_GRID_COLUMNS,
   OVERLAY_GRID_ROWS,
-  OVERLAY_MAX_SCALE,
-  OVERLAY_MIN_SCALE,
-  OVERLAY_REFERENCE_WIDTH,
   OverlayAnchor,
   OverlayWidgetType,
   type OverlayLayout,
@@ -31,7 +27,7 @@ const [undef] = [] as undefined[];
 
 const widget = (overrides: Partial<OverlayWidget> = {}): OverlayWidget => ({
   id: 'battery',
-  type: OverlayWidgetType.battery,
+  type: OverlayWidgetType.batteryLevel,
   column: 1,
   row: 1,
   columnSpan: 2,
@@ -47,21 +43,6 @@ const layout = (widgets: OverlayWidget[]): OverlayLayout => ({
   columns: OVERLAY_GRID_COLUMNS,
   rows: OVERLAY_GRID_ROWS,
   widgets,
-});
-
-describe('overlayScaleForWidth', () => {
-  it('is 1 at the reference width, so widgets keep their natural size', () => {
-    expect(overlayScaleForWidth(OVERLAY_REFERENCE_WIDTH)).toBe(1);
-  });
-
-  it('scales proportionally with the camera', () => {
-    expect(overlayScaleForWidth(OVERLAY_REFERENCE_WIDTH / 2)).toBeCloseTo(0.5);
-  });
-
-  it('clamps extremes so the overlay stays usable', () => {
-    expect(overlayScaleForWidth(1)).toBe(OVERLAY_MIN_SCALE);
-    expect(overlayScaleForWidth(999_999)).toBe(OVERLAY_MAX_SCALE);
-  });
 });
 
 describe('clampWidget', () => {
@@ -145,12 +126,12 @@ describe('addWidget and removeWidget', () => {
 
 describe('createWidgetId', () => {
   it('uses the bare type when it is free', () => {
-    expect(createWidgetId(OverlayWidgetType.depth, layout([]))).toBe('depth');
+    expect(createWidgetId(OverlayWidgetType.currentDepth, layout([]))).toBe('currentDepth');
   });
 
   it('suffixes so a type can be placed more than once', () => {
-    const existing = layout([widget({ id: 'depth' }), widget({ id: 'depth-2' })]);
-    expect(createWidgetId(OverlayWidgetType.depth, existing)).toBe('depth-3');
+    const existing = layout([widget({ id: 'currentDepth' }), widget({ id: 'currentDepth-2' })]);
+    expect(createWidgetId(OverlayWidgetType.currentDepth, existing)).toBe('currentDepth-3');
   });
 });
 
@@ -194,8 +175,8 @@ describe('replaceLayout', () => {
 
 describe('normaliseLayout', () => {
   it('leaves a layout authored against the current grid untouched', () => {
-    const current = layout([widget()]);
-    expect(normaliseLayout(current)).toBe(current);
+    const current = layout([widget({ columnSpan: 5 })]);
+    expect(normaliseLayout(current)).toEqual(current);
   });
 
   it('rescales a layout authored against a coarser grid', () => {
@@ -211,7 +192,7 @@ describe('normaliseLayout', () => {
 
     // A widget that sat mid-grid still sits mid-grid, and stays inside it.
     const [placed] = result.widgets;
-    expect(placed).toMatchObject({ column: 7, columnSpan: 4 });
+    expect(placed).toMatchObject({ column: 17, columnSpan: 8, rowSpan: 2 });
     expect(placed).toBeDefined();
     if (placed !== undef) {
       expect(placed.column + placed.columnSpan - 1).toBeLessThanOrEqual(OVERLAY_GRID_COLUMNS);

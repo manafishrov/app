@@ -80,6 +80,8 @@ export default defineConfig({
       // ESLint's rule rejects that legal pair; typeCheck still checks redeclarations.
       files: [
         'src/stores/configTypes.ts',
+        'src/stores/overlayTypes.ts',
+        'src/features/overlay/attitudeStyle.ts',
         'src/stores/rovConfig.ts',
         'src/input/directionVector.ts',
         'src/tauri/toast.ts',

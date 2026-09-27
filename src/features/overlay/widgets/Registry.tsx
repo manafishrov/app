@@ -31,9 +31,8 @@ import { RecordingIndicator } from '../RecordingIndicator';
 import { StabilizationIndicator } from '../StabilizationIndicator';
 import { TemperatureIndicator } from '../TemperatureIndicator';
 import { ThrusterRpmOverlay } from '../ThrusterRpmOverlay';
+import { WorkIndicator } from '../WorkIndicator';
 import { overlayWidgetPlacements, type OverlayWidgetPlacement } from './definitions';
-
-export { OverlayWidgetOption } from './definitions';
 
 export type OverlayWidgetDefinition = OverlayWidgetPlacement & {
   type: OverlayWidgetType;
@@ -53,11 +52,23 @@ const attitudeEntry = (style: AttitudeStyle): Pick<RegistryEntry, 'Render'> => (
   Render: (props): JSXElement => <AttitudeIndicator style={style} widget={props.widget} />,
 });
 
+const thrusterEntry = (index: number): RegistryEntry => ({
+  label: () => m.overlay_widget_thruster_rpm_number({ number: index + 1 }),
+  Icon: AirIcon,
+  Render: () => <ThrusterRpmOverlay index={index} />,
+});
+
+/* oxlint-disable no-magic-numbers -- telemetry channel indices */
 const entries: Record<OverlayWidgetType, RegistryEntry> = {
   [OverlayWidgetType.connectionStatus]: {
     label: () => m.overlay_widget_connection_status(),
     Icon: WifiIcon,
     Render: () => <ConnectionStatusIndicator />,
+  },
+  [OverlayWidgetType.workIndicator]: {
+    label: () => m.overlay_widget_work_indicator(),
+    Icon: TuneIcon,
+    Render: () => <WorkIndicator />,
   },
   [OverlayWidgetType.recording]: {
     label: () => m.overlay_widget_recording(),
@@ -79,32 +90,57 @@ const entries: Record<OverlayWidgetType, RegistryEntry> = {
     Icon: AirIcon,
     ...attitudeEntry(AttitudeStyle.classic),
   },
-  [OverlayWidgetType.stabilization]: {
-    label: () => m.overlay_widget_stabilization(),
+  [OverlayWidgetType.autoStabilization]: {
+    label: () => m.overlay_widget_auto_stabilization(),
     Icon: TuneIcon,
-    Render: () => <StabilizationIndicator />,
+    Render: () => <StabilizationIndicator depthHold={false} />,
   },
-  [OverlayWidgetType.thrusterRpm]: {
-    label: () => m.overlay_widget_thruster_rpm(),
-    Icon: AirIcon,
-    Render: () => <ThrusterRpmOverlay />,
+  [OverlayWidgetType.depthHold]: {
+    label: () => m.overlay_widget_depth_hold(),
+    Icon: TuneIcon,
+    Render: () => <StabilizationIndicator depthHold={true} />,
   },
-  [OverlayWidgetType.depth]: {
-    label: () => m.overlay_widget_depth(),
+  [OverlayWidgetType.thrusterRpm1]: thrusterEntry(0),
+  [OverlayWidgetType.thrusterRpm2]: thrusterEntry(1),
+  [OverlayWidgetType.thrusterRpm3]: thrusterEntry(2),
+  [OverlayWidgetType.thrusterRpm4]: thrusterEntry(3),
+  [OverlayWidgetType.thrusterRpm5]: thrusterEntry(4),
+  [OverlayWidgetType.thrusterRpm6]: thrusterEntry(5),
+  [OverlayWidgetType.thrusterRpm7]: thrusterEntry(6),
+  [OverlayWidgetType.thrusterRpm8]: thrusterEntry(7),
+  [OverlayWidgetType.currentDepth]: {
+    label: () => m.overlay_widget_current_depth(),
     Icon: StraightenIcon,
-    Render: () => <DepthIndicator />,
+    Render: () => <DepthIndicator target={false} />,
   },
-  [OverlayWidgetType.temperature]: {
-    label: () => m.overlay_widget_temperature(),
+  [OverlayWidgetType.desiredDepth]: {
+    label: () => m.overlay_widget_desired_depth(),
+    Icon: StraightenIcon,
+    Render: () => <DepthIndicator target={true} />,
+  },
+  [OverlayWidgetType.waterTemperature]: {
+    label: () => m.overlay_widget_water_temperature(),
     Icon: ThermostatIcon,
-    Render: () => <TemperatureIndicator />,
+    Render: () => <TemperatureIndicator electronics={false} />,
   },
-  [OverlayWidgetType.battery]: {
-    label: () => m.overlay_widget_battery(),
+  [OverlayWidgetType.electronicsTemperature]: {
+    label: () => m.overlay_widget_electronics_temperature(),
+    Icon: ThermostatIcon,
+    Render: () => <TemperatureIndicator electronics={true} />,
+  },
+  [OverlayWidgetType.currentDraw]: {
+    label: () => m.overlay_widget_current_draw(),
     Icon: BatteryFullIcon,
-    Render: () => <BatteryIndicator />,
+    Render: () => <BatteryIndicator current={true} />,
+  },
+  [OverlayWidgetType.batteryLevel]: {
+    label: () => m.overlay_widget_battery_level(),
+    Icon: BatteryFullIcon,
+    Render: () => <BatteryIndicator current={false} />,
   },
 };
+
+/* oxlint-enable no-magic-numbers */
 
 const buildDefinitions = (): readonly OverlayWidgetDefinition[] => {
   const built: OverlayWidgetDefinition[] = [];

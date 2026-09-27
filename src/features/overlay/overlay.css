@@ -1,0 +1,200 @@
+.overlay-grid {
+  container-type: inline-size;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(var(--overlay-columns), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--overlay-rows), minmax(0, 1fr));
+}
+
+.overlay-grid[data-guides] {
+  background-image:
+    linear-gradient(to right, #ffffff20 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff20 1px, transparent 1px);
+  background-size: calc(100% / var(--overlay-columns)) calc(100% / var(--overlay-rows));
+  box-shadow: inset -1px -1px #ffffff20;
+}
+
+.overlay-cell {
+  min-width: 0;
+  min-height: 0;
+  padding: calc(100cqw / var(--overlay-columns) / 12);
+}
+
+.overlay-selection {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  border-radius: 3px;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+}
+.overlay-selection > * {
+  pointer-events: none;
+}
+.overlay-selection:hover {
+  outline-color: #ffffff80;
+}
+.overlay-selection[aria-pressed='true'],
+.overlay-selection:focus-visible {
+  outline: 2px solid var(--color-primary);
+}
+.overlay-selection:active {
+  cursor: grabbing;
+}
+
+/* Reference dimensions are shared with WidgetContent: 24px cells, 4px gutters. */
+.overlay-surface {
+  --overlay-surface-fill: color-mix(in oklab, var(--color-background) 60%, transparent);
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--overlay-surface-fill);
+  color: var(--color-foreground);
+  backdrop-filter: blur(4px);
+  font-size: 12px;
+  line-height: 1.25;
+}
+.overlay-readings {
+  display: flex;
+  flex-direction: column;
+}
+.overlay-reading,
+.overlay-reading-action {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+.overlay-reading {
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.overlay-readings > :not(:first-child) {
+  border-top: 1px solid var(--color-border);
+}
+.overlay-reading[data-critical='true'] {
+  color: var(--color-destructive);
+}
+.overlay-reading-action > div:first-child {
+  height: 100%;
+}
+.overlay-reading-action .overlay-reading {
+  height: 100%;
+}
+.overlay-reading-action:hover,
+.overlay-control:hover {
+  background: color-mix(in oklab, var(--color-muted) 25%, transparent);
+}
+.overlay-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.overlay-status {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+}
+.overlay-label {
+  color: var(--color-muted-foreground);
+  font-size: 10px;
+}
+.overlay-controls {
+  display: flex;
+}
+.overlay-control {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-muted-foreground);
+}
+.overlay-control + .overlay-control {
+  border-left: 1px solid var(--color-border);
+}
+.overlay-control[data-pressed] {
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.overlay-surface.overlay-reading {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--overlay-surface-fill);
+}
+
+.overlay-editor-widget {
+  container-type: size;
+}
+
+.overlay-remove {
+  opacity: 0;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+  display: flex;
+  width: min(16px, calc(100cqh - 4px));
+  height: min(16px, calc(100cqh - 4px));
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-background);
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+}
+.overlay-remove > svg {
+  width: 70%;
+  height: 70%;
+}
+
+.overlay-remove:hover {
+  background: var(--color-destructive);
+  color: white;
+}
+.overlay-remove:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.overlay-editor-widget:hover .overlay-remove,
+.overlay-editor-widget:focus-within .overlay-remove,
+.overlay-editor-widget[data-selected='true'] .overlay-remove {
+  opacity: 1;
+}
+
+.overlay-control > span {
+  width: 42%;
+  height: auto;
+  aspect-ratio: 1;
+  max-width: 48px;
+}
+
+/* Gallery cards have a flat background; avoid backdrop layers inside the scrolling list. */
+.overlay-palette .overlay-surface {
+  backdrop-filter: none;
+}

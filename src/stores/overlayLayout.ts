@@ -8,25 +8,16 @@
 import {
   OVERLAY_GRID_COLUMNS,
   OVERLAY_GRID_ROWS,
-  OVERLAY_MAX_SCALE,
-  OVERLAY_MIN_SCALE,
-  OVERLAY_REFERENCE_WIDTH,
   type OverlayConfig,
   type OverlayLayout,
   type OverlayWidget,
   type OverlayWidgetType,
 } from '@/stores/overlayTypes';
 
+import { splitLegacyWidgets } from './overlayMigration';
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
-
-/**
- * Scale factor that ties overlay size to camera size. Widgets keep their
- * natural rem-based dimensions and are zoomed by this, so the overlay is always
- * the same fraction of the feed regardless of window size.
- */
-export const overlayScaleForWidth = (cameraWidth: number): number =>
-  clamp(cameraWidth / OVERLAY_REFERENCE_WIDTH, OVERLAY_MIN_SCALE, OVERLAY_MAX_SCALE);
 
 export const getActiveLayout = (overlay: OverlayConfig): OverlayLayout | undefined =>
   overlay.layouts.find((layout) => layout.id === overlay.activeLayoutId) ?? overlay.layouts[0];
@@ -138,10 +129,6 @@ export const replaceLayout = (overlay: OverlayConfig, layout: OverlayLayout): Ov
  * resolution than this build uses, so stored layouts survive a constant change.
  */
 export const normaliseLayout = (layout: OverlayLayout): OverlayLayout => {
-  if (layout.columns === OVERLAY_GRID_COLUMNS && layout.rows === OVERLAY_GRID_ROWS) {
-    return layout;
-  }
-
   const columnRatio = OVERLAY_GRID_COLUMNS / layout.columns;
   const rowRatio = OVERLAY_GRID_ROWS / layout.rows;
 
@@ -160,6 +147,6 @@ export const normaliseLayout = (layout: OverlayLayout): OverlayLayout => {
 
   return {
     ...rescaled,
-    widgets: rescaled.widgets.map((widget) => clampWidget(widget, rescaled)),
+    widgets: splitLegacyWidgets(rescaled.widgets).map((widget) => clampWidget(widget, rescaled)),
   };
 };

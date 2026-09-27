@@ -72,6 +72,7 @@ export type LayoutDraft = {
   patchSelected: (patch: Partial<Omit<OverlayWidget, 'id' | 'type'>>) => void;
   resizeSelected: (span: GridSpan) => void;
   removeSelected: () => void;
+  remove: (widgetId: string) => void;
   nudgeSelected: (delta: GridCell) => void;
   reset: () => void;
 };
@@ -134,6 +135,11 @@ const createSelectionOperations = (context: DraftContext): SelectionOperations =
 
     resizeSelected: (span) => {
       edit((widget) => resizeWidget(current(), widget.id, span));
+    },
+
+    remove: (widgetId) => {
+      context.apply(removeWidget(current(), widgetId), true);
+      context.setSelectedId(undef);
     },
 
     removeSelected: () => {

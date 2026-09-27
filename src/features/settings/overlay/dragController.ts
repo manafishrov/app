@@ -1,4 +1,4 @@
-import type { Accessor, Setter } from 'solid-js';
+import { createSignal, type Accessor, type Setter } from 'solid-js';
 
 import type { OverlayWidget } from '@/stores/overlayTypes';
 
@@ -44,7 +44,11 @@ const startDrag =
 
     event.preventDefault();
     context.options.onSelect(widget.id);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.focus();
+    const canvas = context.options.canvas();
+    if (canvas !== undef) {
+      canvas.setPointerCapture(event.pointerId);
+    }
 
     context.setDrag({
       widgetId: widget.id,
@@ -72,7 +76,10 @@ const endDrag =
     if (context.drag() === undef) {
       return;
     }
-    if (event.currentTarget instanceof HTMLElement) {
+    if (
+      event.currentTarget instanceof HTMLElement &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     context.setDrag(undef);

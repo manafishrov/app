@@ -9,7 +9,7 @@ import BoltIcon from '~icons/material-symbols/bolt';
 
 import { rovStatusStore } from '@/stores/rovStatus';
 
-import { formatCurrentDraw } from "./currentDraw";
+import { formatCurrentDraw } from './currentDraw';
 import { useOverlayContentVisible } from './OverlayPreview';
 
 const BATTERY_HIGH_THRESHOLD = 70;
@@ -54,29 +54,31 @@ const getBatteryIcon = (percentage: number): JSXElement => {
   );
 };
 
-const BatteryIndicator: Component = () => {
+const BatteryIndicator: Component<{ current: boolean }> = (props) => {
   const isVisible = useOverlayContentVisible();
 
   return (
-    <div class={isVisible() ? 'flex flex-col gap-1' : 'hidden'}>
-      <Badge
-        variant='secondary'
-        class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
-      >
-        <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
-          <BoltIcon class='size-full' />
-        </span>
-        {formatCurrentDraw(rovStatusStore.currentDraw)}
-      </Badge>
-      <Badge
-        variant={
-          rovStatusStore.batteryPercentage <= BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
-        }
-        class='h-auto min-h-5 min-w-[4rem] justify-between border-border/50 bg-background/50 py-1 font-mono whitespace-nowrap tabular-nums backdrop-blur-sm'
-      >
-        {getBatteryIcon(rovStatusStore.batteryPercentage)}
-        {rovStatusStore.batteryPercentage.toFixed(0)}%
-      </Badge>
+    <div class={isVisible() ? 'overlay-surface overlay-readings' : 'hidden'}>
+      <Show when={props.current}>
+        <Badge variant='secondary' class='overlay-reading'>
+          <span class='mr-1 inline-flex size-[1.2em] shrink-0 items-center justify-center'>
+            <BoltIcon class='size-full' />
+          </span>
+          <span class='overlay-value'>{formatCurrentDraw(rovStatusStore.currentDraw)}</span>
+        </Badge>
+      </Show>
+      <Show when={!props.current}>
+        <Badge
+          data-critical={rovStatusStore.batteryPercentage <= BATTERY_LOW_THRESHOLD}
+          variant={
+            rovStatusStore.batteryPercentage <= BATTERY_LOW_THRESHOLD ? 'destructive' : 'secondary'
+          }
+          class='overlay-reading'
+        >
+          {getBatteryIcon(rovStatusStore.batteryPercentage)}
+          <span class='overlay-value'>{rovStatusStore.batteryPercentage.toFixed(0)}%</span>
+        </Badge>
+      </Show>
     </div>
   );
 };
