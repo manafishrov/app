@@ -1,6 +1,6 @@
 import type { CapabilityCatalog } from '@/stores/capabilityTypes';
 
-import sdkGuide from './sdkGuide.md?raw';
+import sdkGuide from './sdkGuide.txt?raw';
 import waterSensor from './templates/waterSensor.py?raw';
 
 export const guide = `${sdkGuide}\n\n### Complete water sensor example\n\n\`\`\`python\n${waterSensor}\`\`\`\n`;
