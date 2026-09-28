@@ -4,14 +4,21 @@ import AddIcon from '~icons/material-symbols/add';
 
 import { OverlayPreviewProvider } from '@/features/overlay/OverlayPreview';
 import {
-  overlayWidgetDefinitions,
+  availableWidgetDefinitions,
   type OverlayWidgetDefinition,
 } from '@/features/overlay/widgets/Registry';
 import { WidgetContent } from '@/features/overlay/widgets/WidgetContent';
 import * as m from '@/paraglide/messages';
-import { OverlayAnchor, type OverlayWidget, type OverlayWidgetType } from '@/stores/overlayTypes';
+import {
+  OverlayAnchor,
+  type OverlayWidget,
+  type OverlayWidgetOptions,
+  type OverlayWidgetType,
+} from '@/stores/overlayTypes';
 
-type WidgetPaletteProps = { onAdd: (type: OverlayWidgetType) => void };
+type WidgetPaletteProps = {
+  onAdd: (type: OverlayWidgetType, options?: OverlayWidgetOptions) => void;
+};
 
 const previewWidget = (definition: OverlayWidgetDefinition): OverlayWidget => ({
   id: `preview-${definition.type}`,
@@ -26,7 +33,7 @@ const previewWidget = (definition: OverlayWidgetDefinition): OverlayWidget => ({
 
 const PaletteEntry: Component<{
   definition: OverlayWidgetDefinition;
-  onAdd: (type: OverlayWidgetType) => void;
+  onAdd: (type: OverlayWidgetType, options?: OverlayWidgetOptions) => void;
 }> = (props) => (
   <div
     class='group relative min-w-0 rounded-lg border border-border/60 bg-muted/30'
@@ -46,7 +53,7 @@ const PaletteEntry: Component<{
       class='absolute inset-0 cursor-pointer rounded-lg transition-colors hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none'
       aria-label={m.overlay_layout_add_widget({ name: props.definition.label() })}
       onClick={() => {
-        props.onAdd(props.definition.type);
+        props.onAdd(props.definition.type, props.definition.defaultOptions);
       }}
     />
   </div>
@@ -65,7 +72,7 @@ const WidgetPalette: Component<WidgetPaletteProps> = (props) => (
     </div>
     <OverlayPreviewProvider palette>
       <div class='grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4'>
-        <For each={overlayWidgetDefinitions}>
+        <For each={availableWidgetDefinitions()}>
           {(definition) => <PaletteEntry definition={definition} onAdd={props.onAdd} />}
         </For>
       </div>

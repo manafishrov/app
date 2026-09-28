@@ -5,10 +5,12 @@ import DeleteIcon from '~icons/material-symbols/delete';
 
 import type { WidgetFootprint } from '@/features/overlay/widgets/definitions';
 import type { GridSpan } from '@/stores/overlayLayout';
-import type { OverlayWidget } from '@/stores/overlayTypes';
+import type { OverlayWidget, OverlayWidgetOptions } from '@/stores/overlayTypes';
 
 import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
 import * as m from '@/paraglide/messages';
+
+import { CapabilityOptions } from './CapabilityOptions';
 
 const [undef] = [] as undefined[];
 
@@ -16,6 +18,7 @@ type WidgetInspectorProps = {
   widget: OverlayWidget;
   onSpanChange: (span: GridSpan) => void;
   onRemove: () => void;
+  onOptionsChange: (options: OverlayWidgetOptions) => void;
 };
 
 const RemoveWidgetButton: Component<{ onRemove: () => void }> = (props) => (
@@ -68,7 +71,7 @@ const WidgetInspector: Component<WidgetInspectorProps> = (props) => {
 
   const label = (): string => {
     const found = definition();
-    return found === undef ? props.widget.type : found.label();
+    return props.widget.options.label ?? (found === undef ? props.widget.type : found.label());
   };
   const sizes = (): readonly WidgetFootprint[] => {
     const found = definition();
@@ -88,6 +91,9 @@ const WidgetInspector: Component<WidgetInspectorProps> = (props) => {
 
       <Show when={sizes().length > 1}>
         <WidgetSizes widget={props.widget} sizes={sizes()} onSpanChange={props.onSpanChange} />
+      </Show>
+      <Show when={props.widget.type === 'capability'}>
+        <CapabilityOptions widget={props.widget} onChange={props.onOptionsChange} />
       </Show>
     </section>
   );

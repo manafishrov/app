@@ -2,6 +2,25 @@
 
 Control application for the Manafish ROV built with [Tauri](https://tauri.app), [SolidJS](https://solidjs.com), and Rust.
 
+## Custom actions and CSV logging
+
+Create or import Python scripts in **Settings → Custom actions**. The instructions
+accordion contains the SDK guide and water-sensor example; **Copy instructions**
+also includes the connected ROV's available readings and actions. Scripts and their
+enablement/trigger settings are stored on the ROV. Choose widgets in Appearance
+and bindings in Keyboard or Controller. Download recordings from CSV logging.
+
+This branch requires matching capability protocol V1 firmware. Upgrade firmware
+first, then use the matching app before operating the vehicle. Legacy custom-action
+modules must be ported to SDK scripts and rebound. Existing built-in layouts and
+bindings are retained. The MCU protocol is unchanged.
+
+The Python editor uses bundled ty for completion and diagnostics without executing
+drafts. Connect to the ROV to fetch actual SDK types; cached types work offline.
+Python 3 is needed to prepare the language server during development/builds, but
+users do not need Python installed. Tauri dev/build commands prepare it automatically;
+run `bun run editor:prepare` before invoking Cargo directly.
+
 ## Current display
 
 Current is the sum of two MCU-calibrated board readings above idle. The MCU
@@ -10,10 +29,8 @@ setting. Auto-zero does not support other sensor layouts or validate sensor gain
 Missing calibration or telemetry is shown as `— A`, not zero. No offset or
 board averaging is applied in the app.
 
-Install this nullable-current-capable app before the matching Pi firmware.
-Legacy Pi status with numeric current remains readable, but still represents
-its legacy current calculation. The new estimate is not absolute battery current
-or overcurrent protection.
+The estimate is not absolute battery current or overcurrent protection. Follow
+the capability-protocol upgrade order above for this branch.
 
 ## Logs
 
@@ -33,6 +50,7 @@ waits for a later write after the hourly cooldown rather than resetting storage.
 
 - [Bun](https://bun.sh)
 - [Rust](https://www.rust-lang.org/tools/install)
+- Python 3 (build tooling only)
 
 ## Setup
 

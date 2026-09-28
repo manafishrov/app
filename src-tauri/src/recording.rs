@@ -22,6 +22,8 @@ fn show_save_error(toast_id: &str) {
   toast_error(
     Some(toast_id.to_string()),
     ToastContent {
+      message: None,
+      description: None,
       message_key: "toasts_recording_save_failed".to_string(),
       message_args: None,
       description_key: None,
@@ -35,6 +37,8 @@ fn show_save_started(toast_id: &str) {
   toast_loading(
     Some(toast_id.to_string()),
     ToastContent {
+      message: None,
+      description: None,
       message_key: "toasts_recording_converting_to_mp4".to_string(),
       message_args: None,
       description_key: None,
@@ -54,6 +58,8 @@ fn show_save_success(toast_id: &str, output_path: &Path) {
   toast_success(
     Some(toast_id.to_string()),
     ToastContent {
+      message: None,
+      description: None,
       message_key: "toasts_recording_saved_successfully".to_string(),
       message_args: None,
       description_key: Some("toasts_recording_saved_path".to_string()),

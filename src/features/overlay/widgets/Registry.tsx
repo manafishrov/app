@@ -20,6 +20,11 @@ import ViewInArIcon from '~icons/material-symbols/view-in-ar';
 import WifiIcon from '~icons/material-symbols/wifi';
 
 import * as m from '@/paraglide/messages';
+import {
+  capabilityStore,
+  type ActionDescriptor,
+  type ReadingDescriptor,
+} from '@/stores/capabilities';
 import { OverlayWidgetType, type OverlayWidget } from '@/stores/overlayTypes';
 
 import { AttitudeIndicator } from '../AttitudeIndicator';
@@ -32,6 +37,8 @@ import { StabilizationIndicator } from '../StabilizationIndicator';
 import { TemperatureIndicator } from '../TemperatureIndicator';
 import { ThrusterRpmOverlay } from '../ThrusterRpmOverlay';
 import { WorkIndicator } from '../WorkIndicator';
+import { readingDisplays } from './capabilityDisplay';
+import { CapabilityWidget } from './CapabilityWidget';
 import { overlayWidgetPlacements, type OverlayWidgetPlacement } from './definitions';
 
 export type OverlayWidgetDefinition = OverlayWidgetPlacement & {
@@ -60,6 +67,7 @@ const thrusterEntry = (index: number): RegistryEntry => ({
 
 /* oxlint-disable no-magic-numbers -- telemetry channel indices */
 const entries: Record<OverlayWidgetType, RegistryEntry> = {
+  capability: { label: () => m.capability_widget(), Icon: TuneIcon, Render: CapabilityWidget },
   [OverlayWidgetType.connectionStatus]: {
     label: () => m.overlay_widget_connection_status(),
     Icon: WifiIcon,
@@ -166,3 +174,54 @@ export const overlayWidgetDefinitions = definitions;
  */
 export const getOverlayWidgetDefinition = (type: string): OverlayWidgetDefinition | undefined =>
   definitionsByType.get(type);
+
+const readingDefinition = (
+  base: OverlayWidgetDefinition,
+  reading: ReadingDescriptor,
+): OverlayWidgetDefinition => {
+  const displays = readingDisplays(reading.valueType);
+  const suggested = reading.widget === 'warning' ? 'warningYellow' : reading.widget;
+  return {
+    ...base,
+    label: (): string => reading.name,
+    defaultOptions: {
+      sourceId: reading.id,
+      sourceKind: 'reading',
+      label: reading.name,
+      display: displays.find((display) => display === suggested) ?? displays[0],
+    },
+  };
+};
+
+const actionDefinition = (
+  base: OverlayWidgetDefinition,
+  action: ActionDescriptor,
+): OverlayWidgetDefinition => ({
+  ...base,
+  label: (): string => action.name,
+  defaultOptions: {
+    sourceId: action.id,
+    sourceKind: 'action',
+    label: action.name,
+    display: 'button',
+  },
+});
+
+/** Device capabilities use the same placements and renderer as every other widget. */
+export const availableWidgetDefinitions = (): readonly OverlayWidgetDefinition[] => {
+  const base = definitionsByType.get(OverlayWidgetType.capability);
+  if (!base) {
+    return definitions;
+  }
+  const readings = capabilityStore.catalog.readings
+    .filter((reading) => ['boolean', 'number', 'string'].includes(reading.valueType))
+    .map((reading) => readingDefinition(base, reading));
+  const actions = capabilityStore.catalog.actions
+    .filter((action) => action.inputType === 'none')
+    .map((action) => actionDefinition(base, action));
+  return [
+    ...definitions.filter((definition) => definition.type !== OverlayWidgetType.capability),
+    ...readings,
+    ...actions,
+  ];
+};

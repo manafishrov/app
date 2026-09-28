@@ -9,7 +9,7 @@ import * as m from '@/paraglide/messages';
 
 const widgetLabel = (widget: OverlayWidget): string => {
   const definition = getOverlayWidgetDefinition(widget.type);
-  return definition ? definition.label() : widget.type;
+  return widget.options.label ?? (definition ? definition.label() : widget.type);
 };
 
 type DraggableWidgetProps = {

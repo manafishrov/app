@@ -19,7 +19,10 @@ const LEGACY_GROUPS = new Map<string, readonly [OverlayWidgetType, OverlayWidget
 export const fitWidgetSize = (widget: OverlayWidget): OverlayWidget => {
   const sizes = getWidgetSizes(widget.type);
   const [first] = sizes;
-  if (first === undef) {
+  if (
+    first === undef ||
+    sizes.some((size) => size.columns === widget.columnSpan && size.rows === widget.rowSpan)
+  ) {
     return widget;
   }
   let closest = first;

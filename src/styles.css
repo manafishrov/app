@@ -1,2 +1,6 @@
 @import 'tailwindcss';
 @import '@manafishrov/ui/theme';
+
+html {
+  touch-action: pan-x pan-y;
+}

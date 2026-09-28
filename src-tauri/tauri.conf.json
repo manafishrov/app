@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Manafish",
-  "version": "1.0.18-rc.1",
+  "version": "1.1.0-rc.1",
   "identifier": "com.manafishrov.manafish",
   "build": {
-    "beforeDevCommand": "bun run dev",
+    "beforeDevCommand": "bun run editor:prepare && bun run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "bun run editor:prepare && bun run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -14,6 +14,7 @@
     "windows": [
       {
         "label": "main",
+        "zoomHotkeysEnabled": false,
         "title": "Manafish",
         "decorations": false,
         "shadow": true,
@@ -25,6 +26,7 @@
       },
       {
         "label": "splashscreen",
+        "zoomHotkeysEnabled": false,
         "title": "Manafish",
         "url": "splashscreen.html",
         "decorations": false,
@@ -77,12 +79,20 @@
           "/usr/share/metainfo/com.manafishrov.manafish.metainfo.xml": "com.manafishrov.manafish.metainfo.xml"
         }
       }
+    },
+    "externalBin": [
+      "binaries/manafish-python-analysis"
+    ],
+    "resources": {
+      "../LICENSE": "LICENSE"
     }
   },
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3OEFGMzdGMEVFNTU3RjYKUldUMlYrVU9mL09LeDBJbktpRy91ZU9oL1RKMElNWjN6Y3B1RzhkaldsVGo3VjcwRjlubHhMUDkK",
-      "endpoints": ["https://github.com/manafishrov/app/releases/latest/download/latest.json"]
+      "endpoints": [
+        "https://github.com/manafishrov/app/releases/latest/download/latest.json"
+      ]
     }
   }
 }

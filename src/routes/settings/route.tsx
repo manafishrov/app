@@ -25,7 +25,11 @@ const useSettingsLayoutSetup = (setIsFullscreen: (val: boolean) => unknown): voi
   const navigate = useNavigate();
 
   createEffect(() => {
-    if (!connectionStatusStore.isConnected && location().pathname.startsWith('/settings/rov')) {
+    const path = location().pathname;
+    const allowsDrafts =
+      path.startsWith('/settings/rov/custom-actions') ||
+      path.startsWith('/settings/rov/csv-logging');
+    if (!connectionStatusStore.isConnected && path.startsWith('/settings/rov') && !allowsDrafts) {
       navigate({ to: '/settings', replace: true }).catch(noop);
     }
   });
