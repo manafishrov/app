@@ -2,20 +2,20 @@ import type { ActionDescriptor, ReadingDescriptor } from '@/stores/capabilityTyp
 
 import { capabilityStore } from '@/stores/capabilities';
 
-/** Installed descriptors remain discoverable while their extension is stopped. */
+/** Installed descriptors remain discoverable while their custom action is stopped. */
 export const isCapabilityAvailable = (
   descriptor: ActionDescriptor | ReadingDescriptor | undefined,
 ): boolean => {
   if (!capabilityStore.connected || !descriptor) {
     return false;
   }
-  if (descriptor.extensionId === null) {
+  if (descriptor.customActionId === null) {
     return true;
   }
-  const extension = capabilityStore.catalog.extensions.find(
-    (entry) => entry.id === descriptor.extensionId,
+  const customAction = capabilityStore.catalog.customActions.find(
+    (entry) => entry.id === descriptor.customActionId,
   );
-  return Boolean(extension && extension.enabled && extension.status === 'running');
+  return Boolean(customAction && customAction.enabled && customAction.status === 'running');
 };
 
 export const isActionAvailable = (id: string): boolean =>

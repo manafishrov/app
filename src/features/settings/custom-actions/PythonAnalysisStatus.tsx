@@ -5,10 +5,10 @@ import * as m from '@/paraglide/messages';
 import type { AnalysisStatus } from './pythonLanguageServer';
 
 const messages: Record<AnalysisStatus, () => string> = {
-  starting: m.extensions_analysis_starting,
-  missingSdk: m.extensions_analysis_missing_sdk,
-  cachedSdk: m.extensions_analysis_cached_sdk,
-  failed: m.extensions_analysis_failed,
+  starting: m.custom_action_scripts_analysis_starting,
+  missingSdk: m.custom_action_scripts_analysis_missing_sdk,
+  cachedSdk: m.custom_action_scripts_analysis_cached_sdk,
+  failed: m.custom_action_scripts_analysis_failed,
   ready: (): string => '',
 };
 export const PythonAnalysisStatus: Component<{ status: AnalysisStatus }> = (props) => (

@@ -28,8 +28,8 @@ export const invokeAction = (
     ignoreResult,
   );
 
-export const importExtensionSource = (): Promise<string | null> =>
-  invokeCommand('import_extension_source');
+export const importCustomActionSource = (): Promise<string | null> =>
+  invokeCommand('import_custom_action_source');
 export const saveCsv = (name: string): Promise<boolean> => invokeCommand('save_csv', { name });
 
 let generation = 0;
@@ -44,7 +44,7 @@ export const refreshCapabilities = (): Promise<void> => {
     .catch((error: unknown) => {
       if (generation === current) {
         setCapabilityError(
-          `Could not load ROV capabilities. Ensure the app and firmware both support extensions V1. ${String(error)}`,
+          `Could not load ROV capabilities. Ensure the app and firmware both support custom actions V1. ${String(error)}`,
         );
       }
       throw error;

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 
 import { buildAgentInstructions } from './instructions';
 
-it('includes shared instructions and available declarations without live values or extension internals', () => {
+it('includes shared instructions and available declarations without live values or custom-action internals', () => {
   const output = buildAgentInstructions({
     version: 1,
     readings: [
@@ -10,11 +10,11 @@ it('includes shared instructions and available declarations without live values 
         id: 'rov.waterTemperature',
         name: 'Water temperature',
         valueType: 'number',
-        extensionId: null,
+        customActionId: null,
       },
     ],
     actions: [],
-    extensions: [],
+    customActions: [],
     samples: [
       { id: 'rov.waterTemperature', value: 'PRIVATE_SAMPLE_MARKER', sequence: 1, timestamp: 0 },
     ],

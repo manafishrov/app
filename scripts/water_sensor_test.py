@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 TEMPLATES = (
     Path(__file__).resolve().parents[1]
-    / "src/features/settings/extensions/templates"
+    / "src/features/settings/custom-actions/templates"
 )
 
 

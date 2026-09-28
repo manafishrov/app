@@ -21,9 +21,9 @@ const MIN_DELAY = 50;
 const MAX_DELAY = 3_600_000;
 const modeLabel = (mode: string): string => {
   if (mode === 'hold') {
-    return m.extensions_hold();
+    return m.custom_action_scripts_hold();
   }
-  return mode === 'toggle' ? m.extensions_toggle() : m.extensions_once();
+  return mode === 'toggle' ? m.custom_action_scripts_toggle() : m.custom_action_scripts_once();
 };
 
 type ActionSettingsState = {
@@ -46,10 +46,10 @@ const useActionSettings = (action: () => ActionDescriptor): ActionSettingsState 
     operation.run(() => {
       const intervalMs = Number(interval());
       if (!Number.isInteger(intervalMs) || intervalMs < MIN_DELAY || intervalMs > MAX_DELAY) {
-        return Promise.reject(new Error(m.extensions_delay_invalid()));
+        return Promise.reject(new Error(m.custom_action_scripts_delay_invalid()));
       }
       return requestCapability('action.configure', { id: action().id, mode: mode(), intervalMs });
-    }, m.extensions_saved());
+    }, m.custom_action_scripts_saved());
   };
   return { mode, setMode, interval, setInterval, operation, save };
 };
@@ -68,7 +68,7 @@ const ActionHeading: Component<{
       <p class='text-sm font-medium'>{props.action.name}</p>
       <Show when={isActionRunning(props.action.id)}>
         <span role='status' class='text-xs text-primary'>
-          {m.extensions_running()}
+          {m.custom_action_scripts_running()}
         </span>
       </Show>
     </div>
@@ -81,7 +81,7 @@ const ActionHeading: Component<{
           props.settings.operation.run(() => invokeAction(props.action.id, 'stop'));
         }}
       >
-        {m.extensions_stop()}
+        {m.custom_action_scripts_stop()}
       </Button>
     </Show>
   </div>
@@ -96,14 +96,14 @@ export const ActionSettings: Component<{ action: ActionDescriptor; enabled: bool
       <ActionHeading action={props.action} enabled={props.enabled} settings={settings} />
       <div class='grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto]'>
         <OptionSelect
-          label={m.extensions_trigger()}
+          label={m.custom_action_scripts_trigger()}
           value={settings.mode()}
           disabled={settings.operation.busy()}
           options={props.action.modes.map((mode) => ({ value: mode, label: modeLabel(mode) }))}
           onChange={(mode) => settings.setMode(actionModeSchema.parse(mode))}
         />
         <TextInput disabled={settings.mode() === 'once' || settings.operation.busy()}>
-          <TextInputLabel>{m.extensions_delay()}</TextInputLabel>
+          <TextInputLabel>{m.custom_action_scripts_delay()}</TextInputLabel>
           <TextInputControl>
             <TextInputInput
               type='number'
@@ -116,7 +116,7 @@ export const ActionSettings: Component<{ action: ActionDescriptor; enabled: bool
           </TextInputControl>
         </TextInput>
         <Button variant='outline' disabled={settings.operation.busy()} onClick={settings.save}>
-          {m.extensions_save()}
+          {m.custom_action_scripts_save()}
         </Button>
       </div>
       <OperationFeedback operation={settings.operation} />

@@ -1,15 +1,15 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 
-import type { ExtensionValidation } from './api';
+import type { CustomActionValidation } from './api';
 
-import { createExtensionDraft } from './editorDraft';
+import { createCustomActionDraft } from './editorDraft';
 
 const api = vi.hoisted(() => ({ validate: vi.fn(), install: vi.fn() }));
-vi.mock('./api', () => ({ validateExtension: api.validate, installExtension: api.install }));
+vi.mock('./api', () => ({ validateCustomAction: api.validate, installCustomAction: api.install }));
 vi.mock('@/paraglide/messages', () => ({
-  extensions_validate_first: (): string => 'Validate first',
+  custom_action_scripts_validate_first: (): string => 'Validate first',
 }));
-const validated: ExtensionValidation = {
+const validated: CustomActionValidation = {
   manifest: { id: 'sensor', name: 'Sensor' },
   readings: [],
   actions: [],
@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 it('requires validation of exactly the source being installed', () => {
-  const draft = createExtensionDraft();
+  const draft = createCustomActionDraft();
   draft.load('original', false);
   return draft
     .validate()
@@ -38,14 +38,14 @@ it('requires validation of exactly the source being installed', () => {
 });
 
 it('ignores validation which completes after the source was edited', () => {
-  let resolve: (result: ExtensionValidation) => void = vi.fn();
+  let resolve: (result: CustomActionValidation) => void = vi.fn();
   api.validate.mockImplementation(
     () =>
-      new Promise<ExtensionValidation>((done) => {
+      new Promise<CustomActionValidation>((done) => {
         resolve = done;
       }),
   );
-  const draft = createExtensionDraft();
+  const draft = createCustomActionDraft();
   draft.load('original', false);
   const pending = draft.validate();
   draft.setSource('changed');
@@ -57,7 +57,7 @@ it('ignores validation which completes after the source was edited', () => {
 });
 
 it('preserves source bytes and keeps failed installations dirty', () => {
-  const draft = createExtensionDraft();
+  const draft = createCustomActionDraft();
   const source = '# sensor\r\n# å\r\n';
   draft.load(source, false);
   api.install.mockRejectedValue(new Error('Disconnected'));
@@ -72,7 +72,7 @@ it('preserves source bytes and keeps failed installations dirty', () => {
 });
 
 it('marks installed source clean without erasing later edits', () => {
-  const draft = createExtensionDraft();
+  const draft = createCustomActionDraft();
   draft.load('source', true);
   expect(draft.dirty()).toBe(false);
   draft.setSource('updated');

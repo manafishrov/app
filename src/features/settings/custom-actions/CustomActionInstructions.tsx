@@ -17,7 +17,7 @@ import { buildAgentInstructions, guide } from './instructions';
 import { OperationFeedback } from './OperationFeedback';
 import { createOperation } from './operations';
 
-export const ExtensionInstructions: Component = () => {
+export const CustomActionInstructions: Component = () => {
   const operation = createOperation();
   return (
     <section>
@@ -25,7 +25,7 @@ export const ExtensionInstructions: Component = () => {
         <AccordionItem value='instructions'>
           <div class='flex items-center gap-3'>
             <AccordionTrigger class='min-w-0 flex-1'>
-              {m.extensions_instructions()}
+              {m.custom_action_scripts_instructions()}
               <AccordionIndicator />
             </AccordionTrigger>
             <Button
@@ -37,12 +37,12 @@ export const ExtensionInstructions: Component = () => {
                 operation.run(
                   () =>
                     navigator.clipboard.writeText(buildAgentInstructions(capabilityStore.catalog)),
-                  m.extensions_copied(),
+                  m.custom_action_scripts_copied(),
                 );
               }}
             >
               <CopyIcon class='size-4' />
-              {m.extensions_copy()}
+              {m.custom_action_scripts_copy()}
             </Button>
           </div>
           <AccordionContent>

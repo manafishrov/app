@@ -16,7 +16,7 @@ export type {
   ActionMode,
   ActionPhase,
   CapabilityValue,
-  ExtensionDescriptor,
+  CustomActionDescriptor,
   ReadingDescriptor,
   ReadingSample,
 } from '@/stores/capabilityTypes';
@@ -32,7 +32,7 @@ const emptyCatalog = (): CapabilityCatalog => ({
   version: 1,
   readings: [],
   actions: [],
-  extensions: [],
+  customActions: [],
 });
 const [capabilityStore, setCapabilityStore] = createStore<CapabilityStore>({
   connected: false,

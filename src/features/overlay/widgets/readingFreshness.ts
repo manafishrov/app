@@ -31,10 +31,10 @@ export const readingState = (
   sample: ReadingSample | undefined,
   ageMs: number,
 ): ReadingState => {
-  const extension =
+  const customAction =
     descriptor &&
-    capabilityStore.catalog.extensions.find((item) => item.id === descriptor.extensionId);
-  if (extension && extension.status === 'error') {
+    capabilityStore.catalog.customActions.find((item) => item.id === descriptor.customActionId);
+  if (customAction && customAction.status === 'error') {
     return 'failed';
   }
   if (!isCapabilityAvailable(descriptor) || (sample && sample.value === null)) {

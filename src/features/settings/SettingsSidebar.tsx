@@ -129,16 +129,16 @@ const ROV_ITEMS = [
 
 const SLICE_LAST_CHAR = -1;
 
-const EXTENSION_ITEMS = [
+const CUSTOM_ACTION_ITEMS = [
   {
-    label: (): string => m.extensions_title(),
-    ariaLabel: (): string => m.extensions_title(),
+    label: (): string => m.custom_action_scripts_title(),
+    ariaLabel: (): string => m.custom_action_scripts_title(),
     to: '/settings/rov/custom-actions',
     Icon: CodeIcon,
   },
   {
-    label: (): string => m.extensions_csv_title(),
-    ariaLabel: (): string => m.extensions_csv_title(),
+    label: (): string => m.custom_action_scripts_csv_title(),
+    ariaLabel: (): string => m.custom_action_scripts_csv_title(),
     to: '/settings/rov/csv-logging',
     Icon: TableIcon,
   },
@@ -151,7 +151,7 @@ type SidebarLinkItemProps = {
   item:
     | (typeof APPLICATION_ITEMS)[number]
     | (typeof ROV_ITEMS)[number]
-    | (typeof EXTENSION_ITEMS)[number];
+    | (typeof CUSTOM_ACTION_ITEMS)[number];
   isActive: (path: string) => boolean;
 };
 
@@ -223,7 +223,7 @@ const SettingsSidebarContent: Component<{
               <SidebarLinkItem item={item} isActive={props.isActive} />
             ))}
           </Show>
-          {EXTENSION_ITEMS.map((item) => (
+          {CUSTOM_ACTION_ITEMS.map((item) => (
             <SidebarLinkItem item={item} isActive={props.isActive} />
           ))}
         </SidebarMenu>

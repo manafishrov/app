@@ -7,13 +7,13 @@ vi.mock('@/lib/log', () => ({ logWarn: vi.fn() }));
 import { capabilityStore } from '@/stores/capabilities';
 import { disconnectCapabilities, invokeAction, refreshCapabilities } from '@/tauri/capabilities';
 
-const catalog = { version: 1, readings: [], actions: [], extensions: [] };
+const catalog = { version: 1, readings: [], actions: [], customActions: [] };
 beforeEach(() => {
   vi.clearAllMocks();
   disconnectCapabilities();
 });
 
-it('invokes built-in and extension IDs through the same operation and phase contract', () => {
+it('invokes built-in and custom-action IDs through the same operation and phase contract', () => {
   mocks.invokeCommand.mockResolvedValue(null);
   return Promise.all([
     invokeAction('rov.depthHold.set', 'press', true),
@@ -59,6 +59,6 @@ it('explains incompatible or failed discovery without marking capabilities conne
     .rejects.toThrow('Unsupported version')
     .then(() => {
       expect(capabilityStore.connected).toBe(false);
-      expect(capabilityStore.error).toContain('both support extensions V1');
+      expect(capabilityStore.error).toContain('both support custom actions V1');
     });
 });

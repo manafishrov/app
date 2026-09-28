@@ -38,7 +38,7 @@ const CsvFileRow: Component<{
     <div class='min-w-0'>
       <p class='text-sm font-medium break-all'>{props.file.name}</p>
       <p class='text-xs text-muted-foreground'>
-        {m.extensions_csv_rows({
+        {m.custom_action_scripts_csv_rows({
           rows: props.file.rows,
           columns: props.file.columns,
           size: formatSize(props.file.size),
@@ -50,7 +50,7 @@ const CsvFileRow: Component<{
         variant='ghost'
         size='icon'
         disabled={props.operation.busy()}
-        aria-label={m.extensions_csv_download({ name: props.file.name })}
+        aria-label={m.custom_action_scripts_csv_download({ name: props.file.name })}
         onClick={() => {
           props.operation.run(() => saveCsv(props.file.name));
         }}
@@ -61,7 +61,7 @@ const CsvFileRow: Component<{
         variant='ghost'
         size='icon'
         disabled={props.operation.busy()}
-        aria-label={m.extensions_csv_delete({ name: props.file.name })}
+        aria-label={m.custom_action_scripts_csv_delete({ name: props.file.name })}
         onClick={() => {
           props.onDelete(props.file.name);
         }}
@@ -88,11 +88,11 @@ const CsvFiles: Component<{
       }}
     >
       <RefreshIcon class='size-4' />
-      {m.extensions_csv_refresh()}
+      {m.custom_action_scripts_csv_refresh()}
     </Button>
     <Show when={props.files.loading}>
       <p role='status' class='text-sm text-muted-foreground'>
-        {m.extensions_csv_loading()}
+        {m.custom_action_scripts_csv_loading()}
       </p>
     </Show>
     <Show when={props.files.error}>
@@ -102,7 +102,7 @@ const CsvFiles: Component<{
     </Show>
     <Show when={props.files.state !== 'errored' && !props.files.loading}>
       <ul>
-        <For each={props.files.latest} fallback={<P>{m.extensions_csv_empty()}</P>}>
+        <For each={props.files.latest} fallback={<P>{m.custom_action_scripts_csv_empty()}</P>}>
           {(file) => (
             <CsvFileRow file={file} operation={props.operation} onDelete={props.onDelete} />
           )}
@@ -122,16 +122,19 @@ export const CsvLoggingPage: Component = () => {
     setDeleteName('');
     operation.run(
       () => requestCapability('csv.delete', { name }).then(() => refetch()),
-      m.extensions_csv_deleted(),
+      m.custom_action_scripts_csv_deleted(),
     );
   };
   return (
     <div class='flex flex-col gap-6'>
       <header class='flex flex-col gap-2'>
-        <H1>{m.extensions_csv_title()}</H1>
-        <P>{m.extensions_csv_description()}</P>
+        <H1>{m.custom_action_scripts_csv_title()}</H1>
+        <P>{m.custom_action_scripts_csv_description()}</P>
       </header>
-      <Show when={capabilityStore.connected} fallback={<P>{m.extensions_csv_offline()}</P>}>
+      <Show
+        when={capabilityStore.connected}
+        fallback={<P>{m.custom_action_scripts_csv_offline()}</P>}
+      >
         <CsvFiles
           files={files}
           operation={operation}

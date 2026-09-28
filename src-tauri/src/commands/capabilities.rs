@@ -27,7 +27,7 @@ pub async fn request_capability(
 /// Returns an error for a non-Python, oversized, unreadable, or non-UTF-8 file.
 fn read_source(path: &Path) -> Result<String, String> {
   if path.extension().and_then(std::ffi::OsStr::to_str) != Some("py") {
-    return Err("Choose a Python extension file ending in .py".into());
+    return Err("Choose a Python custom action file ending in .py".into());
   }
   let file = std::fs::File::open(path).map_err(|error| error.to_string())?;
   let mut contents = Vec::new();
@@ -36,15 +36,15 @@ fn read_source(path: &Path) -> Result<String, String> {
     .read_to_end(&mut contents)
     .map_err(|error| error.to_string())?;
   if contents.len() as u64 > MAX_SOURCE_BYTES {
-    return Err("Extension source must be at most 256 KiB".into());
+    return Err("Custom action source must be at most 256 KiB".into());
   }
-  String::from_utf8(contents).map_err(|_| "Extension source must use UTF-8 encoding".into())
+  String::from_utf8(contents).map_err(|_| "Custom action source must use UTF-8 encoding".into())
 }
 
 #[command]
 /// # Errors
 /// Returns an error if the selected source cannot be read. Cancellation returns null.
-pub async fn import_extension_source(app: AppHandle) -> Result<Option<String>, String> {
+pub async fn import_custom_action_source(app: AppHandle) -> Result<Option<String>, String> {
   tauri::async_runtime::spawn_blocking(move || {
     app
       .dialog()

@@ -18,7 +18,7 @@ vi.mock('@/stores/capabilities', () => ({
     get connected(): boolean {
       return transport.connected;
     },
-    catalog: { actions: [{ id: 'dispenser.dispense', extensionId: null }] },
+    catalog: { actions: [{ id: 'dispenser.dispense', customActionId: null }] },
   },
 }));
 vi.mock('@/lib/log', () => ({ logError: vi.fn() }));

@@ -24,4 +24,4 @@ pub use rov::{
 };
 
 pub mod capabilities;
-pub use capabilities::{import_extension_source, request_capability, save_csv};
+pub use capabilities::{import_custom_action_source, request_capability, save_csv};

@@ -18,13 +18,16 @@ const reading = {
   id: 'water.wet',
   name: 'Water detected',
   valueType: 'boolean',
-  extensionId: 'water',
+  customActionId: 'water',
 };
 const catalog = {
   version: 1,
-  readings: [reading, { id: 'rov.depth', name: 'Depth', valueType: 'number', extensionId: null }],
+  readings: [
+    reading,
+    { id: 'rov.depth', name: 'Depth', valueType: 'number', customActionId: null },
+  ],
   actions: [],
-  extensions: [],
+  customActions: [],
 };
 const sample = (sequence: number, value: boolean): ReadingSample => ({
   id: 'water.wet',
@@ -34,7 +37,7 @@ const sample = (sequence: number, value: boolean): ReadingSample => ({
 });
 beforeEach(resetCapabilities);
 
-it('projects built-in and extension readings from the same snapshot and update stream', () => {
+it('projects built-in and custom-action readings from the same snapshot and update stream', () => {
   receiveCapabilityCatalog({
     ...catalog,
     samples: [sample(1, false), { id: 'rov.depth', value: 12, sequence: 1, timestamp: 1 }],
@@ -85,7 +88,7 @@ it('clears samples and capabilities on disconnect and accepts a restarted sequen
   );
 });
 
-it('removes samples when an extension is removed', () => {
+it('removes samples when a custom action is removed', () => {
   receiveCapabilityCatalog({ ...catalog, samples: [sample(1, true)] });
   receiveCapabilityCatalog({ ...catalog, readings: [] });
   expect(capabilityStore.samples).toEqual({});
@@ -101,7 +104,7 @@ it('accepts unavailable readings without confusing them with false or zero', () 
 it('projects every high-frequency built-in sample without delaying attitude instruments', () => {
   receiveCapabilityCatalog({
     ...catalog,
-    readings: [{ id: 'rov.pitch', name: 'Pitch', valueType: 'number', extensionId: null }],
+    readings: [{ id: 'rov.pitch', name: 'Pitch', valueType: 'number', customActionId: null }],
   });
   for (let frame = 1; frame <= 60; frame += 1) {
     receiveCapabilitySamples({
@@ -114,7 +117,7 @@ it('projects every high-frequency built-in sample without delaying attitude inst
 
 it('accepts the real firmware catalogue and projects its structured builtin samples', () => {
   receiveCapabilityCatalog(firmwareCatalog);
-  expect(capabilityStore.catalog.extensions).toHaveLength(3);
+  expect(capabilityStore.catalog.customActions).toHaveLength(3);
   expect(capabilityStore.catalog.actions.some((action) => action.id === 'rov.direction')).toBe(
     true,
   );
@@ -126,7 +129,7 @@ it('accepts the real firmware catalogue and projects its structured builtin samp
   expect(rovStatusStore.health).toEqual(health && health.value);
 });
 
-it('drops the old sample if an updated extension changes a reading type', () => {
+it('drops the old sample if an updated custom action changes a reading type', () => {
   receiveCapabilityCatalog({ ...catalog, samples: [sample(1, true)] });
   receiveCapabilityCatalog({ ...catalog, readings: [{ ...reading, valueType: 'number' }] });
   expect(capabilityStore.samples['water.wet']).toBeUndefined();

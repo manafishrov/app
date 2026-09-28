@@ -92,7 +92,7 @@ const statusSchema = z.object({
   }),
 });
 
-// Existing instruments consume typed views of the same samples as extension widgets.
+// Existing instruments consume typed views of the same samples as custom-action widgets.
 export const projectBuiltinSamples = (samples: ReadingSample[]): void => {
   const values = Object.fromEntries(
     samples

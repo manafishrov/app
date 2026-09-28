@@ -33,13 +33,17 @@ export const ReplaceDraftAlertDialog: Component<{
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{m.extensions_replace_title()}</AlertDialogTitle>
-            <AlertDialogDescription>{m.extensions_replace_description()}</AlertDialogDescription>
+            <AlertDialogTitle>{m.custom_action_scripts_replace_title()}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.custom_action_scripts_replace_description()}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={props.onCancel}>{m.extensions_cancel()}</AlertDialogCancel>
+            <AlertDialogCancel onClick={props.onCancel}>
+              {m.custom_action_scripts_cancel()}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={props.onConfirm}>
-              {m.extensions_replace()}
+              {m.custom_action_scripts_replace()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

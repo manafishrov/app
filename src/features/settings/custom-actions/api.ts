@@ -6,7 +6,7 @@ import { requestCapability } from '@/tauri/capabilities';
 export const MAX_SOURCE_BYTES = 262_144;
 const sendSource = (operation: string, source: string): Promise<unknown> => {
   if (new TextEncoder().encode(source).byteLength > MAX_SOURCE_BYTES) {
-    return Promise.reject(new Error(m.extensions_source_too_large()));
+    return Promise.reject(new Error(m.custom_action_scripts_source_too_large()));
   }
   return requestCapability(operation, { source });
 };
@@ -18,7 +18,7 @@ const validationSchema = z.object({
   actions: z.array(declarationSchema),
   warnings: z.array(z.string()),
 });
-export type ExtensionValidation = z.infer<typeof validationSchema>;
+export type CustomActionValidation = z.infer<typeof validationSchema>;
 
 const csvFileSchema = z.object({
   name: z.string(),
@@ -28,14 +28,14 @@ const csvFileSchema = z.object({
 });
 export type CsvFile = z.infer<typeof csvFileSchema>;
 
-export const validateExtension = (source: string): Promise<ExtensionValidation> =>
-  sendSource('extension.validate', source).then((result) => validationSchema.parse(result));
+export const validateCustomAction = (source: string): Promise<CustomActionValidation> =>
+  sendSource('customAction.validate', source).then((result) => validationSchema.parse(result));
 
-export const installExtension = (source: string): Promise<unknown> =>
-  sendSource('extension.install', source);
+export const installCustomAction = (source: string): Promise<unknown> =>
+  sendSource('customAction.install', source);
 
-export const readExtension = (id: string): Promise<string> =>
-  requestCapability('extension.source', { id }).then(
+export const readCustomAction = (id: string): Promise<string> =>
+  requestCapability('customAction.source', { id }).then(
     (result) => z.object({ source: z.string() }).parse(result).source,
   );
 

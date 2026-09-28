@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Manafish",
-  "version": "1.0.18-rc.1",
+  "version": "1.1.0-rc.1",
   "identifier": "com.manafishrov.manafish",
   "build": {
     "beforeDevCommand": "bun run editor:prepare && bun run dev",
@@ -84,7 +84,7 @@
       "binaries/manafish-python-analysis"
     ],
     "resources": {
-      "licenses/": "licenses/"
+      "../LICENSE": "LICENSE"
     }
   },
   "plugins": {

@@ -33,13 +33,19 @@ export const ConfirmDeleteAlertDialog: Component<{
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{m.extensions_delete_title({ name: props.name })}</AlertDialogTitle>
-            <AlertDialogDescription>{m.extensions_delete_description()}</AlertDialogDescription>
+            <AlertDialogTitle>
+              {m.custom_action_scripts_delete_title({ name: props.name })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {m.custom_action_scripts_delete_description()}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={props.onCancel}>{m.extensions_cancel()}</AlertDialogCancel>
+            <AlertDialogCancel onClick={props.onCancel}>
+              {m.custom_action_scripts_cancel()}
+            </AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={props.onConfirm}>
-              {m.extensions_delete()}
+              {m.custom_action_scripts_delete()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

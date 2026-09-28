@@ -21,8 +21,10 @@ let dispose = (): void => {
 };
 const catalog = {
   version: 1,
-  extensions: [{ id: 'water', name: 'Water', description: '', enabled: true, status: 'running' }],
-  readings: [{ id: 'water.wet', name: 'Water', valueType: 'boolean', extensionId: 'water' }],
+  customActions: [
+    { id: 'water', name: 'Water', description: '', enabled: true, status: 'running' },
+  ],
+  readings: [{ id: 'water.wet', name: 'Water', valueType: 'boolean', customActionId: 'water' }],
   actions: [
     {
       id: 'water.test',
@@ -31,7 +33,7 @@ const catalog = {
       modes: ['once', 'hold'],
       mode: 'hold',
       intervalMs: 250,
-      extensionId: 'water',
+      customActionId: 'water',
     },
   ],
 };
@@ -140,7 +142,7 @@ it('shows explicit unavailability for a null sensor sample', () => {
   expect(host.querySelector('.overlay-capability-light')).toBeNull();
 });
 
-it('disables actions and releases local activation when an extension stops', () => {
+it('disables actions and releases local activation when a custom action stops', () => {
   dispose = render(() => <CapabilityWidget widget={actionWidget} />, host);
   const button = host.querySelector('button');
   if (!button) {
@@ -149,7 +151,7 @@ it('disables actions and releases local activation when an extension stops', () 
   button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   receiveCapabilityCatalog({
     ...catalog,
-    extensions: [
+    customActions: [
       { id: 'water', name: 'Water', description: '', enabled: false, status: 'stopped' },
     ],
   });
@@ -212,7 +214,7 @@ it('distinguishes a failed script from an inactive sensor light', () => {
   publish(1);
   receiveCapabilityCatalog({
     ...catalog,
-    extensions: [{ ...catalog.extensions[0], status: 'error', error: 'GPIO read failed' }],
+    customActions: [{ ...catalog.customActions[0], status: 'error', error: 'GPIO read failed' }],
   });
   expect(host.textContent).toContain('Reading failed');
   expect(host.querySelector('.overlay-capability-light')).toBeNull();

@@ -13,7 +13,7 @@ export const readingDescriptorSchema = z.object({
   unit: z.string().nullish(),
   widget: z.string().nullish(),
   staleAfterMs: z.number().positive().nullish(),
-  extensionId: z.string().nullable(),
+  customActionId: z.string().nullable(),
 });
 export type ReadingDescriptor = z.infer<typeof readingDescriptorSchema>;
 
@@ -24,11 +24,11 @@ export const actionDescriptorSchema = z.object({
   modes: z.array(actionModeSchema),
   mode: actionModeSchema,
   intervalMs: z.number().nonnegative(),
-  extensionId: z.string().nullable(),
+  customActionId: z.string().nullable(),
 });
 export type ActionDescriptor = z.infer<typeof actionDescriptorSchema>;
 
-export const extensionDescriptorSchema = z.object({
+export const customActionDescriptorSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
@@ -36,7 +36,7 @@ export const extensionDescriptorSchema = z.object({
   status: z.enum(['stopped', 'running', 'error']),
   error: z.string().nullish(),
 });
-export type ExtensionDescriptor = z.infer<typeof extensionDescriptorSchema>;
+export type CustomActionDescriptor = z.infer<typeof customActionDescriptorSchema>;
 
 export const readingSampleSchema = z.object({
   id: z.string(),
@@ -54,7 +54,7 @@ export const capabilityCatalogSchema = z.object({
   version: z.literal(1),
   readings: z.array(readingDescriptorSchema),
   actions: z.array(actionDescriptorSchema),
-  extensions: z.array(extensionDescriptorSchema),
+  customActions: z.array(customActionDescriptorSchema),
   samples: z.array(readingSampleSchema).optional(),
 });
 export type CapabilityCatalog = z.infer<typeof capabilityCatalogSchema>;
