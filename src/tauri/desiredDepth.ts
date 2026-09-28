@@ -1,4 +1,4 @@
-import { invokeCommand } from '@/tauri/core';
+import { invokeAction } from '@/tauri/capabilities';
 
 export const setDesiredDepth = (depth: number): Promise<void> =>
-  invokeCommand('set_desired_depth', { depth });
+  invokeAction('rov.desiredDepth.set', 'press', depth);

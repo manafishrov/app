@@ -133,6 +133,8 @@ fn show_config_parse_failed_toast() {
   toast_warn(
     None,
     ToastContent {
+      message: None,
+      description: None,
       message_key: "toasts_app_config_parse_failed_using_default".to_string(),
       message_args: None,
       description_key: None,
@@ -225,6 +227,8 @@ pub async fn set_config_to_file(
   toast_success(
     None,
     ToastContent {
+      message: None,
+      description: None,
       message_key: "toasts_app_config_set_success".to_string(),
       message_args: None,
       description_key: None,
@@ -265,6 +269,8 @@ fn persist_config(mut payload: Config) -> Result<Config, String> {
 
 #[cfg(test)]
 mod tests {
+  // Assertions and propagated fixture errors are the purpose of these tests.
+  #![allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
   use super::*;
   use serde_json::json;
 

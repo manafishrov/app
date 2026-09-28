@@ -15,6 +15,7 @@ export const OVERLAY_GRID_COLUMNS = 32;
 export const OVERLAY_GRID_ROWS = 24;
 
 export const OverlayWidgetType = {
+  capability: 'capability',
   connectionStatus: 'connectionStatus',
   recording: 'recording',
   workIndicator: 'workIndicator',
@@ -64,6 +65,22 @@ export type OverlayAnchor = (typeof OverlayAnchor)[keyof typeof OverlayAnchor];
 export type OverlayWidgetOptions = {
   /** Legacy glow preference, converted into a standalone work widget. */
   workIndicator?: boolean;
+  sourceId?: string;
+  sourceKind?: 'reading' | 'action';
+  label?: string;
+  display?:
+    | 'text'
+    | 'badge'
+    | 'status'
+    | 'warningYellow'
+    | 'warningRed'
+    | 'ping'
+    | 'bar'
+    | 'verticalBar'
+    | 'button';
+  minimum?: number;
+  maximum?: number;
+  decaySeconds?: number;
 };
 
 export type OverlayWidget = {

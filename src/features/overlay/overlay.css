@@ -198,3 +198,62 @@
 .overlay-palette .overlay-surface {
   backdrop-filter: none;
 }
+
+.overlay-capability,
+.overlay-action-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+  padding: 4px;
+}
+.overlay-capability[data-badge='true'] {
+  border-radius: 999px;
+}
+.overlay-capability-light {
+  color: var(--color-primary);
+  transition: opacity 150ms linear;
+}
+.overlay-capability-light[data-warning='warningYellow'] {
+  color: #facc15;
+}
+.overlay-capability-light[data-warning='warningRed'] {
+  color: #ef4444;
+}
+.overlay-capability-bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  background: #80808060;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.overlay-capability-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+.overlay-capability-bar[data-vertical='true'] {
+  width: 8px;
+  height: 100%;
+  align-items: end;
+}
+.overlay-capability-bar[data-vertical='true'] > span {
+  width: 100%;
+}
+.overlay-action-widget {
+  cursor: pointer;
+}
+.overlay-action-widget:active {
+  background: color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+.overlay-action-widget:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.overlay-capability-light[data-active='false'] {
+  color: var(--color-muted-foreground);
+}

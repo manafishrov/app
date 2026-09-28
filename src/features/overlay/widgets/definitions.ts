@@ -22,6 +22,7 @@ const placement = (type: OverlayWidgetType): OverlayWidgetPlacement => {
 };
 
 export const overlayWidgetPlacements: Record<OverlayWidgetType, OverlayWidgetPlacement> = {
+  capability: placement(OverlayWidgetType.capability),
   connectionStatus: placement(OverlayWidgetType.connectionStatus),
   recording: placement(OverlayWidgetType.recording),
   workIndicator: placement(OverlayWidgetType.workIndicator),

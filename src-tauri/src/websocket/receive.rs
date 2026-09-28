@@ -4,8 +4,6 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::log_warn;
 use crate::models::log::LogEntry;
 use crate::models::rov_config::RegulatorSuggestions;
-use crate::models::rov_status::RovStatus;
-use crate::models::rov_telemetry::RovTelemetry;
 use crate::models::toast::Toast;
 use crate::websocket::message::ConfigResponse;
 
@@ -22,16 +20,6 @@ pub fn handle_log_message(app: &AppHandle, payload: &LogEntry) -> Option<Message
 
 pub fn handle_show_toast(app: &AppHandle, payload: &Toast) -> Option<Message> {
   emit_event(app, "show_toast", payload);
-  None
-}
-
-pub fn handle_telemetry(app: &AppHandle, payload: &RovTelemetry) -> Option<Message> {
-  emit_event(app, "rov_telemetry", payload);
-  None
-}
-
-pub fn handle_status_update(app: &AppHandle, payload: &RovStatus) -> Option<Message> {
-  emit_event(app, "rov_status_update", payload);
   None
 }
 

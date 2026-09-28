@@ -29,6 +29,9 @@ const SelectionControls: Component<{ draft: LayoutDraft }> = (props) => (
           widget={widget()}
           onSpanChange={props.draft.resizeSelected}
           onRemove={props.draft.removeSelected}
+          onOptionsChange={(options) => {
+            props.draft.patchSelected({ options });
+          }}
         />
       )}
     </Show>

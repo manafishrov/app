@@ -7,10 +7,11 @@ mod models {
   pub mod config;
   pub mod log;
   pub mod rov_config;
-  pub mod rov_status;
-  pub mod rov_telemetry;
   pub mod toast;
 }
+
+mod python_editor;
+mod python_sdk;
 
 mod recording;
 mod version;
@@ -29,12 +30,11 @@ use commands::{
   append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
   cleanup_firmware_cache, close_splashscreen, confirm_rov_config, deactivate_direction_vector,
   download_firmware_update, export_logs, fetch_app_releases, fetch_firmware_manifest,
-  flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config, import_rov_config,
-  initialize_log_listener, install_app_release, list_firmware_releases, list_flash_drives,
-  prepare_flash, request_rov_config, save_recording, send_custom_action, send_direction_vector,
-  set_auto_stabilization, set_config, set_depth_hold, set_desired_depth, set_rov_config,
-  signal_flash_image, stage_config, start_gamepad_stream, start_regulator_auto_tuning,
-  start_thruster_test,
+  flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config, import_extension_source,
+  import_rov_config, initialize_log_listener, install_app_release, list_firmware_releases,
+  list_flash_drives, prepare_flash, request_capability, request_rov_config, save_csv,
+  save_recording, send_direction_vector, set_config, set_rov_config, signal_flash_image,
+  stage_config, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -57,7 +57,9 @@ fn setup_handlers(app: &mut App) {
   let toast_handle = app.app_handle().clone();
   toast_init(toast_handle);
 
+  app.manage(python_editor::PythonEditorState::default());
   app.manage(Arc::new(FlashControl::default()));
+  app.manage(websocket::capabilities::CapabilityState::default());
 
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
@@ -264,6 +266,12 @@ pub fn run() -> tauri::Result<()> {
       }
     })
     .invoke_handler(generate_handler![
+      python_editor::start_python_editor,
+      python_editor::send_python_editor,
+      python_editor::stop_python_editor,
+      request_capability,
+      import_extension_source,
+      save_csv,
       close_splashscreen,
       start_gamepad_stream,
       gamepad_vibrate,
@@ -282,11 +290,7 @@ pub fn run() -> tauri::Result<()> {
       cancel_regulator_auto_tuning,
       deactivate_direction_vector,
       send_direction_vector,
-      send_custom_action,
-      set_auto_stabilization,
-      set_desired_depth,
       append_recording_chunk,
-      set_depth_hold,
       flash_mcu_firmware,
       flash_esc_firmware,
       list_firmware_releases,

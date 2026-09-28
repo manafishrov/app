@@ -32,6 +32,12 @@ export const overlayWidgetSizes: Record<
   OverlayWidgetType,
   readonly [WidgetFootprint, ...WidgetFootprint[]]
 > = {
+  capability: [
+    { columns: 6, rows: 2 },
+    { columns: 8, rows: 3 },
+    { columns: 4, rows: 4 },
+    { columns: 6, rows: 6 },
+  ],
   connectionStatus: status,
   recording: status,
   workIndicator: status,

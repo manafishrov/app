@@ -17,6 +17,7 @@ import { useLocation } from '@tanstack/solid-router';
 import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';
+import CodeIcon from '~icons/material-symbols/code';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
@@ -29,6 +30,7 @@ import SettingsEthernetIcon from '~icons/material-symbols/settings-ethernet';
 import SpeedIcon from '~icons/material-symbols/speed';
 import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 import SystemUpdateAltIcon from '~icons/material-symbols/system-update-alt';
+import TableIcon from '~icons/material-symbols/table-chart';
 
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
@@ -127,11 +129,29 @@ const ROV_ITEMS = [
 
 const SLICE_LAST_CHAR = -1;
 
+const EXTENSION_ITEMS = [
+  {
+    label: (): string => m.extensions_title(),
+    ariaLabel: (): string => m.extensions_title(),
+    to: '/settings/rov/custom-actions',
+    Icon: CodeIcon,
+  },
+  {
+    label: (): string => m.extensions_csv_title(),
+    ariaLabel: (): string => m.extensions_csv_title(),
+    to: '/settings/rov/csv-logging',
+    Icon: TableIcon,
+  },
+] as const satisfies readonly SidebarItem[];
+
 const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, SLICE_LAST_CHAR) : path;
 
 type SidebarLinkItemProps = {
-  item: (typeof APPLICATION_ITEMS)[number] | (typeof ROV_ITEMS)[number];
+  item:
+    | (typeof APPLICATION_ITEMS)[number]
+    | (typeof ROV_ITEMS)[number]
+    | (typeof EXTENSION_ITEMS)[number];
   isActive: (path: string) => boolean;
 };
 
@@ -194,18 +214,21 @@ const SettingsSidebarContent: Component<{
       </SidebarGroupContent>
     </SidebarGroup>
 
-    <Show when={props.isConnected()}>
-      <SidebarGroup>
-        <SidebarGroupLabel>{rovConfigStore.rovName}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
+    <SidebarGroup>
+      <SidebarGroupLabel>{rovConfigStore.rovName}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <Show when={props.isConnected()}>
             {ROV_ITEMS.map((item) => (
               <SidebarLinkItem item={item} isActive={props.isActive} />
             ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    </Show>
+          </Show>
+          {EXTENSION_ITEMS.map((item) => (
+            <SidebarLinkItem item={item} isActive={props.isActive} />
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   </SidebarContent>
 );
 

@@ -1,0 +1,87 @@
+import { beforeEach, expect, it, vi } from 'vitest';
+
+import type { ExtensionValidation } from './api';
+
+import { createExtensionDraft } from './editorDraft';
+
+const api = vi.hoisted(() => ({ validate: vi.fn(), install: vi.fn() }));
+vi.mock('./api', () => ({ validateExtension: api.validate, installExtension: api.install }));
+vi.mock('@/paraglide/messages', () => ({
+  extensions_validate_first: (): string => 'Validate first',
+}));
+const validated: ExtensionValidation = {
+  manifest: { id: 'sensor', name: 'Sensor' },
+  readings: [],
+  actions: [],
+  warnings: [],
+};
+beforeEach(() => {
+  vi.resetAllMocks();
+  api.validate.mockResolvedValue(validated);
+  api.install.mockResolvedValue({ id: 'sensor' });
+});
+
+it('requires validation of exactly the source being installed', () => {
+  const draft = createExtensionDraft();
+  draft.load('original', false);
+  return draft
+    .validate()
+    .then(() => {
+      expect(draft.validation()).toEqual(validated);
+      draft.setSource('changed');
+      expect(draft.validation()).toBeNull();
+      return expect(draft.install()).rejects.toThrow('Validate first');
+    })
+    .then(() => {
+      expect(api.install).not.toHaveBeenCalled();
+    });
+});
+
+it('ignores validation which completes after the source was edited', () => {
+  let resolve: (result: ExtensionValidation) => void = vi.fn();
+  api.validate.mockImplementation(
+    () =>
+      new Promise<ExtensionValidation>((done) => {
+        resolve = done;
+      }),
+  );
+  const draft = createExtensionDraft();
+  draft.load('original', false);
+  const pending = draft.validate();
+  draft.setSource('changed');
+  resolve(validated);
+  return pending.then(() => {
+    expect(draft.validation()).toBeNull();
+    expect(draft.source()).toBe('changed');
+  });
+});
+
+it('preserves source bytes and keeps failed installations dirty', () => {
+  const draft = createExtensionDraft();
+  const source = '# sensor\r\n# å\r\n';
+  draft.load(source, false);
+  api.install.mockRejectedValue(new Error('Disconnected'));
+  return draft
+    .validate()
+    .then(() => expect(draft.install()).rejects.toThrow('Disconnected'))
+    .then(() => {
+      expect(api.install).toHaveBeenCalledWith(source);
+      expect(draft.dirty()).toBe(true);
+      expect(draft.source()).toBe(source);
+    });
+});
+
+it('marks installed source clean without erasing later edits', () => {
+  const draft = createExtensionDraft();
+  draft.load('source', true);
+  expect(draft.dirty()).toBe(false);
+  draft.setSource('updated');
+  return draft
+    .validate()
+    .then(draft.install)
+    .then(() => {
+      expect(draft.dirty()).toBe(false);
+      draft.setSource('next revision');
+      expect(draft.dirty()).toBe(true);
+    });
+});

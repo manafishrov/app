@@ -181,6 +181,7 @@ export type CustomActionTrigger = (typeof CustomActionTrigger)[keyof typeof Cust
 
 type CustomActionBinding = {
   id: string;
+  actionId?: string;
   module: string;
   trigger: CustomActionTrigger;
   keyboard: NullableKeyboardInput;

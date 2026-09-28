@@ -2,7 +2,12 @@ import type { Accessor, Setter } from 'solid-js';
 
 import { createStore, reconcile, unwrap } from 'solid-js/store';
 
-import type { OverlayLayout, OverlayWidget, OverlayWidgetType } from '@/stores/overlayTypes';
+import type {
+  OverlayLayout,
+  OverlayWidget,
+  OverlayWidgetOptions,
+  OverlayWidgetType,
+} from '@/stores/overlayTypes';
 
 import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
 import { logError } from '@/lib/log';
@@ -32,7 +37,11 @@ const persist = (layout: OverlayLayout): void => {
 };
 
 /** Builds a new widget of this type on the first free cell it fits. */
-const buildWidget = (layout: OverlayLayout, type: OverlayWidgetType): OverlayWidget | undefined => {
+const buildWidget = (
+  layout: OverlayLayout,
+  type: OverlayWidgetType,
+  options?: OverlayWidgetOptions,
+): OverlayWidget | undefined => {
   const definition = getOverlayWidgetDefinition(type);
   if (definition === undef) {
     return undef;
@@ -49,7 +58,7 @@ const buildWidget = (layout: OverlayLayout, type: OverlayWidgetType): OverlayWid
     ...findFreeCell(layout, span),
     ...span,
     anchor: definition.defaultAnchor,
-    options: { ...definition.defaultOptions },
+    options: { ...definition.defaultOptions, ...options },
   };
 };
 
@@ -68,7 +77,7 @@ export type LayoutDraft = {
   /** Drag-time update; not written to disk until `commit`. */
   moveTo: (widgetId: string, cell: GridCell) => void;
   commit: () => void;
-  add: (type: OverlayWidgetType) => void;
+  add: (type: OverlayWidgetType, options?: OverlayWidgetOptions) => void;
   patchSelected: (patch: Partial<Omit<OverlayWidget, 'id' | 'type'>>) => void;
   resizeSelected: (span: GridSpan) => void;
   removeSelected: () => void;
@@ -107,8 +116,8 @@ const createPlacementOperations = (context: DraftContext): PlacementOperations =
       persist(current());
     },
 
-    add: (type) => {
-      const widget = buildWidget(current(), type);
+    add: (type, options) => {
+      const widget = buildWidget(current(), type, options);
       if (widget === undef) {
         return;
       }

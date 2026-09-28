@@ -199,6 +199,8 @@ pub enum CustomActionTrigger {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CustomActionBinding {
   pub id: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub action_id: Option<String>,
   pub module: String,
   pub trigger: CustomActionTrigger,
   pub keyboard: Option<KeyboardInput>,
@@ -210,6 +212,7 @@ pub struct CustomActionBinding {
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayWidgetType {
+  Capability,
   ConnectionStatus,
   Recording,
   WorkIndicator,
@@ -264,6 +267,20 @@ pub enum OverlayAnchor {
 pub struct OverlayWidgetOptions {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub work_indicator: Option<bool>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub source_id: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub source_kind: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub label: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub display: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub minimum: Option<f64>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub maximum: Option<f64>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub decay_seconds: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -618,6 +635,33 @@ mod tests {
   use super::*;
 
   /// # Panics
+  /// Panics if capability references or display settings cannot survive a local save.
+  #[test]
+  fn capability_configuration_round_trip_preserves_unavailable_sources() {
+    let widget = serde_json::json!({
+      "id": "water", "type": "capability", "column": 2, "row": 3,
+      "columnSpan": 6, "rowSpan": 6, "anchor": "center",
+      "options": { "sourceId": "uninstalled.water", "sourceKind": "reading",
+        "label": "Water sensor", "display": "ping", "decaySeconds": 0.5,
+        "minimum": 0.0, "maximum": 1.0 }
+    });
+    let parsed = serde_json::from_value::<OverlayWidget>(widget.clone());
+    assert!(parsed.is_ok(), "Capability widget rejected: {:?}", parsed.as_ref().err());
+    let Ok(parsed) = parsed else {
+      return;
+    };
+    assert_eq!(serde_json::to_value(parsed).ok(), Some(widget));
+    let binding = serde_json::json!({"id": "binding", "actionId": "dispenser.dispense",
+      "module": "", "trigger": "tap", "keyboard": null, "gamepad": {}});
+    let parsed = serde_json::from_value::<CustomActionBinding>(binding.clone());
+    assert!(parsed.is_ok(), "Capability binding rejected: {:?}", parsed.as_ref().err());
+    let Ok(parsed) = parsed else {
+      return;
+    };
+    assert_eq!(serde_json::to_value(parsed).ok(), Some(binding));
+  }
+
+  /// # Panics
   /// Panics if the two floating-point values are not equal within epsilon.
   fn assert_f32_eq(actual: f32, expected: f32) {
     assert!((actual - expected).abs() <= f32::EPSILON);
@@ -660,6 +704,7 @@ mod tests {
       .iter()
       .map(|widget| {
         let type_name = match widget.widget_type {
+          OverlayWidgetType::Capability => "capability",
           OverlayWidgetType::ConnectionStatus => "connectionStatus",
           OverlayWidgetType::Recording => "recording",
           OverlayWidgetType::WorkIndicator => "workIndicator",

@@ -81,6 +81,8 @@ jobs:
             ${{ runner.os }}-cargo-
       - name: Check formatting
         run: cargo fmt --check
+      - name: Prepare Python language server
+        run: python3 ../scripts/prepare-python-editor.py
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Run tests

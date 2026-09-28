@@ -1,18 +1,16 @@
+import { setupCapabilityListeners } from '@/tauri/capabilities';
 import { setupConnectionListener } from '@/tauri/connection';
 import { DisposableStack, type CleanupFn } from '@/tauri/core';
 import { setupGamepadListener } from '@/tauri/gamepad';
 import { setupLogsListener } from '@/tauri/logs';
 import { setupRegulatorListener } from '@/tauri/regulator';
 import { setupRovConfigListener } from '@/tauri/rovConfig';
-import { setupRovStatusListener } from '@/tauri/rovStatus';
-import { setupRovTelemetryListener } from '@/tauri/rovTelemetry';
 import { setupFirmwareDownloadListener, setupFirmwareFlashListener } from '@/tauri/sdFlash';
 import { setupToastListener } from '@/tauri/toast';
 
 export { flashMcuFirmware } from '@/tauri/mcuFirmware';
 export { flashEscFirmware } from '@/tauri/escFirmware';
 export { getConfig, setConfig, stageConfig } from '@/tauri/config';
-export { sendCustomAction } from '@/tauri/customAction';
 export { setDesiredDepth } from '@/tauri/desiredDepth';
 export { initializeVideoDirectory, recoverTempRecordings, saveRecording } from '@/tauri/recording';
 export { regulatorSuggestions, startRegulatorAutoTuning } from '@/tauri/regulator';
@@ -50,8 +48,7 @@ const listeners = [
   setupLogsListener,
   setupRegulatorListener,
   setupRovConfigListener,
-  setupRovStatusListener,
-  setupRovTelemetryListener,
+  setupCapabilityListeners,
   setupToastListener,
 ];
 

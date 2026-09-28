@@ -289,7 +289,7 @@ jobs:
             [ -f "$f" ] || continue
             patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
           done
-          echo '{"bundle": {"resources": ["*.so*", "webkit"]}}' > src-tauri/tauri.linux.conf.json
+          echo '{"bundle": {"resources": ["*.so*", "webkit", "licenses"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
@@ -305,7 +305,7 @@ jobs:
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
           copy-item "ffmpeg\bin\*.dll" src-tauri/
-          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["*.dll"]}}'
+          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["*.dll", "licenses"]}}'
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile

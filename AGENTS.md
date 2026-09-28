@@ -18,6 +18,7 @@ Tauri + SolidJS desktop app for controlling the Manafish ROV. Rust backend in
 
 - `src/` — UI: `components/`, `features/`, `routes/`, `stores/`, `lib/`, `tauri/`
 - `src-tauri/` — Rust backend (system access, ROV comms)
+- For custom-action SDK, editor analysis, or source-cache changes, read `EXTENSIONS.md`.
 - `src-yolo/` — experimental sandbox; not shipped
 - `messages/`, `i18n.inlang/` — Paraglide translations
 - `public/`, `app-icon.png` — static assets
@@ -25,6 +26,7 @@ Tauri + SolidJS desktop app for controlling the Manafish ROV. Rust backend in
 ## Commands
 
 - Install: `bun install`
+- Prepare the bundled Python language server before direct Cargo commands: `bun run editor:prepare`
 - Dev (full app): `bun run tauri dev`
 - Dev (frontend only): `bun run dev`
 - Build: `bun run tauri build`

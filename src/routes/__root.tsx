@@ -9,6 +9,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 import { Header } from '@/features/header';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
+import { disablePageZoom } from '@/lib/pageZoom';
 import * as m from '@/paraglide/messages';
 import { getLocale, shouldRedirect } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
@@ -49,6 +50,7 @@ const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
 
   onMount(() => {
+    cleanupFns.push(disablePageZoom());
     setTimeout(closeSplashscreen, 0);
     setupAppListeners(cleanupFns);
   });
