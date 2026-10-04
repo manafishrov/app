@@ -3,6 +3,10 @@ set -euo pipefail
 
 # Runner images can disable automatic updates and retain an older formula index.
 brew update
+# ffmpeg@8 depends on openssl@4, whose links overlap the image's openssl@3.
+# Installing it inside the ffmpeg@8 transaction deadlocks on the openssl@3
+# keg lock, so release those links in a separate invocation first.
+brew unlink openssl@3 || true
 brew install ffmpeg@8
 export FFMPEG_DIR="$(brew --prefix ffmpeg@8)"
 export PKG_CONFIG_PATH="${FFMPEG_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
