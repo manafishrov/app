@@ -4,7 +4,6 @@ import { configStore } from '@/stores/config';
 import { getActiveLayout, normaliseLayout } from '@/stores/overlayLayout';
 
 import { OverlayGrid } from './OverlayGrid';
-import { PiUndervoltageWarning } from './PiUndervoltageWarning';
 
 const [undef] = [] as undefined[];
 
@@ -16,7 +15,6 @@ const Overlay: Component = () => {
 
   return (
     <div class='pointer-events-none absolute inset-0 overflow-hidden'>
-      <PiUndervoltageWarning />
       <Show when={layout()}>{(resolved) => <OverlayGrid layout={resolved()} />}</Show>
     </div>
   );
