@@ -2,7 +2,7 @@
 name = "manafish"
 version = "1.1.0-rc.3"
 description = "An app for controlling the Manafish ROV"
-requires-python = "==3.14.7"
+requires-python = "==3.15.0"
 dependencies = ["ultralytics==8.4.155"]
 
 [tool.ruff]
