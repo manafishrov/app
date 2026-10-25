@@ -75,6 +75,18 @@
       "matchPackageNames": ["@manafishrov/ui"],
       "automerge": true,
       "platformAutomerge": true
+    },
+    {
+      "description": "gtk-sys declares `links`, so gtk must match the 0.18 line that tauri, tao, wry and webkit2gtk use. Remove once Tauri moves to gtk 0.19.",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["gtk"],
+      "allowedVersions": "<0.19"
+    },
+    {
+      "description": "ultralytics needs torch, which has no cp315 wheels yet. Remove once torch supports Python 3.15.",
+      "matchManagers": ["pep621"],
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
     }
   ]
 }
