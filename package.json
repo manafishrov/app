@@ -46,7 +46,7 @@
     "solid-js": "1.9.15",
     "three": "0.186.0",
     "vscode-languageserver-protocol": "3.18.4",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "1.2.92",
