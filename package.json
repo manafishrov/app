@@ -22,7 +22,7 @@
     "editor:prepare": "bun scripts/preparePythonEditor.ts"
   },
   "dependencies": {
-    "@chenglou/pretext": "0.0.9",
+    "@chenglou/pretext": "1.0.0",
     "@codemirror/lang-python": "6.2.1",
     "@codemirror/language": "6.13.1",
     "@codemirror/lint": "6.9.7",
