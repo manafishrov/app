@@ -16,6 +16,8 @@ import {
 
 import { splitLegacyWidgets } from './overlayMigration';
 
+const [undef] = [] as undefined[];
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
@@ -114,6 +116,46 @@ export const findFreeCell = (layout: OverlayLayout, span: GridSpan): GridCell =>
   return { column: 1, row: 1 };
 };
 
+/** Cell nearest the widget's own where it overlaps nothing else; its own cell when none is free. */
+const nearestFreeCell = (widget: OverlayWidget, others: readonly OverlayWidget[]): GridCell => {
+  let nearest: GridCell = { column: widget.column, row: widget.row };
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (let row = 1; row <= OVERLAY_GRID_ROWS - widget.rowSpan + 1; row += 1) {
+    for (let column = 1; column <= OVERLAY_GRID_COLUMNS - widget.columnSpan + 1; column += 1) {
+      const distance = Math.abs(column - widget.column) + Math.abs(row - widget.row);
+      const candidate: GridRect = { ...widget, column, row };
+      if (distance < nearestDistance && !others.some((other) => overlaps(candidate, other))) {
+        nearest = { column, row };
+        nearestDistance = distance;
+      }
+    }
+  }
+  return nearest;
+};
+
+/**
+ * Fitting a saved widget to its supported sizes can grow it into a neighbour,
+ * such as a vertical bar saved in a landscape footprint. Move it aside instead
+ * of introducing an overlap the user never made.
+ */
+const separateRefitWidgets = (
+  widgets: OverlayWidget[],
+  saved: ReadonlyMap<string, OverlayWidget>,
+): OverlayWidget[] => {
+  for (const [index, widget] of widgets.entries()) {
+    const before = saved.get(widget.id);
+    const others = widgets.filter((_, otherIndex) => otherIndex !== index);
+    const refit =
+      before !== undef &&
+      before.type === widget.type &&
+      (before.columnSpan !== widget.columnSpan || before.rowSpan !== widget.rowSpan);
+    if (refit && others.some((other) => overlaps(widget, other) && !overlaps(before, other))) {
+      widgets[index] = { ...widget, ...nearestFreeCell(widget, others) };
+    }
+  }
+  return widgets;
+};
+
 export const addWidget = (layout: OverlayLayout, widget: OverlayWidget): OverlayLayout => ({
   ...layout,
   widgets: [...layout.widgets, clampWidget(widget, layout)],
@@ -145,8 +187,11 @@ export const normaliseLayout = (layout: OverlayLayout): OverlayLayout => {
     })),
   };
 
-  return {
-    ...rescaled,
-    widgets: splitLegacyWidgets(rescaled.widgets).map((widget) => clampWidget(widget, rescaled)),
-  };
+  const saved = new Map(
+    rescaled.widgets.map((widget) => [widget.id, clampWidget(widget, rescaled)] as const),
+  );
+  const widgets = splitLegacyWidgets(rescaled.widgets).map((widget) =>
+    clampWidget(widget, rescaled),
+  );
+  return { ...rescaled, widgets: separateRefitWidgets(widgets, saved) };
 };

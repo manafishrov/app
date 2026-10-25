@@ -9,6 +9,7 @@ import type { OverlayWidget, OverlayWidgetOptions } from '@/stores/overlayTypes'
 
 import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
 import * as m from '@/paraglide/messages';
+import { getWidgetSizes } from '@/stores/overlayWidgetSizes';
 
 import { CapabilityOptions } from './CapabilityOptions';
 
@@ -73,14 +74,12 @@ const WidgetInspector: Component<WidgetInspectorProps> = (props) => {
     const found = definition();
     return props.widget.options.label ?? (found === undef ? props.widget.type : found.label());
   };
-  const sizes = (): readonly WidgetFootprint[] => {
-    const found = definition();
+  const sizes = (): readonly WidgetFootprint[] =>
     /* oxlint-disable unicorn/no-array-sort -- ES2022; sort a fresh copy. */
-    return found === undef
-      ? []
-      : [...found.sizes].sort((left, right) => left.columns - right.columns);
-    /* oxlint-enable unicorn/no-array-sort */
-  };
+    [...getWidgetSizes(props.widget)].sort(
+      (left, right) => left.columns * left.rows - right.columns * right.rows,
+    );
+  /* oxlint-enable unicorn/no-array-sort */
 
   return (
     <section class='flex w-full flex-col gap-2' aria-label={label()}>

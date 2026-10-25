@@ -4,7 +4,7 @@ import {
   OverlayWidgetType,
   type OverlayWidget,
 } from './overlayTypes';
-import { getWidgetSizes } from './overlayWidgetSizes';
+import { getWidgetSizes, type WidgetFootprint } from './overlayWidgetSizes';
 
 const PAIR = 2;
 const [undef] = [] as undefined[];
@@ -15,9 +15,15 @@ const LEGACY_GROUPS = new Map<string, readonly [OverlayWidgetType, OverlayWidget
   ['battery', [OverlayWidgetType.currentDraw, OverlayWidgetType.batteryLevel]],
 ]);
 
-/** Keep fixed controls compact, and restrict instruments to their supported sizes. */
+const sizeDistance = (widget: OverlayWidget, size: WidgetFootprint): number =>
+  Math.abs(size.columns - widget.columnSpan) + Math.abs(size.rows - widget.rowSpan);
+
+/**
+ * Restrict a widget to its supported sizes, preferring the smallest on a tie so
+ * fixed controls stay compact.
+ */
 export const fitWidgetSize = (widget: OverlayWidget): OverlayWidget => {
-  const sizes = getWidgetSizes(widget.type);
+  const sizes = getWidgetSizes(widget);
   const [first] = sizes;
   if (
     first === undef ||
@@ -27,9 +33,7 @@ export const fitWidgetSize = (widget: OverlayWidget): OverlayWidget => {
   }
   let closest = first;
   for (const size of sizes) {
-    if (
-      Math.abs(size.columns - widget.columnSpan) < Math.abs(closest.columns - widget.columnSpan)
-    ) {
+    if (sizeDistance(widget, size) < sizeDistance(widget, closest)) {
       closest = size;
     }
   }
@@ -72,14 +76,16 @@ const THRUSTER_TYPES = [
 ] as const;
 
 const splitThrusters = (widget: OverlayWidget, taken: Set<string>): OverlayWidget[] =>
-  THRUSTER_TYPES.map((type, index) =>
-    fitWidgetSize({
+  THRUSTER_TYPES.map((type, index) => {
+    const channel = fitWidgetSize({
       ...widget,
       type,
       id: index === 0 ? widget.id : uniqueId(`${widget.id}-${type}`, taken),
-      row: Math.min(widget.row, OVERLAY_GRID_ROWS - THRUSTER_TYPES.length + 1) + index,
-    }),
-  );
+    });
+    const stackRows = THRUSTER_TYPES.length * channel.rowSpan;
+    channel.row = Math.min(widget.row, OVERLAY_GRID_ROWS - stackRows + 1) + index * channel.rowSpan;
+    return channel;
+  });
 
 const splitWorkIndicator = (widget: OverlayWidget, taken: Set<string>): OverlayWidget[] => {
   const enabled = widget.options.workIndicator === true;
@@ -93,8 +99,8 @@ const splitWorkIndicator = (widget: OverlayWidget, taken: Set<string>): OverlayW
     ...instrument,
     type: OverlayWidgetType.workIndicator,
     id: uniqueId(`${widget.id}-workIndicator`, taken),
-    row: widget.row > 1 ? widget.row - 1 : widget.row + widget.rowSpan,
   });
+  work.row = widget.row > work.rowSpan ? widget.row - work.rowSpan : widget.row + widget.rowSpan;
   return [instrument, work];
 };
 

@@ -1,7 +1,12 @@
 import { expect, it } from 'vitest';
 
 import { normaliseLayout } from '@/stores/overlayLayout';
-import { OverlayAnchor, type OverlayLayout } from '@/stores/overlayTypes';
+import {
+  OVERLAY_GRID_COLUMNS,
+  OVERLAY_GRID_ROWS,
+  OverlayAnchor,
+  type OverlayLayout,
+} from '@/stores/overlayTypes';
 
 import { compatibleReadingDisplay, normalisedLevel, readingDisplays } from './capabilityDisplay';
 
@@ -21,20 +26,20 @@ it('only offers renderers compatible with a reading type', () => {
   expect(readingDisplays('number')).toContain('bar');
   expect(readingDisplays('string')).not.toContain('bar');
 });
-it.each([2, 6])('preserves unavailable capability references and a 6 by %i footprint', (rows) => {
+it.each([4, 6, 8])('preserves unavailable capability references and a %i square light', (side) => {
   const layout: OverlayLayout = {
     id: 'test',
     name: 'Test',
-    columns: 32,
-    rows: 24,
+    columns: OVERLAY_GRID_COLUMNS,
+    rows: OVERLAY_GRID_ROWS,
     widgets: [
       {
         id: 'sensor',
         type: 'capability',
-        column: 7,
-        row: 9,
-        columnSpan: 6,
-        rowSpan: rows,
+        column: 13,
+        row: 17,
+        columnSpan: side,
+        rowSpan: side,
         anchor: OverlayAnchor.center,
         options: {
           sourceId: 'not-installed.wet',

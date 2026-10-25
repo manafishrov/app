@@ -2,9 +2,9 @@ import type { Component, JSXElement } from 'solid-js';
 
 import type { OverlayAnchor, OverlayWidget } from '@/stores/overlayTypes';
 
-import { getWidgetSizes } from '@/stores/overlayWidgetSizes';
+import { getWidgetSizes, SINGLE_LINE_ROWS } from '@/stores/overlayWidgetSizes';
 
-export const WIDGET_CELL_SIZE = 24;
+export const WIDGET_CELL_SIZE = 12;
 export const WIDGET_GUTTER = 4;
 const HALF = 0.5;
 const PERCENT = 100;
@@ -22,15 +22,15 @@ const ANCHORS: Record<OverlayAnchor, readonly [number, number]> = {
 
 type WidgetContentProps = {
   children: JSXElement;
-  widget: Pick<OverlayWidget, 'type' | 'columnSpan' | 'rowSpan'>;
+  widget: Pick<OverlayWidget, 'type' | 'columnSpan' | 'rowSpan' | 'options'>;
   anchor: OverlayAnchor;
   preview?: boolean;
 };
 
-/** Larger readings enlarge their contents as well as their surface. */
-const readingMagnification = (widget: WidgetContentProps['widget']): number => {
-  const [base] = getWidgetSizes(widget.type);
-  if (!base || base.rows !== 1) {
+/** Larger readings and capabilities enlarge their contents as well as their surface. */
+const contentMagnification = (widget: WidgetContentProps['widget']): number => {
+  const [base] = getWidgetSizes(widget);
+  if (!base || (widget.type !== 'capability' && base.rows !== SINGLE_LINE_ROWS)) {
     return 1;
   }
   return Math.min(widget.columnSpan / base.columns, widget.rowSpan / base.rows);
@@ -42,9 +42,9 @@ const WidgetContent: Component<WidgetContentProps> = (props) => {
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const width = (): number =>
     (props.widget.columnSpan * WIDGET_CELL_SIZE - WIDGET_GUTTER) /
-    readingMagnification(props.widget);
+    contentMagnification(props.widget);
   const height = (): number =>
-    (props.widget.rowSpan * WIDGET_CELL_SIZE - WIDGET_GUTTER) / readingMagnification(props.widget);
+    (props.widget.rowSpan * WIDGET_CELL_SIZE - WIDGET_GUTTER) / contentMagnification(props.widget);
 
   createEffect(() => {
     const outer = slot();

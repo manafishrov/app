@@ -175,7 +175,7 @@ describe('replaceLayout', () => {
 
 describe('normaliseLayout', () => {
   it('leaves a layout authored against the current grid untouched', () => {
-    const current = layout([widget({ columnSpan: 5 })]);
+    const current = layout([widget({ columnSpan: 10, rowSpan: 2 })]);
     expect(normaliseLayout(current)).toEqual(current);
   });
 
@@ -192,10 +192,33 @@ describe('normaliseLayout', () => {
 
     // A widget that sat mid-grid still sits mid-grid, and stays inside it.
     const [placed] = result.widgets;
-    expect(placed).toMatchObject({ column: 17, columnSpan: 8, rowSpan: 2 });
+    expect(placed).toMatchObject({ column: 33, columnSpan: 16, rowSpan: 4 });
     expect(placed).toBeDefined();
     if (placed !== undef) {
       expect(placed.column + placed.columnSpan - 1).toBeLessThanOrEqual(OVERLAY_GRID_COLUMNS);
     }
+  });
+
+  it('doubles a layout saved on the previous 32 by 24 grid exactly', () => {
+    const previous: OverlayLayout = {
+      ...layout([
+        widget({ column: 28, row: 24, columnSpan: 5, rowSpan: 1 }),
+        widget({
+          id: 'depth-hold',
+          type: OverlayWidgetType.depthHold,
+          column: 1,
+          row: 13,
+          columnSpan: 2,
+          rowSpan: 2,
+        }),
+      ]),
+      columns: 32,
+      rows: 24,
+    };
+
+    expect(normaliseLayout(previous).widgets).toMatchObject([
+      { id: 'battery', column: 55, row: 47, columnSpan: 10, rowSpan: 2 },
+      { id: 'depth-hold', column: 1, row: 25, columnSpan: 4, rowSpan: 4 },
+    ]);
   });
 });

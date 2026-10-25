@@ -9,6 +9,7 @@ import type {
   OverlayWidgetType,
 } from '@/stores/overlayTypes';
 
+import { sizedPlacement } from '@/features/overlay/widgets/definitions';
 import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
 import { logError } from '@/lib/log';
 import { configStore, setConfig } from '@/stores/config';
@@ -27,6 +28,7 @@ import {
   type GridCell,
   type GridSpan,
 } from '@/stores/overlayLayout';
+import { fitWidgetSize } from '@/stores/overlayMigration';
 
 const [undef] = [] as undefined[];
 
@@ -47,9 +49,11 @@ const buildWidget = (
     return undef;
   }
 
+  const widgetOptions = { ...definition.defaultOptions, ...options };
+  const placement = sizedPlacement(definition, type, widgetOptions);
   const span = {
-    columnSpan: definition.defaultColumnSpan,
-    rowSpan: definition.defaultRowSpan,
+    columnSpan: placement.defaultColumnSpan,
+    rowSpan: placement.defaultRowSpan,
   };
 
   return {
@@ -58,7 +62,7 @@ const buildWidget = (
     ...findFreeCell(layout, span),
     ...span,
     anchor: definition.defaultAnchor,
-    options: { ...definition.defaultOptions, ...options },
+    options: widgetOptions,
   };
 };
 
@@ -139,7 +143,15 @@ const createSelectionOperations = (context: DraftContext): SelectionOperations =
 
   return {
     patchSelected: (patch) => {
-      edit((widget) => updateWidget(current(), widget.id, patch));
+      // A capability's sizes follow its display, so re-fit after an options change.
+      edit((widget) => {
+        const fitted = fitWidgetSize({ ...widget, ...patch });
+        return updateWidget(current(), widget.id, {
+          ...patch,
+          columnSpan: fitted.columnSpan,
+          rowSpan: fitted.rowSpan,
+        });
+      });
     },
 
     resizeSelected: (span) => {

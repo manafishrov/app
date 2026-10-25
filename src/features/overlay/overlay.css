@@ -8,17 +8,24 @@
 }
 
 .overlay-grid[data-guides] {
+  /* Every second line is stronger so the fine grid still reads at a glance. */
   background-image:
     linear-gradient(to right, #ffffff20 1px, transparent 1px),
-    linear-gradient(to bottom, #ffffff20 1px, transparent 1px);
-  background-size: calc(100% / var(--overlay-columns)) calc(100% / var(--overlay-rows));
+    linear-gradient(to bottom, #ffffff20 1px, transparent 1px),
+    linear-gradient(to right, #ffffff10 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff10 1px, transparent 1px);
+  background-size:
+    calc(200% / var(--overlay-columns)) calc(200% / var(--overlay-rows)),
+    calc(200% / var(--overlay-columns)) calc(200% / var(--overlay-rows)),
+    calc(100% / var(--overlay-columns)) calc(100% / var(--overlay-rows)),
+    calc(100% / var(--overlay-columns)) calc(100% / var(--overlay-rows));
   box-shadow: inset -1px -1px #ffffff20;
 }
 
 .overlay-cell {
   min-width: 0;
   min-height: 0;
-  padding: calc(100cqw / var(--overlay-columns) / 12);
+  padding: calc(100cqw / var(--overlay-columns) / 6);
 }
 
 .overlay-selection {
@@ -45,7 +52,7 @@
   cursor: grabbing;
 }
 
-/* Reference dimensions are shared with WidgetContent: 24px cells, 4px gutters. */
+/* Reference dimensions are shared with WidgetContent: 12px cells, 4px gutters. */
 .overlay-surface {
   --overlay-surface-fill: color-mix(in oklab, var(--color-background) 60%, transparent);
   width: 100%;
@@ -188,10 +195,9 @@
 }
 
 .overlay-control > span {
-  width: 42%;
+  width: 60%;
   height: auto;
   aspect-ratio: 1;
-  max-width: 48px;
 }
 
 /* Gallery cards have a flat background; avoid backdrop layers inside the scrolling list. */
@@ -236,8 +242,11 @@
   background: var(--color-primary);
 }
 .overlay-capability-bar[data-vertical='true'] {
+  /* Share the column with the caption instead of pushing it out of the widget. */
+  flex: 1;
   width: 8px;
-  height: 100%;
+  height: auto;
+  min-height: 0;
   align-items: end;
 }
 .overlay-capability-bar[data-vertical='true'] > span {

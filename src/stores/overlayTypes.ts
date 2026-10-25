@@ -11,8 +11,8 @@
  */
 
 /** Columns and rows the overlay grid is divided into. */
-export const OVERLAY_GRID_COLUMNS = 32;
-export const OVERLAY_GRID_ROWS = 24;
+export const OVERLAY_GRID_COLUMNS = 64;
+export const OVERLAY_GRID_ROWS = 48;
 
 export const OverlayWidgetType = {
   capability: 'capability',

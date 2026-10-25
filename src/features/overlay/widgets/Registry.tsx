@@ -25,7 +25,11 @@ import {
   type ActionDescriptor,
   type ReadingDescriptor,
 } from '@/stores/capabilities';
-import { OverlayWidgetType, type OverlayWidget } from '@/stores/overlayTypes';
+import {
+  OverlayWidgetType,
+  type OverlayWidget,
+  type OverlayWidgetOptions,
+} from '@/stores/overlayTypes';
 
 import { AttitudeIndicator } from '../AttitudeIndicator';
 import { AttitudeStyle } from '../attitudeStyle';
@@ -39,7 +43,11 @@ import { ThrusterRpmOverlay } from '../ThrusterRpmOverlay';
 import { WorkIndicator } from '../WorkIndicator';
 import { readingDisplays } from './capabilityDisplay';
 import { CapabilityWidget } from './CapabilityWidget';
-import { overlayWidgetPlacements, type OverlayWidgetPlacement } from './definitions';
+import {
+  overlayWidgetPlacements,
+  sizedPlacement,
+  type OverlayWidgetPlacement,
+} from './definitions';
 
 export type OverlayWidgetDefinition = OverlayWidgetPlacement & {
   type: OverlayWidgetType;
@@ -181,31 +189,37 @@ const readingDefinition = (
 ): OverlayWidgetDefinition => {
   const displays = readingDisplays(reading.valueType);
   const suggested = reading.widget === 'warning' ? 'warningYellow' : reading.widget;
+  const defaultOptions: OverlayWidgetOptions = {
+    sourceId: reading.id,
+    sourceKind: 'reading',
+    label: reading.name,
+    display: displays.find((display) => display === suggested) ?? displays[0],
+  };
   return {
     ...base,
+    ...sizedPlacement(base, base.type, defaultOptions),
     label: (): string => reading.name,
-    defaultOptions: {
-      sourceId: reading.id,
-      sourceKind: 'reading',
-      label: reading.name,
-      display: displays.find((display) => display === suggested) ?? displays[0],
-    },
+    defaultOptions,
   };
 };
 
 const actionDefinition = (
   base: OverlayWidgetDefinition,
   action: ActionDescriptor,
-): OverlayWidgetDefinition => ({
-  ...base,
-  label: (): string => action.name,
-  defaultOptions: {
+): OverlayWidgetDefinition => {
+  const defaultOptions: OverlayWidgetOptions = {
     sourceId: action.id,
     sourceKind: 'action',
     label: action.name,
     display: 'button',
-  },
-});
+  };
+  return {
+    ...base,
+    ...sizedPlacement(base, base.type, defaultOptions),
+    label: (): string => action.name,
+    defaultOptions,
+  };
+};
 
 /** Device capabilities use the same placements and renderer as every other widget. */
 export const availableWidgetDefinitions = (): readonly OverlayWidgetDefinition[] => {

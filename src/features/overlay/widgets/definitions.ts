@@ -1,5 +1,11 @@
 import { OverlayAnchor, OverlayWidgetType, type OverlayWidgetOptions } from '@/stores/overlayTypes';
-import { overlayWidgetSizes, type WidgetFootprint } from '@/stores/overlayWidgetSizes';
+import {
+  getWidgetSizes,
+  overlayWidgetSizes,
+  type WidgetFootprint,
+} from '@/stores/overlayWidgetSizes';
+
+const [undef] = [] as undefined[];
 
 export type { WidgetFootprint } from '@/stores/overlayWidgetSizes';
 export type OverlayWidgetPlacement = {
@@ -51,3 +57,16 @@ const placementsByType = new Map<string, OverlayWidgetPlacement>(
 );
 export const getOverlayWidgetPlacement = (type: string): OverlayWidgetPlacement | undefined =>
   placementsByType.get(type);
+
+/** Sizes follow the options, so a capability takes the shape of its display. */
+export const sizedPlacement = (
+  base: OverlayWidgetPlacement,
+  type: OverlayWidgetType,
+  options: OverlayWidgetOptions,
+): Pick<OverlayWidgetPlacement, 'defaultColumnSpan' | 'defaultRowSpan' | 'sizes'> => {
+  const sizes = getWidgetSizes({ type, options });
+  const [first] = sizes;
+  return first === undef
+    ? base
+    : { defaultColumnSpan: first.columns, defaultRowSpan: first.rows, sizes };
+};
