@@ -90,15 +90,15 @@ export const useReadingFreshness = (
   preview: Accessor<boolean>,
 ): { age: Accessor<string>; state: Accessor<ReadingState> } => {
   const [now, setNow] = createSignal(performance.now());
+  const update = (): void => {
+    setNow(performance.now());
+  };
   createEffect(() => {
     const current = sample();
     if (!current || current.value === null || preview()) {
       return;
     }
     const receivedAt = capabilityStore.receivedAt[current.id] ?? performance.now();
-    const update = (): void => {
-      setNow(performance.now());
-    };
     update();
     const timeout = (descriptor() ?? {}).staleAfterMs;
     const elapsed = readingAgeMs(current, receivedAt, performance.now());
