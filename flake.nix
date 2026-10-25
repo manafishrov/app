@@ -33,7 +33,11 @@
         "rustc"
         "rust-analyzer"
       ];
-      webkitWithWebRTC = pkgs.webkitgtk_4_1.override {enableExperimental = true;};
+      # Experimental features enable WebRTC, and since WebKitGTK 2.54 also
+      # Vulkan, which needs volk that nixpkgs does not provide here.
+      webkitWithWebRTC = (pkgs.webkitgtk_4_1.override {enableExperimental = true;}).overrideAttrs (old: {
+        cmakeFlags = old.cmakeFlags ++ ["-DUSE_VULKAN=OFF"];
+      });
       gstPlugins = with pkgs.gst_all_1; [
         gstreamer
         gst-plugins-base
