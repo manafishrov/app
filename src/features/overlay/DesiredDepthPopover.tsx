@@ -39,6 +39,20 @@ const shouldPreventInputKey = (event: KeyboardEvent): boolean => {
   );
 };
 
+const handleKeyDown = (event: KeyboardEvent): void => {
+  if (shouldPreventInputKey(event)) {
+    event.preventDefault();
+  }
+
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
+  }
+};
+
 const DesiredDepthInput = (props: {
   draftDepth: string;
   setDraftDepth: (value: string) => void;
@@ -78,20 +92,6 @@ const DesiredDepthPopoverContent = (): JSXElement => {
       }, FOCUS_DELAY_MS);
     }
   });
-
-  const handleKeyDown = (event: KeyboardEvent): void => {
-    if (shouldPreventInputKey(event)) {
-      event.preventDefault();
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
-    }
-  };
 
   return (
     <div class='pointer-events-auto absolute right-0 bottom-full z-50 mb-2 w-48 rounded-md border bg-popover p-3 text-popover-foreground shadow-md'>
