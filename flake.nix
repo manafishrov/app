@@ -33,22 +33,6 @@
         "rustc"
         "rust-analyzer"
       ];
-      # The Android SDK is unfree and needs its license accepted, so only the
-      # android shell pulls it in.
-      androidPkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowUnfree = true;
-          android_sdk.accept_license = true;
-        };
-      };
-      androidSdk =
-        (androidPkgs.androidenv.composeAndroidPackages {
-          platformVersions = ["36"];
-          buildToolsVersions = ["35.0.0"];
-          includeNDK = true;
-        }).androidsdk;
-      androidHome = "${androidSdk}/libexec/android-sdk";
       # Experimental features pull in the WebRTC dependencies, but since
       # WebKitGTK 2.54 they no longer turn ENABLE_WEB_RTC on, so it is set
       # explicitly. The librice ICE agent needs a newer librice than nixpkgs
@@ -114,22 +98,66 @@
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
       };
-      android = pkgs.mkShell {
-        # The Tauri CLI installs the Android Rust targets through rustup.
-        buildInputs = with pkgs; [
-          rustup
-          androidSdk
-          jdk17
-          unstable.bun
-          python3
-        ];
-        RUSTUP_TOOLCHAIN = "stable";
-        ANDROID_HOME = androidHome;
-        NDK_HOME = "${androidHome}/ndk-bundle";
-        JAVA_HOME = pkgs.jdk17.home;
-        # Gradle otherwise downloads its own aapt2, which cannot run on NixOS.
-        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidHome}/build-tools/35.0.0/aapt2";
-      };
+      # `nix develop .#mobile` for `tauri ios` and `tauri android`. On macOS
+      # there is no C toolchain from nixpkgs: Xcode provides one, and the
+      # nixpkgs wrapper would point Xcode at its own SDK. Linux needs it for
+      # build scripts.
+      mobile = let
+        inherit (pkgs.stdenv) isDarwin;
+        androidPkgs = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            android_sdk.accept_license = true;
+          };
+        };
+        android = androidPkgs.androidenv.composeAndroidPackages {
+          # The app targets 37; the tauri-android library still compiles against 36.
+          platformVersions = ["36" "37"];
+          buildToolsVersions = ["36.0.0"];
+          includeNDK = true;
+          ndkVersions = ["28.2.13676358"];
+        };
+        androidSdk = "${android.androidsdk}/libexec/android-sdk";
+        fenixPkgs = fenix.packages.${system};
+        # Every target `tauri ios|android init` checks for; it calls rustup,
+        # which this toolchain does not have, when one is missing.
+        mobileTargets =
+          [
+            "aarch64-linux-android"
+            "armv7-linux-androideabi"
+            "i686-linux-android"
+            "x86_64-linux-android"
+          ]
+          ++ pkgs.lib.optionals isDarwin [
+            "aarch64-apple-ios"
+            "aarch64-apple-ios-sim"
+            "x86_64-apple-ios"
+          ];
+        mobileRustToolchain = fenixPkgs.combine (
+          [
+            (fenixPkgs.stable.withComponents ["cargo" "clippy" "rustfmt" "rust-src" "rustc"])
+          ]
+          ++ map (target: fenixPkgs.targets.${target}.stable.rust-std) mobileTargets
+        );
+      in
+        (if isDarwin then pkgs.mkShellNoCC else pkgs.mkShell) {
+          packages =
+            [
+              mobileRustToolchain
+              unstable.bun
+              pkgs.jdk17
+              android.androidsdk
+            ]
+            ++ pkgs.lib.optionals isDarwin (with pkgs; [cocoapods libimobiledevice xcodegen]);
+          ANDROID_HOME = androidSdk;
+          ANDROID_SDK_ROOT = androidSdk;
+          NDK_HOME = "${androidSdk}/ndk/28.2.13676358";
+          JAVA_HOME = pkgs.jdk17.home;
+          # Gradle's bundled aapt2 is dynamically linked against a glibc
+          # nixpkgs does not provide; use the SDK's patched one instead.
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/build-tools/36.0.0/aapt2";
+        };
     });
   };
 }
