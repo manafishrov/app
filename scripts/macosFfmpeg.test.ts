@@ -9,6 +9,7 @@ const folders: string[] = [];
 const stubs = {
   brew: `case "$*" in
     'update') touch "$TEST_FFMPEG_PREFIX/refreshed" ;;
+    'unlink openssl@3') exit 1 ;;
     'install ffmpeg@8') test -f "$TEST_FFMPEG_PREFIX/refreshed" || { echo 'No available formula ffmpeg@8 in stale metadata' >&2; exit 1; } ;;
     '--prefix ffmpeg@8') printf '%s\\n' "$TEST_FFMPEG_PREFIX" ;;
     'deps ffmpeg@8') exit 0 ;;

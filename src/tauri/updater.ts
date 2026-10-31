@@ -2,7 +2,6 @@ import { toast } from '@manafishrov/ui/toaster';
 import { Channel, invoke } from '@tauri-apps/api/core';
 import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 
-import { LEGACY_APP_VERSION } from '@/lib/compatibility';
 import { logError, logInfo } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
@@ -206,7 +205,6 @@ type AppReleasePayload = {
   tag: string;
   publishedAt: string;
   prerelease: boolean;
-  legacy: boolean;
   releaseNotes?: string;
 };
 
@@ -215,7 +213,6 @@ const toReleaseEntry = (release: AppReleasePayload): AppReleaseEntry => ({
   tag: release.tag,
   publishedAt: release.publishedAt,
   prerelease: release.prerelease,
-  legacy: release.legacy,
   ...(typeof release.releaseNotes === 'string' ? { releaseNotes: release.releaseNotes } : {}),
 });
 
@@ -228,7 +225,7 @@ export const loadAppReleases = (): Promise<void> => {
   }
 
   setAppReleasesState({ status: ReleasesStatus.loading, error: UNSET });
-  return invoke<AppReleasePayload[]>('fetch_app_releases', { legacyTag: `v${LEGACY_APP_VERSION}` })
+  return invoke<AppReleasePayload[]>('fetch_app_releases')
     .then((releases) => {
       setAppReleasesState({
         status: ReleasesStatus.ready,

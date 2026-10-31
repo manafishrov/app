@@ -102,13 +102,13 @@ const SystemHealthTooltipContent = (props: { isMac: boolean }): JSXElement => (
 const useSystemHealthKeybind = (
   setPopoverOpen: (update: (prev: boolean) => boolean) => unknown,
 ): void => {
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
+      event.preventDefault();
+      setPopoverOpen((prev) => !prev);
+    }
+  };
   onMount(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
-        event.preventDefault();
-        setPopoverOpen((prev) => !prev);
-      }
-    };
     globalThis.addEventListener('keydown', handleKeyDown);
     onCleanup(() => {
       globalThis.removeEventListener('keydown', handleKeyDown);

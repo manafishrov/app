@@ -10,24 +10,28 @@ export const createKeyboardTracker = (): {
   const pressedKeys = new Set<string>();
 
   const handleKeyDown = (event: KeyboardEvent): void => {
-    pressedKeys.add(event.code);
+    if (!event.repeat || pressedKeys.has(event.code)) {
+      pressedKeys.add(event.code);
+    }
   };
 
   const handleKeyUp = (event: KeyboardEvent): void => {
     pressedKeys.delete(event.code);
   };
 
-  const handleVisibilityChange = (): void => {
-    if (document.hidden) {
+  const handleVisibilityChange = (event: Event): void => {
+    if (document.hidden || event.type === 'blur') {
       pressedKeys.clear();
     }
   };
 
+  globalThis.addEventListener('blur', handleVisibilityChange);
   globalThis.addEventListener('keydown', handleKeyDown);
   globalThis.addEventListener('keyup', handleKeyUp);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   const cleanup = (): void => {
+    globalThis.removeEventListener('blur', handleVisibilityChange);
     globalThis.removeEventListener('keydown', handleKeyDown);
     globalThis.removeEventListener('keyup', handleKeyUp);
     document.removeEventListener('visibilitychange', handleVisibilityChange);

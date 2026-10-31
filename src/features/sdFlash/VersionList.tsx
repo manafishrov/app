@@ -4,11 +4,8 @@ import { Skeleton } from '@manafishrov/ui/skeleton';
 import { For, Index, Show, createMemo, type Component } from 'solid-js';
 import ChevronIcon from '~icons/material-symbols/keyboard-arrow-down';
 
-import { CompatibleWithText } from '@/features/compatibility/CompatibilityText';
 import { ReleaseNotes } from '@/features/update/ReleaseNotes';
-import { compatibleApps } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
-import { newestVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { VersionsStatus, sdFlashStore, type VersionEntryState } from '@/stores/sdFlash';
 import { loadFirmwareVersions } from '@/tauri';
@@ -16,8 +13,7 @@ import { loadFirmwareVersions } from '@/tauri';
 const [UNSET]: undefined[] = [];
 
 const NOT_FOUND_INDEX = -1;
-// Three stable releases, two prereleases and the legacy release.
-const SKELETON_COUNT = 6;
+const SKELETON_COUNT = 5;
 
 const VersionRowSkeleton: Component<{ expanded: boolean }> = (props) => (
   <div class='flex w-full flex-col overflow-hidden rounded-lg border border-border'>
@@ -76,30 +72,6 @@ const versionCardClass = (disabled: boolean, selected: boolean): string => {
   return 'border-border hover:bg-muted/40';
 };
 
-const VersionRowBadges: Component<{
-  isLatest: boolean;
-  prerelease: boolean;
-  legacy: boolean;
-}> = (props) => (
-  <>
-    <Show when={props.isLatest}>
-      <Badge class='bg-primary/10 px-1.5 py-0 text-[10px] text-primary'>
-        {m.sd_flash_badge_latest()}
-      </Badge>
-    </Show>
-    <Show when={props.prerelease}>
-      <Badge class='bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400'>
-        {m.sd_flash_badge_prerelease()}
-      </Badge>
-    </Show>
-    <Show when={props.legacy}>
-      <Badge class='bg-muted px-1.5 py-0 text-[10px] text-muted-foreground'>
-        {m.sd_flash_badge_legacy()}
-      </Badge>
-    </Show>
-  </>
-);
-
 const VersionRow: Component<{
   entry: VersionEntryState;
   isLatest: boolean;
@@ -119,21 +91,22 @@ const VersionRow: Component<{
       <div class='flex min-w-0 flex-col gap-1.5'>
         <div class='flex min-w-0 items-center gap-2'>
           <span class='text-sm font-semibold'>{props.entry.version}</span>
-          <VersionRowBadges
-            isLatest={props.isLatest}
-            prerelease={props.entry.prerelease}
-            legacy={props.entry.legacy}
-          />
+          <Show when={props.isLatest}>
+            <Badge class='bg-primary/10 px-1.5 py-0 text-[10px] text-primary'>
+              {m.sd_flash_badge_latest()}
+            </Badge>
+          </Show>
+          <Show when={props.entry.prerelease}>
+            <Badge class='bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400'>
+              {m.sd_flash_badge_prerelease()}
+            </Badge>
+          </Show>
         </div>
         <p class='text-xs text-muted-foreground'>
           {m.sd_flash_published_at({
             date: new Date(props.entry.publishedAt).toLocaleDateString(),
           })}
         </p>
-        <CompatibleWithText
-          versions={compatibleApps(props.entry.version)}
-          label={m.sd_flash_compatible_with}
-        />
       </div>
       <ChevronIcon
         class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${props.selected ? 'rotate-180' : ''}`}
@@ -154,11 +127,10 @@ export const VersionList: Component<{
   onSelectVersion: (version: string) => void;
 }> = (props) => {
   const status = createMemo(() => sdFlashStore.versionsStatus);
-  const latestStableVersion = createMemo(() =>
-    newestVersion(
-      sdFlashStore.versions.filter((entry) => !entry.prerelease).map((entry) => entry.version),
-    ),
-  );
+  const latestStableVersion = createMemo(() => {
+    const stable = sdFlashStore.versions.find((entry) => !entry.prerelease);
+    return stable ? stable.version : UNSET;
+  });
   const expandedSkeletonIndex = createMemo(() => {
     const selected = props.selectedVersion;
     if (typeof selected !== 'string') {

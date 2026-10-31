@@ -1,3 +1,4 @@
+use reqwest::Client;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
@@ -6,8 +7,6 @@ use tauri_plugin_updater::UpdaterExt;
 use url::Url;
 
 use crate::constants::{APP_REPO_NAME, APP_REPO_OWNER, MAX_PRERELEASES, MAX_STABLE_RELEASES};
-use crate::firmware::releases::fetch_github_json;
-use crate::log_warn;
 use crate::version::parse_release_version;
 
 #[derive(Deserialize)]
@@ -25,7 +24,6 @@ pub struct AppRelease {
   pub tag: String,
   pub published_at: String,
   pub prerelease: bool,
-  pub legacy: bool,
   pub release_notes: Option<String>,
 }
 
@@ -40,7 +38,7 @@ pub enum InstallProgress {
 }
 
 fn releases_api_url() -> String {
-  format!("https://api.github.com/repos/{APP_REPO_OWNER}/{APP_REPO_NAME}/releases")
+  format!("https://api.github.com/repos/{APP_REPO_OWNER}/{APP_REPO_NAME}/releases?per_page=100")
 }
 
 /// # Errors
@@ -61,24 +59,21 @@ fn latest_json_url_for_tag(tag: &str) -> Result<Url, String> {
 /// # Errors
 /// Returns an error if the `GitHub` releases cannot be fetched or parsed.
 #[command]
-pub async fn fetch_app_releases(legacy_tag: Option<String>) -> Result<Vec<AppRelease>, String> {
-  let url = releases_api_url();
-  let all: Vec<GitHubRelease> = fetch_github_json(&format!("{url}?per_page=100")).await?;
-  let mut selected = select_releases(
-    all.into_iter().filter(|release| Some(&release.tag_name) != legacy_tag.as_ref()),
-  );
-  // The legacy release is fetched by tag so it stays listed no matter how many
-  // releases follow it.
-  if let Some(tag) = legacy_tag {
-    match fetch_github_json::<GitHubRelease>(&format!("{url}/tags/{tag}")).await {
-      Ok(release) => selected.extend(to_app_release(release).map(|(_, release)| AppRelease {
-        legacy: true,
-        ..release
-      })),
-      Err(error) => log_warn!("Failed to fetch legacy app release {tag}: {error}"),
-    }
+pub async fn fetch_app_releases() -> Result<Vec<AppRelease>, String> {
+  let client = Client::new();
+  let response = client
+    .get(releases_api_url())
+    .header("Accept", "application/vnd.github+json")
+    .header("User-Agent", "manafish")
+    .send()
+    .await
+    .map_err(|e| e.to_string())?;
+  let status = response.status();
+  if !status.is_success() {
+    return Err(format!("GitHub API returned status {status}"));
   }
-  Ok(selected)
+  let all: Vec<GitHubRelease> = response.json().await.map_err(|e| e.to_string())?;
+  Ok(select_releases(all))
 }
 
 fn to_app_release(release: GitHubRelease) -> Option<(Version, AppRelease)> {
@@ -98,7 +93,6 @@ fn to_app_release(release: GitHubRelease) -> Option<(Version, AppRelease)> {
         tag: release.tag_name,
         published_at,
         prerelease,
-        legacy: false,
         release_notes,
       },
     )
@@ -108,10 +102,10 @@ fn to_app_release(release: GitHubRelease) -> Option<(Version, AppRelease)> {
 /// Take the newest `MAX_STABLE_RELEASES` stable and `MAX_PRERELEASES` prerelease
 /// versions independently, merged newest-first, so prereleases never hide
 /// stable versions.
-fn select_releases(all: impl Iterator<Item = GitHubRelease>) -> Vec<AppRelease> {
+fn select_releases(all: Vec<GitHubRelease>) -> Vec<AppRelease> {
   let mut stable = Vec::new();
   let mut prerelease = Vec::new();
-  for release in all.filter_map(to_app_release) {
+  for release in all.into_iter().filter_map(to_app_release) {
     if release.1.prerelease {
       prerelease.push(release);
     } else {

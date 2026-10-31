@@ -1,0 +1,67 @@
+.python-editor {
+  --code-keyword: #7c3aed;
+  --code-string: #15803d;
+  --code-number: #b45309;
+  --code-function: #0369a1;
+}
+.dark .python-editor {
+  --code-keyword: #c4b5fd;
+  --code-string: #86efac;
+  --code-number: #fcd34d;
+  --code-function: #7dd3fc;
+}
+.python-editor .cm-editor {
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+}
+.python-editor .cm-scroller {
+  min-height: 20rem;
+  max-height: 32rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  line-height: 1.7;
+}
+.python-editor .cm-content {
+  padding-block: 0.75rem;
+  caret-color: var(--foreground);
+}
+.python-editor .cm-gutters {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border-right: 1px solid var(--border);
+}
+.python-editor .cm-activeLine,
+.python-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+.python-editor .cm-selectionBackground,
+.python-editor .cm-editor.cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+.python-editor .cm-cursor {
+  border-left-color: var(--foreground);
+}
+.python-editor:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.python-editor .cm-focused {
+  outline: none;
+}
+.python-editor .cm-tooltip,
+.python-editor .cm-panels {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.python-editor .cm-tooltip {
+  max-width: min(40rem, calc(100vw - 2rem));
+}
+.python-editor .cm-completionDetail {
+  display: inline-block;
+  max-width: min(24rem, 50vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}

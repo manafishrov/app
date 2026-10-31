@@ -39,6 +39,20 @@ const shouldPreventInputKey = (event: KeyboardEvent): boolean => {
   );
 };
 
+const handleKeyDown = (event: KeyboardEvent): void => {
+  if (shouldPreventInputKey(event)) {
+    event.preventDefault();
+  }
+
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
+  }
+};
+
 const DesiredDepthInput = (props: {
   draftDepth: string;
   setDraftDepth: (value: string) => void;
@@ -79,20 +93,6 @@ const DesiredDepthPopoverContent = (): JSXElement => {
     }
   });
 
-  const handleKeyDown = (event: KeyboardEvent): void => {
-    if (shouldPreventInputKey(event)) {
-      event.preventDefault();
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);
-    }
-  };
-
   return (
     <div class='pointer-events-auto absolute right-0 bottom-full z-50 mb-2 w-48 rounded-md border bg-popover p-3 text-popover-foreground shadow-md'>
       <div class='absolute top-full right-4 h-3 w-3 -translate-y-1/2 rotate-45 border-r border-b bg-popover' />
@@ -106,7 +106,12 @@ const DesiredDepthPopoverContent = (): JSXElement => {
   );
 };
 
-export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement => {
+type DesiredDepthPopoverProps = {
+  children: JSXElement;
+  class?: string;
+};
+
+export const DesiredDepthPopover = (props: DesiredDepthPopoverProps): JSXElement => {
   const [containerRef, setContainerRef] = createSignal<HTMLDivElement>();
 
   createEffect(() => {
@@ -131,13 +136,11 @@ export const DesiredDepthPopover = (props: { children: JSXElement }): JSXElement
 
   return (
     <div
-      ref={(element): void => {
-        setContainerRef(element);
-      }}
-      class='pointer-events-auto relative inline-flex'
+      ref={setContainerRef}
+      class={`pointer-events-auto relative inline-flex ${props.class ?? ''}`}
     >
       <div
-        class='cursor-pointer'
+        class='w-full cursor-pointer'
         onClick={() => {
           if (desiredDepthPopupStore.isOpen) {
             closeDesiredDepthPopup().catch(ignoreDesiredDepthCloseError);

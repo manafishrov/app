@@ -58,6 +58,39 @@ describe('setupLogsListener', () => {
       });
     },
   );
+});
+
+describe('firmware log delivery', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('records each firmware info summary at the supplied five-second cadence', () => {
+    vi.useFakeTimers();
+    mocks.createListener.mockResolvedValue(vi.fn());
+    mocks.invokeCommand.mockResolvedValue([]);
+    mocks.recordLogSessionStart.mockResolvedValue(null);
+    mocks.createLogRecord.mockResolvedValue(null);
+    const intervalMs = 5000;
+    const summaryCount = 3;
+    const entry: LogEntry = {
+      origin: 'firmware',
+      level: 'info',
+      message: 'Pico attitude 500 Hz; control 60 Hz; pressure 15 Hz',
+    };
+    return setupLogsListener()
+      .then(() => {
+        for (let index = 0; index < summaryCount; index += 1) {
+          vi.advanceTimersByTime(intervalMs);
+          deliverLog(entry);
+        }
+        expect(mocks.createLogRecord).toHaveBeenCalledTimes(summaryCount);
+        expect(mocks.createLogRecord).toHaveBeenLastCalledWith(entry);
+      })
+      .finally(() => {
+        vi.useRealTimers();
+      });
+  });
 
   it('does not initialize backend logging when event registration fails', () => {
     mocks.createListener.mockRejectedValue(new Error('registration failed'));

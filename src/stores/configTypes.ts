@@ -1,9 +1,4 @@
-export const AttitudeIndicator = {
-  scientific: 'scientific',
-  model3D: 'model3D',
-  classic: 'classic',
-  disabled: 'disabled',
-} as const;
+import type { OverlayConfig } from '@/stores/overlayTypes';
 
 type KeyboardKey =
   | 'KeyA'
@@ -186,20 +181,16 @@ export type CustomActionTrigger = (typeof CustomActionTrigger)[keyof typeof Cust
 
 type CustomActionBinding = {
   id: string;
+  actionId?: string;
   module: string;
   trigger: CustomActionTrigger;
   keyboard: NullableKeyboardInput;
   gamepad: Record<string, NullableGamepadInput>;
 };
 
-export type AttitudeIndicator = (typeof AttitudeIndicator)[keyof typeof AttitudeIndicator];
-
 type Config = {
   appVersion: string;
-  overlayScale: number;
-  attitudeIndicator: AttitudeIndicator;
-  workIndicator: boolean;
-  thrusterRpmOverlay: boolean;
+  overlay: OverlayConfig;
   videoDirectory: string;
   checkForAppUpdatesOnStartup: boolean;
   ipAddress: string;
@@ -211,7 +202,6 @@ type Config = {
   customActions: CustomActionBinding[];
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
-  dismissedCompatibilityWarnings: string[];
 };
 
 export type {

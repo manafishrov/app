@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'
       - name: Set up Bun
@@ -28,6 +28,10 @@ jobs:
           bun-version: latest
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Validate embedded release identities
+        run: |
+          python3 -m unittest discover -s scripts -p '*_test.py'
+          python3 scripts/validate-release-version.py "$(jq -r .version src-tauri/tauri.conf.json)"
       - name: Run formatting check
         run: bun run fmt:check
       - name: Build
@@ -77,6 +81,8 @@ jobs:
             ${{ runner.os }}-cargo-
       - name: Check formatting
         run: cargo fmt --check
+      - name: Prepare Python language server
+        run: python3 ../scripts/prepare-python-editor.py
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Run tests
@@ -94,7 +100,7 @@ jobs:
         with:
           bun-version: latest
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
       - name: Install and bundle macOS FFmpeg

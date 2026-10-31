@@ -30,7 +30,7 @@ const ScientificAttitudeIndicator: Component<ScientificAttitudeIndicatorProps> =
 
   return (
     <div
-      class='rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
+      class='overlay-surface overflow-hidden'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg

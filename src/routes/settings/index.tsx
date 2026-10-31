@@ -20,12 +20,11 @@ import { Show, createSignal, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
 
 import { VersionBadge } from '@/components/VersionBadge';
-import { LegacyNotice } from '@/features/compatibility/CompatibilityText';
+import { Appearance } from '@/features/settings/forms/Appearance';
 import { General } from '@/features/settings/forms/General';
 import { AppVersionList } from '@/features/update/AppVersionList';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { ReleaseNotes } from '@/features/update/ReleaseNotes';
-import { leavesLegacyApp } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
@@ -79,14 +78,7 @@ const AppUpdateActions: Component = () => (
       confirmLabel={m.general_settings_app_update_button()}
       disabled={updatesStore.app.status !== 'available'}
       title={m.alerts_app_update_title()}
-      description={
-        <Show
-          when={leavesLegacyApp(configStore.appVersion, updatesStore.app.latestVersion ?? '')}
-          fallback={<p>{m.alerts_app_update_description()}</p>}
-        >
-          <LegacyNotice when />
-        </Show>
-      }
+      description={<p>{m.alerts_app_update_description()}</p>}
       onConfirm={() => installAppUpdate()}
     />
   </CardAction>
@@ -189,6 +181,9 @@ const GeneralSettingsPage: Component = () => (
     </div>
     <AppVersionCard />
     <General />
+    <div class='mt-8 border-t border-border pt-6'>
+      <Appearance />
+    </div>
   </>
 );
 

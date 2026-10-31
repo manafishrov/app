@@ -1,12 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::actions::{CustomAction, DirectionVector};
+use super::capabilities::{CapabilityRequest, CapabilityResponse};
 use crate::models::log::LogEntry;
 use crate::models::rov_config::{
   McuBoard, PartialRovConfig, RegulatorSuggestions, RovConfig, ThrusterTest,
 };
-use crate::models::rov_status::RovStatus;
-use crate::models::rov_telemetry::RovTelemetry;
 use crate::models::toast::Toast;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -21,13 +19,18 @@ pub struct ConfigMutation<T> {
 pub struct ConfigResponse {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub mutation_id: Option<String>,
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub error: Option<String>,
   pub config: RovConfig,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum WebsocketMessage {
-  DirectionVector(DirectionVector),
+  CapabilityRequest(CapabilityRequest),
+  CapabilityResponse(CapabilityResponse),
+  CapabilityCatalog(serde_json::Value),
+  CapabilitySamples(serde_json::Value),
   GetConfig,
   SetConfig(ConfigMutation<PartialRovConfig>),
   ImportConfig(ConfigMutation<serde_json::Value>),
@@ -40,12 +43,6 @@ pub enum WebsocketMessage {
   RegulatorSuggestions(RegulatorSuggestions),
   ShowToast(Toast),
   LogMessage(LogEntry),
-  StatusUpdate(RovStatus),
-  Telemetry(RovTelemetry),
-  CustomAction(CustomAction),
-  SetAutoStabilization(bool),
-  SetDepthHold(bool),
-  SetDesiredDepth(f32),
   FlashMcuFirmware(McuBoard),
   FlashEscFirmware,
 }
@@ -53,21 +50,6 @@ pub enum WebsocketMessage {
 #[cfg(test)]
 mod tests {
   use super::WebsocketMessage;
-
-  #[test]
-  /// # Panics
-  ///
-  /// Panics if a stabilization command does not serialize to its wire format.
-  fn stabilization_messages_include_the_desired_state() {
-    assert_eq!(
-      serde_json::to_value(WebsocketMessage::SetAutoStabilization(true)).expect("serialize"),
-      serde_json::json!({"type": "setAutoStabilization", "payload": true})
-    );
-    assert_eq!(
-      serde_json::to_value(WebsocketMessage::SetDepthHold(false)).expect("serialize"),
-      serde_json::json!({"type": "setDepthHold", "payload": false})
-    );
-  }
 
   #[test]
   /// # Panics

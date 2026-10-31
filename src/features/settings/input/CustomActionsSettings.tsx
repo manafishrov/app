@@ -1,29 +1,11 @@
-import type { Component, JSXElement } from 'solid-js';
+import type { Component } from 'solid-js';
 
-import { createListCollection } from '@ark-ui/solid/collection';
-import { Button } from '@manafishrov/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectControl,
-  SelectIndicator,
-  SelectItem,
-  SelectLabel,
-  SelectPositioner,
-  SelectTrigger,
-  SelectValue,
-} from '@manafishrov/ui/select';
-import {
-  TextInput,
-  TextInputControl,
-  TextInputDescription,
-  TextInputInput,
-  TextInputLabel,
-} from '@manafishrov/ui/text-input';
 import { H3, P } from '@manafishrov/ui/typography';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import { capabilityStore } from '@/stores/capabilities';
+import { isCapabilityAvailable } from '@/stores/capabilityAvailability';
 import {
   configStore,
   CustomActionTrigger,
@@ -40,101 +22,50 @@ type CustomActionsSettingsProps =
   | { kind: 'keyboard' }
   | { kind: 'gamepad'; selectedGamepadId: string | null; selectedGamepadConnected: boolean };
 
-const MODULE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+type BindableAction = { id: string; name: string; available: boolean };
 
-const createActionId = (): string => globalThis.crypto.randomUUID();
-
-const hasGamepadId = (gamepadId: string | null): gamepadId is string =>
-  typeof gamepadId === 'string' && gamepadId.length > 0;
-
-const createCustomAction = (): CustomActionBinding => ({
-  id: createActionId(),
-  module: '',
-  trigger: CustomActionTrigger.tap,
-  keyboard: null,
-  gamepad: {},
-});
-
-const saveActions = (actions: CustomActionBinding[]): void => {
-  setConfig({ customActions: actions }).catch(logError);
-};
-
-const updateAction = (
-  actionId: string,
-  updater: (action: CustomActionBinding) => CustomActionBinding,
-): void => {
-  saveActions(
-    configStore.customActions.map((action) => (action.id === actionId ? updater(action) : action)),
-  );
-};
-
-const addAction = (): void => {
-  saveActions([...configStore.customActions, createCustomAction()]);
-};
-
-const removeAction = (actionId: string): void => {
-  saveActions(configStore.customActions.filter((action) => action.id !== actionId));
-};
-
-const updateModule = (actionId: string, moduleName: string): void => {
-  updateAction(actionId, (action) => ({ ...action, module: moduleName }));
-};
-
-const updateTrigger = (actionId: string, trigger: CustomActionTrigger): void => {
-  updateAction(actionId, (action) => ({ ...action, trigger }));
-};
-
-const toTrigger = (value: string): CustomActionTrigger =>
-  value === CustomActionTrigger.hold ? CustomActionTrigger.hold : CustomActionTrigger.tap;
-
-const updateKeyboard = (actionId: string, keyboard: KeyboardInput | null): void => {
-  updateAction(actionId, (action) => ({ ...action, keyboard }));
-};
-
-const updateGamepad = (
-  actionId: string,
-  gamepadId: string | null,
-  input: GamepadInput | null,
-): void => {
-  if (!hasGamepadId(gamepadId)) {
-    return;
+const availableActions = (): BindableAction[] => {
+  const actions = capabilityStore.catalog.actions
+    .filter((action) => action.inputType === 'none' && !action.id.startsWith('rov.'))
+    .map((action) => ({
+      id: action.id,
+      name: action.name,
+      available: isCapabilityAvailable(action),
+    }));
+  for (const binding of configStore.customActions) {
+    const id = binding.actionId ?? binding.module;
+    if (id.length > 0 && !actions.some((action) => action.id === id)) {
+      actions.push({ id, name: id, available: false });
+    }
   }
-  updateAction(actionId, (action) => ({
-    ...action,
-    gamepad: { ...action.gamepad, [gamepadId]: input },
-  }));
+  return actions;
 };
 
-const getGamepadInput = (
-  action: CustomActionBinding,
-  gamepadId: string | null,
-): GamepadInput | null => {
-  if (!hasGamepadId(gamepadId)) {
-    return null;
+const getBinding = (id: string): CustomActionBinding =>
+  configStore.customActions.find((binding) => (binding.actionId ?? binding.module) === id) ?? {
+    id,
+    actionId: id,
+    module: '',
+    trigger: CustomActionTrigger.tap,
+    keyboard: null,
+    gamepad: {},
+  };
+
+const updateBinding = (id: string, patch: Partial<CustomActionBinding>): void => {
+  const next = { ...getBinding(id), ...patch };
+  const others = configStore.customActions.filter((binding) => binding.id !== next.id);
+  setConfig({ customActions: [...others, next] }).catch(logError);
+};
+
+const updateGamepad = (id: string, gamepadId: string | null, input: GamepadInput | null): void => {
+  if (gamepadId !== null && gamepadId.length > 0) {
+    updateBinding(id, { gamepad: { ...getBinding(id).gamepad, [gamepadId]: input } });
   }
-  return action.gamepad[gamepadId] ?? null;
 };
 
-const getModuleHint = (moduleName: string): JSXElement => {
-  const trimmed = moduleName.trim();
-  if (trimmed.length === 0) {
-    return m.custom_actions_module_hint_disabled();
-  }
-  return MODULE_NAME_PATTERN.test(trimmed) ? (
-    <>
-      {m.custom_actions_module_hint_valid_prefix()} <code>rov_firmware/custom_actions/</code>.
-    </>
-  ) : (
-    <>
-      {m.custom_actions_module_hint_invalid_prefix()} <code>example_action</code>.
-    </>
-  );
-};
-
-const BindingInput: Component<{
-  action: CustomActionBinding;
-  settings: CustomActionsSettingsProps;
-}> = (props) => (
+const BindingInput: Component<{ action: BindableAction; settings: CustomActionsSettingsProps }> = (
+  props,
+) => (
   <Show
     when={props.settings.kind === 'keyboard'}
     fallback={
@@ -144,13 +75,14 @@ const BindingInput: Component<{
       >
         <GamepadBindInput
           selectedGamepadId={
-            props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : ''
+            props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : null
           }
-          label={m.custom_actions_gamepad_binding()}
-          value={getGamepadInput(
-            props.action,
-            props.settings.kind === 'gamepad' ? props.settings.selectedGamepadId : null,
-          )}
+          label={props.action.name}
+          value={
+            getBinding(props.action.id).gamepad[
+              props.settings.kind === 'gamepad' ? (props.settings.selectedGamepadId ?? '') : ''
+            ] ?? null
+          }
           onChange={(next) => {
             updateGamepad(
               props.action.id,
@@ -163,124 +95,32 @@ const BindingInput: Component<{
     }
   >
     <KeyboardBindInput
-      label={m.custom_actions_keyboard_binding()}
-      value={props.action.keyboard}
-      onChange={(next) => {
-        updateKeyboard(props.action.id, next);
+      label={props.action.name}
+      value={getBinding(props.action.id).keyboard}
+      onChange={(keyboard: KeyboardInput | null) => {
+        updateBinding(props.action.id, { keyboard });
       }}
     />
   </Show>
 );
 
-type TriggerOption = { value: CustomActionTrigger; label: string };
-
-const createTriggerOptions = (): ReturnType<typeof createListCollection<TriggerOption>> =>
-  createListCollection<TriggerOption>({
-    items: [
-      { value: CustomActionTrigger.tap, label: m.custom_actions_trigger_tap() },
-      { value: CustomActionTrigger.hold, label: m.custom_actions_trigger_hold() },
-    ],
-  });
-
-const ModuleInput: Component<{ action: CustomActionBinding }> = (props) => (
-  <TextInput>
-    <TextInputLabel>{m.custom_actions_python_module()}</TextInputLabel>
-    <TextInputControl>
-      <TextInputInput
-        value={props.action.module}
-        placeholder={m.custom_actions_module_placeholder()}
-        onInput={(event) => {
-          updateModule(props.action.id, event.currentTarget.value);
-        }}
-      />
-    </TextInputControl>
-    <TextInputDescription class='text-[0.8rem]'>
-      {getModuleHint(props.action.module)}
-    </TextInputDescription>
-  </TextInput>
-);
-
-const TriggerSelect: Component<{ action: CustomActionBinding }> = (props) => {
-  const triggerOptions = createTriggerOptions();
-  return (
-    <div class='flex flex-col gap-1.5'>
-      <Select
-        collection={triggerOptions}
-        value={[props.action.trigger]}
-        onValueChange={(details) => {
-          const [firstValue] = details.value;
-          if (typeof firstValue === 'string') {
-            updateTrigger(props.action.id, toTrigger(firstValue));
-          }
-        }}
-      >
-        <SelectLabel>{m.custom_actions_trigger_label()}</SelectLabel>
-        <SelectControl>
-          <SelectTrigger>
-            <SelectValue placeholder={m.custom_actions_trigger_placeholder()} />
-            <SelectIndicator />
-          </SelectTrigger>
-        </SelectControl>
-        <SelectPositioner>
-          <SelectContent>
-            <For each={triggerOptions.items}>
-              {(item) => <SelectItem item={item}>{item.label}</SelectItem>}
-            </For>
-          </SelectContent>
-        </SelectPositioner>
-      </Select>
-      <span class='text-[0.8rem] text-muted-foreground'>
-        {m.custom_actions_trigger_hold_description()}
-      </span>
-    </div>
-  );
-};
-
-const CustomActionRow: Component<{
-  action: CustomActionBinding;
-  settings: CustomActionsSettingsProps;
-}> = (props) => (
-  <div class='rounded-lg border bg-background/80 p-4'>
-    <div class='grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_13rem_auto]'>
-      <ModuleInput action={props.action} />
-      <TriggerSelect action={props.action} />
-      <Button
-        class='self-start lg:mt-6'
-        variant='outline'
-        onClick={() => {
-          removeAction(props.action.id);
-        }}
-      >
-        {m.custom_actions_remove()}
-      </Button>
-    </div>
-    <div class='mt-4'>
-      <BindingInput action={props.action} settings={props.settings} />
-    </div>
-  </div>
-);
-
-const CustomActionsSettings: Component<CustomActionsSettingsProps> = (props) => (
-  <section class='mt-8 space-y-4 rounded-xl border bg-card/60 p-5 shadow-sm'>
-    <div class='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-      <div class='space-y-1'>
-        <H3>{m.custom_actions_title()}</H3>
-        <P>
-          {m.custom_actions_description_bindings()} <code>rov_firmware/custom_actions/</code>.{' '}
-          {m.custom_actions_description_optional()} <code>ssh pi@10.10.10.10</code>{' '}
-          {m.custom_actions_description_password()} <code>manafish</code>.
-        </P>
-      </div>
-      <Button onClick={addAction}>{m.custom_actions_add_action()}</Button>
-    </div>
-    <Show when={configStore.customActions.length > 0} fallback={<P>{m.custom_actions_empty()}</P>}>
-      <div class='space-y-4'>
-        <For each={configStore.customActions}>
-          {(action) => <CustomActionRow action={action} settings={props} />}
+export const CustomActionsSettings: Component<CustomActionsSettingsProps> = (props) => (
+  <section class='mt-8 space-y-4'>
+    <H3>{m.capability_bindings()}</H3>
+    <P>{m.capability_bindings_description()}</P>
+    <Show when={availableActions().length > 0} fallback={<P>{m.capability_bindings_empty()}</P>}>
+      <div class='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+        <For each={availableActions()}>
+          {(action) => (
+            <div class='min-w-0'>
+              <BindingInput action={action} settings={props} />
+              <Show when={!action.available}>
+                <p class='mt-1 text-xs text-muted-foreground'>{m.capability_unavailable()}</p>
+              </Show>
+            </div>
+          )}
         </For>
       </div>
     </Show>
   </section>
 );
-
-export { CustomActionsSettings };

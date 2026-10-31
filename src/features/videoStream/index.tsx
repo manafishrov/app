@@ -79,17 +79,25 @@ const useRecordingEffects = (
   });
 };
 
-const VideoStream: Component = () => {
+const VideoStream: Component<{ preview?: boolean }> = (props) => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);
 
   let video: HTMLVideoElement | undefined = undef;
 
   const connection = createWebRTCConnection(() => video, setIsLoading, setHasError);
-  const recording = createRecording(() => video);
 
   useConnectionEffect(connection);
-  useRecordingEffects(connection, recording);
+  if (props.preview === true) {
+    onCleanup(() => {
+      connection.dispose();
+    });
+  } else {
+    useRecordingEffects(
+      connection,
+      createRecording(() => video),
+    );
+  }
 
   return (
     <>
@@ -97,19 +105,23 @@ const VideoStream: Component = () => {
         ref={(el): void => {
           video = el;
         }}
-        class='h-full w-full'
+        class='absolute inset-0 h-full w-full object-contain'
         autoplay
         playsinline
         muted
       />
       {(isLoading() || hasError()) && (
         <div class='absolute inset-0 flex items-center justify-center'>
-          <div class='text-center'>
-            {isLoading() ? (
-              <p>{m.video_stream_connecting()}</p>
-            ) : (
-              <p>{m.video_stream_reconnecting()}</p>
-            )}
+          <div class='max-w-[50%] text-center text-xs text-white/50'>
+            <Show
+              when={props.preview === true}
+              fallback={
+                <p>{isLoading() ? m.video_stream_connecting() : m.video_stream_reconnecting()}</p>
+              }
+            >
+              <p>{m.overlay_layout_offline()}</p>
+              <p class='mt-1'>{m.overlay_layout_offline_hint()}</p>
+            </Show>
           </div>
         </div>
       )}

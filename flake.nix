@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     fenix = {
       url = "github:nix-community/fenix";
@@ -33,7 +33,15 @@
         "rustc"
         "rust-analyzer"
       ];
-      webkitWithWebRTC = pkgs.webkitgtk_4_1.override {enableExperimental = true;};
+      # Experimental features pull in the WebRTC dependencies, but since
+      # WebKitGTK 2.54 they no longer turn ENABLE_WEB_RTC on, so it is set
+      # explicitly. The librice ICE agent needs a newer librice than nixpkgs
+      # ships, so webrtcbin's libnice agent is used instead. Experimental
+      # features also enable Vulkan, which needs volk that nixpkgs does not
+      # provide here.
+      webkitWithWebRTC = (pkgs.webkitgtk_4_1.override {enableExperimental = true;}).overrideAttrs (old: {
+        cmakeFlags = old.cmakeFlags ++ ["-DENABLE_WEB_RTC=ON" "-DUSE_LIBRICE=OFF" "-DUSE_VULKAN=OFF"];
+      });
       gstPlugins = with pkgs.gst_all_1; [
         gstreamer
         gst-plugins-base

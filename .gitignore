@@ -9,3 +9,7 @@
 /dist
 /target
 *.tsbuildinfo
+__pycache__/
+
+/src-tauri/python/
+/src-tauri/binaries/

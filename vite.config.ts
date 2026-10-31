@@ -23,7 +23,7 @@ export default defineConfig({
     paraglideVitePlugin({
       project: './i18n.inlang',
       outdir: './src/paraglide',
-      strategy: ['url', 'cookie', 'baseLocale'],
+      strategy: ['cookie', 'baseLocale'],
       emitTsDeclarations: true,
     }),
     tanstackRouter({

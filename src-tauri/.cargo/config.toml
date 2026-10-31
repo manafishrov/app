@@ -1,0 +1,6 @@
+# ffmpeg-sys-next's build script overflows Windows' default 1 MiB main-thread
+# stack while generating bindings. Without `--target`, these flags also apply
+# to build scripts, so reserve the 8 MiB stack Linux and macOS already give.
+# https://github.com/zmwangx/rust-ffmpeg-sys/issues/9
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/STACK:8388608"]

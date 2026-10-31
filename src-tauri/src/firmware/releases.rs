@@ -1,12 +1,10 @@
 use reqwest::Client;
 use semver::Version;
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::{
   ASSETS_MARKER_END, ASSETS_MARKER_START, MAX_PRERELEASES, MAX_STABLE_RELEASES,
 };
-use crate::log_warn;
 use crate::version::parse_release_version;
 
 #[derive(Deserialize)]
@@ -23,7 +21,6 @@ pub struct FirmwareRelease {
   pub version: String,
   pub published_at: String,
   pub prerelease: bool,
-  pub legacy: bool,
   pub release_notes: Option<String>,
 }
 
@@ -31,7 +28,6 @@ pub struct FirmwareRelease {
 #[serde(rename_all = "camelCase")]
 pub struct FirmwareReleasesRequest {
   pub repo_url: String,
-  pub legacy_tag: Option<String>,
 }
 
 /// Strip the CI-generated artifact-links section (between the asset markers)
@@ -60,10 +56,12 @@ fn api_url_from_repo(repo_url: &str) -> Result<String, String> {
 }
 
 /// # Errors
-/// Returns an error if the request fails or the response cannot be parsed.
-pub(crate) async fn fetch_github_json<T: DeserializeOwned>(url: &str) -> Result<T, String> {
-  let response = Client::new()
-    .get(url)
+/// Returns an error if the `GitHub` releases cannot be fetched or parsed.
+pub async fn fetch_releases(repo_url: &str) -> Result<Vec<FirmwareRelease>, String> {
+  let url = api_url_from_repo(repo_url)?;
+  let client = Client::new();
+  let response = client
+    .get(&url)
     .header("Accept", "application/vnd.github+json")
     .header("User-Agent", "manafish")
     .send()
@@ -73,34 +71,8 @@ pub(crate) async fn fetch_github_json<T: DeserializeOwned>(url: &str) -> Result<
   if !status.is_success() {
     return Err(format!("GitHub API returned status {status}"));
   }
-  response.json().await.map_err(|e| e.to_string())
-}
-
-/// # Errors
-/// Returns an error if the `GitHub` releases cannot be fetched or parsed.
-pub async fn fetch_releases(
-  repo_url: &str,
-  legacy_tag: Option<&str>,
-) -> Result<Vec<FirmwareRelease>, String> {
-  let url = api_url_from_repo(repo_url)?;
-  let all: Vec<GitHubRelease> = fetch_github_json(&format!("{url}?per_page=100")).await?;
-  let mut selected = select_releases(
-    all.into_iter().filter(|release| Some(release.tag_name.as_str()) != legacy_tag),
-  );
-  // The legacy release is fetched by tag so it stays listed no matter how many
-  // releases follow it.
-  if let Some(tag) = legacy_tag {
-    match fetch_github_json::<GitHubRelease>(&format!("{url}/tags/{tag}")).await {
-      Ok(release) => {
-        selected.extend(to_firmware_release(release).map(|(_, release)| FirmwareRelease {
-          legacy: true,
-          ..release
-        }));
-      },
-      Err(error) => log_warn!("Failed to fetch legacy firmware release {tag}: {error}"),
-    }
-  }
-  Ok(selected)
+  let all: Vec<GitHubRelease> = response.json().await.map_err(|e| e.to_string())?;
+  Ok(select_releases(all))
 }
 
 /// Convert a single `GitHub` release into a `FirmwareRelease`, dropping drafts
@@ -122,17 +94,16 @@ fn to_firmware_release(release: GitHubRelease) -> Option<(Version, FirmwareRelea
         version: release.tag_name,
         published_at,
         prerelease,
-        legacy: false,
         release_notes,
       },
     )
   })
 }
 
-fn select_releases(all: impl Iterator<Item = GitHubRelease>) -> Vec<FirmwareRelease> {
+fn select_releases(all: Vec<GitHubRelease>) -> Vec<FirmwareRelease> {
   let mut stable = Vec::new();
   let mut prerelease = Vec::new();
-  for release in all.filter_map(to_firmware_release) {
+  for release in all.into_iter().filter_map(to_firmware_release) {
     if release.1.prerelease {
       prerelease.push(release);
     } else {

@@ -5,7 +5,7 @@ use tokio::sync::{mpsc::Sender, oneshot};
 use tokio::time::timeout;
 
 use crate::log_error;
-use crate::models::actions::{CustomAction, DirectionVector};
+use crate::models::actions::DirectionVector;
 use crate::models::rov_config::{McuBoard, PartialRovConfig, ThrusterTest};
 use crate::websocket::client::{
   DirectionVectorInput, DirectionVectorSendChannelState, MessageSendChannelState, OutboundMessage,
@@ -83,7 +83,7 @@ async fn send_message(
 ///
 /// # Errors
 /// Returns an error if the message cannot be queued or its delivery fails.
-async fn send_message_and_wait(
+pub(crate) async fn send_message_and_wait(
   tx: &Sender<OutboundMessage>,
   message: WebsocketMessage,
   label: &str,
@@ -129,47 +129,6 @@ pub async fn handle_deactivate_direction_vector(
   sequence: u64,
 ) -> Result<(), String> {
   deactivate_direction_vector(&state.tx, &state.last_sequence, sequence)
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_send_custom_action(
-  state: &State<'_, MessageSendChannelState>,
-  payload: CustomAction,
-) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::CustomAction(payload), "CustomAction").await
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_set_auto_stabilization(
-  state: &State<'_, MessageSendChannelState>,
-  enabled: bool,
-) -> Result<(), String> {
-  send_message_and_wait(
-    &state.tx,
-    WebsocketMessage::SetAutoStabilization(enabled),
-    "SetAutoStabilization",
-  )
-  .await
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_set_depth_hold(
-  state: &State<'_, MessageSendChannelState>,
-  enabled: bool,
-) -> Result<(), String> {
-  send_message_and_wait(&state.tx, WebsocketMessage::SetDepthHold(enabled), "SetDepthHold").await
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_set_desired_depth(
-  state: &State<'_, MessageSendChannelState>,
-  depth: f32,
-) -> Result<(), String> {
-  send_message(&state.tx, WebsocketMessage::SetDesiredDepth(depth), "SetDesiredDepth").await
 }
 
 /// # Errors

@@ -84,7 +84,7 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
 
   return (
     <div
-      class='relative overflow-hidden rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
+      class='overlay-surface relative overflow-hidden'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <canvas
@@ -92,8 +92,6 @@ const Model3DAttitudeIndicator: Component<Model3DAttitudeIndicatorProps> = (prop
           refs.canvas = element;
         }}
         class='absolute inset-0'
-        width={props.size}
-        height={props.size}
       />
       <AttitudeOverlay
         size={props.size}

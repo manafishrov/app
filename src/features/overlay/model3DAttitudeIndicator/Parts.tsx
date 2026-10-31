@@ -1,4 +1,4 @@
-import type { JSX, Resource } from 'solid-js';
+import type { Accessor, JSX, Resource } from 'solid-js';
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -70,7 +70,8 @@ export const updateModelRotation = (
   modelGroup.rotation.set(
     (props.pitch * Math.PI) / DEGREES_HALF_CIRCLE,
     yawRotation,
-    (props.roll * Math.PI) / DEGREES_HALF_CIRCLE,
+    // Three.js has upward-positive Y; positive vehicle roll lowers the right edge on screen.
+    (-props.roll * Math.PI) / DEGREES_HALF_CIRCLE,
   );
 };
 
@@ -79,90 +80,95 @@ export const createRenderer = (canvasRef: HTMLCanvasElement, size: number): THRE
     canvas: canvasRef,
     alpha: true,
     antialias: true,
+    // Retain the last pose when scrolling recomposites this idle canvas.
+    preserveDrawingBuffer: true,
   });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(size, size);
   return renderer;
 };
 
-type AnimationState = {
-  renderer?: THREE.WebGLRenderer;
-  animationId?: number;
-  modelGroup?: THREE.Group;
-};
-
-const setupModelGroup = (scene: THREE.Scene, result: THREE.Group, state: AnimationState): void => {
-  if (state.modelGroup) {
-    scene.remove(state.modelGroup);
-  }
-  state.modelGroup = new THREE.Group();
-  state.modelGroup.add(result);
-  scene.add(state.modelGroup);
-};
-
-const startAnimation = (context: {
+type RenderState = {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
-  props: Model3DAttitudeIndicatorProps;
-  state: AnimationState;
-}): void => {
-  const animate = (): void => {
-    context.state.animationId = requestAnimationFrame(animate);
-    if (context.state.modelGroup) {
-      updateModelRotation(context.state.modelGroup, context.props);
-    }
-    if (context.state.renderer) {
-      context.state.renderer.render(context.scene, context.camera);
-    }
-  };
-  animate();
+  renderer: THREE.WebGLRenderer;
+  modelGroup: THREE.Group;
+  size: number;
 };
 
+const createRenderState = (
+  canvas: HTMLCanvasElement,
+  model: THREE.Group,
+  size: number,
+): RenderState => {
+  const { scene, camera } = setupScene();
+  const modelGroup = new THREE.Group();
+  modelGroup.add(model);
+  scene.add(modelGroup);
+  return { scene, camera, modelGroup, renderer: createRenderer(canvas, size), size };
+};
+
+const useCanvasVisible = (getCanvasRef: () => HTMLCanvasElement | undefined): Accessor<boolean> => {
+  const [visible, setVisible] = createSignal(false);
+  onMount(() => {
+    const canvas = getCanvasRef();
+    if (!canvas) {
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      setVisible(entries.some((entry) => entry.isIntersecting));
+    });
+    observer.observe(canvas);
+    onCleanup(() => {
+      observer.disconnect();
+    });
+  });
+  return visible;
+};
+
+const renderModel = (state: RenderState, props: Model3DAttitudeIndicatorProps): void => {
+  if (state.size !== props.size) {
+    state.renderer.setSize(props.size, props.size);
+    state.size = props.size;
+  }
+  updateModelRotation(state.modelGroup, props);
+  state.renderer.render(state.scene, state.camera);
+};
+
+/** Paint changed telemetry when visible; an idle or off-screen instrument needs no frames. */
 export const useModel3DAttitudeIndicator = (
   props: Model3DAttitudeIndicatorProps,
   gltf: Resource<THREE.Group>,
   getCanvasRef: () => HTMLCanvasElement | undefined,
 ): void => {
-  const state: AnimationState = {};
-
-  const { scene, camera } = setupScene();
+  const [state, setState] = createSignal<RenderState>();
+  const visible = useCanvasVisible(getCanvasRef);
 
   createEffect(() => {
     if (gltf.state === 'errored') {
       logError('Error loading 3D model:', gltf.error);
-    }
-  });
-
-  createEffect(() => {
-    const result = gltf();
-    const canvasRef = getCanvasRef();
-    if (!result || !canvasRef) {
       return;
     }
-
-    setupModelGroup(scene, result, state);
-
-    if (!state.renderer) {
-      state.renderer = createRenderer(canvasRef, props.size);
-      startAnimation({ scene, camera, props, state });
+    const model = gltf();
+    const canvas = getCanvasRef();
+    if (!model || !canvas) {
+      return;
     }
+    const current = createRenderState(
+      canvas,
+      model,
+      untrack(() => props.size),
+    );
+    setState(current);
+    onCleanup(() => {
+      current.renderer.dispose();
+    });
   });
 
   createEffect(() => {
-    const { size } = props;
-    if (state.renderer) {
-      state.renderer.setSize(size, size);
-      camera.aspect = 1;
-      camera.updateProjectionMatrix();
-    }
-  });
-
-  onCleanup(() => {
-    if (typeof state.animationId === 'number') {
-      cancelAnimationFrame(state.animationId);
-    }
-    if (state.renderer) {
-      state.renderer.dispose();
+    const current = state();
+    if (current && visible()) {
+      renderModel(current, props);
     }
   });
 };

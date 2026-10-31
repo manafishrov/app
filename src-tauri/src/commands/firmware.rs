@@ -57,7 +57,7 @@ pub struct CleanupFirmwareCacheRequest {
 pub async fn list_firmware_releases(
   payload: FirmwareReleasesRequest,
 ) -> Result<Vec<FirmwareRelease>, String> {
-  fetch_releases(&payload.repo_url, payload.legacy_tag.as_deref()).await
+  fetch_releases(&payload.repo_url).await
 }
 
 #[command]

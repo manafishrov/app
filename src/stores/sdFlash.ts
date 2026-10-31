@@ -30,7 +30,6 @@ export type FirmwareRelease = {
   version: string;
   publishedAt: string;
   prerelease: boolean;
-  legacy: boolean;
   releaseNotes?: string;
 };
 
@@ -80,7 +79,6 @@ export type VersionEntryState = {
   version: string;
   publishedAt: string;
   prerelease: boolean;
-  legacy: boolean;
   releaseNotes?: string;
 };
 

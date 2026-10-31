@@ -5,7 +5,6 @@ type ParsedVersion = {
   prerelease: PrereleaseIdentifier[];
 };
 
-const [UNSET]: undefined[] = [];
 const VERSION_GREATER_THAN = 1;
 const VERSION_LESS_THAN = -1;
 const VERSION_PARTS = 3;
@@ -142,14 +141,4 @@ export const isPrereleaseVersion = (version: string): boolean | null => {
     return null;
   }
   return parsed.prerelease.length > 0;
-};
-
-export const newestVersion = (versions: string[]): string | undefined => {
-  let [newest] = versions;
-  for (const version of versions) {
-    if (newest === UNSET || isNewerVersion(version, newest)) {
-      newest = version;
-    }
-  }
-  return newest;
 };

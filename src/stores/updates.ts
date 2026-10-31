@@ -35,7 +35,6 @@ export type AppReleaseEntry = {
   tag: string;
   publishedAt: string;
   prerelease: boolean;
-  legacy: boolean;
   releaseNotes?: string;
 };
 
