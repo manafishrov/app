@@ -94,23 +94,28 @@ Differences from desktop:
   desktop-only.
 - No in-app updater or SD-card flashing.
 
+`nix develop .#mobile` provides the Rust mobile targets, the Android SDK, NDK
+and JDK 17, and on macOS XcodeGen and CocoaPods. iOS also needs Xcode. To run on
+a phone over USB, pass `--host` so it can reach the dev server on this computer's
+network.
+
 ### Android
 
-Requires the Android SDK and NDK, JDK 17 and rustup. On Nix, `nix develop .#android`
-provides all of them.
+Turn on USB debugging in Developer options.
 
 ```bash
 bun run android:init
-bun tauri android dev
+bun tauri android dev --host
 ```
 
 ### iOS
 
-Requires macOS with Xcode, XcodeGen and rustup.
+Turn on Developer Mode on the iPhone. A physical device needs the ID of an Apple
+team you have an Apple Development certificate for; simulators do not.
 
 ```bash
 bun run ios:init
-bun tauri ios dev
+APPLE_DEVELOPMENT_TEAM=<team id> bun tauri ios dev --host
 ```
 
 ### Releases
