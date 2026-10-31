@@ -388,7 +388,9 @@ jobs:
 
       # Linux deb/rpm: package-manager owned, so the in-app updater is
       # compiled out (it can only replace an AppImage in place; touching a
-      # dpkg/rpm-managed binary would desync the package database).
+      # dpkg/rpm-managed binary would desync the package database). RPM
+      # versions cannot contain `-`, so prereleases such as `1.1.0-rc.4` publish
+      # only the deb while stable releases publish both package formats.
       - name: Build and upload deb/rpm
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
@@ -402,7 +404,7 @@ jobs:
           LD_LIBRARY_PATH: ${{ github.workspace }}/src-tauri/webkit/lib
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: --bundles deb,rpm
+          args: ${{ needs.create-release.outputs.prerelease == 'true' && '--bundles deb' || '--bundles deb,rpm' }}
 
       # Linux AppImage: a direct download, so the in-app updater stays on.
       # LD_LIBRARY_PATH makes the AppImage bundler resolve libwebkit2gtk to
