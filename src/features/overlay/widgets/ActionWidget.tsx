@@ -76,7 +76,7 @@ export const ActionWidget: Component<{ widget: OverlayWidget }> = (props) => {
   return (
     <button
       type='button'
-      class='overlay-surface overlay-action-widget'
+      class='overlay-surface overlay-action-widget pointer-events-auto'
       disabled={!preview() && !isActionAvailable(id())}
       onPointerDown={(event) => {
         if (event.button === 0) {
