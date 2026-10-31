@@ -3,15 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DirectionVector } from '@/stores/directionVector';
 
 import {
+  computeDirectionVector,
   createDirectionVectorLoop,
   DIRECTION_VECTOR_SEND_INTERVAL_MS,
   type DirectionVectorConfig,
 } from '@/input/directionVector';
+import { createTouchAxes, TouchAxis } from '@/input/touch';
 
 const INTERVALS_TO_ADVANCE = 3;
 const INITIAL_SEND_COUNT = 1;
 const SECOND_CALL_INDEX = 1;
 const EXPECTED_COALESCED_SEND_COUNT = 2;
+const TOUCH_DEFLECTION = 0.5;
 const resolverNotInitialized = (): never => {
   throw new Error('Promise resolver was not initialized');
 };
@@ -64,7 +67,11 @@ describe('createDirectionVectorLoop', () => {
   it('publishes input on a fixed timer instead of render frames', () => {
     const send = vi.fn<(vector: DirectionVector) => Promise<void>>().mockResolvedValue();
     const deactivate = vi.fn<() => Promise<void>>().mockResolvedValue();
-    const cleanup = createDirectionVectorLoop(config, new Set(), { deactivate, send });
+    const cleanup = createDirectionVectorLoop(
+      config,
+      { pressedKeys: new Set() },
+      { deactivate, send },
+    );
 
     expect(send).toHaveBeenCalledTimes(1);
     return vi
@@ -81,7 +88,11 @@ describe('createDirectionVectorLoop', () => {
   it('stops publishing after cleanup', () => {
     const send = vi.fn<(vector: DirectionVector) => Promise<void>>().mockResolvedValue();
     const deactivate = vi.fn<() => Promise<void>>().mockResolvedValue();
-    const cleanup = createDirectionVectorLoop(config, new Set(), { deactivate, send });
+    const cleanup = createDirectionVectorLoop(
+      config,
+      { pressedKeys: new Set() },
+      { deactivate, send },
+    );
     cleanup();
     const callCount = send.mock.calls.length;
 
@@ -114,10 +125,14 @@ describe('pending direction vector transport', () => {
         surgeForward: { key: 'KeyW', minValue: 0, maxValue: 1 },
       },
     };
-    const cleanup = createDirectionVectorLoop(boundConfig, pressedKeys, {
-      deactivate: vi.fn<() => Promise<void>>().mockResolvedValue(),
-      send,
-    });
+    const cleanup = createDirectionVectorLoop(
+      boundConfig,
+      { pressedKeys },
+      {
+        deactivate: vi.fn<() => Promise<void>>().mockResolvedValue(),
+        send,
+      },
+    );
 
     pressedKeys.add('KeyW');
     vi.advanceTimersByTime(DIRECTION_VECTOR_SEND_INTERVAL_MS * INTERVALS_TO_ADVANCE);
@@ -133,5 +148,34 @@ describe('pending direction vector transport', () => {
       expect(secondCall[0][0]).toBe(1);
       cleanup();
     });
+  });
+});
+
+describe('touch input', () => {
+  it('adds on-screen controls to the bound inputs and clamps the sum', () => {
+    const boundConfig: DirectionVectorConfig = {
+      ...config,
+      keyboard: {
+        ...config.keyboard,
+        surgeForward: { key: 'KeyW', minValue: 0, maxValue: 1 },
+      },
+    };
+    const touchAxes = createTouchAxes();
+    touchAxes[TouchAxis.surge] = TOUCH_DEFLECTION;
+    touchAxes[TouchAxis.yaw] = -TOUCH_DEFLECTION;
+
+    expect(computeDirectionVector(boundConfig, new Set(), touchAxes)).toEqual([
+      TOUCH_DEFLECTION,
+      0,
+      0,
+      0,
+      -TOUCH_DEFLECTION,
+      0,
+      0,
+      0,
+    ]);
+    expect(computeDirectionVector(boundConfig, new Set(['KeyW']), touchAxes)[TouchAxis.surge]).toBe(
+      1,
+    );
   });
 });

@@ -9,6 +9,7 @@ const messages: Record<AnalysisStatus, () => string> = {
   missingSdk: m.custom_action_scripts_analysis_missing_sdk,
   cachedSdk: m.custom_action_scripts_analysis_cached_sdk,
   failed: m.custom_action_scripts_analysis_failed,
+  unsupported: m.custom_action_scripts_analysis_unsupported,
   ready: (): string => '',
 };
 export const PythonAnalysisStatus: Component<{ status: AnalysisStatus }> = (props) => (

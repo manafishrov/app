@@ -71,6 +71,58 @@ bun run tauri dev
 bun run tauri build
 ```
 
+## Mobile (Android and iOS)
+
+The same app builds for Android and iOS phones and tablets. Mobile builds add
+on-screen sticks (hidden while the selected gamepad is connected), lock to landscape and
+keep the screen awake while open. Native code (game controllers, file pickers,
+the ethernet route to the ROV) lives in the `src-tauri/plugins/mobile` Tauri
+plugin, so the generated `src-tauri/gen/android` and `src-tauri/gen/apple`
+projects are not committed; recreate them with the init scripts below.
+
+Differences from desktop:
+
+- Connect the ROV through a USB-C ethernet adapter. Android routes the app over
+  the ethernet network that contains the ROV address, so other apps keep using
+  Wi-Fi, but the app itself has no internet while tethered.
+- Recordings are copied to a folder picked in the system file picker, or by
+  default to Movies/Manafish (Android) or the app's folder in the Files app
+  (iOS). They keep the recorder's container; there is no MP4 remux.
+- Logs, CSV files and ROV config backups are saved through the system export
+  sheet.
+- Custom-action scripts can be edited, but Python completion and checking are
+  desktop-only.
+- No in-app updater or SD-card flashing.
+
+### Android
+
+Requires the Android SDK and NDK, JDK 17 and rustup. On Nix, `nix develop .#android`
+provides all of them.
+
+```bash
+bun run android:init
+bun tauri android dev
+```
+
+### iOS
+
+Requires macOS with Xcode, XcodeGen and rustup.
+
+```bash
+bun run ios:init
+bun tauri ios dev
+```
+
+### Releases
+
+Release tags also attach `Manafish_<version>_android_aarch64.apk` and
+`Manafish_<version>_ios_unsigned.ipa`. The APK is signed with the release
+keystore from the `ANDROID_KEYSTORE` (base64), `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` secrets; keep the keystore safe,
+since installed apps only accept updates signed with the same key. The IPA is
+unsigned, so install it with a tool that signs it for your device, such as
+AltStore or Sideloadly.
+
 ## Scripts
 
 | Script                 | Description                  |
@@ -85,6 +137,8 @@ bun run tauri build
 | `bun run lint:rs:fix`  | Lint and auto-fix Rust       |
 | `bun run fmt:rs`       | Format Rust                  |
 | `bun run fmt:rs:check` | Check Rust formatting        |
+| `bun run android:init` | Generate the Android project |
+| `bun run ios:init`     | Generate the Xcode project   |
 
 ## License
 

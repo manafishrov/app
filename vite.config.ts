@@ -46,6 +46,7 @@ export default defineConfig({
     dedupe: ['solid-js', '@tanstack/solid-router', '@tanstack/solid-form', 'tailwindcss'],
   },
   clearScreen: false,
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
   server: {
     port: 1420,
     strictPort: true,

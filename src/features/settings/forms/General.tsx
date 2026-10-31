@@ -7,16 +7,22 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { z } from 'zod';
 
 import { logError } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore, setConfig } from '@/stores/config';
 import { isUpdaterEnabled } from '@/tauri';
+
+import { MobileVideoDirectory } from './MobileVideoDirectory';
 
 const createFormSchema = (): z.ZodObject<{
   videoDirectory: z.ZodString;
   checkForAppUpdatesOnStartup: z.ZodBoolean;
 }> =>
   z.object({
-    videoDirectory: z.string().min(1, m.general_settings_video_directory_required()),
+    // Mobile stores a picker token where empty means the default folder.
+    videoDirectory: isMobile
+      ? z.string()
+      : z.string().min(1, m.general_settings_video_directory_required()),
     checkForAppUpdatesOnStartup: z.boolean(),
   });
 
@@ -51,7 +57,7 @@ const handleFormSubmit = ({
   };
 }): void => {
   setConfig({
-    videoDirectory: value.videoDirectory,
+    ...(isMobile ? {} : { videoDirectory: value.videoDirectory }),
     checkForAppUpdatesOnStartup: value.checkForAppUpdatesOnStartup,
   }).catch(logError);
 };
@@ -78,24 +84,26 @@ const GeneralFields: Component<{
   onSelect: () => void;
 }> = (props) => (
   <>
-    <props.AppField name='videoDirectory'>
-      {(field) => (
-        <field.TextInputField
-          label={m.general_settings_video_directory_title()}
-          description={m.general_settings_video_directory_description()}
-          readonly
-          trailingAddon={
-            <Button
-              onClick={props.onSelect}
-              aria-label={m.aria_labels_select_video_directory()}
-              variant='outline'
-            >
-              {m.general_settings_video_directory_select_directory()}
-            </Button>
-          }
-        />
-      )}
-    </props.AppField>
+    <Show when={!isMobile} fallback={<MobileVideoDirectory />}>
+      <props.AppField name='videoDirectory'>
+        {(field) => (
+          <field.TextInputField
+            label={m.general_settings_video_directory_title()}
+            description={m.general_settings_video_directory_description()}
+            readonly
+            trailingAddon={
+              <Button
+                onClick={props.onSelect}
+                aria-label={m.aria_labels_select_video_directory()}
+                variant='outline'
+              >
+                {m.general_settings_video_directory_select_directory()}
+              </Button>
+            }
+          />
+        )}
+      </props.AppField>
+    </Show>
     <Show when={isUpdaterEnabled}>
       <props.AppField name='checkForAppUpdatesOnStartup'>
         {(field) => (

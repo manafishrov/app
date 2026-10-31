@@ -34,7 +34,6 @@ tauri-build = { version = "2.5.3", features = [] }
 flate2 = "1.1.10"
 base64 = "0.23.0"
 tauri = { version = "2.9.5", features = ["macos-private-api"] }
-tauri-plugin-updater = "2.9.0"
 tauri-plugin-opener = "2.5.3"
 tauri-plugin-dialog = "2.5.0"
 tauri-plugin-fs = "2.4.5"
@@ -43,19 +42,27 @@ serde_json = "1.0.149"
 semver = "1.0.28"
 url = "2.5.8"
 dirs = "7.0.0"
-reqwest = { version = "0.13.0", default-features = false, features = ["json", "rustls", "stream"] }
 sha2 = "0.11.0"
-minisign-verify = "0.3.0"
 tokio = { version = "1.49.0", features = ["full"] }
 tokio-tungstenite = "0.30.0"
 tokio-util = { version = "0.7.17", features = ["io"] }
 futures-util = "0.3.31"
 bytes = "1.10.1"
 percent-encoding = "2.3.2"
-ruzstd = "0.9.0"
 tempfile = "3.21.0"
+
+# Updates, SD-card flashing, SDL gamepads and FFmpeg remuxing are desktop-only;
+# mobile builds get gamepads and file access from the native mobile plugin.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2.9.0"
+reqwest = { version = "0.13.0", default-features = false, features = ["json", "rustls", "stream"] }
+minisign-verify = "0.3.0"
+ruzstd = "0.9.0"
 sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
 ffmpeg-next = "9.0.0"
+
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-manafish-mobile = { path = "plugins/mobile" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2.181"

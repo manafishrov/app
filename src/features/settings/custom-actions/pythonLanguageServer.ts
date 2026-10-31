@@ -19,7 +19,13 @@ import {
 
 import { pythonDiagnostics } from './pythonDiagnostics';
 
-export type AnalysisStatus = 'starting' | 'ready' | 'missingSdk' | 'cachedSdk' | 'failed';
+export type AnalysisStatus =
+  | 'starting'
+  | 'ready'
+  | 'missingSdk'
+  | 'cachedSdk'
+  | 'failed'
+  | 'unsupported';
 const REQUEST_TIMEOUT = 10_000;
 
 class PythonLanguageServer {

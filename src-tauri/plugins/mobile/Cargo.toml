@@ -1,0 +1,25 @@
+[package]
+name = "tauri-plugin-manafish-mobile"
+description = "Native Android and iOS services for the Manafish app"
+version = "0.1.0"
+license = "AGPL-3.0-or-later"
+authors = ["Michael Brusegard"]
+edition = "2024"
+rust-version = "1.92"
+publish = false
+links = "tauri-plugin-manafish-mobile"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+
+[build-dependencies]
+tauri-plugin = { version = "2.6.3", features = ["build"] }
+
+[dependencies]
+tauri = "2.9.5"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"

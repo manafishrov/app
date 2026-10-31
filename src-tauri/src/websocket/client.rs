@@ -278,6 +278,18 @@ where
   true
 }
 
+/// Android sends traffic over Wi-Fi rather than an ethernet link without
+/// internet, so ask the native side to route the app over the tether that
+/// reaches the ROV.
+#[cfg(mobile)]
+async fn route_to_rov(app: &AppHandle, address: &str) {
+  use tauri_plugin_manafish_mobile::MobileExt;
+
+  if let Err(error) = app.mobile().set_rov_address(address).await {
+    log_warn!("Failed to route traffic to the ROV: {error}");
+  }
+}
+
 async fn connect_socket(
   app: &AppHandle,
   url: &str,
@@ -306,6 +318,8 @@ pub async fn start_websocket_client(
   let mut direction_session_active = false;
 
   loop {
+    #[cfg(mobile)]
+    route_to_rov(&app, &config.ip_address).await;
     let url = connection_url(&config);
     let Some(ws_stream) = connect_socket(&app, &url).await else {
       if let Some(new_config) = wait_before_retry(&mut config_rx).await {

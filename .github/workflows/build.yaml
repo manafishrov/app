@@ -422,3 +422,122 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --bundles appimage
+
+  # Android: a sideloadable APK for arm64 phones and tablets, signed with the
+  # release keystore. The Gradle project is generated fresh from the Tauri
+  # config; native code lives in src-tauri/plugins/mobile.
+  build-android:
+    name: Build Android
+    needs: create-release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      # The runner image ships the Android SDK, an NDK and JDK 17.
+      - name: Configure Android toolchain
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+
+      - name: Generate Android project
+        run: bun run android:init
+
+      - name: Build APK
+        run: bun tauri android build --apk --target aarch64
+
+      - name: Sign and upload APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          build_tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)"
+          unsigned="$(find src-tauri/gen/android/app/build/outputs/apk -name '*-release-unsigned.apk' | head -n 1)"
+          keystore="$RUNNER_TEMP/release.keystore"
+          aligned="$RUNNER_TEMP/aligned.apk"
+          signed="Manafish_${TAG#v}_android_aarch64.apk"
+
+          printf '%s' "$ANDROID_KEYSTORE" | base64 --decode > "$keystore"
+          "$build_tools/zipalign" -P 16 -f 4 "$unsigned" "$aligned"
+          "$build_tools/apksigner" sign \
+            --ks "$keystore" \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD \
+            --out "$signed" \
+            "$aligned"
+          "$build_tools/apksigner" verify "$signed"
+          gh release upload "$TAG" "$signed" --clobber -R "$GITHUB_REPOSITORY"
+
+  # iOS: an unsigned IPA. iOS only installs apps signed for the device, so
+  # users sideload it with a tool that re-signs it with their own Apple ID
+  # (AltStore, Sideloadly). App Store/TestFlight distribution is not set up.
+  build-ios:
+    name: Build iOS
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+          targets: aarch64-apple-ios
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Xcode project
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          bun run ios:init
+
+      - name: Build unsigned IPA
+        run: bun tauri ios build --no-sign --target aarch64
+
+      - name: Upload IPA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          ipa="$(find src-tauri/gen/apple/build -name '*.ipa' | head -n 1)"
+          renamed="Manafish_${TAG#v}_ios_unsigned.ipa"
+          cp "$ipa" "$renamed"
+          gh release upload "$TAG" "$renamed" --clobber -R "$GITHUB_REPOSITORY"

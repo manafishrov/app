@@ -30,6 +30,8 @@ import SettingsIcon from '~icons/material-symbols/settings';
 import * as m from '@/paraglide/messages';
 import { recordingStore } from '@/stores/recording';
 
+import { headerButtonSize } from './buttonSize';
+
 type SettingsLinkProps = {
   isMac: boolean;
 };
@@ -63,7 +65,7 @@ const RecordingSettingsAlertDialog = (props: { isMac: boolean }): JSXElement => 
             <AlertDialogTrigger
               {...tooltipProps()}
               asChild={(triggerProps) => (
-                <Button {...triggerProps()} size='icon-xs' variant='outline'>
+                <Button {...triggerProps()} size={headerButtonSize} variant='outline'>
                   <SettingsIcon />
                 </Button>
               )}
@@ -109,7 +111,7 @@ const SettingsLink = (props: SettingsLinkProps): JSXElement => (
         <TooltipTrigger
           tabIndex={-1}
           asChild={(triggerProps) => (
-            <Link {...triggerProps()} to='/settings' size='icon-xs' variant='outline'>
+            <Link {...triggerProps()} to='/settings' size={headerButtonSize} variant='outline'>
               <SettingsIcon />
             </Link>
           )}

@@ -33,6 +33,22 @@
         "rustc"
         "rust-analyzer"
       ];
+      # The Android SDK is unfree and needs its license accepted, so only the
+      # android shell pulls it in.
+      androidPkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          android_sdk.accept_license = true;
+        };
+      };
+      androidSdk =
+        (androidPkgs.androidenv.composeAndroidPackages {
+          platformVersions = ["36"];
+          buildToolsVersions = ["35.0.0"];
+          includeNDK = true;
+        }).androidsdk;
+      androidHome = "${androidSdk}/libexec/android-sdk";
       # Experimental features pull in the WebRTC dependencies, but since
       # WebKitGTK 2.54 they no longer turn ENABLE_WEB_RTC on, so it is set
       # explicitly. The librice ICE agent needs a newer librice than nixpkgs
@@ -97,6 +113,22 @@
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg] ++ linuxLibs);
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
+      };
+      android = pkgs.mkShell {
+        # The Tauri CLI installs the Android Rust targets through rustup.
+        buildInputs = with pkgs; [
+          rustup
+          androidSdk
+          jdk17
+          unstable.bun
+          python3
+        ];
+        RUSTUP_TOOLCHAIN = "stable";
+        ANDROID_HOME = androidHome;
+        NDK_HOME = "${androidHome}/ndk-bundle";
+        JAVA_HOME = pkgs.jdk17.home;
+        # Gradle otherwise downloads its own aapt2, which cannot run on NixOS.
+        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidHome}/build-tools/35.0.0/aapt2";
       };
     });
   };

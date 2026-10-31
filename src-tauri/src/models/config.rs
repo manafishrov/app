@@ -353,7 +353,12 @@ fn default_automatic_bitrate() -> bool {
 }
 
 fn default_video_directory() -> String {
-  if cfg!(target_os = "windows") {
+  // On mobile this holds a folder token from the system picker; empty means
+  // the platform default (Movies/Manafish on Android, the app's Files folder
+  // on iOS).
+  if cfg!(any(target_os = "android", target_os = "ios")) {
+    String::new()
+  } else if cfg!(target_os = "windows") {
     format!(
       "{}\\Videos\\Manafish",
       std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())

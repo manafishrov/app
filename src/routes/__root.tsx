@@ -12,6 +12,7 @@ import { loadCompatibility } from '@/lib/compatibility';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
 import { disablePageZoom } from '@/lib/pageZoom';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { getLocale } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
@@ -69,7 +70,9 @@ const RootLayout: Component = () => {
       <HeadContent />
       <ThemeProvider>
         <LocaleProvider locale={getLocale()}>
-          <Header />
+          <Show when={!isMobile}>
+            <Header />
+          </Show>
           <Outlet />
           <Toaster />
           <CompatibilityWarningAlertDialog />

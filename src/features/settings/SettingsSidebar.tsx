@@ -32,6 +32,7 @@ import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 import SystemUpdateAltIcon from '~icons/material-symbols/system-update-alt';
 import TableIcon from '~icons/material-symbols/table-chart';
 
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
@@ -235,19 +236,21 @@ const SettingsSidebarContent: Component<{
 const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> = (props) => (
   <SidebarFooter>
     <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={m.settings_sd_card_title()}
-          aria-label={m.aria_labels_sd_card_button()}
-          isActive={props.isActive('/settings/sd-card')}
-          asChild={(triggerProps) => (
-            <Link {...triggerProps()} to='/settings/sd-card' activeOptions={{ exact: true }}>
-              <SdCardIcon aria-hidden='true' />
-              <span>{m.settings_sd_card_title()}</span>
-            </Link>
-          )}
-        />
-      </SidebarMenuItem>
+      <Show when={!isMobile}>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip={m.settings_sd_card_title()}
+            aria-label={m.aria_labels_sd_card_button()}
+            isActive={props.isActive('/settings/sd-card')}
+            asChild={(triggerProps) => (
+              <Link {...triggerProps()} to='/settings/sd-card' activeOptions={{ exact: true }}>
+                <SdCardIcon aria-hidden='true' />
+                <span>{m.settings_sd_card_title()}</span>
+              </Link>
+            )}
+          />
+        </SidebarMenuItem>
+      </Show>
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={m.settings_debug_title()}

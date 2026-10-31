@@ -5,6 +5,7 @@ import { tags } from '@lezer/highlight';
 import { basicSetup, EditorView } from 'codemirror';
 import { on } from 'solid-js';
 
+import { isMobile } from '@/lib/platform';
 import { capabilityStore } from '@/stores/capabilities';
 
 import { connectPythonLanguageServer, type AnalysisStatus } from './pythonLanguageServer';
@@ -37,6 +38,29 @@ const createPythonState = (props: PythonEditorProps, extensions: Extension): Edi
     ],
   });
 
+/*
+ * The bundled language server is a separate process, which mobile apps cannot
+ * start, so editing works there without completion or checking.
+ */
+const connectAnalysis = (
+  onExtension: (extension: Extension) => void,
+  onStatus: (status: AnalysisStatus) => void,
+): void => {
+  if (isMobile) {
+    onStatus('unsupported');
+    return;
+  }
+  createEffect(
+    on(
+      () => capabilityStore.connected,
+      () => {
+        const disconnect = connectPythonLanguageServer(onExtension, onStatus);
+        onCleanup(disconnect);
+      },
+    ),
+  );
+};
+
 export const mountPythonEditor = (parent: HTMLElement, props: PythonEditorProps): (() => void) => {
   const editable = new Compartment();
   const analysis = new Compartment();
@@ -54,18 +78,10 @@ export const mountPythonEditor = (parent: HTMLElement, props: PythonEditorProps)
       }),
     ]);
   const view = new EditorView({ parent, state: createState() });
-  createEffect(
-    on(
-      () => capabilityStore.connected,
-      () => {
-        const disconnect = connectPythonLanguageServer((extension) => {
-          analysisExtensions = extension;
-          view.dispatch({ effects: analysis.reconfigure(extension) });
-        }, props.onAnalysisStatus);
-        onCleanup(disconnect);
-      },
-    ),
-  );
+  connectAnalysis((extension) => {
+    analysisExtensions = extension;
+    view.dispatch({ effects: analysis.reconfigure(extension) });
+  }, props.onAnalysisStatus);
   createEffect(() => {
     if (props.source !== currentSource) {
       currentSource = props.source;

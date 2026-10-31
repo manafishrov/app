@@ -5,6 +5,7 @@ import { Show, createMemo, onMount, type Component } from 'solid-js';
 import { VersionBadge } from '@/components/VersionBadge';
 import { compatibleFirmware, isVerifiedPair } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import { isNewerVersion, newestVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
@@ -36,7 +37,8 @@ const newerVersionAvailable = (): string | undefined => {
 export const PiFirmwareVersionCard: Component = () => {
   const latestNewer = createMemo(newerVersionAvailable);
   onMount(() => {
-    if (sdFlashStore.versionsStatus === VersionsStatus.idle) {
+    // Mobile cannot flash SD cards, so there is no firmware release list.
+    if (!isMobile && sdFlashStore.versionsStatus === VersionsStatus.idle) {
       loadFirmwareVersions().catch(logError);
     }
   });

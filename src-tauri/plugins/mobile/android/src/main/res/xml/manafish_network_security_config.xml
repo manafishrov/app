@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ROV serves WebRTC signalling over plain HTTP on the tethered LAN, and its
+  address is user-configurable, so cleartext cannot be limited to one host.
+-->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -1,8 +1,14 @@
 import { RouterProvider, createRouter } from '@tanstack/solid-router';
 import { render } from 'solid-js/web';
 
+import { isMobile } from '@/lib/platform';
 import { routeTree } from '@/routeTree.gen';
 import '@/styles.css';
+
+// Rounded corners shape the frameless desktop window; mobile apps fill the screen.
+if (isMobile) {
+  document.documentElement.classList.remove('rounded-2xl');
+}
 
 /**
  * No `rewrite`: with one, TanStack Router treats every non-http(s) location as

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fs;
+#[cfg(desktop)]
 use std::path::Path;
 use std::sync::{LazyLock, Mutex};
 
+#[cfg(desktop)]
 use ffmpeg_next as ffmpeg;
 use serde_json::Value;
 
@@ -34,12 +36,17 @@ fn show_save_error(toast_id: &str) {
 }
 
 fn show_save_started(toast_id: &str) {
+  // Desktop remuxes to MP4 while saving; mobile copies the recording as is.
+  #[cfg(desktop)]
+  let message_key = "toasts_recording_converting_to_mp4";
+  #[cfg(mobile)]
+  let message_key = "toasts_recording_saving";
   toast_loading(
     Some(toast_id.to_string()),
     ToastContent {
       message: None,
       description: None,
-      message_key: "toasts_recording_converting_to_mp4".to_string(),
+      message_key: message_key.to_string(),
       message_args: None,
       description_key: None,
       description_args: None,
@@ -48,12 +55,9 @@ fn show_save_started(toast_id: &str) {
   );
 }
 
-fn show_save_success(toast_id: &str, output_path: &Path) {
+fn show_save_success(toast_id: &str, location: &str) {
   let mut description_args = HashMap::<String, Value>::new();
-  let display_name = output_path
-    .file_name()
-    .map_or_else(|| output_path.display().to_string(), |name| name.to_string_lossy().into_owned());
-  let _ = description_args.insert("path".to_string(), Value::from(display_name));
+  let _ = description_args.insert("path".to_string(), Value::from(location));
 
   toast_success(
     Some(toast_id.to_string()),
@@ -69,6 +73,7 @@ fn show_save_success(toast_id: &str, output_path: &Path) {
   );
 }
 
+#[cfg(desktop)]
 /// Map a temp recording path (`..._temp.<ext>`) to its final `.mp4` path. The
 /// temp extension varies by platform (mp4/mkv/webm), so match the `_temp.`
 /// marker rather than a fixed extension.
@@ -79,6 +84,7 @@ fn output_path_for(temp_path: &str) -> String {
   }
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if FFmpeg cannot be initialized.
 fn initialize_ffmpeg(toast_id: &str) -> Result<(), String> {
@@ -89,6 +95,7 @@ fn initialize_ffmpeg(toast_id: &str) -> Result<(), String> {
   })
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if the input file is missing, unreadable, or contains no
 /// streams.
@@ -122,6 +129,7 @@ fn open_input_context(
   Ok(context)
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if the output file or any FFmpeg stream cannot be created.
 fn create_output_context(
@@ -166,6 +174,7 @@ fn create_output_context(
   Ok(output_context)
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if reading or writing any FFmpeg packet fails.
 fn copy_packets(
@@ -225,6 +234,7 @@ fn copy_packets(
   Ok(())
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if FFmpeg cannot finish writing the output file.
 fn finalize_output(
@@ -264,6 +274,7 @@ fn remove_temp_file(temp_path: &str) {
   }
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error without deleting the source if remuxing or finalization fails.
 fn remux_recording(
@@ -281,10 +292,14 @@ fn remux_recording(
 
   remove_temp_file(temp_path);
   log_info!("Recording conversion completed for {temp_path}");
-  show_save_success(toast_id, output_path);
+  let display_name = output_path
+    .file_name()
+    .map_or_else(|| output_path.display().to_string(), |name| name.to_string_lossy().into_owned());
+  show_save_success(toast_id, &display_name);
   Ok(())
 }
 
+#[cfg(desktop)]
 /// # Errors
 /// Returns an error if FFmpeg cannot convert the temporary recording into an
 /// MP4 file.
@@ -353,7 +368,53 @@ pub async fn append_chunk(temp_path: String, chunk: Vec<u8>) -> Result<(), Strin
   .map_err(|error| format!("Recording chunk task failed: {error}"))?
 }
 
-#[cfg(test)]
+/// Final file name for a temp recording (`..._temp.<ext>` becomes
+/// `....<ext>`) and its MIME type. Mobile keeps the container `MediaRecorder`
+/// wrote, since there is no FFmpeg to remux it.
+#[cfg(mobile)]
+fn mobile_output_for(temp_path: &str) -> (String, &'static str) {
+  let file_name = std::path::Path::new(temp_path)
+    .file_name()
+    .map_or_else(|| temp_path.to_string(), |name| name.to_string_lossy().into_owned());
+  let (stem, extension) = file_name.rsplit_once("_temp.").unwrap_or((file_name.as_str(), "webm"));
+  let mime_type = match extension {
+    "mp4" => "video/mp4",
+    "mkv" => "video/x-matroska",
+    _ => "video/webm",
+  };
+  (format!("{stem}.{extension}"), mime_type)
+}
+
+/// Copies a finished recording into the configured folder (the platform
+/// default when none is chosen) and removes the temp file.
+///
+/// # Errors
+/// Returns an error without deleting the temp file if the copy fails.
+#[cfg(mobile)]
+pub async fn save(app: &tauri::AppHandle, temp_path: String) -> Result<(), String> {
+  use tauri_plugin_manafish_mobile::MobileExt;
+
+  let toast_id = toast_identifier(&temp_path);
+  show_save_started(&toast_id);
+  close_cached_file(&temp_path);
+
+  let (file_name, mime_type) = mobile_output_for(&temp_path);
+  let directory = crate::config::get_config_from_file().video_directory;
+  let location = app
+    .mobile()
+    .save_to_directory(std::path::Path::new(&temp_path), &directory, &file_name, mime_type)
+    .await
+    .inspect_err(|error| {
+      log_error!("Failed to save recording {temp_path}: {error}");
+      show_save_error(&toast_id);
+    })?;
+  remove_temp_file(&temp_path);
+  log_info!("Recording saved to {location}");
+  show_save_success(&toast_id, &location);
+  Ok(())
+}
+
+#[cfg(all(test, desktop))]
 mod tests {
   use std::io::{Read, Seek, SeekFrom};
   use std::sync::Arc;

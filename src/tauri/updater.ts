@@ -4,6 +4,7 @@ import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 
 import { LEGACY_APP_VERSION } from '@/lib/compatibility';
 import { logError, logInfo } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import {
   ReleasesStatus,
@@ -17,7 +18,8 @@ const PERCENT_MULTIPLIER = 100;
 const MAX_PERCENT = 100;
 const [UNSET]: undefined[] = [];
 
-export const isUpdaterEnabled = import.meta.env['VITE_UPDATER_DISABLED'] !== '1';
+// Mobile builds are updated by installing a newer release instead.
+export const isUpdaterEnabled = !isMobile && import.meta.env['VITE_UPDATER_DISABLED'] !== '1';
 
 const showAppUpdateAvailableToast = (version: string): void => {
   toast.create({

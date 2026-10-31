@@ -2341,6 +2341,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
+ "tauri-plugin-manafish-mobile",
  "tauri-plugin-opener",
  "tauri-plugin-updater",
  "tempfile",
@@ -4338,6 +4339,16 @@ dependencies = [
  "thiserror 2.0.21",
  "toml 1.1.8+spec-1.1.0",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-manafish-mobile"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

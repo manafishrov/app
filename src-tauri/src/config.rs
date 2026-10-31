@@ -16,8 +16,31 @@ pub struct ConfigSendChannelState {
   pub tx: Sender<Config>,
 }
 
+#[cfg(mobile)]
+static MOBILE_CONFIG_DIR: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+
+/// Mobile apps have no home config directory, so the sandboxed app config
+/// directory is resolved once the app starts.
+#[cfg(mobile)]
+pub fn init_config_dir(app: &tauri::AppHandle) {
+  use tauri::Manager;
+
+  match app.path().app_config_dir() {
+    Ok(dir) => {
+      let _ = MOBILE_CONFIG_DIR.set(dir);
+    },
+    Err(error) => log_error!("Failed to resolve the config directory: {error}"),
+  }
+}
+
+#[cfg(desktop)]
 pub fn get_config_path() -> Option<PathBuf> {
   dirs::config_dir().map(|base_dir| base_dir.join("manafish").join("config.json"))
+}
+
+#[cfg(mobile)]
+pub fn get_config_path() -> Option<PathBuf> {
+  MOBILE_CONFIG_DIR.get().map(|dir| dir.join("config.json"))
 }
 
 fn stored_version_is_newer(stored: &str, current: &str) -> bool {

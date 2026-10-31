@@ -28,6 +28,7 @@ import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { ReleaseNotes } from '@/features/update/ReleaseNotes';
 import { leavesLegacyApp } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { ReleasesStatus, updatesStore } from '@/stores/updates';
@@ -60,6 +61,15 @@ const createAppUpdateStatusMessage = (): string => {
       return m.general_settings_app_update_check_failed();
     }
   }
+};
+
+const appVersionStatusMessage = (): string => {
+  if (isUpdaterEnabled) {
+    return createAppUpdateStatusMessage();
+  }
+  return isMobile
+    ? m.general_settings_app_update_mobile()
+    : m.general_settings_app_update_managed_externally();
 };
 
 const AppUpdateActions: Component = () => (
@@ -166,11 +176,7 @@ const AppVersionCard: Component = () => (
     <CardContent class='flex flex-col gap-4'>
       <div class='flex flex-wrap items-center gap-3'>
         <VersionBadge version={configStore.appVersion} />
-        <p class='text-sm text-muted-foreground'>
-          {isUpdaterEnabled
-            ? createAppUpdateStatusMessage()
-            : m.general_settings_app_update_managed_externally()}
-        </p>
+        <p class='text-sm text-muted-foreground'>{appVersionStatusMessage()}</p>
       </div>
       <Show when={isUpdaterEnabled && updatesStore.app.status === 'available'}>
         <ReleaseNotes notes={updatesStore.app.releaseNotes} />

@@ -108,6 +108,65 @@ jobs:
       - name: Compile native FFmpeg bindings
         run: cargo check --locked --manifest-path src-tauri/Cargo.toml -p ffmpeg-next
 
+  check-android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.92.0
+        with:
+          components: clippy
+          targets: aarch64-linux-android
+      - name: Cache cargo registry
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-android-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-android-
+      # The runner image ships an Android NDK for the C dependencies.
+      - name: Run clippy
+        run: |
+          ndk_bin="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export CC_aarch64_linux_android="$ndk_bin/aarch64-linux-android29-clang"
+          export AR_aarch64_linux_android="$ndk_bin/llvm-ar"
+          cargo clippy --target aarch64-linux-android --all-targets \
+            -p manafish -p tauri-plugin-manafish-mobile -- -D warnings
+
+  # Also compiles the Swift side of the mobile plugin.
+  check-ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.92.0
+        with:
+          components: clippy
+          targets: aarch64-apple-ios
+      - name: Cache cargo registry
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-ios-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-ios-
+      - name: Run clippy
+        run: |
+          cargo clippy --target aarch64-apple-ios --all-targets \
+            -p manafish -p tauri-plugin-manafish-mobile -- -D warnings
+
   ci:
     name: ci
     if: always()
@@ -115,6 +174,8 @@ jobs:
       - check-frontend
       - check-backend
       - check-macos-ffmpeg
+      - check-android
+      - check-ios
     runs-on: ubuntu-latest
     steps:
       - name: Require all checks
@@ -122,7 +183,11 @@ jobs:
           FRONTEND_RESULT: ${{ needs.check-frontend.result }}
           BACKEND_RESULT: ${{ needs.check-backend.result }}
           MACOS_FFMPEG_RESULT: ${{ needs.check-macos-ffmpeg.result }}
+          ANDROID_RESULT: ${{ needs.check-android.result }}
+          IOS_RESULT: ${{ needs.check-ios.result }}
         run: |
           test "$FRONTEND_RESULT" = success
           test "$BACKEND_RESULT" = success
           test "$MACOS_FFMPEG_RESULT" = success
+          test "$ANDROID_RESULT" = success
+          test "$IOS_RESULT" = success
