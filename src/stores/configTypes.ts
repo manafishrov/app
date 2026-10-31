@@ -211,6 +211,7 @@ type Config = {
   customActions: CustomActionBinding[];
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
+  dismissedCompatibilityWarnings: string[];
 };
 
 export type {

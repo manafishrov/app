@@ -255,6 +255,10 @@ pub struct Config {
   pub custom_actions: Vec<CustomActionBinding>,
   pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
+  // `app@firmware` version pairs whose compatibility warning the user chose
+  // not to see again.
+  #[serde(default)]
+  pub dismissed_compatibility_warnings: Vec<String>,
 }
 
 fn default_automatic_bitrate() -> bool {
@@ -340,6 +344,7 @@ impl Default for Config {
       custom_actions: Vec::new(),
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
+      dismissed_compatibility_warnings: Vec::new(),
     }
   }
 }

@@ -6,7 +6,9 @@ import { TanStackDevtools } from '@tanstack/solid-devtools';
 import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
+import { CompatibilityWarningAlertDialog } from '@/features/compatibility/CompatibilityWarningAlertDialog';
 import { Header } from '@/features/header';
+import { loadCompatibility } from '@/lib/compatibility';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
@@ -50,6 +52,7 @@ const RootLayout: Component = () => {
 
   onMount(() => {
     setTimeout(closeSplashscreen, 0);
+    loadCompatibility().catch(logError);
     setupAppListeners(cleanupFns);
   });
 
@@ -67,6 +70,7 @@ const RootLayout: Component = () => {
           <Header />
           <Outlet />
           <Toaster />
+          <CompatibilityWarningAlertDialog />
         </LocaleProvider>
       </ThemeProvider>
       <TanStackDevtools

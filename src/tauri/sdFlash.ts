@@ -2,6 +2,7 @@ import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
+import { LEGACY_FIRMWARE_VERSION } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import {
@@ -60,13 +61,14 @@ const isTerminalStatus = (status: string): boolean =>
 export const loadFirmwareVersions = (): Promise<void> => {
   setSdFlashState({ versionsStatus: VersionsStatus.loading, versionsError: UNSET });
   return invoke<FirmwareRelease[]>('list_firmware_releases', {
-    payload: { repoUrl: FIRMWARE_REPO_URL },
+    payload: { repoUrl: FIRMWARE_REPO_URL, legacyTag: `v${LEGACY_FIRMWARE_VERSION}` },
   })
     .then((releases) => {
       const entries = releases.map((release) => ({
         version: release.version,
         publishedAt: release.publishedAt,
         prerelease: release.prerelease,
+        legacy: release.legacy,
         ...(typeof release.releaseNotes === 'string' ? { releaseNotes: release.releaseNotes } : {}),
       }));
       setVersions(entries);

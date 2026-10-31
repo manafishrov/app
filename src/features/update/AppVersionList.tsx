@@ -4,10 +4,12 @@ import { Skeleton } from '@manafishrov/ui/skeleton';
 import { For, Index, Show, createMemo, type Component } from 'solid-js';
 import ChevronIcon from '~icons/material-symbols/keyboard-arrow-down';
 
+import { CompatibleWithText, LegacyNotice } from '@/features/compatibility/CompatibilityText';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { ReleaseNotes } from '@/features/update/ReleaseNotes';
+import { compatibleFirmware, leavesLegacyApp } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
-import { compareVersions } from '@/lib/version';
+import { compareVersions, newestVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { ReleasesStatus, updatesStore, type AppReleaseEntry } from '@/stores/updates';
@@ -16,7 +18,8 @@ import { installAppReleaseVersion, loadAppReleases } from '@/tauri';
 const [UNSET]: undefined[] = [];
 
 const NOT_FOUND_INDEX = -1;
-const SKELETON_COUNT = 5;
+// Three stable releases, two prereleases and the legacy release.
+const SKELETON_COUNT = 6;
 
 const VersionRowSkeleton: Component<{ expanded: boolean }> = (props) => (
   <div class='flex w-full flex-col overflow-hidden rounded-lg border border-border'>
@@ -80,6 +83,7 @@ const VersionRowBadges: Component<{
   isCurrent: boolean;
   isLatestStable: boolean;
   prerelease: boolean;
+  legacy: boolean;
 }> = (props) => (
   <>
     <Show when={props.isCurrent}>
@@ -95,6 +99,11 @@ const VersionRowBadges: Component<{
     <Show when={props.prerelease}>
       <Badge class='bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-600 dark:text-amber-400'>
         {m.app_versions_badge_prerelease()}
+      </Badge>
+    </Show>
+    <Show when={props.legacy}>
+      <Badge class='bg-muted px-1.5 py-0 text-[10px] text-muted-foreground'>
+        {m.app_versions_badge_legacy()}
       </Badge>
     </Show>
   </>
@@ -126,6 +135,7 @@ const InstallConfirmDescription: Component<{ entry: AppReleaseEntry }> = (props)
         })}
       </p>
     </Show>
+    <LegacyNotice when={leavesLegacyApp(configStore.appVersion, props.entry.version)} />
   </div>
 );
 
@@ -179,6 +189,7 @@ const VersionRow: Component<{
             isCurrent={props.isCurrent}
             isLatestStable={props.isLatestStable}
             prerelease={props.entry.prerelease}
+            legacy={props.entry.legacy}
           />
         </div>
         <p class='text-xs text-muted-foreground'>
@@ -186,6 +197,10 @@ const VersionRow: Component<{
             date: new Date(props.entry.publishedAt).toLocaleDateString(),
           })}
         </p>
+        <CompatibleWithText
+          versions={compatibleFirmware(props.entry.version)}
+          label={m.app_versions_compatible_with}
+        />
       </div>
       <ChevronIcon
         class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${props.selected ? 'rotate-180' : ''}`}
@@ -209,10 +224,13 @@ const VersionRows: Component<{
   onSelectTag: (tag: string) => void;
 }> = (props) => {
   const isInstalling = createMemo(() => typeof updatesStore.releases.installingTag === 'string');
-  const latestStableVersion = createMemo(() => {
-    const stable = updatesStore.releases.entries.find((entry) => !entry.prerelease);
-    return stable ? stable.version : UNSET;
-  });
+  const latestStableVersion = createMemo(() =>
+    newestVersion(
+      updatesStore.releases.entries
+        .filter((entry) => !entry.prerelease)
+        .map((entry) => entry.version),
+    ),
+  );
 
   return (
     <div class='flex flex-col gap-2'>
