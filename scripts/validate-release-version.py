@@ -103,6 +103,12 @@ def main() -> int:
             f"  {path}: {embedded!r}" for path, embedded in mismatches.items()
         )
         parser.error(f"tag version {version!r} does not match:\n{details}")
+
+    compatibility = json.loads((ROOT / "src" / "compatibility.json").read_text())
+    if not prerelease and version.partition("+")[0] not in compatibility:
+        parser.error(
+            f"src/compatibility.json has no firmware versions for stable release {version!r}"
+        )
     return 0
 
 

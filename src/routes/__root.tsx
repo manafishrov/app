@@ -6,7 +6,9 @@ import { TanStackDevtools } from '@tanstack/solid-devtools';
 import { HeadContent, Outlet, createRootRoute } from '@tanstack/solid-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
+import { CompatibilityWarningAlertDialog } from '@/features/compatibility/CompatibilityWarningAlertDialog';
 import { Header } from '@/features/header';
+import { loadCompatibility } from '@/lib/compatibility';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
 import { disablePageZoom } from '@/lib/pageZoom';
@@ -52,6 +54,7 @@ const RootLayout: Component = () => {
   onMount(() => {
     cleanupFns.push(disablePageZoom());
     setTimeout(closeSplashscreen, 0);
+    loadCompatibility().catch(logError);
     setupAppListeners(cleanupFns);
   });
 
@@ -69,6 +72,7 @@ const RootLayout: Component = () => {
           <Header />
           <Outlet />
           <Toaster />
+          <CompatibilityWarningAlertDialog />
         </LocaleProvider>
       </ThemeProvider>
       <TanStackDevtools

@@ -75,6 +75,7 @@ const defaultConfig: Config = {
   customActions: [],
   selectedGamepadId: null,
   gamepad: {},
+  dismissedCompatibilityWarnings: [],
 };
 
 const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);

@@ -27,9 +27,13 @@ import {
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
 
+import { LegacyNotice } from '@/features/compatibility/CompatibilityText';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
+import { leavesLegacyFirmware } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
+import { configStore } from '@/stores/config';
+import { rovConfigStore } from '@/stores/rovConfig';
 import {
   PipelineStatus,
   isPipelineRunning,
@@ -190,6 +194,20 @@ const useFlashState = (
   return { canFlash, buttonText: createMemo(() => getButtonText(selectedEntry())) };
 };
 
+const FlashConfirmDescription: Component<{ version: string }> = (props) => (
+  <div class='space-y-2'>
+    <p>{m.sd_flash_confirm_data_loss()}</p>
+    <p>{m.sd_flash_confirm_config_replaced()}</p>
+    <LegacyNotice
+      when={leavesLegacyFirmware(
+        configStore.appVersion,
+        rovConfigStore.firmwareVersion,
+        props.version,
+      )}
+    />
+  </div>
+);
+
 export const FlashAction: Component<{
   selectedVersion: string | undefined;
 }> = (props) => {
@@ -214,12 +232,7 @@ export const FlashAction: Component<{
           confirmLabel={m.sd_flash_action_ready()}
           disabled={!canFlash()}
           title={m.sd_flash_confirm_title()}
-          description={
-            <div class='space-y-2'>
-              <p>{m.sd_flash_confirm_data_loss()}</p>
-              <p>{m.sd_flash_confirm_config_replaced()}</p>
-            </div>
-          }
+          description={<FlashConfirmDescription version={props.selectedVersion ?? ''} />}
           onConfirm={() => {
             const version = props.selectedVersion;
             if (typeof version !== 'string') {

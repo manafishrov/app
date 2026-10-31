@@ -3,31 +3,34 @@ import { Link } from '@manafishrov/ui/link';
 import { Show, createMemo, onMount, type Component } from 'solid-js';
 
 import { VersionBadge } from '@/components/VersionBadge';
+import { compatibleFirmware, isVerifiedPair } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
-import { isNewerVersion } from '@/lib/version';
+import { isNewerVersion, newestVersion } from '@/lib/version';
 import * as m from '@/paraglide/messages';
+import { configStore } from '@/stores/config';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { VersionsStatus, sdFlashStore } from '@/stores/sdFlash';
 import { loadFirmwareVersions } from '@/tauri';
+
+const [UNSET]: undefined[] = [];
 
 const newerVersionAvailable = (): string | undefined => {
   const installed = rovConfigStore.firmwareVersion;
   if (installed === '' || installed === m.common_not_available()) {
     return;
   }
-  let latestStable: (typeof sdFlashStore.versions)[number] | null = null;
-  for (const entry of sdFlashStore.versions) {
-    if (
-      !entry.prerelease &&
-      (latestStable === null || isNewerVersion(entry.version, latestStable.version))
-    ) {
-      latestStable = entry;
-    }
-  }
-  if (!latestStable || !isNewerVersion(latestStable.version, installed)) {
+  // Only suggest firmware this app was verified with, so legacy ROVs stay on legacy firmware.
+  const app = configStore.appVersion;
+  const anyFirmware = compatibleFirmware(app).length === 0;
+  const latestStable = newestVersion(
+    sdFlashStore.versions
+      .filter((entry) => !entry.prerelease && (anyFirmware || isVerifiedPair(app, entry.version)))
+      .map((entry) => entry.version),
+  );
+  if (latestStable === UNSET || !isNewerVersion(latestStable, installed)) {
     return;
   }
-  return latestStable.version;
+  return latestStable;
 };
 
 export const PiFirmwareVersionCard: Component = () => {
