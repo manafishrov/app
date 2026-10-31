@@ -41,6 +41,7 @@ describe('compatibility', () => {
     expect(leavesLegacyFirmware('1.0.18', 'N/A', 'v1.2.0')).toBe(true);
     expect(leavesLegacyFirmware('1.1.0', '1.1.6', 'v1.2.0')).toBe(true);
     expect(leavesLegacyFirmware('1.1.0', '1.2.0', 'v1.2.1')).toBe(false);
+    expect(leavesLegacyFirmware('1.1.0', 'N/A', 'v1.2.1')).toBe(true);
     expect(leavesLegacyFirmware('1.0.18', 'N/A', 'v1.1.6')).toBe(false);
   });
 });

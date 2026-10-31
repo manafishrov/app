@@ -76,10 +76,12 @@ export const isLegacyFirmware = (version: string): boolean =>
 export const leavesLegacyApp = (currentVersion: string, targetVersion: string): boolean =>
   isLegacyApp(currentVersion) && isNewerVersion(targetVersion, LEGACY_APP_VERSION);
 
+// SD cards are usually flashed with the ROV disconnected.
+// An unknown installed firmware version may still be a legacy ROV.
 export const leavesLegacyFirmware = (
   appVersion: string,
   installedFirmwareVersion: string,
   targetFirmwareVersion: string,
 ): boolean =>
-  (isLegacyApp(appVersion) || isLegacyFirmware(installedFirmwareVersion)) &&
+  (isLegacyApp(appVersion) || !isNewerVersion(installedFirmwareVersion, LEGACY_FIRMWARE_VERSION)) &&
   isNewerVersion(targetFirmwareVersion, LEGACY_FIRMWARE_VERSION);
