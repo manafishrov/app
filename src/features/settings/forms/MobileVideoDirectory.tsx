@@ -15,6 +15,16 @@ const saveVideoDirectory = (directory: string): void => {
   setConfig({ videoDirectory: directory }).catch(logError);
 };
 
+const handleSelect = (): void => {
+  pickVideoDirectory()
+    .then((picked) => {
+      if (picked) {
+        saveVideoDirectory(picked.directory);
+      }
+    })
+    .catch(logError);
+};
+
 const describe = (directory: string): Promise<string> =>
   describeVideoDirectory(directory)
     .then((name) =>
@@ -32,16 +42,6 @@ const describe = (directory: string): Promise<string> =>
  */
 export const MobileVideoDirectory: Component = () => {
   const [name] = createResource(() => configStore.videoDirectory, describe);
-
-  const handleSelect = (): void => {
-    pickVideoDirectory()
-      .then((picked) => {
-        if (picked) {
-          saveVideoDirectory(picked.directory);
-        }
-      })
-      .catch(logError);
-  };
 
   return (
     <Field readOnly>
