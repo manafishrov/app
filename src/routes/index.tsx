@@ -1,16 +1,19 @@
 import { cn } from '@manafishrov/ui';
+import { AspectRatio } from '@manafishrov/ui/aspect-ratio';
 import { createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createSignal, onCleanup, onMount, type JSXElement } from 'solid-js';
 
 import { Overlay } from '@/features/overlay';
 import { VideoStream } from '@/features/videoStream';
-import { CameraFrame } from '@/features/videoStream/CameraFrame';
 import { createDirectionVectorLoop, createKeyboardTracker, createStateToggleLoop } from '@/input';
 import { configStore, recordingStore } from '@/stores';
 import { deactivateDirectionVector, sendDirectionVector } from '@/tauri';
 
 const FULLSCREEN_POLL_INTERVAL = 500;
+const ASPECT_RATIO_WIDTH = 4;
+const ASPECT_RATIO_HEIGHT = 3;
+const ASPECT_RATIO = ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT;
 
 const INVALID_INTERVAL = -1;
 const DIRECTION_TRANSPORT = {
@@ -85,10 +88,13 @@ const HomePage = (): JSXElement => {
         !isFullscreen() && 'mt-8',
       )}
     >
-      <CameraFrame class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-sm'>
+      <AspectRatio
+        ratio={ASPECT_RATIO}
+        class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-lg bg-muted'
+      >
         <VideoStream />
         <Overlay />
-      </CameraFrame>
+      </AspectRatio>
     </main>
   );
 };

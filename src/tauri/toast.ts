@@ -25,8 +25,6 @@ type ToastAction = {
 
 type ToastContent = {
   messageKey: string;
-  message?: string | null;
-  description?: string | null;
   messageArgs?: ToastKeyArgs;
   descriptionKey?: string;
   descriptionArgs?: ToastKeyArgs;
@@ -132,7 +130,6 @@ const clearAllLoadingTimeouts = (): void => {
 };
 
 const createToastTitle = (content: ToastContent): string =>
-  content.message ??
   resolveToastMessage(content.messageKey, content.messageArgs, content.messageKey) ??
   content.messageKey;
 
@@ -209,9 +206,10 @@ const createBaseToastOptions = (payload: ToastPayload): ToastCreateOptions => {
 };
 
 const addToastDescription = (options: ToastCreateOptions, payload: ToastPayload): void => {
-  const description =
-    payload.content.description ??
-    resolveToastMessage(payload.content.descriptionKey, payload.content.descriptionArgs);
+  const description = resolveToastMessage(
+    payload.content.descriptionKey,
+    payload.content.descriptionArgs,
+  );
 
   if (
     payload.identifier === 'thruster-test' &&

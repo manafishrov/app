@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  invokeAction: vi.fn(),
+  invokeCommand: vi.fn(),
   status: { autoStabilization: false, depthHold: false },
 }));
 
@@ -14,7 +14,7 @@ vi.mock('@/stores/rovStatus', () => ({
     mocks.status.depthHold = value;
   },
 }));
-vi.mock('@/tauri/capabilities', () => ({ invokeAction: mocks.invokeAction }));
+vi.mock('@/tauri/core', () => ({ invokeCommand: mocks.invokeCommand }));
 
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 
@@ -23,13 +23,15 @@ describe('stabilization state commands', () => {
     vi.clearAllMocks();
     mocks.status.autoStabilization = false;
     mocks.status.depthHold = false;
-    mocks.invokeAction.mockImplementation((): Promise<void> => Promise.resolve());
+    mocks.invokeCommand.mockImplementation((): Promise<void> => Promise.resolve());
   });
 
   it('sends the desired auto-stabilization state explicitly', () =>
     toggleAutoStabilization().then(() => {
       expect(mocks.status.autoStabilization).toBe(true);
-      expect(mocks.invokeAction).toHaveBeenCalledWith('rov.autoStabilization.set', 'press', true);
+      expect(mocks.invokeCommand).toHaveBeenCalledWith('set_auto_stabilization', {
+        enabled: true,
+      });
     }));
 
   it('sends the desired depth-hold state explicitly', () => {
@@ -37,12 +39,12 @@ describe('stabilization state commands', () => {
 
     return toggleDepthHold().then(() => {
       expect(mocks.status.depthHold).toBe(false);
-      expect(mocks.invokeAction).toHaveBeenCalledWith('rov.depthHold.set', 'press', false);
+      expect(mocks.invokeCommand).toHaveBeenCalledWith('set_depth_hold', { enabled: false });
     });
   });
 
   it('rolls back and rejects when delivery fails', () => {
-    mocks.invokeAction.mockRejectedValue(new Error('delivery failed'));
+    mocks.invokeCommand.mockRejectedValue(new Error('delivery failed'));
 
     return expect(toggleAutoStabilization())
       .rejects.toThrow('delivery failed')

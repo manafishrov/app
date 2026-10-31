@@ -23,7 +23,7 @@ const ClassicAttitudeIndicator: Component<ClassicAttitudeIndicatorProps> = (prop
 
   return (
     <div
-      class='overlay-surface flex flex-col items-center justify-center overflow-hidden'
+      class='flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-background/50 text-foreground opacity-75 backdrop-blur-sm'
       style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}
     >
       <svg width={props.size} height={props.size} viewBox={`0 0 ${props.size} ${props.size}`}>

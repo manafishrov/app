@@ -1,16 +1,15 @@
 use std::sync::atomic::AtomicU64;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use super::capabilities::{CapabilityState, action_message};
 use futures_util::{Sink, SinkExt, StreamExt};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio::sync::{
   mpsc::{self, Receiver},
   oneshot, watch,
 };
 use tokio::time::{MissedTickBehavior, interval, sleep, timeout};
+use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{self, Message};
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 
 use super::handler::handle_message;
 use super::message::WebsocketMessage;
@@ -111,7 +110,6 @@ fn direction_session_state_after_send(
 }
 
 fn emit_connection_status(app: &AppHandle, is_connected: bool, delay: Option<u128>) {
-  app.state::<CapabilityState>().set_connected(is_connected);
   if let Err(error) = app.emit(
     "rov_connection_status_updated",
     ConnectionStatus {
@@ -278,24 +276,6 @@ where
   true
 }
 
-async fn connect_socket(
-  app: &AppHandle,
-  url: &str,
-) -> Option<WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>> {
-  log_info!("Attempting to connect to {url}");
-  let error = match timeout(Duration::from_secs(5), connect_async(url)).await {
-    Ok(Ok((stream, _))) => {
-      log_info!("Successfully connected to {url}");
-      return Some(stream);
-    },
-    Ok(Err(error)) => error.to_string(),
-    Err(_) => "connection timed out".into(),
-  };
-  log_info!("WebSocket connect error: {error}. Retrying...");
-  emit_connection_status(app, false, None);
-  None
-}
-
 pub async fn start_websocket_client(
   app: AppHandle,
   mut config_rx: Receiver<Config>,
@@ -307,14 +287,32 @@ pub async fn start_websocket_client(
 
   loop {
     let url = connection_url(&config);
-    let Some(ws_stream) = connect_socket(&app, &url).await else {
-      if let Some(new_config) = wait_before_retry(&mut config_rx).await {
-        config = new_config;
-      }
-      continue;
+    let connect_timeout = Duration::from_secs(5);
+
+    log_info!("Attempting to connect to {}", url);
+    let ws_stream = match timeout(connect_timeout, connect_async(&url)).await {
+      Ok(Ok((stream, _))) => {
+        log_info!("Successfully connected to {}", url);
+        stream
+      },
+      Ok(Err(e)) => {
+        log_info!("WebSocket connect error: {}. Retrying...", e);
+        emit_connection_status(&app, false, None);
+        if let Some(new_config) = wait_before_retry(&mut config_rx).await {
+          config = new_config;
+        }
+        continue;
+      },
+      Err(_) => {
+        log_info!("WebSocket connect timeout. Retrying...");
+        emit_connection_status(&app, false, None);
+        if let Some(new_config) = wait_before_retry(&mut config_rx).await {
+          config = new_config;
+        }
+        continue;
+      },
     };
 
-    emit_connection_status(&app, true, None);
     let (mut write, mut read) = ws_stream.split();
 
     let ping_interval_duration = Duration::from_secs(2);
@@ -335,10 +333,6 @@ pub async fn start_websocket_client(
             config = new_config;
           }
           Some(outbound) = message_rx.recv() => {
-              if let WebsocketMessage::CapabilityRequest(request) = &outbound.message
-                && !app.state::<CapabilityState>().is_pending(&request.request_id) {
-                continue;
-              }
               if outbound_completion_cancelled(outbound.sent.as_ref()) {
                 log_warn!("Dropping an outbound command after its caller timed out.");
                 continue;
@@ -364,7 +358,7 @@ pub async fn start_websocket_client(
               let outcome = send_serialized_message(
                 &mut write,
                 &app,
-                &action_message("rov.direction", &serde_json::json!(direction_vector)),
+                &WebsocketMessage::DirectionVector(direction_vector),
                 "direction vector",
                 " (direction vector)",
               ).await;
@@ -382,11 +376,7 @@ pub async fn start_websocket_client(
                 break;
               }
           }
-          message = read.next() => {
-              let Some(message) = message else {
-                emit_connection_status(&app, false, None);
-                break;
-              };
+          Some(message) = read.next() => {
               if !handle_incoming_message(&mut write, &app, message).await {
                 break;
               }

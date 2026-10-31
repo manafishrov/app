@@ -17,48 +17,50 @@ import { playConfirmHaptic } from '@/tauri/gamepad';
 
 const [undef] = [] as (number | undefined)[];
 
-const handleRecordingClick = (): void => {
-  const { isRecording } = recordingStore;
-  playConfirmHaptic(configStore.selectedGamepadId);
-  setRecordingStore({
-    isRecording: !isRecording,
-    startTime: isRecording ? undef : Date.now(),
-  });
-};
+const RecordingButton = (): JSXElement => {
+  const handleRecordingClick = (): void => {
+    const { isRecording } = recordingStore;
+    playConfirmHaptic(configStore.selectedGamepadId);
+    setRecordingStore({
+      isRecording: !isRecording,
+      startTime: isRecording ? undef : Date.now(),
+    });
+  };
 
-const RecordingButton = (): JSXElement => (
-  <Show when={recordingStore.webrtcConnected}>
-    <Tooltip positioning={{ placement: 'bottom' }}>
-      <TooltipTrigger
-        tabIndex={-1}
-        asChild={(props) => (
-          <Button
-            {...props()}
-            size='icon-xs'
-            variant={recordingStore.isRecording ? 'destructive' : 'outline'}
-            onClick={handleRecordingClick}
-            aria-label={
-              recordingStore.isRecording
+  return (
+    <Show when={recordingStore.webrtcConnected}>
+      <Tooltip positioning={{ placement: 'bottom' }}>
+        <TooltipTrigger
+          tabIndex={-1}
+          asChild={(props) => (
+            <Button
+              {...props()}
+              size='icon-xs'
+              variant={recordingStore.isRecording ? 'destructive' : 'outline'}
+              onClick={handleRecordingClick}
+              aria-label={
+                recordingStore.isRecording
+                  ? m.controls_recording_stop_recording()
+                  : m.controls_recording_start_recording()
+              }
+            >
+              <VideoIcon />
+            </Button>
+          )}
+        />
+        <TooltipPositioner>
+          <TooltipContent>
+            <span>
+              {recordingStore.isRecording
                 ? m.controls_recording_stop_recording()
-                : m.controls_recording_start_recording()
-            }
-          >
-            <VideoIcon />
-          </Button>
-        )}
-      />
-      <TooltipPositioner>
-        <TooltipContent>
-          <span>
-            {recordingStore.isRecording
-              ? m.controls_recording_stop_recording()
-              : m.controls_recording_start_recording()}
-          </span>
-          <TooltipArrow />
-        </TooltipContent>
-      </TooltipPositioner>
-    </Tooltip>
-  </Show>
-);
+                : m.controls_recording_start_recording()}
+            </span>
+            <TooltipArrow />
+          </TooltipContent>
+        </TooltipPositioner>
+      </Tooltip>
+    </Show>
+  );
+};
 
 export { RecordingButton };

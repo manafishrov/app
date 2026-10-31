@@ -209,19 +209,21 @@ const useHeaderEffects = (
   return isMouseInWindow;
 };
 
-const handleClose = (): void => {
-  getCurrentWindow().close().catch(ignoreError);
-};
-
-const handleMinimize = (): void => {
-  getCurrentWindow().minimize().catch(ignoreError);
-};
-
 const useWindowActions = (
   setIsFullscreen: (val: boolean) => unknown,
 ): {
+  handleClose: () => void;
+  handleMinimize: () => void;
   handleFullscreen: () => void;
 } => {
+  const handleClose = (): void => {
+    getCurrentWindow().close().catch(ignoreError);
+  };
+
+  const handleMinimize = (): void => {
+    getCurrentWindow().minimize().catch(ignoreError);
+  };
+
   const handleFullscreen = (): void => {
     const win = getCurrentWindow();
     win
@@ -238,7 +240,7 @@ const useWindowActions = (
       .catch(ignoreError);
   };
 
-  return { handleFullscreen };
+  return { handleClose, handleMinimize, handleFullscreen };
 };
 
 export const Header: Component = () => {
@@ -247,7 +249,7 @@ export const Header: Component = () => {
   const [isFocused, setIsFocused] = createSignal(true);
 
   const isMouseInWindow = useHeaderEffects(setIsFullscreen, setIsFocused, navigate);
-  const { handleFullscreen } = useWindowActions(setIsFullscreen);
+  const { handleClose, handleMinimize, handleFullscreen } = useWindowActions(setIsFullscreen);
 
   const isMac = createMemo(getIsMac);
 

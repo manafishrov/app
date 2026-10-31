@@ -20,7 +20,6 @@ import { Show, createSignal, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
 
 import { VersionBadge } from '@/components/VersionBadge';
-import { Appearance } from '@/features/settings/forms/Appearance';
 import { General } from '@/features/settings/forms/General';
 import { AppVersionList } from '@/features/update/AppVersionList';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
@@ -181,9 +180,6 @@ const GeneralSettingsPage: Component = () => (
     </div>
     <AppVersionCard />
     <General />
-    <div class='mt-8 border-t border-border pt-6'>
-      <Appearance />
-    </div>
   </>
 );
 

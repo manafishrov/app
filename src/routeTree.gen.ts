@@ -21,8 +21,6 @@ import { Route as SettingsSdCardIndexRouteImport } from './routes/settings/sd-ca
 import { Route as SettingsRovCalibrationIndexRouteImport } from './routes/settings/rov/calibration/index'
 import { Route as SettingsRovCameraIndexRouteImport } from './routes/settings/rov/camera/index'
 import { Route as SettingsRovConnectionIndexRouteImport } from './routes/settings/rov/connection/index'
-import { Route as SettingsRovCsvLoggingIndexRouteImport } from './routes/settings/rov/csv-logging/index'
-import { Route as SettingsRovCustomActionsIndexRouteImport } from './routes/settings/rov/custom-actions/index'
 import { Route as SettingsRovFirmwareIndexRouteImport } from './routes/settings/rov/firmware/index'
 import { Route as SettingsRovMcuIndexRouteImport } from './routes/settings/rov/mcu/index'
 import { Route as SettingsRovPowerIndexRouteImport } from './routes/settings/rov/power/index'
@@ -92,18 +90,6 @@ const SettingsRovConnectionIndexRoute =
     path: '/rov/connection/',
     getParentRoute: () => SettingsRouteRoute,
   } as any)
-const SettingsRovCsvLoggingIndexRoute =
-  SettingsRovCsvLoggingIndexRouteImport.update({
-    id: '/rov/csv-logging/',
-    path: '/rov/csv-logging/',
-    getParentRoute: () => SettingsRouteRoute,
-  } as any)
-const SettingsRovCustomActionsIndexRoute =
-  SettingsRovCustomActionsIndexRouteImport.update({
-    id: '/rov/custom-actions/',
-    path: '/rov/custom-actions/',
-    getParentRoute: () => SettingsRouteRoute,
-  } as any)
 const SettingsRovFirmwareIndexRoute =
   SettingsRovFirmwareIndexRouteImport.update({
     id: '/rov/firmware/',
@@ -145,8 +131,6 @@ export interface FileRoutesByFullPath {
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera/': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
-  '/settings/rov/csv-logging/': typeof SettingsRovCsvLoggingIndexRoute
-  '/settings/rov/custom-actions/': typeof SettingsRovCustomActionsIndexRoute
   '/settings/rov/firmware/': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
@@ -165,8 +149,6 @@ export interface FileRoutesByTo {
   '/settings/rov/calibration': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection': typeof SettingsRovConnectionIndexRoute
-  '/settings/rov/csv-logging': typeof SettingsRovCsvLoggingIndexRoute
-  '/settings/rov/custom-actions': typeof SettingsRovCustomActionsIndexRoute
   '/settings/rov/firmware': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power': typeof SettingsRovPowerIndexRoute
@@ -187,8 +169,6 @@ export interface FileRoutesById {
   '/settings/rov/calibration/': typeof SettingsRovCalibrationIndexRoute
   '/settings/rov/camera/': typeof SettingsRovCameraIndexRoute
   '/settings/rov/connection/': typeof SettingsRovConnectionIndexRoute
-  '/settings/rov/csv-logging/': typeof SettingsRovCsvLoggingIndexRoute
-  '/settings/rov/custom-actions/': typeof SettingsRovCustomActionsIndexRoute
   '/settings/rov/firmware/': typeof SettingsRovFirmwareIndexRoute
   '/settings/rov/mcu/': typeof SettingsRovMcuIndexRoute
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
@@ -210,8 +190,6 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration/'
     | '/settings/rov/camera/'
     | '/settings/rov/connection/'
-    | '/settings/rov/csv-logging/'
-    | '/settings/rov/custom-actions/'
     | '/settings/rov/firmware/'
     | '/settings/rov/mcu/'
     | '/settings/rov/power/'
@@ -230,8 +208,6 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration'
     | '/settings/rov/camera'
     | '/settings/rov/connection'
-    | '/settings/rov/csv-logging'
-    | '/settings/rov/custom-actions'
     | '/settings/rov/firmware'
     | '/settings/rov/mcu'
     | '/settings/rov/power'
@@ -251,8 +227,6 @@ export interface FileRouteTypes {
     | '/settings/rov/calibration/'
     | '/settings/rov/camera/'
     | '/settings/rov/connection/'
-    | '/settings/rov/csv-logging/'
-    | '/settings/rov/custom-actions/'
     | '/settings/rov/firmware/'
     | '/settings/rov/mcu/'
     | '/settings/rov/power/'
@@ -351,20 +325,6 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsRovConnectionIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
-    '/settings/rov/csv-logging/': {
-      id: '/settings/rov/csv-logging/'
-      path: '/rov/csv-logging'
-      fullPath: '/settings/rov/csv-logging/'
-      preLoaderRoute: typeof SettingsRovCsvLoggingIndexRouteImport
-      parentRoute: typeof SettingsRouteRoute
-    }
-    '/settings/rov/custom-actions/': {
-      id: '/settings/rov/custom-actions/'
-      path: '/rov/custom-actions'
-      fullPath: '/settings/rov/custom-actions/'
-      preLoaderRoute: typeof SettingsRovCustomActionsIndexRouteImport
-      parentRoute: typeof SettingsRouteRoute
-    }
     '/settings/rov/firmware/': {
       id: '/settings/rov/firmware/'
       path: '/rov/firmware'
@@ -414,8 +374,6 @@ interface SettingsRouteRouteChildren {
   SettingsRovCalibrationIndexRoute: typeof SettingsRovCalibrationIndexRoute
   SettingsRovCameraIndexRoute: typeof SettingsRovCameraIndexRoute
   SettingsRovConnectionIndexRoute: typeof SettingsRovConnectionIndexRoute
-  SettingsRovCsvLoggingIndexRoute: typeof SettingsRovCsvLoggingIndexRoute
-  SettingsRovCustomActionsIndexRoute: typeof SettingsRovCustomActionsIndexRoute
   SettingsRovFirmwareIndexRoute: typeof SettingsRovFirmwareIndexRoute
   SettingsRovMcuIndexRoute: typeof SettingsRovMcuIndexRoute
   SettingsRovPowerIndexRoute: typeof SettingsRovPowerIndexRoute
@@ -434,8 +392,6 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsRovCalibrationIndexRoute: SettingsRovCalibrationIndexRoute,
   SettingsRovCameraIndexRoute: SettingsRovCameraIndexRoute,
   SettingsRovConnectionIndexRoute: SettingsRovConnectionIndexRoute,
-  SettingsRovCsvLoggingIndexRoute: SettingsRovCsvLoggingIndexRoute,
-  SettingsRovCustomActionsIndexRoute: SettingsRovCustomActionsIndexRoute,
   SettingsRovFirmwareIndexRoute: SettingsRovFirmwareIndexRoute,
   SettingsRovMcuIndexRoute: SettingsRovMcuIndexRoute,
   SettingsRovPowerIndexRoute: SettingsRovPowerIndexRoute,

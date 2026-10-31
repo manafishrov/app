@@ -3,6 +3,7 @@ import { defineConfig } from 'oxfmt';
 export default defineConfig({
   ignorePatterns: [
     '.github/**',
+    'AGENTS.md',
     'README.md',
     'dist',
     'node_modules',

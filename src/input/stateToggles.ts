@@ -3,8 +3,6 @@ import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/sto
 
 import {
   handleCustomActionToggles,
-  releaseCustomActions,
-  setupCustomActionFocusRelease,
   type CustomActionToggleState,
 } from '@/input/customActionToggles';
 import { getActiveGamepad, getGamepadBindings, readGamepadInput } from '@/input/gamepad';
@@ -20,12 +18,14 @@ import { isInputSuppressed } from '@/stores/inputState';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 import { playConfirmHaptic } from '@/tauri/gamepad';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
+
 type ToggleState = {
   autoStabilization: boolean;
   depthHold: boolean;
   desiredDepthEntry: boolean;
   record: boolean;
 };
+
 type ToggleContext = {
   config: Config;
   pressedKeys: Set<string>;
@@ -60,6 +60,7 @@ const THRESHOLD = 0.5;
 const DESIRED_DEPTH_STEP = 0.1;
 const DESIRED_DEPTH_REPEAT_DELAY_MS = 200;
 const DESIRED_DEPTH_REPEAT_INTERVAL_MS = 40;
+
 const isInputPressed = ({
   input,
   pressedKeys,
@@ -253,9 +254,13 @@ const handleDefaultFrame = (
   handleRecordingInput(ctx);
 };
 
-type ToggleLoopInputs = [Config, Set<string>, () => boolean, () => boolean];
 export const createStateToggleLoop = (
-  ...[config, pressedKeys, getIsRecording, getWebrtcConnected]: ToggleLoopInputs
+  ...[config, pressedKeys, getIsRecording, getWebrtcConnected]: [
+    Config,
+    Set<string>,
+    () => boolean,
+    () => boolean,
+  ]
 ): CleanupFn => {
   let frame: number | null = null;
   const lastState: ToggleState = {
@@ -269,7 +274,6 @@ export const createStateToggleLoop = (
     desiredDepthDecrease: 0,
   };
   const customActionState: CustomActionToggleState = new Map();
-  const releaseFocus = setupCustomActionFocusRelease(customActionState);
   const loop = (): void => {
     const ctx = createToggleContext({
       config,
@@ -280,7 +284,6 @@ export const createStateToggleLoop = (
     });
     handleDesiredDepthEntryToggle(ctx);
     if (isInputSuppressed()) {
-      releaseCustomActions(customActionState);
       handleSuppressedFrame(ctx, desiredDepthRepeatState);
       frame = requestAnimationFrame(loop);
       return;
@@ -290,7 +293,6 @@ export const createStateToggleLoop = (
   };
   loop();
   return (): void => {
-    releaseFocus();
     if (frame !== null) {
       cancelAnimationFrame(frame);
     }
