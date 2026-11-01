@@ -7,7 +7,6 @@ import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configT
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
-export { CustomActionTrigger } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 

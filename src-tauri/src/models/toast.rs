@@ -54,7 +54,7 @@ mod tests {
   fn forwards_plain_sdk_notifications_and_localized_firmware_toasts() {
     for content in [
       json!({"message": "Water detected", "description": "Check housing"}),
-      json!({"messageKey": "toasts_water_sensor_wet_title"}),
+      json!({"messageKey": "toasts_thruster_test_cancelled"}),
     ] {
       let payload = json!({"identifier": "custom-action:sensor:wet", "variant": "warn", "content": content, "action": null});
       let toast: Toast = serde_json::from_value(payload).unwrap();

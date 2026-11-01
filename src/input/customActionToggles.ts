@@ -41,7 +41,7 @@ const isInputPressed = (input: InputPair, args: CustomActionToggleArgs): boolean
 };
 
 const handleAction = (args: CustomActionToggleArgs, binding: CustomActionBinding): void => {
-  const id = binding.actionId ?? binding.module;
+  const id = binding.actionId;
   const available = isActionAvailable(id);
   const pressed = isInputPressed(getInput(binding, args.config), args);
   const previous = args.state.get(binding.id);
@@ -57,7 +57,7 @@ const removeDeletedActions = (args: CustomActionToggleArgs): void => {
   for (const [id, state] of args.state) {
     if (
       !args.config.customActions.some(
-        (binding) => binding.id === id && (binding.actionId ?? binding.module) === state.actionId,
+        (binding) => binding.id === id && binding.actionId === state.actionId,
       )
     ) {
       if (state.pressed && capabilityStore.connected) {

@@ -188,21 +188,10 @@ pub struct GamepadBindings {
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum CustomActionTrigger {
-  #[default]
-  Tap,
-  Hold,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CustomActionBinding {
   pub id: String,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub action_id: Option<String>,
-  pub module: String,
-  pub trigger: CustomActionTrigger,
+  pub action_id: String,
   pub keyboard: Option<KeyboardInput>,
   pub gamepad: HashMap<String, Option<GamepadInput>>,
 }
@@ -657,7 +646,7 @@ mod tests {
     };
     assert_eq!(serde_json::to_value(parsed).ok(), Some(widget));
     let binding = serde_json::json!({"id": "binding", "actionId": "dispenser.dispense",
-      "module": "", "trigger": "tap", "keyboard": null, "gamepad": {}});
+      "keyboard": null, "gamepad": {}});
     let parsed = serde_json::from_value::<CustomActionBinding>(binding.clone());
     assert!(parsed.is_ok(), "Capability binding rejected: {:?}", parsed.as_ref().err());
     let Ok(parsed) = parsed else {

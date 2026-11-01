@@ -8,7 +8,6 @@ import { capabilityStore } from '@/stores/capabilities';
 import { isCapabilityAvailable } from '@/stores/capabilityAvailability';
 import {
   configStore,
-  CustomActionTrigger,
   setConfig,
   type CustomActionBinding,
   type GamepadInput,
@@ -33,7 +32,7 @@ const availableActions = (): BindableAction[] => {
       available: isCapabilityAvailable(action),
     }));
   for (const binding of configStore.customActions) {
-    const id = binding.actionId ?? binding.module;
+    const id = binding.actionId;
     if (id.length > 0 && !actions.some((action) => action.id === id)) {
       actions.push({ id, name: id, available: false });
     }
@@ -42,11 +41,9 @@ const availableActions = (): BindableAction[] => {
 };
 
 const getBinding = (id: string): CustomActionBinding =>
-  configStore.customActions.find((binding) => (binding.actionId ?? binding.module) === id) ?? {
+  configStore.customActions.find((binding) => binding.actionId === id) ?? {
     id,
     actionId: id,
-    module: '',
-    trigger: CustomActionTrigger.tap,
     keyboard: null,
     gamepad: {},
   };

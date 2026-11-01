@@ -109,6 +109,25 @@ fn migrate_overlay(object: &mut serde_json::Map<String, serde_json::Value>) {
   }
 }
 
+/// Drop bindings for the removed module-based custom actions, which only named a
+/// Python module, and the trigger setting the ROV now owns per action.
+fn migrate_custom_action_bindings(object: &mut serde_json::Map<String, serde_json::Value>) {
+  let Some(serde_json::Value::Array(bindings)) = object.get_mut("customActions") else {
+    return;
+  };
+  bindings.retain_mut(|binding| {
+    let Some(binding) = binding.as_object_mut() else {
+      return false;
+    };
+    binding.remove("module");
+    binding.remove("trigger");
+    binding
+      .get("actionId")
+      .and_then(serde_json::Value::as_str)
+      .is_some_and(|id| !id.is_empty())
+  });
+}
+
 fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
   let stored_version = raw.get("appVersion").and_then(|v| v.as_str()).unwrap_or("0.0.0");
 
@@ -124,6 +143,7 @@ fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
   if let Some(object) = raw.as_object_mut() {
     object.remove("checkForFirmwareUpdatesOnConnect");
     migrate_overlay(object);
+    migrate_custom_action_bindings(object);
   }
 
   raw
@@ -390,6 +410,29 @@ mod tests {
 
     // The migrated config round-trips through the strict `Config` type.
     let mut migrated = result;
+    migrated["appVersion"] = json!(current_app_version());
+    assert!(serde_json::from_value::<Config>(migrated).is_ok());
+  }
+
+  /// # Panics
+  /// Panics if module-based bindings survive or capability bindings lose inputs.
+  #[test]
+  fn apply_migrations_removes_module_custom_action_bindings() {
+    let mut raw = sample_raw_config();
+    raw["customActions"] = json!([
+      {"id": "legacy", "module": "example_action", "trigger": "tap",
+        "keyboard": {"key": "KeyE", "minValue": 0, "maxValue": 1}, "gamepad": {}},
+      {"id": "binding", "actionId": "water_sensor.toggle_monitoring", "module": "",
+        "trigger": "hold", "keyboard": null, "gamepad": {}},
+    ]);
+
+    let mut migrated = apply_migrations(raw);
+
+    assert_eq!(
+      migrated["customActions"],
+      json!([{"id": "binding", "actionId": "water_sensor.toggle_monitoring",
+        "keyboard": null, "gamepad": {}}])
+    );
     migrated["appVersion"] = json!(current_app_version());
     assert!(serde_json::from_value::<Config>(migrated).is_ok());
   }
