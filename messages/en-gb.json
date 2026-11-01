@@ -576,7 +576,7 @@
   "toasts_failed_to_invoke_action": "Failed to run toast action",
   "toasts_failed_to_listen_toast_messages": "Failed to listen to toast messages",
   "toasts_failed_to_listen_for_gamepad_events": "Failed to listen for controller events",
-  "toasts_thruster_test_title": "Testing thruster {thruster}",
+  "toasts_thruster_test_title": "Testing the thruster on {pin}",
   "toasts_thruster_test_cancel_hint": "Press Esc in Calibration to cancel.",
   "toasts_thruster_test_completed": "Thruster test completed",
   "toasts_thruster_test_cancelled": "Thruster test cancelled",

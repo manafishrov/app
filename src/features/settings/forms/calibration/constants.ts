@@ -1,4 +1,5 @@
 import * as m from '@/paraglide/messages';
+import { THRUSTER_PINS } from '@/tauri/constants';
 
 import type { ThrusterPresetRow } from './thrusterPresets';
 
@@ -12,7 +13,6 @@ const DEADZONE_FIELD_STEP = Number('0.01');
 const DEADZONE_THRESHOLD = Number('0.2');
 
 const THRUSTER_COLUMN_VALUES = ['1', '2', '3', '4', '5', '6', '7', '8'] as const;
-const PIN_VALUE_STRINGS = ['6', '7', '8', '9', '18', '19', '20', '21'] as const;
 
 const THRUSTER_INDICES = ['0', '1', '2', '3', '4', '5', '6', '7'].map((value) =>
   Number.parseInt(value, DECIMAL_RADIX),
@@ -20,7 +20,7 @@ const THRUSTER_INDICES = ['0', '1', '2', '3', '4', '5', '6', '7'].map((value) =>
 const THRUSTER_COLUMNS = THRUSTER_COLUMN_VALUES.map((value) =>
   Number.parseInt(value, DECIMAL_RADIX),
 );
-const PIN_NUMBERS = PIN_VALUE_STRINGS.map((value) => Number.parseInt(value, DECIMAL_RADIX));
+const PIN_NUMBERS = THRUSTER_PINS.map((value) => Number.parseInt(value, DECIMAL_RADIX));
 const [
   THRUSTER_0,
   THRUSTER_1,

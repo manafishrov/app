@@ -8,7 +8,7 @@ import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { playConfirmHaptic } from '@/tauri/gamepad';
-import { receiveThrusterTestToast } from '@/tauri/thrusterTest';
+import * as thrusterTest from '@/tauri/thrusterTest';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
@@ -133,7 +133,7 @@ const clearAllLoadingTimeouts = (): void => {
 
 const createToastTitle = (content: ToastContent): string =>
   content.message ??
-  resolveToastMessage(content.messageKey, content.messageArgs, content.messageKey) ??
+  resolveToastMessage(content.messageKey, thrusterTest.titleArgs(content), content.messageKey) ??
   content.messageKey;
 
 const createActionLabel = (action: ToastAction | null | undefined): string => {
@@ -217,9 +217,7 @@ const addToastDescription = (options: ToastCreateOptions, payload: ToastPayload)
     payload.identifier === 'thruster-test' &&
     payload.content.messageKey === 'toasts_thruster_test_title'
   ) {
-    options.description = [description, m.toasts_thruster_test_cancel_hint()]
-      .filter((part) => isNonEmptyString(part))
-      .join(' ');
+    options.description = thrusterTest.description(description);
   } else if (typeof description === 'string') {
     options.description = description;
   }
@@ -252,7 +250,7 @@ const SETTINGS_SUCCESS_KEYS = new Set([
 ]);
 
 const handleToastPayload = (payload: ToastPayload): void => {
-  receiveThrusterTestToast(payload);
+  thrusterTest.receiveThrusterTestToast(payload);
   const toastId = isNonEmptyString(payload.identifier) ? payload.identifier : '';
 
   if (toastId.length > 0) {
