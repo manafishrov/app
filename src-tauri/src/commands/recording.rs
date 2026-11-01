@@ -21,14 +21,17 @@ pub async fn save_recording(app: tauri::AppHandle, temp_path: String) -> Result<
 #[command]
 /// Appends a recording chunk sent as a raw binary IPC body, with the temp file
 /// path in the `temp-path` header. Using the raw body avoids serializing the
-/// video bytes as a JSON number array.
+/// video bytes as a JSON number array, except on Android, whose IPC cannot
+/// carry raw bodies and sends the bytes as one.
 ///
 /// # Errors
-/// Returns an error if the request body is not raw bytes, the `temp-path`
-/// header is missing or invalid, or the file cannot be opened or written.
+/// Returns an error if the request body is not bytes, the `temp-path` header
+/// is missing or invalid, or the file cannot be opened or written.
 pub async fn append_recording_chunk(request: Request<'_>) -> Result<(), String> {
-  let InvokeBody::Raw(chunk) = request.body() else {
-    return Err("Recording chunk body must be raw bytes".to_string());
+  let chunk = match request.body() {
+    InvokeBody::Raw(chunk) => chunk.clone(),
+    InvokeBody::Json(value) => serde_json::from_value(value.clone())
+      .map_err(|_| "Recording chunk body must be bytes".to_string())?,
   };
   let encoded = request
     .headers()
@@ -40,7 +43,7 @@ pub async fn append_recording_chunk(request: Request<'_>) -> Result<(), String> 
     .decode_utf8()
     .map_err(|_| "Invalid temp-path encoding".to_string())?
     .into_owned();
-  crate::recording::append_chunk(temp_path, chunk.clone()).await
+  crate::recording::append_chunk(temp_path, chunk).await
 }
 
 #[cfg(mobile)]
