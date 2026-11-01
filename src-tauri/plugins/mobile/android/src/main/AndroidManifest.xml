@@ -5,5 +5,13 @@
   <!-- Controller rumble. -->
   <uses-permission android:name="android.permission.VIBRATE" />
 
-  <application android:networkSecurityConfig="@xml/manafish_network_security_config" />
+  <!-- Keeps the ROV connection while a system file picker is open. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+  <application android:networkSecurityConfig="@xml/manafish_network_security_config">
+    <service
+      android:name="com.manafishrov.mobile.FilePickerService"
+      android:exported="false"
+      android:foregroundServiceType="shortService" />
+  </application>
 </manifest>

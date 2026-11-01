@@ -99,6 +99,7 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
   }
 
   override fun onResume() {
+    FilePickerService.stop(activity)
     hideSystemBars()
   }
 
@@ -144,7 +145,7 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
           Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
           Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
       )
-    startActivityForResult(invoke, intent, "pickDirectoryResult")
+    pick(invoke, intent, "pickDirectoryResult")
   }
 
   @ActivityCallback
@@ -188,7 +189,7 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
         .addCategory(Intent.CATEGORY_OPENABLE)
         .setType(args.mimeType)
         .putExtra(Intent.EXTRA_TITLE, args.fileName)
-    startActivityForResult(invoke, intent, "exportFileResult")
+    pick(invoke, intent, "exportFileResult")
   }
 
   @ActivityCallback
@@ -213,7 +214,7 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
         .addCategory(Intent.CATEGORY_OPENABLE)
         .setType("*/*")
         .putExtra(Intent.EXTRA_MIME_TYPES, args.mimeTypes)
-    startActivityForResult(invoke, intent, "importFileResult")
+    pick(invoke, intent, "importFileResult")
   }
 
   @ActivityCallback
@@ -226,6 +227,11 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
     runCatchingInto(invoke) {
       JSObject().put("path", storage.importToCache(source).absolutePath)
     }
+  }
+
+  private fun pick(invoke: Invoke, intent: Intent, callback: String) {
+    FilePickerService.start(activity)
+    startActivityForResult(invoke, intent, callback)
   }
 
   // File copies can be large recordings, so keep them off the UI thread.
