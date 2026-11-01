@@ -23,4 +23,6 @@ it('includes shared instructions and available declarations without live values 
   expect(output).toContain('from `manafish_sdk`');
   expect(output).not.toContain('PRIVATE_SAMPLE_MARKER');
   expect(output).toContain('ctx.log_csv');
+  // Complete examples are the installed default scripts, not part of the guide.
+  expect(output).not.toContain('WATER_SENSOR_GPIO_PIN');
 });

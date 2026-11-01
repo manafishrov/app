@@ -4,16 +4,17 @@ Control application for the Manafish ROV built with [Tauri](https://tauri.app), 
 
 ## Custom actions and CSV logging
 
-Create or import Python scripts in **Settings → Custom actions**. The instructions
-accordion contains the SDK guide and water-sensor example; **Copy instructions**
-also includes the connected ROV's available readings and actions. Scripts and their
-enablement/trigger settings are stored on the ROV. Choose widgets in Appearance
-and bindings in Keyboard or Controller. Download recordings from CSV logging.
+Create or import Python scripts in **Settings → Custom actions**. The firmware
+installs the Water sensor, Blackbox logging, and Extended telemetry scripts
+disabled; enable them there and open them as examples. The instructions accordion
+contains the SDK guide; **Copy instructions** also includes the connected ROV's
+available readings and actions. Scripts and their enablement/trigger settings are
+stored on the ROV. Choose widgets in Appearance and bindings in Keyboard or
+Controller. Download recordings from CSV logging.
 
 This branch requires matching capability protocol V1 firmware. Upgrade firmware
-first, then use the matching app before operating the vehicle. Legacy custom-action
-modules must be ported to SDK scripts and rebound. Existing built-in layouts and
-bindings are retained. The MCU protocol is unchanged.
+first, then use the matching app before operating the vehicle. The MCU protocol is
+unchanged.
 
 The Python editor uses bundled ty for completion and diagnostics without executing
 drafts. Connect to the ROV to fetch actual SDK types; cached types work offline.
