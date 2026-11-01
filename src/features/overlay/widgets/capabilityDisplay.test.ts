@@ -8,7 +8,12 @@ import {
   type OverlayLayout,
 } from '@/stores/overlayTypes';
 
-import { compatibleReadingDisplay, normalisedLevel, readingDisplays } from './capabilityDisplay';
+import {
+  compatibleReadingDisplay,
+  formatReading,
+  normalisedLevel,
+  readingDisplays,
+} from './capabilityDisplay';
 
 /* oxlint-disable no-magic-numbers -- representative persisted grid and sensor values */
 it('normalises numeric readings and handles invalid ranges without infinities', () => {
@@ -26,7 +31,7 @@ it('only offers renderers compatible with a reading type', () => {
   expect(readingDisplays('number')).toContain('bar');
   expect(readingDisplays('string')).not.toContain('bar');
 });
-it.each([4, 6, 8])('preserves unavailable capability references and a %i square light', (side) => {
+it.each([4, 6, 8])('migrates a %i square light while preserving its unavailable source', (side) => {
   const layout: OverlayLayout = {
     id: 'test',
     name: 'Test',
@@ -50,8 +55,21 @@ it.each([4, 6, 8])('preserves unavailable capability references and a %i square 
       },
     ],
   };
-  expect(normaliseLayout(layout)).toEqual(layout);
-  expect(normaliseLayout(normaliseLayout(layout))).toEqual(layout);
+  const migrated = normaliseLayout(layout);
+  expect(migrated.widgets[0]).toEqual({ ...layout.widgets[0], columnSpan: 12, rowSpan: 2 });
+  expect(normaliseLayout(migrated)).toEqual(migrated);
+});
+
+it('formats generic units, precision and arrays without inventing unavailable values', () => {
+  expect(formatReading(1200.125, 'MHz')).toBe('1,200 MHz');
+  expect(formatReading(57.375, '°C')).toBe('57.4°C');
+  expect(formatReading(0.127, 'ms')).toBe('0.13 ms');
+  expect(formatReading(-29.234, '%')).toBe('-29.2%');
+  expect(formatReading([12.43, 12.47], 'V')).toBe('12.4 · 12.5 V');
+  expect(formatReading(3.25, 'μT')).toBe('3.25 μT');
+  expect(formatReading(null, 'V')).toBe('—');
+  expect(formatReading(Number.NaN, '%')).toBe('—');
+  expect(readingDisplays('numberArray')[0]).toBe('array');
 });
 
 it('falls back to a compatible display after the same source changes type', () => {

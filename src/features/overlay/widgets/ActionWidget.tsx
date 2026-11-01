@@ -1,5 +1,7 @@
 import type { Component, JSX } from 'solid-js';
 
+import PlayIcon from '~icons/material-symbols/play-arrow';
+
 import type { OverlayWidget } from '@/stores/overlayTypes';
 
 import { useIsOverlayPreview } from '@/features/overlay/OverlayPreview';
@@ -73,10 +75,16 @@ export const ActionWidget: Component<{ widget: OverlayWidget }> = (props) => {
   const preview = useIsOverlayPreview();
   const id = (): string => props.widget.options.sourceId ?? '';
   const activation = useActivation(id, preview);
+  const running = (): boolean => {
+    const sample = capabilityStore.samples[`${id()}.running`];
+    return Boolean(sample && sample.value === true);
+  };
   return (
     <button
       type='button'
       class='overlay-surface overlay-action-widget pointer-events-auto'
+      data-running={running()}
+      title={props.widget.options.label ?? id()}
       disabled={!preview() && !isActionAvailable(id())}
       onPointerDown={(event) => {
         if (event.button === 0) {
@@ -90,7 +98,8 @@ export const ActionWidget: Component<{ widget: OverlayWidget }> = (props) => {
       onBlur={activation.release}
       {...keyboardHandlers(activation)}
     >
-      {props.widget.options.label ?? id()}
+      <PlayIcon class='size-3 shrink-0' />
+      <span class='min-w-0 truncate'>{props.widget.options.label ?? id()}</span>
     </button>
   );
 };

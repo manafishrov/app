@@ -70,6 +70,7 @@ export type OverlayWidgetOptions = {
   label?: string;
   display?:
     | 'text'
+    | 'array'
     | 'badge'
     | 'status'
     | 'warningYellow'

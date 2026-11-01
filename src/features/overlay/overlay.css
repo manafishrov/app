@@ -208,17 +208,87 @@
 .overlay-capability,
 .overlay-action-widget {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
+  gap: 6px;
   overflow: hidden;
-  padding: 4px;
+  padding: 0 8px;
 }
-.overlay-capability[data-badge='true'] {
+.overlay-capability > .overlay-label:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overlay-capability > .overlay-value {
+  flex-shrink: 0;
+}
+.overlay-capability > .overlay-value[data-text='true'] {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+.overlay-unit {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-muted-foreground);
+}
+.overlay-capability[data-display='badge'] {
   border-radius: 999px;
 }
+.overlay-capability[data-display='bar'],
+.overlay-capability[data-display='array'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 3px 8px;
+  padding: 4px 8px;
+}
+.overlay-capability[data-display='bar'] > .overlay-capability-bar,
+.overlay-array-values {
+  grid-column: 1 / -1;
+}
+.overlay-array-values {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+.overlay-array-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.overlay-array-cell .overlay-value {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overlay-array-cell .overlay-label {
+  font-size: 8px;
+}
+.overlay-capability[data-display='verticalBar'] {
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 4px;
+}
+.overlay-capability[data-display='verticalBar'] > .overlay-label:first-child {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+.overlay-capability[data-display='verticalBar'] > .overlay-value {
+  font-size: 10px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overlay-reading-state {
+  flex-shrink: 0;
+}
 .overlay-capability-light {
+  flex-shrink: 0;
   color: var(--color-primary);
   transition: opacity 150ms linear;
 }
@@ -254,6 +324,11 @@
 }
 .overlay-action-widget {
   cursor: pointer;
+  justify-content: center;
+}
+.overlay-action-widget[data-running='true'] {
+  color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 12%, var(--overlay-surface-fill));
 }
 .overlay-action-widget:active {
   background: color-mix(in oklab, var(--color-primary) 30%, transparent);
@@ -265,4 +340,9 @@
 
 .overlay-capability-light[data-active='false'] {
   color: var(--color-muted-foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay-capability-light {
+    transition: none;
+  }
 }

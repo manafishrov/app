@@ -1,12 +1,13 @@
 import type { Accessor, Component, Setter } from 'solid-js';
 
+import { Badge } from '@manafishrov/ui/badge';
 import { Button } from '@manafishrov/ui/button';
 import {
-  TextInput,
-  TextInputControl,
-  TextInputInput,
-  TextInputLabel,
-} from '@manafishrov/ui/text-input';
+  NumberInput,
+  NumberInputControl,
+  NumberInputInput,
+  NumberInputLabel,
+} from '@manafishrov/ui/number-input';
 
 import * as m from '@/paraglide/messages';
 import { capabilityStore } from '@/stores/capabilities';
@@ -43,81 +44,85 @@ const useActionSettings = (action: () => ActionDescriptor): ActionSettingsState 
     setInterval(String(action().intervalMs));
   });
   const save = (): void => {
+    const intervalMs = Number(interval());
+    if (mode() === action().mode && intervalMs === action().intervalMs) {
+      return;
+    }
     operation.run(() => {
-      const intervalMs = Number(interval());
       if (!Number.isInteger(intervalMs) || intervalMs < MIN_DELAY || intervalMs > MAX_DELAY) {
         return Promise.reject(new Error(m.custom_action_scripts_delay_invalid()));
       }
       return requestCapability('action.configure', { id: action().id, mode: mode(), intervalMs });
-    }, m.custom_action_scripts_saved());
+    });
   };
   return { mode, setMode, interval, setInterval, operation, save };
 };
 
-const isActionRunning = (id: string): boolean => {
-  const sample = capabilityStore.samples[`${id}.running`];
-  return typeof sample === 'object' && sample.value === true;
-};
-const ActionHeading: Component<{
-  action: ActionDescriptor;
-  enabled: boolean;
-  settings: ActionSettingsState;
-}> = (props) => (
-  <div class='flex items-center justify-between gap-2'>
-    <div class='flex flex-wrap items-center gap-2'>
-      <p class='text-sm font-medium'>{props.action.name}</p>
-      <Show when={isActionRunning(props.action.id)}>
-        <span role='status' class='text-xs text-primary'>
-          {m.custom_action_scripts_running()}
-        </span>
-      </Show>
-    </div>
-    <Show when={props.settings.mode() !== 'once'}>
-      <Button
-        variant='ghost'
-        size='sm'
-        disabled={!props.enabled || props.settings.operation.busy()}
-        onClick={() => {
-          props.settings.operation.run(() => invokeAction(props.action.id, 'stop'));
-        }}
-      >
-        {m.custom_action_scripts_stop()}
-      </Button>
-    </Show>
-  </div>
+const RepeatDelay: Component<{ settings: ActionSettingsState }> = (props) => (
+  <Show when={props.settings.mode() !== 'once'}>
+    <NumberInput
+      class='w-36'
+      value={props.settings.interval()}
+      min={MIN_DELAY}
+      max={MAX_DELAY}
+      step={1}
+      disabled={props.settings.operation.busy()}
+      onValueChange={(details) => props.settings.setInterval(details.value)}
+    >
+      <NumberInputLabel class='sr-only'>{m.custom_action_scripts_delay()}</NumberInputLabel>
+      <NumberInputControl>
+        <NumberInputInput
+          onBlur={props.settings.save}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              props.settings.save();
+            }
+          }}
+        />
+      </NumberInputControl>
+    </NumberInput>
+  </Show>
 );
 
 export const ActionSettings: Component<{ action: ActionDescriptor; enabled: boolean }> = (
   props,
 ) => {
   const settings = useActionSettings(() => props.action);
+  const running = (): boolean => {
+    const sample = capabilityStore.samples[`${props.action.id}.running`];
+    return Boolean(sample && sample.value === true);
+  };
   return (
     <div class='flex flex-col gap-2 border-t border-border pt-3'>
-      <ActionHeading action={props.action} enabled={props.enabled} settings={settings} />
-      <div class='grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto]'>
-        <OptionSelect
-          label={m.custom_action_scripts_trigger()}
-          value={settings.mode()}
-          disabled={settings.operation.busy()}
-          options={props.action.modes.map((mode) => ({ value: mode, label: modeLabel(mode) }))}
-          onChange={(mode) => settings.setMode(actionModeSchema.parse(mode))}
-        />
-        <TextInput disabled={settings.mode() === 'once' || settings.operation.busy()}>
-          <TextInputLabel>{m.custom_action_scripts_delay()}</TextInputLabel>
-          <TextInputControl>
-            <TextInputInput
-              type='number'
-              min={MIN_DELAY}
-              max={MAX_DELAY}
-              step={1}
-              value={settings.interval()}
-              onInput={(event) => settings.setInterval(event.currentTarget.value)}
-            />
-          </TextInputControl>
-        </TextInput>
-        <Button variant='outline' disabled={settings.operation.busy()} onClick={settings.save}>
-          {m.custom_action_scripts_save()}
-        </Button>
+      <div class='flex flex-wrap items-center gap-3'>
+        <span class='mr-auto text-xs font-medium'>{props.action.name}</span>
+        <Show when={running()}>
+          <Badge variant='outline'>{m.custom_action_scripts_running()}</Badge>
+          <Button
+            variant='ghost'
+            size='sm'
+            disabled={!props.enabled || settings.operation.busy()}
+            onClick={() => {
+              settings.operation.run(() => invokeAction(props.action.id, 'stop'));
+            }}
+          >
+            {m.custom_action_scripts_stop()}
+          </Button>
+        </Show>
+        <div class='w-40'>
+          <OptionSelect
+            label={m.custom_action_scripts_trigger()}
+            hideLabel
+            value={settings.mode()}
+            disabled={settings.operation.busy()}
+            options={props.action.modes.map((mode) => ({ value: mode, label: modeLabel(mode) }))}
+            onChange={(mode) => {
+              settings.setMode(actionModeSchema.parse(mode));
+              settings.save();
+            }}
+          />
+        </div>
+        <RepeatDelay settings={settings} />
       </div>
       <OperationFeedback operation={settings.operation} />
     </div>

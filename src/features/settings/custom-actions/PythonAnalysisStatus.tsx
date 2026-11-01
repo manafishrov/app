@@ -13,7 +13,7 @@ const messages: Record<AnalysisStatus, () => string> = {
   ready: (): string => '',
 };
 export const PythonAnalysisStatus: Component<{ status: AnalysisStatus }> = (props) => (
-  <Show when={props.status !== 'ready'}>
+  <Show when={['missingSdk', 'failed', 'unsupported'].includes(props.status)}>
     <span class='text-xs text-muted-foreground' role='status'>
       {messages[props.status]()}
     </span>

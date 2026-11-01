@@ -15,7 +15,7 @@ export const PythonEditor: Component<PythonEditorProps> = (props) => {
       ref={(element) => {
         host = element;
       }}
-      class='python-editor min-w-0 overflow-hidden rounded-md border border-input'
+      class='python-editor min-h-0 min-w-0 flex-1 overflow-hidden rounded-md border border-input'
     />
   );
 };

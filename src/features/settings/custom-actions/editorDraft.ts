@@ -8,15 +8,18 @@ import { installCustomAction, validateCustomAction, type CustomActionValidation 
 type CustomActionDraft = {
   source: Accessor<string>;
   setSource: (text: string) => void;
-  load: (text: string, installed: boolean) => void;
+  load: (text: string, installed: boolean, name?: string) => void;
   validation: Accessor<CustomActionValidation | null>;
   validate: () => Promise<void>;
   install: () => Promise<void>;
   dirty: Accessor<boolean>;
+  name: Accessor<string>;
+  discard: () => void;
 };
 export const createCustomActionDraft = (): CustomActionDraft => {
   const [source, setText] = createSignal('');
-  const [baseline, setBaseline] = createSignal('');
+  const [baseline, setBaseline] = createSignal({ source: '', name: '' });
+  const [name, setName] = createSignal('');
   const [validation, setValidation] = createSignal<CustomActionValidation | null>(null);
   let validatedSource: string | null = null;
   const setSource = (text: string): void => {
@@ -24,9 +27,10 @@ export const createCustomActionDraft = (): CustomActionDraft => {
     validatedSource = null;
     setValidation(null);
   };
-  const load = (text: string, installed: boolean): void => {
+  const load = (text: string, installed: boolean, scriptName = ''): void => {
     setSource(text);
-    setBaseline(installed ? text : '');
+    setBaseline({ source: installed ? text : '', name: scriptName });
+    setName(scriptName);
   };
   const validate = (): Promise<void> => {
     const snapshot = source();
@@ -34,16 +38,18 @@ export const createCustomActionDraft = (): CustomActionDraft => {
       if (snapshot === source()) {
         validatedSource = snapshot;
         setValidation(result);
+        setName(result.manifest.name);
       }
     });
   };
   const install = (): Promise<void> => {
     const snapshot = source();
-    if (validatedSource !== snapshot || !validation()) {
+    const result = validation();
+    if (validatedSource !== snapshot || !result) {
       return Promise.reject(new Error(m.custom_action_scripts_validate_first()));
     }
     return installCustomAction(snapshot).then(() => {
-      setBaseline(snapshot);
+      setBaseline({ source: snapshot, name: result.manifest.name });
     });
   };
   return {
@@ -53,9 +59,14 @@ export const createCustomActionDraft = (): CustomActionDraft => {
     validation,
     validate,
     install,
-    dirty: (): boolean => source() !== baseline(),
+    dirty: (): boolean => source() !== baseline().source,
+    name,
+    discard: (): void => {
+      load(baseline().source, true, baseline().name);
+    },
   };
 };
 
 // Preserve an unfinished draft while visiting Appearance or keybindings in this app session.
 export const customActionDraft = createCustomActionDraft();
+export const [customActionEditorOpen, setCustomActionEditorOpen] = createSignal(false);
