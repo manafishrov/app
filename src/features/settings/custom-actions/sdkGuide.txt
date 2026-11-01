@@ -91,6 +91,11 @@ or one-dimensional NumPy array. Use a plain `.csv` filename, keep the column
 count constant, and write a header only once. Recordings are listed in CSV
 logging; files are limited to 64 MiB each and 256 MiB in total.
 
+For rolling logs, `delete_oldest="my_log_"` permanently deletes the oldest other
+CSV files with that filename prefix when needed to fit a row within the total
+limit. Use a prefix reserved for your script, and rotate files at the per-file
+limit. See Blackbox logging for a complete example.
+
 `await ctx.notify("Water detected", level=NotificationLevel.WARNING)` shows a
 notification. Levels are `INFO` (default), `SUCCESS`, `WARNING`, and `ERROR`;
 `description` adds plain text, and `key="status"` replaces the script's previous
