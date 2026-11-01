@@ -139,7 +139,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
-          toolchain: stable
+          toolchain: 1.99.0
 
       - name: Install macOS dependencies
         if: matrix.platform == 'macos-latest'
@@ -442,7 +442,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
-          toolchain: stable
+          toolchain: 1.99.0
           targets: aarch64-linux-android
 
       - name: Cache Rust dependencies
@@ -512,7 +512,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
-          toolchain: stable
+          toolchain: 1.99.0
           targets: aarch64-apple-ios
 
       - name: Cache Rust dependencies

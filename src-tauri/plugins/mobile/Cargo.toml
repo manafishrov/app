@@ -5,7 +5,7 @@ version = "0.1.0"
 license = "AGPL-3.0-or-later"
 authors = ["Michael Brusegard"]
 edition = "2024"
-rust-version = "1.92"
+rust-version = "1.99"
 publish = false
 links = "tauri-plugin-manafish-mobile"
 
