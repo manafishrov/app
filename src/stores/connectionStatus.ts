@@ -2,12 +2,13 @@ import { createStore, reconcile } from 'solid-js/store';
 
 type ConnectionStatus = {
   isConnected: boolean;
-  delay: number;
+  // Null until the first ping after connecting comes back.
+  delay: number | null;
 };
 
 const [connectionStatusStore, setConnectionStatusStoreInternal] = createStore<ConnectionStatus>({
   isConnected: false,
-  delay: 0,
+  delay: null,
 });
 
 const setConnectionStatusStore = (value: ConnectionStatus): void => {
