@@ -48,7 +48,7 @@ sha2 = "0.11.0"
 minisign-verify = "0.3.0"
 tokio = { version = "1.49.0", features = ["full"] }
 tokio-tungstenite = "0.30.0"
-tokio-util = { version = "0.7.17", features = ["io"] }
+tokio-util = { version = "0.7.17", features = ["io", "rt"] }
 futures-util = "0.3.31"
 bytes = "1.10.1"
 percent-encoding = "2.3.2"
@@ -56,8 +56,10 @@ ruzstd = "0.9.0"
 tempfile = "3.21.0"
 sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
 ffmpeg-next = "9.0.0"
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "download-binaries", "copy-dylibs", "tls-rustls", "api-31"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["coreml"] }
 libc = "0.2.181"
 plist = "1.7.4"
 runas = "1.2.0"
@@ -68,5 +70,6 @@ nix = { version = "0.31.0", features = ["mount"] }
 gtk = "0.18.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["directml"] }
 windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_Ioctl", "Win32_System_IO"] }
 runas = "1.2.0"

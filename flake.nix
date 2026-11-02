@@ -94,7 +94,8 @@
         );
         env =
           pkgs.lib.optionalAttrs isLinux {
-            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg] ++ linuxLibs);
+            # ONNX Runtime, used for object detection, is C++ and links libstdc++.
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg pkgs.stdenv.cc.cc.lib] ++ linuxLibs);
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
       };

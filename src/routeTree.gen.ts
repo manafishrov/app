@@ -15,6 +15,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppConnectionIndexRouteImport } from './routes/settings/app-connection/index'
 import { Route as SettingsAppearanceIndexRouteImport } from './routes/settings/appearance/index'
 import { Route as SettingsDebugIndexRouteImport } from './routes/settings/debug/index'
+import { Route as SettingsDetectionIndexRouteImport } from './routes/settings/detection/index'
 import { Route as SettingsGamepadIndexRouteImport } from './routes/settings/gamepad/index'
 import { Route as SettingsKeyboardIndexRouteImport } from './routes/settings/keyboard/index'
 import { Route as SettingsSdCardIndexRouteImport } from './routes/settings/sd-card/index'
@@ -58,6 +59,11 @@ const SettingsAppearanceIndexRoute = SettingsAppearanceIndexRouteImport.update({
 const SettingsDebugIndexRoute = SettingsDebugIndexRouteImport.update({
   id: '/debug/',
   path: '/debug/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsDetectionIndexRoute = SettingsDetectionIndexRouteImport.update({
+  id: '/detection/',
+  path: '/detection/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsGamepadIndexRoute = SettingsGamepadIndexRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
   '/settings/appearance/': typeof SettingsAppearanceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
+  '/settings/detection/': typeof SettingsDetectionIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
   '/settings/sd-card/': typeof SettingsSdCardIndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/settings/app-connection': typeof SettingsAppConnectionIndexRoute
   '/settings/appearance': typeof SettingsAppearanceIndexRoute
   '/settings/debug': typeof SettingsDebugIndexRoute
+  '/settings/detection': typeof SettingsDetectionIndexRoute
   '/settings/gamepad': typeof SettingsGamepadIndexRoute
   '/settings/keyboard': typeof SettingsKeyboardIndexRoute
   '/settings/sd-card': typeof SettingsSdCardIndexRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/settings/app-connection/': typeof SettingsAppConnectionIndexRoute
   '/settings/appearance/': typeof SettingsAppearanceIndexRoute
   '/settings/debug/': typeof SettingsDebugIndexRoute
+  '/settings/detection/': typeof SettingsDetectionIndexRoute
   '/settings/gamepad/': typeof SettingsGamepadIndexRoute
   '/settings/keyboard/': typeof SettingsKeyboardIndexRoute
   '/settings/sd-card/': typeof SettingsSdCardIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/settings/app-connection/'
     | '/settings/appearance/'
     | '/settings/debug/'
+    | '/settings/detection/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
     | '/settings/sd-card/'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/settings/app-connection'
     | '/settings/appearance'
     | '/settings/debug'
+    | '/settings/detection'
     | '/settings/gamepad'
     | '/settings/keyboard'
     | '/settings/sd-card'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/settings/app-connection/'
     | '/settings/appearance/'
     | '/settings/debug/'
+    | '/settings/detection/'
     | '/settings/gamepad/'
     | '/settings/keyboard/'
     | '/settings/sd-card/'
@@ -307,6 +319,13 @@ declare module '@tanstack/solid-router' {
       path: '/debug'
       fullPath: '/settings/debug/'
       preLoaderRoute: typeof SettingsDebugIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/detection/': {
+      id: '/settings/detection/'
+      path: '/detection'
+      fullPath: '/settings/detection/'
+      preLoaderRoute: typeof SettingsDetectionIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/gamepad/': {
@@ -408,6 +427,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppConnectionIndexRoute: typeof SettingsAppConnectionIndexRoute
   SettingsAppearanceIndexRoute: typeof SettingsAppearanceIndexRoute
   SettingsDebugIndexRoute: typeof SettingsDebugIndexRoute
+  SettingsDetectionIndexRoute: typeof SettingsDetectionIndexRoute
   SettingsGamepadIndexRoute: typeof SettingsGamepadIndexRoute
   SettingsKeyboardIndexRoute: typeof SettingsKeyboardIndexRoute
   SettingsSdCardIndexRoute: typeof SettingsSdCardIndexRoute
@@ -428,6 +448,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppConnectionIndexRoute: SettingsAppConnectionIndexRoute,
   SettingsAppearanceIndexRoute: SettingsAppearanceIndexRoute,
   SettingsDebugIndexRoute: SettingsDebugIndexRoute,
+  SettingsDetectionIndexRoute: SettingsDetectionIndexRoute,
   SettingsGamepadIndexRoute: SettingsGamepadIndexRoute,
   SettingsKeyboardIndexRoute: SettingsKeyboardIndexRoute,
   SettingsSdCardIndexRoute: SettingsSdCardIndexRoute,

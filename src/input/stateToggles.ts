@@ -1,6 +1,7 @@
 import type { CleanupFn } from '@/input/types';
 import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/stores/config';
 
+import { toggleObjectDetection } from '@/features/detection/controller';
 import {
   handleCustomActionToggles,
   releaseCustomActions,
@@ -25,6 +26,7 @@ type ToggleState = {
   depthHold: boolean;
   desiredDepthEntry: boolean;
   record: boolean;
+  objectDetection: boolean;
 };
 type ToggleContext = {
   config: Config;
@@ -55,7 +57,7 @@ type DesiredDepthAdjustConfig = {
 };
 type DesiredDepthRepeatState = Record<'desiredDepthIncrease' | 'desiredDepthDecrease', number>;
 type PopupGamepadBindingKey = 'desiredDepthEntry' | 'desiredDepthIncrease' | 'desiredDepthDecrease';
-type ToggleBindingKey = 'autoStabilization' | 'depthHold' | 'record' | PopupGamepadBindingKey;
+type ToggleBindingKey = keyof ToggleState | PopupGamepadBindingKey;
 const THRESHOLD = 0.5;
 const DESIRED_DEPTH_STEP = 0.1;
 const DESIRED_DEPTH_REPEAT_DELAY_MS = 200;
@@ -156,37 +158,20 @@ const handleDesiredDepthAdjust = (
         : now + DESIRED_DEPTH_REPEAT_INTERVAL_MS;
   }
 };
-const handleAutoStabilizationToggle = (ctx: ToggleContext): void => {
+const handleHapticToggle = (
+  ctx: ToggleContext,
+  state: 'autoStabilization' | 'depthHold' | 'objectDetection',
+  action: () => Promise<void>,
+): void => {
   const isPressed = isInputPressed({
-    input: getToggleInput(ctx, 'autoStabilization'),
+    input: getToggleInput(ctx, state),
     pressedKeys: ctx.pressedKeys,
     gamepad: ctx.gamepad,
   });
-  if (isPressed && !ctx.lastState.autoStabilization) {
+  if (isPressed && !ctx.lastState[state]) {
     playConfirmHaptic(ctx.config.selectedGamepadId);
   }
-  handleToggle({
-    isPressed,
-    state: 'autoStabilization',
-    lastState: ctx.lastState,
-    action: toggleAutoStabilization,
-  });
-};
-const handleDepthHoldToggle = (ctx: ToggleContext): void => {
-  const isPressed = isInputPressed({
-    input: getToggleInput(ctx, 'depthHold'),
-    pressedKeys: ctx.pressedKeys,
-    gamepad: ctx.gamepad,
-  });
-  if (isPressed && !ctx.lastState.depthHold) {
-    playConfirmHaptic(ctx.config.selectedGamepadId);
-  }
-  handleToggle({
-    isPressed,
-    state: 'depthHold',
-    lastState: ctx.lastState,
-    action: toggleDepthHold,
-  });
+  handleToggle({ isPressed, state, lastState: ctx.lastState, action });
 };
 const handleRecordingInput = (ctx: ToggleContext): void => {
   const recordPressed = isInputPressed({
@@ -242,8 +227,8 @@ const handleDefaultFrame = (
   ctx: ToggleContext,
   customActionState: CustomActionToggleState,
 ): void => {
-  handleAutoStabilizationToggle(ctx);
-  handleDepthHoldToggle(ctx);
+  handleHapticToggle(ctx, 'autoStabilization', toggleAutoStabilization);
+  handleHapticToggle(ctx, 'depthHold', toggleDepthHold);
   handleCustomActionToggles({
     config: ctx.config,
     pressedKeys: ctx.pressedKeys,
@@ -251,6 +236,7 @@ const handleDefaultFrame = (
     state: customActionState,
   });
   handleRecordingInput(ctx);
+  handleHapticToggle(ctx, 'objectDetection', toggleObjectDetection);
 };
 
 type ToggleLoopInputs = [Config, Set<string>, () => boolean, () => boolean];
@@ -263,6 +249,7 @@ export const createStateToggleLoop = (
     depthHold: false,
     desiredDepthEntry: false,
     record: false,
+    objectDetection: false,
   };
   const desiredDepthRepeatState: DesiredDepthRepeatState = {
     desiredDepthIncrease: 0,

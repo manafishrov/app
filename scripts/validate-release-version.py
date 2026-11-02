@@ -36,7 +36,6 @@ def _package_version(path: Path, package_name: str) -> str:
 
 def embedded_versions() -> dict[str, str]:
     cargo = _load_toml(ROOT / "src-tauri" / "Cargo.toml")
-    yolo = _load_toml(ROOT / "src-yolo" / "pyproject.toml")
     tauri = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text())
     appstream = ElementTree.parse(
         ROOT / "src-tauri" / "com.manafishrov.manafish.metainfo.xml"
@@ -54,25 +53,7 @@ def embedded_versions() -> dict[str, str]:
         "src-tauri/com.manafishrov.manafish.metainfo.xml": newest_release.get(
             "version", ""
         ),
-        "src-yolo/pyproject.toml": str(yolo["project"]["version"]),
-        "src-yolo/uv.lock": _package_version(
-            ROOT / "src-yolo" / "uv.lock", "manafish"
-        ),
     }
-
-
-def matches_embedded_version(path: str, embedded: str, version: str) -> bool:
-    if embedded == version:
-        return True
-
-    # uv writes canonical PEP 440 release candidates into its generated lock.
-    # Accept only this lossless spelling change, only in the lockfile. Other
-    # metadata must retain canonical SemVer; never discard prerelease/build IDs.
-    if path == "src-yolo/uv.lock":
-        candidate = re.fullmatch(r"(\d+\.\d+\.\d+)-rc\.([1-9]\d*)", version)
-        if candidate is not None:
-            return embedded == f"{candidate[1]}rc{candidate[2]}"
-    return False
 
 
 def main() -> int:
@@ -96,7 +77,7 @@ def main() -> int:
     mismatches = {
         path: embedded
         for path, embedded in embedded_versions().items()
-        if not matches_embedded_version(path, embedded, version)
+        if embedded != version
     }
     if mismatches:
         details = "\n".join(

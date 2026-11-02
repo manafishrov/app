@@ -6,6 +6,7 @@ import { TanStackDevtools } from '@tanstack/solid-devtools';
 import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
+import { createDetectionController } from '@/features/detection/controller';
 import { Header } from '@/features/header';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
@@ -48,6 +49,7 @@ const setupAppListeners = (cleanupFns: (() => void)[]): void => {
 
 const RootLayout: Component = () => {
   const cleanupFns: (() => void)[] = [];
+  createDetectionController();
 
   onMount(() => {
     cleanupFns.push(disablePageZoom());

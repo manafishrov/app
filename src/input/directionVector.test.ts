@@ -49,6 +49,7 @@ const config: DirectionVectorConfig = {
     desiredDepthIncrease: null,
     desiredDepthDecrease: null,
     record: null,
+    objectDetection: null,
   },
 };
 

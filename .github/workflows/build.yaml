@@ -305,7 +305,9 @@ jobs:
           mv ffmpeg-*/* ffmpeg/
           Add-Content $env:GITHUB_ENV "FFMPEG_DIR=${pwd}\ffmpeg`n"
           copy-item "ffmpeg\bin\*.dll" src-tauri/
-          Set-Content src-tauri/tauri.windows.conf.json '{"bundle": {"resources": ["*.dll", "../LICENSE"]}}'
+          # ort copies DirectML.dll beside the compiled executable. Stage it
+          # after compilation so the installer includes it with the FFmpeg DLLs.
+          Set-Content src-tauri/tauri.windows.conf.json '{"build": {"beforeBundleCommand": "copy /Y src-tauri\\target\\release\\DirectML.dll src-tauri\\DirectML.dll"}, "bundle": {"resources": ["*.dll", "../LICENSE"]}}'
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile

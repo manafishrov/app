@@ -7,7 +7,7 @@ import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configT
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
-export { CustomActionTrigger } from '@/stores/configTypes';
+export { CustomActionTrigger, ExecutionProviderPreference } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 
@@ -34,6 +34,7 @@ const createNullKeyboardBindings = (): KeyboardBindings => ({
   desiredDepthIncrease: null,
   desiredDepthDecrease: null,
   record: null,
+  objectDetection: null,
 });
 
 const createNullGamepadBindings = (): GamepadBindings => ({
@@ -59,6 +60,7 @@ const createNullGamepadBindings = (): GamepadBindings => ({
   desiredDepthIncrease: null,
   desiredDepthDecrease: null,
   record: null,
+  objectDetection: null,
 });
 
 const defaultConfig: Config = {
@@ -75,6 +77,15 @@ const defaultConfig: Config = {
   customActions: [],
   selectedGamepadId: null,
   gamepad: {},
+  detection: {
+    enabled: false,
+    modelId: null,
+    executionProvider: 'auto',
+    confidenceThreshold: 0.4,
+    classFilters: {},
+    showLabels: true,
+    showTrackIds: false,
+  },
 };
 
 const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);
@@ -126,5 +137,6 @@ export type {
   KeyboardBindings,
   GamepadBindings,
   CustomActionBinding,
+  DetectionConfig,
   Config,
 } from '@/stores/configTypes';

@@ -23,7 +23,6 @@ export default defineConfig({
     '**/*.gen.ts',
     'src-tauri/target/**',
     'src-tauri/gen/**',
-    'src-yolo/**',
   ],
   singleQuote: true,
   jsxSingleQuote: true,

@@ -1,6 +1,7 @@
 pub mod app;
 pub mod app_update;
 pub mod control;
+pub mod detection;
 pub mod firmware;
 pub mod gamepad;
 pub mod recording;
@@ -11,6 +12,11 @@ pub use app::{
 };
 pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{deactivate_direction_vector, send_direction_vector};
+pub use detection::{
+  cancel_detection_model_download, delete_detection_model, download_detection_model,
+  import_detection_model, list_detection_catalog, list_detection_models, start_detection,
+  stop_detection,
+};
 pub use firmware::{
   cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_firmware_manifest,
   list_firmware_releases, list_flash_drives, prepare_flash, signal_flash_image,

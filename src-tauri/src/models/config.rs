@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::detection::model::ExecutionProviderPreference;
 use crate::version::current_app_version;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -158,6 +159,7 @@ pub struct KeyboardBindings {
   pub desired_depth_increase: Option<KeyboardInput>,
   pub desired_depth_decrease: Option<KeyboardInput>,
   pub record: Option<KeyboardInput>,
+  pub object_detection: Option<KeyboardInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -185,6 +187,7 @@ pub struct GamepadBindings {
   pub desired_depth_increase: Option<GamepadInput>,
   pub desired_depth_decrease: Option<GamepadInput>,
   pub record: Option<GamepadInput>,
+  pub object_detection: Option<GamepadInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -353,6 +356,38 @@ pub struct Config {
   pub custom_actions: Vec<CustomActionBinding>,
   pub selected_gamepad_id: Option<String>,
   pub gamepad: HashMap<String, GamepadBindings>,
+  #[serde(default)]
+  pub detection: DetectionConfig,
+}
+
+/// Object detection settings. Models live in the app data directory and are
+/// referenced by ID.
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct DetectionConfig {
+  pub enabled: bool,
+  pub model_id: Option<String>,
+  pub execution_provider: ExecutionProviderPreference,
+  pub confidence_threshold: f32,
+  /// Class IDs to show for each model ID. A model without an entry shows every
+  /// class.
+  pub class_filters: HashMap<String, Vec<u32>>,
+  pub show_labels: bool,
+  pub show_track_ids: bool,
+}
+
+impl Default for DetectionConfig {
+  fn default() -> Self {
+    Self {
+      enabled: false,
+      model_id: None,
+      execution_provider: ExecutionProviderPreference::Auto,
+      confidence_threshold: 0.4,
+      class_filters: HashMap::new(),
+      show_labels: true,
+      show_track_ids: false,
+    }
+  }
 }
 
 fn default_automatic_bitrate() -> bool {
@@ -411,6 +446,7 @@ impl Default for KeyboardBindings {
       desired_depth_increase: Some(default_keyboard_input(KeyboardKey::ArrowUp)),
       desired_depth_decrease: Some(default_keyboard_input(KeyboardKey::ArrowDown)),
       record: Some(default_keyboard_input(KeyboardKey::KeyR)),
+      object_detection: Some(default_keyboard_input(KeyboardKey::KeyV)),
     }
   }
 }
@@ -626,6 +662,7 @@ impl Default for Config {
       custom_actions: Vec::new(),
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
+      detection: DetectionConfig::default(),
     }
   }
 }
@@ -978,5 +1015,32 @@ mod tests {
     };
 
     assert!(deserialized.automatic_bitrate);
+  }
+
+  /// # Errors
+  /// Returns serialization errors when constructing or loading the old config.
+  ///
+  /// # Panics
+  /// Panics if detection defaults or bindings are not backwards compatible.
+  #[test]
+  fn configs_without_detection_settings_keep_default_bindings()
+  -> Result<(), Box<dyn std::error::Error>> {
+    let mut serialized = serde_json::to_value(Config::default())?;
+    if let Some(object) = serialized.as_object_mut() {
+      object.remove("detection");
+    }
+    if let Some(keyboard) = serialized["keyboard"].as_object_mut() {
+      keyboard.remove("objectDetection");
+    }
+    serialized["gamepad"] = serde_json::json!({"old-controller": {}});
+    let config: Config = serde_json::from_value(serialized)?;
+    assert!(!config.detection.enabled);
+    assert!(config.detection.model_id.is_none());
+    assert!(matches!(
+      config.keyboard.object_detection.map(|input| input.key),
+      Some(KeyboardKey::KeyV)
+    ));
+    assert!(config.gamepad["old-controller"].object_detection.is_none());
+    Ok(())
   }
 }

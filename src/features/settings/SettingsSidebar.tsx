@@ -20,6 +20,7 @@ import BuildIcon from '~icons/material-symbols/build';
 import CodeIcon from '~icons/material-symbols/code';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
+import FilterCenterFocusIcon from '~icons/material-symbols/filter-center-focus';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import MemoryIcon from '~icons/material-symbols/memory';
 import PaletteIcon from '~icons/material-symbols/palette';
@@ -73,6 +74,12 @@ const APPLICATION_ITEMS = [
     ariaLabel: (): string => m.aria_labels_app_connection_button(),
     to: '/settings/app-connection',
     Icon: SettingsEthernetIcon,
+  },
+  {
+    label: (): string => m.settings_application_detection(),
+    ariaLabel: (): string => m.aria_labels_detection_button(),
+    to: '/settings/detection',
+    Icon: FilterCenterFocusIcon,
   },
 ] as const satisfies readonly SidebarItem[];
 

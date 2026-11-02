@@ -1,5 +1,6 @@
 mod commands;
 mod constants;
+mod detection;
 mod firmware;
 
 mod models {
@@ -27,14 +28,17 @@ use std::sync::atomic::AtomicU64;
 
 use commands::firmware::FlashControl;
 use commands::{
-  append_recording_chunk, cancel_flash, cancel_regulator_auto_tuning, cancel_thruster_test,
-  cleanup_firmware_cache, close_splashscreen, confirm_rov_config, deactivate_direction_vector,
-  download_firmware_update, export_logs, fetch_app_releases, fetch_firmware_manifest,
-  flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config, import_custom_action_source,
-  import_rov_config, initialize_log_listener, install_app_release, list_firmware_releases,
+  append_recording_chunk, cancel_detection_model_download, cancel_flash,
+  cancel_regulator_auto_tuning, cancel_thruster_test, cleanup_firmware_cache, close_splashscreen,
+  confirm_rov_config, deactivate_direction_vector, delete_detection_model,
+  download_detection_model, download_firmware_update, export_logs, fetch_app_releases,
+  fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
+  import_custom_action_source, import_detection_model, import_rov_config, initialize_log_listener,
+  install_app_release, list_detection_catalog, list_detection_models, list_firmware_releases,
   list_flash_drives, prepare_flash, request_capability, request_rov_config, save_csv,
   save_recording, send_direction_vector, set_config, set_rov_config, signal_flash_image,
-  stage_config, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  stage_config, start_detection, start_gamepad_stream, start_regulator_auto_tuning,
+  start_thruster_test, stop_detection,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -60,6 +64,7 @@ fn setup_handlers(app: &mut App) {
   app.manage(python_editor::PythonEditorState::default());
   app.manage(Arc::new(FlashControl::default()));
   app.manage(websocket::capabilities::CapabilityState::default());
+  app.manage(detection::DetectionRuntime::default());
 
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
@@ -304,6 +309,14 @@ pub fn run() -> tauri::Result<()> {
       save_recording,
       fetch_app_releases,
       install_app_release,
+      list_detection_models,
+      list_detection_catalog,
+      download_detection_model,
+      cancel_detection_model_download,
+      import_detection_model,
+      delete_detection_model,
+      start_detection,
+      stop_detection,
     ])
     .setup(|app| {
       #[cfg(target_os = "linux")]

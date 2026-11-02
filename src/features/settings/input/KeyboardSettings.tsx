@@ -85,7 +85,10 @@ const BINDING_SECTIONS: BindingSection[] = [
   },
   {
     title: () => m.bindings_section_other(),
-    fields: [{ key: 'record', label: () => m.keyboard_record() }],
+    fields: [
+      { key: 'record', label: () => m.keyboard_record() },
+      { key: 'objectDetection', label: () => m.bindings_action_object_detection() },
+    ],
   },
 ];
 
