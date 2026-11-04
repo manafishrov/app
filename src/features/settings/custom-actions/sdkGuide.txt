@@ -22,6 +22,22 @@ async def read_depth(ctx: Context) -> None:
 The installed Water sensor, Blackbox logging, and Extended telemetry scripts are
 complete examples. Open them with **Edit script**.
 
+## Source code
+
+Manafish is open source on GitHub. When this guide does not answer a question,
+read the source there instead of guessing:
+
+- Firmware: https://github.com/manafishrov/firmware. It contains the
+  `manafish_sdk` package (`src/manafish_sdk/`), the custom-action runtime
+  (`src/rov_firmware/custom_actions/`), the installed example scripts
+  (`src/rov_firmware/custom_actions/defaults/`), and `RovState`
+  (`src/rov_firmware/rov_state.py`).
+- App: https://github.com/manafishrov/app
+- All repositories: https://github.com/manafishrov
+
+The `main` branch can be newer than the firmware on this ROV. Release tags, for
+example `v1.2.0`, match firmware versions.
+
 ## IDs
 
 The script ID uses lowercase letters, digits, and underscores, starts with a
@@ -113,8 +129,7 @@ The editor type-checks drafts locally against the connected ROV's SDK
 definitions, cached for offline use, without running them. Static checks cannot
 prove that hardware exists or that an operation is safe.
 
-## Agent output
+## Installing
 
-Return one complete Python file and a short testing checklist. Keep
-configuration constants at the top. Explain required wiring and libraries; do
-not invent pin assignments. No manifest or firmware changes are needed.
+A custom action needs a single Python `.py` file, which can be uploaded with
+**Import script** on the app's Custom actions page.
