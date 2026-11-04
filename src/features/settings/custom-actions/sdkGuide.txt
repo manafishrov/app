@@ -129,10 +129,7 @@ The editor type-checks drafts locally against the connected ROV's SDK
 definitions, cached for offline use, without running them. Static checks cannot
 prove that hardware exists or that an operation is safe.
 
-## Agent output
+## Installing
 
-Unless the user asks for something else, give them the script as a `.py` file
-named after the script ID, for example `depth_monitor.py`. If you cannot attach
-files, put the complete file in one Python code block. Also give a short
-testing checklist. Keep configuration constants at the top. Explain required
-wiring and libraries; do not invent pin assignments. No manifest or firmware changes are needed.
+A custom action needs a single Python `.py` file, which can be uploaded with
+**Import script** on the app's Custom actions page.
