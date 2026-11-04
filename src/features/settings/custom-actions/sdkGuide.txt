@@ -134,5 +134,5 @@ prove that hardware exists or that an operation is safe.
 Unless the user asks for something else, give them the script as a `.py` file
 named after the script ID, for example `depth_monitor.py`. If you cannot attach
 files, put the complete file in one Python code block. Also give a short
-testing checklist. Keep configuration constants at the top. Explain required wiring and libraries; do
-not invent pin assignments. No manifest or firmware changes are needed.
+testing checklist. Keep configuration constants at the top. Explain required
+wiring and libraries; do not invent pin assignments. No manifest or firmware changes are needed.
