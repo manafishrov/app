@@ -45,6 +45,7 @@ export const overlayWidgetPlacements: Record<OverlayWidgetType, OverlayWidgetPla
   thrusterRpm8: placement(OverlayWidgetType.thrusterRpm8),
   autoStabilization: placement(OverlayWidgetType.autoStabilization),
   depthHold: placement(OverlayWidgetType.depthHold),
+  takePhoto: placement(OverlayWidgetType.takePhoto),
   currentDepth: placement(OverlayWidgetType.currentDepth),
   desiredDepth: placement(OverlayWidgetType.desiredDepth),
   waterTemperature: placement(OverlayWidgetType.waterTemperature),

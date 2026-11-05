@@ -20,7 +20,7 @@ import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization'
 
 import { useOverlayContentVisible } from './OverlayPreview';
 
-type StabilizationToggleProps = {
+type OverlayToggleProps = {
   active: boolean;
   label: string;
   onToggle: () => void;
@@ -31,7 +31,8 @@ const handleToggleError = (): void => {
   // Silently ignore toggle errors (command failure is expected if not connected)
 };
 
-const StabilizationToggle: Component<StabilizationToggleProps> = (props) => (
+/** The square overlay control button: stabilization, depth hold and photos. */
+const OverlayToggle: Component<OverlayToggleProps> = (props) => (
   <Tooltip positioning={{ placement: 'right' }}>
     <TooltipTrigger
       asChild={(tooltipProps) => (
@@ -73,7 +74,7 @@ const StabilizationIndicator: Component<{ depthHold: boolean }> = (props) => {
   return (
     <div class={isVisible() ? 'overlay-surface overlay-controls pointer-events-auto' : 'hidden'}>
       <Show when={!props.depthHold}>
-        <StabilizationToggle
+        <OverlayToggle
           active={rovStatusStore.autoStabilization}
           label={m.controls_stabilization_stabilization()}
           onToggle={() => {
@@ -84,7 +85,7 @@ const StabilizationIndicator: Component<{ depthHold: boolean }> = (props) => {
         />
       </Show>
       <Show when={props.depthHold}>
-        <StabilizationToggle
+        <OverlayToggle
           active={rovStatusStore.depthHold}
           label={m.controls_stabilization_depth_hold()}
           onToggle={() => {
@@ -98,4 +99,4 @@ const StabilizationIndicator: Component<{ depthHold: boolean }> = (props) => {
   );
 };
 
-export { StabilizationIndicator };
+export { OverlayToggle, StabilizationIndicator };

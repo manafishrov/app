@@ -53,6 +53,7 @@ const config: DirectionVectorConfig = {
     desiredDepthDecrease: null,
     record: null,
     objectDetection: null,
+    takePhoto: null,
   },
 };
 

@@ -45,6 +45,7 @@ class RovAddressArgs {
 @InvokeArg
 class DirectoryArgs {
   lateinit var directory: String
+  var kind: String = "video"
 }
 
 @InvokeArg
@@ -167,7 +168,7 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
   fun describeDirectory(invoke: Invoke) {
     val args = invoke.parseArgs(DirectoryArgs::class.java)
     runCatchingInto(invoke) {
-      JSObject().put("name", storage.describeDirectory(args.directory))
+      JSObject().put("name", storage.describeDirectory(args.directory, args.kind))
     }
   }
 

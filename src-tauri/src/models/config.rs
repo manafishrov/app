@@ -159,6 +159,10 @@ pub struct KeyboardBindings {
   pub desired_depth_decrease: Option<KeyboardInput>,
   pub record: Option<KeyboardInput>,
   pub object_detection: Option<KeyboardInput>,
+  // Field-level default: configs saved before photos existed keep it unbound
+  // instead of taking P, which they may already use for the depth popup.
+  #[serde(default)]
+  pub take_photo: Option<KeyboardInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -187,6 +191,7 @@ pub struct GamepadBindings {
   pub desired_depth_decrease: Option<GamepadInput>,
   pub record: Option<GamepadInput>,
   pub object_detection: Option<GamepadInput>,
+  pub take_photo: Option<GamepadInput>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -213,6 +218,7 @@ pub enum OverlayWidgetType {
   AttitudeClassic,
   AutoStabilization,
   DepthHold,
+  TakePhoto,
   CurrentDepth,
   DesiredDepth,
   WaterTemperature,
@@ -317,6 +323,10 @@ pub struct Config {
   /// before any ROV is connected.
   pub overlay: OverlayConfig,
   pub video_directory: String,
+  // Where photos from the ROV are saved. Defaulted so configs saved before
+  // photos existed still load.
+  #[serde(default = "default_photo_directory")]
+  pub photo_directory: String,
   #[serde(flatten)]
   pub update_checks: UpdateCheckConfig,
   pub ip_address: String,
@@ -413,6 +423,24 @@ fn default_video_directory() -> String {
   }
 }
 
+fn default_photo_directory() -> String {
+  // As for videos: a picker token on mobile, where empty means the platform
+  // default (Pictures/Manafish on Android, the app's Files folder on iOS).
+  if cfg!(any(target_os = "android", target_os = "ios")) {
+    String::new()
+  } else if cfg!(target_os = "windows") {
+    format!(
+      "{}\\Pictures\\Manafish",
+      std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())
+    )
+  } else {
+    format!(
+      "{}/Pictures/Manafish",
+      std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string())
+    )
+  }
+}
+
 fn default_keyboard_input(key: KeyboardKey) -> KeyboardInput {
   KeyboardInput {
     key,
@@ -442,11 +470,12 @@ impl Default for KeyboardBindings {
       action2_negative: Some(default_keyboard_input(KeyboardKey::Digit4)),
       auto_stabilization: Some(default_keyboard_input(KeyboardKey::KeyU)),
       depth_hold: Some(default_keyboard_input(KeyboardKey::KeyO)),
-      desired_depth_entry: Some(default_keyboard_input(KeyboardKey::KeyP)),
+      desired_depth_entry: Some(default_keyboard_input(KeyboardKey::KeyT)),
       desired_depth_increase: Some(default_keyboard_input(KeyboardKey::ArrowUp)),
       desired_depth_decrease: Some(default_keyboard_input(KeyboardKey::ArrowDown)),
       record: Some(default_keyboard_input(KeyboardKey::KeyR)),
       object_detection: Some(default_keyboard_input(KeyboardKey::KeyV)),
+      take_photo: Some(default_keyboard_input(KeyboardKey::KeyP)),
     }
   }
 }
@@ -576,6 +605,7 @@ pub fn default_overlay_widgets() -> Vec<OverlayWidget> {
       OverlayAnchor::Left,
     ),
     overlay_widget("depth-hold", OverlayWidgetType::DepthHold, 1, 25, 3, 3, OverlayAnchor::Left),
+    overlay_widget("take-photo", OverlayWidgetType::TakePhoto, 1, 28, 3, 3, OverlayAnchor::Left),
     overlay_widget(
       "attitude",
       OverlayWidgetType::AttitudeScientific,
@@ -625,7 +655,8 @@ pub fn default_overlay_widgets() -> Vec<OverlayWidget> {
     overlay_widget("battery", OverlayWidgetType::BatteryLevel, 55, 47, 10, 2, OverlayAnchor::Right),
     overlay_widget("work", OverlayWidgetType::WorkIndicator, 1, 33, 8, 2, OverlayAnchor::Right),
   ];
-  widgets.splice(5..5, default_thruster_widgets());
+  // After the attitude widget, as in the frontend's copy.
+  widgets.splice(6..6, default_thruster_widgets());
   widgets
 }
 
@@ -650,6 +681,7 @@ impl Default for Config {
       app_version: current_app_version(),
       overlay: default_overlay_config(),
       video_directory: default_video_directory(),
+      photo_directory: default_photo_directory(),
       update_checks: UpdateCheckConfig {
         check_for_app_updates_on_startup: true,
       },
@@ -751,6 +783,7 @@ mod tests {
           OverlayWidgetType::AttitudeClassic => "attitudeClassic",
           OverlayWidgetType::AutoStabilization => "autoStabilization",
           OverlayWidgetType::DepthHold => "depthHold",
+          OverlayWidgetType::TakePhoto => "takePhoto",
           OverlayWidgetType::CurrentDepth => "currentDepth",
           OverlayWidgetType::DesiredDepth => "desiredDepth",
           OverlayWidgetType::WaterTemperature => "waterTemperature",
@@ -777,6 +810,7 @@ mod tests {
         ("recording", "recording"),
         ("stabilization", "autoStabilization"),
         ("depth-hold", "depthHold"),
+        ("take-photo", "takePhoto"),
         ("attitude", "attitudeScientific"),
         ("thruster-rpm-1", "thrusterRpm1"),
         ("thruster-rpm-2", "thrusterRpm2"),
@@ -888,7 +922,7 @@ mod tests {
       matches!(key, KeyboardKey::KeyO)
     });
     assert_keyboard_binding(config.keyboard.desired_depth_entry.as_ref(), |key| {
-      matches!(key, KeyboardKey::KeyP)
+      matches!(key, KeyboardKey::KeyT)
     });
     assert_keyboard_binding(config.keyboard.desired_depth_increase.as_ref(), |key| {
       matches!(key, KeyboardKey::ArrowUp)
@@ -899,6 +933,39 @@ mod tests {
     assert_keyboard_binding(config.keyboard.record.as_ref(), |key| {
       matches!(key, KeyboardKey::KeyR)
     });
+    assert_keyboard_binding(config.keyboard.take_photo.as_ref(), |key| {
+      matches!(key, KeyboardKey::KeyP)
+    });
+    assert!(config.photo_directory.contains("Pictures"));
+    assert!(config.photo_directory.contains("Manafish"));
+  }
+
+  /// # Panics
+  /// Panics if a config saved before photos existed gains a photo key, which
+  /// could clash with P already bound to the desired depth popup.
+  #[test]
+  fn configs_saved_before_photos_load_with_photo_key_unbound() {
+    let mut raw = serde_json::to_value(Config::default()).unwrap_or_default();
+    let Some(keyboard) = raw.get_mut("keyboard").and_then(serde_json::Value::as_object_mut) else {
+      panic!("serialized config has keyboard bindings");
+    };
+    let _ = keyboard.remove("takePhoto");
+    let Some(object) = raw.as_object_mut() else {
+      panic!("serialized config is an object");
+    };
+    let _ = object.remove("photoDirectory");
+
+    let config = serde_json::from_value::<Config>(raw);
+    assert!(
+      config.is_ok(),
+      "old config failed to load: {:?}",
+      config.err().map(|e| e.to_string())
+    );
+    let Ok(config) = config else {
+      return;
+    };
+    assert!(config.keyboard.take_photo.is_none());
+    assert!(config.photo_directory.contains("Manafish"));
   }
 
   /// # Panics
@@ -929,6 +996,7 @@ mod tests {
     assert!(bindings.desired_depth_increase.is_none());
     assert!(bindings.desired_depth_decrease.is_none());
     assert!(bindings.record.is_none());
+    assert!(bindings.take_photo.is_none());
   }
 
   /// # Panics
@@ -947,6 +1015,7 @@ mod tests {
     assert!(serialized.get("appVersion").is_some());
     assert!(serialized.get("overlay").is_some());
     assert!(serialized.get("videoDirectory").is_some());
+    assert!(serialized.get("photoDirectory").is_some());
     assert!(serialized.get("app_version").is_none());
     assert!(serialized.get("video_directory").is_none());
 
