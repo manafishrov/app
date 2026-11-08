@@ -3,7 +3,7 @@
 
 use std::collections::{HashMap, hash_map::Entry};
 use std::fmt::Write as _;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -151,7 +151,8 @@ impl ModelDownloads {
         .map_err(|error| error.to_string())?,
     );
     let client = client.build().map_err(|error| error.to_string())?;
-    let staged = receive(&client, &asset, &token, &progress).await?;
+    tokio::fs::create_dir_all(&directory).await.map_err(|error| error.to_string())?;
+    let staged = receive(&client, &asset, &directory, &token, &progress).await?;
     if token.is_cancelled() {
       return Err(CANCELLED.to_string());
     }
@@ -170,13 +171,14 @@ impl ModelDownloads {
 async fn receive(
   client: &reqwest::Client,
   asset: &CatalogAsset,
+  directory: &Path,
   cancellation: &CancellationToken,
   progress: &impl Fn(DownloadProgress),
 ) -> Result<NamedTempFile, String> {
   tokio::select! {
     biased;
     () = cancellation.cancelled() => Err(CANCELLED.to_string()),
-    result = receive_inner(client, asset, progress) => result,
+    result = receive_inner(client, asset, directory, progress) => result,
   }
 }
 
@@ -185,6 +187,7 @@ async fn receive(
 async fn receive_inner(
   client: &reqwest::Client,
   asset: &CatalogAsset,
+  directory: &Path,
   progress: &impl Fn(DownloadProgress),
 ) -> Result<NamedTempFile, String> {
   if asset.file_size == 0 || asset.file_size > MAX_MODEL_BYTES {
@@ -196,7 +199,9 @@ async fn receive_inner(
   if response.content_length().is_some_and(|size| size != asset.file_size) {
     return Err("The model download size has changed".to_string());
   }
-  let staged = NamedTempFile::new().map_err(|error| error.to_string())?;
+  // Android before 13 does not set $TMPDIR for apps, so the default temporary
+  // directory is not writable there. Stage next to the library instead.
+  let staged = NamedTempFile::new_in(directory).map_err(|error| error.to_string())?;
   let mut file = tokio::fs::File::from_std(staged.reopen().map_err(|error| error.to_string())?);
   let mut stream = response.bytes_stream();
   let mut downloaded = 0_u64;
@@ -335,9 +340,17 @@ mod tests {
   async fn receives_verified_bytes_and_removes_staging_file_on_drop() -> Result<(), String> {
     let (url, server) =
       serve(response(std::str::from_utf8(CONTENT).map_err(|error| error.to_string())?)).await?;
-    let file =
-      receive(&reqwest::Client::new(), &asset(url), &CancellationToken::new(), &|_| {}).await?;
+    let directory = tempfile::tempdir().map_err(|error| error.to_string())?;
+    let file = receive(
+      &reqwest::Client::new(),
+      &asset(url),
+      directory.path(),
+      &CancellationToken::new(),
+      &|_| {},
+    )
+    .await?;
     let path = file.path().to_path_buf();
+    assert_eq!(path.parent(), Some(directory.path()));
     assert_eq!(std::fs::read(&path).map_err(|error| error.to_string())?, CONTENT);
     drop(file);
     assert!(!path.exists());
@@ -356,15 +369,24 @@ mod tests {
         .to_string(),
       "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nshort".to_string(),
     ];
+    let directory = tempfile::tempdir().map_err(|error| error.to_string())?;
     for response in cases {
       let (url, server) = serve(response).await?;
       assert!(
-        receive(&reqwest::Client::new(), &asset(url), &CancellationToken::new(), &|_| {})
-          .await
-          .is_err()
+        receive(
+          &reqwest::Client::new(),
+          &asset(url),
+          directory.path(),
+          &CancellationToken::new(),
+          &|_| {},
+        )
+        .await
+        .is_err()
       );
       server.await.map_err(|error| error.to_string())?;
     }
+    let leftovers = std::fs::read_dir(directory.path()).map_err(|error| error.to_string())?;
+    assert_eq!(leftovers.count(), 0);
     Ok(())
   }
 
@@ -372,6 +394,7 @@ mod tests {
   async fn cancels_a_connection_waiting_for_headers() -> Result<(), String> {
     let listener = TcpListener::bind("127.0.0.1:0").await.map_err(|error| error.to_string())?;
     let address = listener.local_addr().map_err(|error| error.to_string())?;
+    let directory = tempfile::tempdir().map_err(|error| error.to_string())?;
     let cancellation = CancellationToken::new();
     let cancel = cancellation.clone();
     let server = tokio::spawn(async move {
@@ -384,6 +407,7 @@ mod tests {
       receive(
         &reqwest::Client::new(),
         &asset(format!("http://{address}/model.onnx")),
+        directory.path(),
         &cancellation,
         &|_| {},
       ),
