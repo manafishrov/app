@@ -128,7 +128,8 @@ intra-op threads and one inter-op thread.
 Capture requests the newest decoded video frame with `requestVideoFrameCallback`
 when available, with a timer/currentTime fallback. Its ceiling is 5 fps. An
 exponential moving average of acknowledged processing latency lowers the rate
-for slow models, leaving at least 20% idle time between requests. This is a
+for slow models and leaves an idle gap based on processing latency, capped at
+two seconds. Native idle expiry starts after inference completes. This is a
 playback/controls budget, not a thermal sensor. It waits for
 native inference to acknowledge each binary request before reading another
 frame, so slow inference drops sampling opportunities instead of building a

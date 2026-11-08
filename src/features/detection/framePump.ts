@@ -66,8 +66,11 @@ export const createFramePump = (
           MAX_FRAME_INTERVAL_MS,
           Math.max(FRAME_INTERVAL_MS, averageLatency * PROCESSING_HEADROOM),
         );
-        // Leave at least 20% idle after slow requests, even beyond the rate cap.
-        const delay = Math.max(interval - duration, duration * (PROCESSING_HEADROOM - 1));
+        // Budget idle time after slow requests, bounded below native idle expiry.
+        const delay = Math.min(
+          MAX_FRAME_INTERVAL_MS,
+          Math.max(interval - duration, duration * (PROCESSING_HEADROOM - 1)),
+        );
         clock.request(tick, delay);
       })
       .catch((error: unknown) => {

@@ -225,6 +225,9 @@ fn infer(
     });
     drop(frame_settings);
     send_stats(started, &mut last_result, frame.captured_at, send);
+    // Idle expiry measures missing capture after completion, not time spent
+    // inside a slow model. The frontend may deliberately cool down after ACK.
+    last_frame = Instant::now();
     let _ = request.done.send(Ok(()));
   }
   Ok(())

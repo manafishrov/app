@@ -29,7 +29,9 @@ IPC transport zero-copy. Malformed wire data is rejected before the owned copy.
 Mobile scheduling requests a decoded frame only after acknowledgement and the
 next sample deadline. Fallback timers check `currentTime`. The maximum is 5 fps;
 an EWMA of request latency (weight 0.2) lowers the target and each slow request
-gets at least 25% of its processing time as an idle gap (20% idle duty share).
+gets 25% of its processing time as an idle gap (20% idle duty share), capped
+at two seconds so the native worker does not mistake intentional cooldown for
+a missing source. Native idle expiry starts after a frame completes.
 There is no thermal measurement or claim. Cancellation, hidden/paused playback,
 resume generations and source replacement are covered by fake-clock tests.
 

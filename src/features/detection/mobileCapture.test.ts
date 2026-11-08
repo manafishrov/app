@@ -242,3 +242,24 @@ it('ignores completion and rejection from a superseded run', async () => {
   expect(sample).toHaveBeenCalledOnce();
   cancel();
 });
+
+it('bounds cooldown after a very slow acknowledgement so native capture does not expire', async () => {
+  vi.useFakeTimers();
+  let acknowledge: () => void = noPendingFrame;
+  const sample = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        acknowledge = resolve;
+      }),
+  );
+  const cancel = createFramePump(sample, () => true);
+  await vi.advanceTimersByTimeAsync(12_000);
+  expect(sample).toHaveBeenCalledOnce();
+  acknowledge();
+  await vi.advanceTimersByTimeAsync(1999);
+  expect(sample).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(1);
+  expect(sample).toHaveBeenCalledTimes(2);
+  cancel();
+  acknowledge();
+});
