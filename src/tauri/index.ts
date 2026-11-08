@@ -4,7 +4,7 @@ import { DisposableStack, type CleanupFn } from '@/tauri/core';
 import { setupGamepadListener } from '@/tauri/gamepad';
 import { setupLogsListener } from '@/tauri/logs';
 import { setupRegulatorListener } from '@/tauri/regulator';
-import { setupRovConfigListener } from '@/tauri/rovConfig';
+import { setupRovConfigListener, setupRovFirmwareVersionListener } from '@/tauri/rovConfig';
 import { setupFirmwareDownloadListener, setupFirmwareFlashListener } from '@/tauri/sdFlash';
 import { setupToastListener } from '@/tauri/toast';
 
@@ -49,6 +49,7 @@ const listeners = [
   setupRegulatorListener,
   setupRovConfigListener,
   setupCapabilityListeners,
+  setupRovFirmwareVersionListener,
   setupToastListener,
 ];
 

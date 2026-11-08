@@ -99,6 +99,66 @@
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
       };
+      # `nix develop .#mobile` for `tauri ios` and `tauri android`. On macOS
+      # there is no C toolchain from nixpkgs: Xcode provides one, and the
+      # nixpkgs wrapper would point Xcode at its own SDK. Linux needs it for
+      # build scripts.
+      mobile = let
+        inherit (pkgs.stdenv) isDarwin;
+        androidPkgs = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            android_sdk.accept_license = true;
+          };
+        };
+        android = androidPkgs.androidenv.composeAndroidPackages {
+          # The app targets 37; the tauri-android library still compiles against 36.
+          platformVersions = ["36" "37"];
+          buildToolsVersions = ["36.0.0"];
+          includeNDK = true;
+          ndkVersions = ["28.2.13676358"];
+        };
+        androidSdk = "${android.androidsdk}/libexec/android-sdk";
+        fenixPkgs = fenix.packages.${system};
+        # Every target `tauri ios|android init` checks for; it calls rustup,
+        # which this toolchain does not have, when one is missing.
+        mobileTargets =
+          [
+            "aarch64-linux-android"
+            "armv7-linux-androideabi"
+            "i686-linux-android"
+            "x86_64-linux-android"
+          ]
+          ++ pkgs.lib.optionals isDarwin [
+            "aarch64-apple-ios"
+            "aarch64-apple-ios-sim"
+            "x86_64-apple-ios"
+          ];
+        mobileRustToolchain = fenixPkgs.combine (
+          [
+            (fenixPkgs.stable.withComponents ["cargo" "clippy" "rustfmt" "rust-src" "rustc"])
+          ]
+          ++ map (target: fenixPkgs.targets.${target}.stable.rust-std) mobileTargets
+        );
+      in
+        (if isDarwin then pkgs.mkShellNoCC else pkgs.mkShell) {
+          packages =
+            [
+              mobileRustToolchain
+              unstable.bun
+              pkgs.jdk17
+              android.androidsdk
+            ]
+            ++ pkgs.lib.optionals isDarwin (with pkgs; [cocoapods libimobiledevice xcodegen]);
+          ANDROID_HOME = androidSdk;
+          ANDROID_SDK_ROOT = androidSdk;
+          NDK_HOME = "${androidSdk}/ndk/28.2.13676358";
+          JAVA_HOME = pkgs.jdk17.home;
+          # Gradle's bundled aapt2 is dynamically linked against a glibc
+          # nixpkgs does not provide; use the SDK's patched one instead.
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/build-tools/36.0.0/aapt2";
+        };
     });
   };
 }

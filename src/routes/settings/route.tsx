@@ -13,6 +13,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createEffect, createSignal, onCleanup, onMount, Show, type Component } from 'solid-js';
 
 import { SettingsSidebar } from '@/features/settings/SettingsSidebar';
+import { isMobile } from '@/lib/platform';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { requestRovConfig, rovConfigRevision } from '@/tauri';
 
@@ -41,6 +42,10 @@ const useSettingsLayoutSetup = (setIsFullscreen: (val: boolean) => unknown): voi
   let unlistenResize: () => void = noop;
 
   onMount(() => {
+    // Mobile apps are always full screen and have no window to watch.
+    if (isMobile) {
+      return;
+    }
     const win = getCurrentWindow();
     updateFullscreenState();
 
@@ -66,7 +71,14 @@ const SettingsLayout: Component = () => {
 
   return (
     <SidebarProvider defaultOpen>
-      <SidebarLayout class={cn('size-full', !isFullscreen() && 'pt-7')}>
+      <SidebarLayout
+        class={cn(
+          'size-full',
+          isMobile
+            ? 'pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]'
+            : !isFullscreen() && 'pt-7',
+        )}
+      >
         <SettingsSidebar isFullscreen={isFullscreen()} />
         <SidebarInset class={cn(isFullscreen() && 'mt-6')}>
           <ScrollArea class='relative size-full'>

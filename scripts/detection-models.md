@@ -82,6 +82,29 @@ MANA_FISH_TEST_IMAGE=/path/to/ultralytics/assets/bus.jpg \
   -- --ignored
 ```
 
+## Android and iOS
+
+Detection is desktop-only. Mobile builds omit ONNX Runtime, FFmpeg decoding,
+the detection worker and its Tauri commands. The settings entry and input
+bindings are hidden; opening the detection settings URL directly shows an
+unavailable message. An imported config may retain detection settings, but
+the mobile controller never starts inference or invokes desktop commands.
+
+Mobile support needs a packaged ONNX Runtime for each target, a mobile frame
+source (the desktop worker currently reads RTSP through FFmpeg), sandboxed
+model downloads/imports and storage, and lifecycle/cancellation handling.
+Android acceleration needs a validated NNAPI or other supported execution
+provider; iOS needs a validated Core ML provider. CPU inference must also be
+tested on both platforms. Performance, memory, thermal load, orientation and
+overlay alignment need tests on real phones before enabling the UI.
+
+The integrated branch passes an Android ARM64 Rust `cargo check --lib`,
+Android/iOS frontend builds, and dependency checks excluding ONNX Runtime,
+FFmpeg and SDL from both mobile targets. The frontend regression test imports
+an enabled detection config on mobile and verifies that no detection IPC is
+called. No APK/IPA or mobile hardware test was performed; iOS native checks
+require macOS and Xcode.
+
 ## Linux GPU backends
 
 The hardware selector lists the backends compiled into the native app. Their

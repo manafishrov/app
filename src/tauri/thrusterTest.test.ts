@@ -1,15 +1,20 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ listen: vi.fn(), createToast: vi.fn() }));
+const mocks = vi.hoisted(() => ({ listen: vi.fn(), createToast: vi.fn(), isMobile: false }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: mocks.listen }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@manafishrov/ui/toaster', () => ({ toast: { create: mocks.createToast } }));
 vi.mock('@/stores/config', () => ({ configStore: {} }));
 vi.mock('@/tauri/gamepad', () => ({ playConfirmHaptic: vi.fn() }));
 vi.mock('@/lib/log', () => ({ logError: vi.fn() }));
+vi.mock('@/lib/platform', () => ({
+  get isMobile(): boolean {
+    return mocks.isMobile;
+  },
+}));
 vi.mock('@/paraglide/messages', () => ({
   toasts_operation_timed_out: (): string => 'Timed out',
-  toasts_thruster_test_title: (): string => 'Testing',
+  toasts_thruster_test_title: (args: { pin: string }): string => `Testing ${args.pin}`,
   toasts_thruster_test_cancel_hint: (): string => 'Press Esc in Calibration to cancel.',
   toasts_seconds_remaining: (): string => '3 seconds remaining',
   toasts_thruster_test_completed: (): string => 'Completed',
@@ -24,7 +29,11 @@ type ToastEvent = {
   payload: {
     identifier: string;
     variant: string;
-    content: { messageKey: string; descriptionKey?: string | undefined };
+    content: {
+      messageKey: string;
+      messageArgs?: Record<string, number> | undefined;
+      descriptionKey?: string | undefined;
+    };
   };
 };
 const isListener = (value: unknown): value is (event: ToastEvent) => void =>
@@ -33,19 +42,26 @@ const isListener = (value: unknown): value is (event: ToastEvent) => void =>
 const deliverToast = (
   variant: string,
   messageKey: string,
-  options: { descriptionKey?: string; identifier?: string } = {},
+  options: {
+    descriptionKey?: string;
+    identifier?: string;
+    messageArgs?: Record<string, number>;
+  } = {},
 ): void => {
-  const { descriptionKey, identifier = 'thruster-test' } = options;
+  const { descriptionKey, identifier = 'thruster-test', messageArgs } = options;
   const [call = []]: unknown[][] = mocks.listen.mock.calls;
   const [, listener] = call;
   if (!isListener(listener)) {
     throw new TypeError('Expected a registered toast listener');
   }
-  listener({ payload: { identifier, variant, content: { messageKey, descriptionKey } } });
+  listener({
+    payload: { identifier, variant, content: { messageKey, messageArgs, descriptionKey } },
+  });
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.isMobile = false;
 });
 
 afterEach(() => {
@@ -80,11 +96,12 @@ it('keeps the countdown and adds a calibration-scoped Escape hint to active test
   return setupToastListener().then((cleanup) => {
     deliverToast('loading', 'toasts_thruster_test_title', {
       descriptionKey: 'toasts_seconds_remaining',
+      messageArgs: { thruster: 4 },
     });
     expect(mocks.createToast).toHaveBeenLastCalledWith({
       id: 'thruster-test',
       type: 'loading',
-      title: 'Testing',
+      title: 'Testing GP18',
       description: '3 seconds remaining Press Esc in Calibration to cancel.',
     });
     cleanup();
@@ -99,6 +116,20 @@ it('shows the hint even when the active test has no countdown description', () =
       expect.objectContaining({
         description: 'Press Esc in Calibration to cancel.',
       }),
+    );
+    cleanup();
+  });
+});
+
+it('leaves the Escape hint out on phones, where the Cancel button stops the test', () => {
+  mocks.isMobile = true;
+  mocks.listen.mockResolvedValue(vi.fn());
+  return setupToastListener().then((cleanup) => {
+    deliverToast('loading', 'toasts_thruster_test_title', {
+      descriptionKey: 'toasts_seconds_remaining',
+    });
+    expect(mocks.createToast).toHaveBeenLastCalledWith(
+      expect.objectContaining({ description: '3 seconds remaining' }),
     );
     cleanup();
   });

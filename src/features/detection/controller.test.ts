@@ -4,9 +4,17 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { configStore, defaultConfig, setConfigStore } from '@/stores/config';
 import { detectionStore, setDetectionStore } from '@/stores/detection';
-import { type DetectionEvent, startDetection, stopDetection } from '@/tauri/detection';
+import {
+  type DetectionEvent,
+  listDetectionModels,
+  startDetection,
+  stopDetection,
+} from '@/tauri/detection';
 
-import { createDetectionController } from './controller';
+import { createDetectionController, toggleObjectDetection } from './controller';
+
+const platform = vi.hoisted(() => ({ isMobile: false }));
+vi.mock('@/lib/platform', () => platform);
 
 vi.mock('@/lib/log', () => ({ logError: vi.fn(), logInfo: vi.fn(), logWarn: vi.fn() }));
 vi.mock('@/tauri/detection', () => ({
@@ -64,6 +72,7 @@ const createDeferred = (): { promise: Promise<void>; resolve: () => void } => {
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  platform.isMobile = false;
   configure(true);
   setDetectionStore({ state: 'stopped', frame: null });
 });
@@ -128,4 +137,17 @@ it('coalesces a burst of option changes into one start using the latest options'
       });
     });
   });
+});
+
+it('does not invoke desktop detection on mobile, even with an enabled imported config', () => {
+  platform.isMobile = true;
+  mount();
+  return toggleObjectDetection()
+    .then(() => vi.advanceTimersByTimeAsync(RESTART_WAIT_MS))
+    .then(() => {
+      expect(listDetectionModels).not.toHaveBeenCalled();
+      expect(startDetection).not.toHaveBeenCalled();
+      expect(stopDetection).not.toHaveBeenCalled();
+      expect(configStore.detection.enabled).toBe(true);
+    });
 });

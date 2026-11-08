@@ -1,9 +1,10 @@
 import { toast } from '@manafishrov/ui/toaster';
 import { invoke } from '@tauri-apps/api/core';
-import { join } from '@tauri-apps/api/path';
+import { appCacheDir, join } from '@tauri-apps/api/path';
 import { mkdir, readDir } from '@tauri-apps/plugin-fs';
 
 import { logError, logInfo } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { setRecordingStore } from '@/stores/recording';
@@ -14,6 +15,16 @@ const MAX_CONSECUTIVE_CHUNK_FAILURES = 3;
 const TEMP_MARKER = '_temp.';
 
 const resolveVoid: () => void = () => 0;
+
+/*
+ * Where MediaRecorder chunks are written. Desktop records straight into the
+ * video directory. Mobile folders are only reachable through the system
+ * picker, so recordings are staged in the app cache and copied out on save.
+ */
+const getRecordingDirectory = (): Promise<string> =>
+  isMobile
+    ? appCacheDir().then((cacheDir) => join(cacheDir, 'recordings'))
+    : Promise.resolve(configStore.videoDirectory);
 
 // Container extension actually written by MediaRecorder (varies per platform).
 const extensionForMimeType = (mimeType: string): string => {
@@ -42,16 +53,20 @@ const recoverTempFile = (videoDirectory: string, fileName: string): Promise<void
     .then(resolveVoid);
 
 export const initializeVideoDirectory = (): Promise<void> =>
-  mkdir(configStore.videoDirectory, { recursive: true }).catch((error: unknown) => {
-    logError('Failed to initialize video directory:', error);
-  });
+  getRecordingDirectory()
+    .then((directory) => mkdir(directory, { recursive: true }))
+    .catch((error: unknown) => {
+      logError('Failed to initialize video directory:', error);
+    });
 
 export const ensureVideoDirectory = (): Promise<void> =>
-  mkdir(configStore.videoDirectory, { recursive: true }).catch((error: unknown) => {
-    logError('Failed to create video directory:', error);
-    toast.create({ title: m.toasts_failed_to_start_recording(), type: 'error' });
-    throw error;
-  });
+  getRecordingDirectory()
+    .then((directory) => mkdir(directory, { recursive: true }))
+    .catch((error: unknown) => {
+      logError('Failed to create video directory:', error);
+      toast.create({ title: m.toasts_failed_to_start_recording(), type: 'error' });
+      throw error;
+    });
 
 export const createRecordingPath = (mimeType: string): Promise<string> => {
   const timestamp = new Date()
@@ -60,7 +75,9 @@ export const createRecordingPath = (mimeType: string): Promise<string> => {
     .replaceAll(/[:.]/g, '-')
     .slice(0, TIMESTAMP_LENGTH);
   const extension = extensionForMimeType(mimeType);
-  return join(configStore.videoDirectory, `Recording_${timestamp}${TEMP_MARKER}${extension}`);
+  return getRecordingDirectory().then((directory) =>
+    join(directory, `Recording_${timestamp}${TEMP_MARKER}${extension}`),
+  );
 };
 
 /*
@@ -106,32 +123,32 @@ export const saveRecording = (tempPath: string): Promise<void> =>
     })
     .then(resolveVoid);
 
-export const recoverTempRecordings = (): Promise<void> => {
-  const { videoDirectory } = configStore;
-  if (!videoDirectory) {
-    return Promise.resolve();
-  }
-
-  return readDir(videoDirectory)
-    .then((entries) => {
-      const tempFiles = getTempFileNames(entries);
-      if (tempFiles.length === 0) {
-        return;
-      }
-
-      toast.create({
-        title: m.toasts_recovering_unfinished_recordings({ count: tempFiles.length }),
-        type: 'info',
-      });
-      logInfo('Recovering temp files:', tempFiles);
-
-      return Promise.all(
-        tempFiles.map((fileName) => recoverTempFile(videoDirectory, fileName)),
-      ).then(resolveVoid);
-    })
-    .catch((error: unknown) => {
-      logError('Error during temp file recovery:', error);
+export const recoverTempRecordings = (): Promise<void> =>
+  getRecordingDirectory().then((videoDirectory) => {
+    if (!videoDirectory) {
       return;
-    })
-    .then(resolveVoid);
-};
+    }
+
+    return readDir(videoDirectory)
+      .then((entries) => {
+        const tempFiles = getTempFileNames(entries);
+        if (tempFiles.length === 0) {
+          return;
+        }
+
+        toast.create({
+          title: m.toasts_recovering_unfinished_recordings({ count: tempFiles.length }),
+          type: 'info',
+        });
+        logInfo('Recovering temp files:', tempFiles);
+
+        return Promise.all(
+          tempFiles.map((fileName) => recoverTempFile(videoDirectory, fileName)),
+        ).then(resolveVoid);
+      })
+      .catch((error: unknown) => {
+        logError('Error during temp file recovery:', error);
+        return;
+      })
+      .then(resolveVoid);
+  });

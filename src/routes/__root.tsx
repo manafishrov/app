@@ -3,16 +3,19 @@ import type { Component } from 'solid-js';
 import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
 import { Toaster } from '@manafishrov/ui/toaster';
 import { TanStackDevtools } from '@tanstack/solid-devtools';
-import { HeadContent, Outlet, createRootRoute, redirect } from '@tanstack/solid-router';
+import { HeadContent, Outlet, createRootRoute } from '@tanstack/solid-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
+import { CompatibilityWarningAlertDialog } from '@/features/compatibility/CompatibilityWarningAlertDialog';
 import { createDetectionController } from '@/features/detection/controller';
 import { Header } from '@/features/header';
+import { loadCompatibility } from '@/lib/compatibility';
 import { disableContextMenu } from '@/lib/contextMenu';
 import { logError } from '@/lib/log';
 import { disablePageZoom } from '@/lib/pageZoom';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
-import { getLocale, shouldRedirect } from '@/paraglide/runtime';
+import { getLocale } from '@/paraglide/runtime';
 import { configStore } from '@/stores/config';
 import {
   checkForAppUpdates,
@@ -54,6 +57,7 @@ const RootLayout: Component = () => {
   onMount(() => {
     cleanupFns.push(disablePageZoom());
     setTimeout(closeSplashscreen, 0);
+    loadCompatibility().catch(logError);
     setupAppListeners(cleanupFns);
   });
 
@@ -68,9 +72,12 @@ const RootLayout: Component = () => {
       <HeadContent />
       <ThemeProvider>
         <LocaleProvider locale={getLocale()}>
-          <Header />
+          <Show when={!isMobile}>
+            <Header />
+          </Show>
           <Outlet />
           <Toaster />
+          <CompatibilityWarningAlertDialog />
         </LocaleProvider>
       </ThemeProvider>
       <TanStackDevtools
@@ -85,17 +92,8 @@ const RootLayout: Component = () => {
   );
 };
 
-const handleBeforeLoad = (): Promise<
-  Awaited<ReturnType<typeof shouldRedirect>> | ReturnType<typeof redirect>
-> => {
+const handleBeforeLoad = (): void => {
   document.documentElement.setAttribute('lang', getLocale());
-  return shouldRedirect({ url: globalThis.location.href }).then((decision) => {
-    if (decision.redirectUrl) {
-      return redirect({ href: decision.redirectUrl.href });
-    }
-
-    return decision;
-  });
 };
 
 export const Route = createRootRoute({

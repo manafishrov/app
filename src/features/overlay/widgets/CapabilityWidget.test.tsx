@@ -185,10 +185,16 @@ it('shows a manual reading age without confusing dry with no data or stale', () 
       { id: 'water.wet', value: false, sequence: 1, timestamp: 9_999_999_999_999, ageMs: 7000 },
     ],
   });
-  expect(host.textContent).toContain('7s ago');
+  expect(host.querySelector('.overlay-capability')).toHaveProperty(
+    'title',
+    expect.stringContaining('7s ago'),
+  );
   expect(stateAttribute()).toBe('ready');
   vi.advanceTimersByTime(60_000);
-  expect(host.textContent).toContain('1m ago');
+  expect(host.querySelector('.overlay-capability')).toHaveProperty(
+    'title',
+    expect.stringContaining('1m ago'),
+  );
   expect(stateAttribute()).toBe('ready');
   expect(lightAttribute()).toBe('false');
 });

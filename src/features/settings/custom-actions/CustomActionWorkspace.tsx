@@ -1,95 +1,153 @@
-import type { Accessor, Component } from 'solid-js';
+import type { Component } from 'solid-js';
 
 import { Button } from '@manafishrov/ui/button';
-import { P } from '@manafishrov/ui/typography';
+import { Empty, EmptyDescription } from '@manafishrov/ui/empty';
+import { H1 } from '@manafishrov/ui/typography';
+import AddIcon from '~icons/material-symbols/add';
 
 import * as m from '@/paraglide/messages';
 import { capabilityStore } from '@/stores/capabilities';
 import { importCustomActionSource } from '@/tauri/capabilities';
 
 import { CustomActionEditor } from './CustomActionEditor';
-import { customActionDraft } from './editorDraft';
+import { CustomActionInstructions } from './CustomActionInstructions';
+import { DiscardDraftAlertDialog } from './DiscardDraftAlertDialog';
+import {
+  customActionDraft,
+  customActionEditorOpen,
+  setCustomActionEditorOpen,
+} from './editorDraft';
 import { InstalledCustomActions } from './InstalledCustomActions';
 import { OperationFeedback } from './OperationFeedback';
-import { createOperation } from './operations';
-import { ReplaceDraftAlertDialog } from './ReplaceDraftAlertDialog';
+import { createOperation, type Operation } from './operations';
 
-type PendingScript = { source: string; installed: boolean };
+const NEW_SCRIPT = `from manafish_sdk import Context, Script, Widget
+
+script = Script("depth_monitor", name="Depth monitor")
+depth = script.reading("depth", float, unit="m", widget=Widget.TEXT)
+
+
+@script.action(name="Read depth")
+async def read_depth(ctx: Context) -> None:
+    if not ctx.rov.system_health.pressure_sensor_healthy:
+        await depth.publish(None)
+        raise RuntimeError("Pressure sensor is unavailable")
+    await depth.publish(ctx.rov.pressure.depth)
+`;
+
+const load = (source: string, installed: boolean, name?: string): void => {
+  customActionDraft.load(source, installed, name);
+  setCustomActionEditorOpen(true);
+};
+
+const ScriptList: Component<{ operation: Operation; onImport: () => void }> = (props) => (
+  <div class='flex min-w-0 flex-col gap-5'>
+    <header class='flex flex-wrap items-center justify-between gap-3'>
+      <H1>{m.custom_action_scripts_title()}</H1>
+      <div class='flex flex-wrap items-start gap-2'>
+        <CustomActionInstructions />
+        <Button
+          variant='outline'
+          size='sm'
+          disabled={props.operation.busy()}
+          onClick={props.onImport}
+        >
+          {m.custom_action_scripts_import()}
+        </Button>
+        <Button
+          size='sm'
+          disabled={props.operation.busy()}
+          onClick={() => {
+            load(NEW_SCRIPT, false);
+          }}
+        >
+          <AddIcon class='size-4' />
+          {m.custom_action_scripts_new()}
+        </Button>
+      </div>
+    </header>
+    <OperationFeedback operation={props.operation} />
+    <Show
+      when={capabilityStore.connected}
+      fallback={
+        <Empty>
+          <EmptyDescription>{m.custom_action_scripts_offline()}</EmptyDescription>
+        </Empty>
+      }
+    >
+      <InstalledCustomActions onLoad={load} />
+    </Show>
+  </div>
+);
+
 type EditorNavigation = {
-  open: Accessor<boolean>;
-  pending: Accessor<PendingScript | null>;
-  load: (source: string, installed: boolean) => void;
-  replace: () => void;
+  pending: () => (() => void) | null;
+  back: () => void;
+  discard: () => void;
+  confirmDiscard: () => void;
   cancel: () => void;
 };
-const createEditorNavigation = (): EditorNavigation => {
-  const [open, setOpen] = createSignal(customActionDraft.source() !== '');
-  const [pending, setPending] = createSignal<PendingScript | null>(null);
-  const apply = (source: string, installed: boolean): void => {
-    customActionDraft.load(source, installed);
-    setOpen(true);
-    requestAnimationFrame(() => {
-      const editor = document.querySelector<HTMLElement>('[data-custom-action-editor]');
-      if (editor) {
-        editor.scrollIntoView({ block: 'start' });
+const useEditorNavigation = (): EditorNavigation => {
+  const [pending, setPending] = createSignal<(() => void) | null>(null);
+  const discardThen = (next: () => void): void => {
+    if (customActionDraft.dirty()) {
+      setPending(() => next);
+    } else {
+      next();
+    }
+  };
+  const back = (): void => {
+    discardThen(() => setCustomActionEditorOpen(false));
+  };
+  const discard = (): void => {
+    discardThen(() => {
+      if (customActionDraft.source() === '') {
+        setCustomActionEditorOpen(false);
       }
     });
   };
-  const load = (source: string, installed: boolean): void => {
-    if (customActionDraft.dirty()) {
-      setPending({ source, installed });
-    } else {
-      apply(source, installed);
-    }
-  };
-  const replace = (): void => {
-    const draft = pending();
-    if (draft) {
-      apply(draft.source, draft.installed);
+  const confirmDiscard = (): void => {
+    customActionDraft.discard();
+    const next = pending();
+    if (next) {
+      next();
     }
     setPending(null);
   };
-  return { open, pending, load, replace, cancel: () => setPending(null) };
+  return {
+    pending,
+    back,
+    discard,
+    confirmDiscard,
+    cancel: () => {
+      setPending(null);
+    },
+  };
 };
 
 export const CustomActionWorkspace: Component = () => {
-  const editor = createEditorNavigation();
   const operation = createOperation();
+  const editor = useEditorNavigation();
   const importSource = (): void => {
     operation.run(() =>
       importCustomActionSource().then((source) => {
         if (source !== null) {
-          editor.load(source, false);
+          load(source, false);
         }
       }),
     );
   };
   return (
     <>
-      <div class='flex flex-wrap gap-2'>
-        <Button
-          variant='outline'
-          disabled={operation.busy()}
-          onClick={() => {
-            editor.load('', false);
-          }}
-        >
-          {m.custom_action_scripts_new()}
-        </Button>
-        <Button variant='outline' disabled={operation.busy()} onClick={importSource}>
-          {m.custom_action_scripts_import()}
-        </Button>
-      </div>
-      <OperationFeedback operation={operation} />
-      <Show when={capabilityStore.connected} fallback={<P>{m.custom_action_scripts_offline()}</P>}>
-        <InstalledCustomActions onLoad={editor.load} />
+      <Show
+        when={customActionEditorOpen()}
+        fallback={<ScriptList operation={operation} onImport={importSource} />}
+      >
+        <CustomActionEditor onBack={editor.back} onDiscard={editor.discard} />
       </Show>
-      <Show when={editor.open()}>
-        <CustomActionEditor />
-      </Show>
-      <ReplaceDraftAlertDialog
+      <DiscardDraftAlertDialog
         open={editor.pending() !== null}
-        onConfirm={editor.replace}
+        onConfirm={editor.confirmDiscard}
         onCancel={editor.cancel}
       />
     </>

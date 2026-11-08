@@ -22,4 +22,13 @@ export {
 } from '@/input/bindings';
 
 export { createKeyboardTracker, getKeyboardValue } from '@/input/keyboard';
+export {
+  TouchAxis,
+  createTouchAxes,
+  joystickDeflection,
+  releaseTouchAxes,
+  sliderDeflection,
+  type Deflection,
+  type TouchAxes,
+} from '@/input/touch';
 export { createStateToggleLoop } from '@/input/stateToggles';

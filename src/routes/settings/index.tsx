@@ -20,12 +20,15 @@ import { Show, createSignal, type Component } from 'solid-js';
 import RefreshIcon from '~icons/material-symbols/refresh';
 
 import { VersionBadge } from '@/components/VersionBadge';
+import { LegacyNotice } from '@/features/compatibility/CompatibilityText';
 import { Appearance } from '@/features/settings/forms/Appearance';
 import { General } from '@/features/settings/forms/General';
 import { AppVersionList } from '@/features/update/AppVersionList';
 import { ConfirmUpdateButton } from '@/features/update/ConfirmUpdateButton';
 import { ReleaseNotes } from '@/features/update/ReleaseNotes';
+import { leavesLegacyApp } from '@/lib/compatibility';
 import { logError } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { ReleasesStatus, updatesStore } from '@/stores/updates';
@@ -60,6 +63,15 @@ const createAppUpdateStatusMessage = (): string => {
   }
 };
 
+const appVersionStatusMessage = (): string => {
+  if (isUpdaterEnabled) {
+    return createAppUpdateStatusMessage();
+  }
+  return isMobile
+    ? m.general_settings_app_update_mobile()
+    : m.general_settings_app_update_managed_externally();
+};
+
 const AppUpdateActions: Component = () => (
   <CardAction class='flex flex-wrap gap-2'>
     <Button
@@ -78,7 +90,14 @@ const AppUpdateActions: Component = () => (
       confirmLabel={m.general_settings_app_update_button()}
       disabled={updatesStore.app.status !== 'available'}
       title={m.alerts_app_update_title()}
-      description={<p>{m.alerts_app_update_description()}</p>}
+      description={
+        <Show
+          when={leavesLegacyApp(configStore.appVersion, updatesStore.app.latestVersion ?? '')}
+          fallback={<p>{m.alerts_app_update_description()}</p>}
+        >
+          <LegacyNotice when />
+        </Show>
+      }
       onConfirm={() => installAppUpdate()}
     />
   </CardAction>
@@ -157,11 +176,7 @@ const AppVersionCard: Component = () => (
     <CardContent class='flex flex-col gap-4'>
       <div class='flex flex-wrap items-center gap-3'>
         <VersionBadge version={configStore.appVersion} />
-        <p class='text-sm text-muted-foreground'>
-          {isUpdaterEnabled
-            ? createAppUpdateStatusMessage()
-            : m.general_settings_app_update_managed_externally()}
-        </p>
+        <p class='text-sm text-muted-foreground'>{appVersionStatusMessage()}</p>
       </div>
       <Show when={isUpdaterEnabled && updatesStore.app.status === 'available'}>
         <ReleaseNotes notes={updatesStore.app.releaseNotes} />

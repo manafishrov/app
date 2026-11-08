@@ -4,7 +4,8 @@ use tokio_tungstenite::tungstenite::Message;
 
 use super::message::WebsocketMessage;
 use super::receive::{
-  handle_config, handle_log_message, handle_regulator_suggestions, handle_show_toast,
+  handle_config, handle_firmware_version, handle_log_message, handle_regulator_suggestions,
+  handle_show_toast,
 };
 use crate::log_warn;
 
@@ -37,7 +38,7 @@ pub async fn handle_message(app_handle: &AppHandle, message: Message) -> Option<
       },
       Err(e) => {
         log_warn!("Failed to deserialize message: {}", e);
-        None
+        handle_firmware_version(app_handle, &text)
       },
     }
   } else {

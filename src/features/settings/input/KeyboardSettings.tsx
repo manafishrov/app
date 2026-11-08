@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { H3 } from '@manafishrov/ui/typography';
 
 import { logError } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { type KeyboardBindings, type KeyboardInput, configStore, setConfig } from '@/stores/config';
 import { playConfirmHaptic } from '@/tauri/gamepad';
@@ -87,7 +88,9 @@ const BINDING_SECTIONS: BindingSection[] = [
     title: () => m.bindings_section_other(),
     fields: [
       { key: 'record', label: () => m.keyboard_record() },
-      { key: 'objectDetection', label: () => m.bindings_action_object_detection() },
+      ...(isMobile
+        ? []
+        : [{ key: 'objectDetection' as const, label: () => m.bindings_action_object_detection() }]),
     ],
   },
 ];

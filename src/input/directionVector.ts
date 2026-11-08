@@ -1,3 +1,4 @@
+import type { TouchAxes } from '@/input/touch';
 import type { CleanupFn } from '@/input/types';
 import type { Config, GamepadBindings, GamepadInput, KeyboardInput } from '@/stores/config';
 import type { DirectionVector } from '@/stores/directionVector';
@@ -20,6 +21,10 @@ const clamp = (value: number): number => Math.max(MIN_AXIS_VALUE, Math.min(MAX_A
 
 type OptionalInput<InputType> = InputType | null | undefined;
 export type DirectionVectorConfig = Pick<Config, 'keyboard' | 'selectedGamepadId' | 'gamepad'>;
+export type DirectionVectorSources = {
+  pressedKeys: Set<string>;
+  touchAxes?: Readonly<TouchAxes>;
+};
 export type DirectionVectorTransport = {
   deactivate: () => Promise<void>;
   send: (vector: DirectionVector) => Promise<void>;
@@ -100,7 +105,8 @@ const createAxisInput = (
   negativeGP: getGamepadBinding(gamepadBindings, definition.negative),
 });
 
-const computeAxisValue = (
+// Unclamped, so touch input can still be added before limiting the axis.
+const sumAxisInputs = (
   pressedKeys: Set<string>,
   gamepad: Gamepad | null,
   input: AxisInput,
@@ -110,37 +116,40 @@ const computeAxisValue = (
   const posGP = input.positiveGP && gamepad ? readGamepadInput(input.positiveGP, gamepad) : 0;
   const negGP = input.negativeGP && gamepad ? readGamepadInput(input.negativeGP, gamepad) : 0;
 
-  return clamp(posKB + posGP - (negKB + negGP));
+  return posKB + posGP - (negKB + negGP);
 };
 
 export const computeDirectionVector = (
   config: DirectionVectorConfig,
   pressedKeys: Set<string>,
+  touchAxes: Readonly<TouchAxes> = EMPTY_INPUT,
 ): DirectionVector => {
   const { keyboard, selectedGamepadId } = config;
   const gamepad = getActiveGamepad(selectedGamepadId);
   const gamepadBindings = getGamepadBindings(gamepad, config);
   const [surge, sway, heave, pitch, yaw, roll, action1, action2] = AXIS_DEFINITIONS;
-  const computeAxis = (definition: AxisDefinition): number => {
+  const [touchSurge, touchSway, touchHeave, touchPitch, touchYaw, touchRoll, touch1, touch2] =
+    touchAxes;
+  const computeAxis = (definition: AxisDefinition, touch: number): number => {
     const axisInput = createAxisInput(definition, keyboard, gamepadBindings);
-    return computeAxisValue(pressedKeys, gamepad, axisInput);
+    return clamp(sumAxisInputs(pressedKeys, gamepad, axisInput) + touch);
   };
 
   return [
-    computeAxis(surge),
-    computeAxis(sway),
-    computeAxis(heave),
-    computeAxis(pitch),
-    computeAxis(yaw),
-    computeAxis(roll),
-    computeAxis(action1),
-    computeAxis(action2),
+    computeAxis(surge, touchSurge),
+    computeAxis(sway, touchSway),
+    computeAxis(heave, touchHeave),
+    computeAxis(pitch, touchPitch),
+    computeAxis(yaw, touchYaw),
+    computeAxis(roll, touchRoll),
+    computeAxis(action1, touch1),
+    computeAxis(action2, touch2),
   ];
 };
 
 export const createDirectionVectorLoop = (
   config: DirectionVectorConfig,
-  pressedKeys: Set<string>,
+  { pressedKeys, touchAxes = EMPTY_INPUT }: DirectionVectorSources,
   transport: DirectionVectorTransport,
 ): CleanupFn => {
   let inFlight = false;
@@ -169,7 +178,9 @@ export const createDirectionVectorLoop = (
   };
 
   const sendCurrentInput = (): void => {
-    const vector = isInputSuppressed() ? EMPTY_INPUT : computeDirectionVector(config, pressedKeys);
+    const vector = isInputSuppressed()
+      ? EMPTY_INPUT
+      : computeDirectionVector(config, pressedKeys, touchAxes);
     sendVector(vector);
   };
 

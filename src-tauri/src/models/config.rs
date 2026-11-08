@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::detection::model::ExecutionProviderPreference;
 use crate::version::current_app_version;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -191,21 +190,10 @@ pub struct GamepadBindings {
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum CustomActionTrigger {
-  #[default]
-  Tap,
-  Hold,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CustomActionBinding {
   pub id: String,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub action_id: Option<String>,
-  pub module: String,
-  pub trigger: CustomActionTrigger,
+  pub action_id: String,
   pub keyboard: Option<KeyboardInput>,
   pub gamepad: HashMap<String, Option<GamepadInput>>,
 }
@@ -350,6 +338,21 @@ pub struct Config {
   pub gamepad: HashMap<String, GamepadBindings>,
   #[serde(default)]
   pub detection: DetectionConfig,
+  #[serde(default)]
+  pub dismissed_compatibility_warnings: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ExecutionProviderPreference {
+  /// Use the platform's GPU backend when it loads, otherwise the CPU.
+  #[default]
+  Auto,
+  Gpu,
+  Cpu,
+  Cuda,
+  Migraphx,
+  OpenVino,
 }
 
 /// Object detection settings. Models live in the app data directory and are
@@ -387,7 +390,12 @@ fn default_automatic_bitrate() -> bool {
 }
 
 fn default_video_directory() -> String {
-  if cfg!(target_os = "windows") {
+  // On mobile this holds a folder token from the system picker; empty means
+  // the platform default (Movies/Manafish on Android, the app's Files folder
+  // on iOS).
+  if cfg!(any(target_os = "android", target_os = "ios")) {
+    String::new()
+  } else if cfg!(target_os = "windows") {
     format!(
       "{}\\Videos\\Manafish",
       std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\Users\\Default".to_string())
@@ -655,6 +663,7 @@ impl Default for Config {
       selected_gamepad_id: None,
       gamepad: HashMap::new(),
       detection: DetectionConfig::default(),
+      dismissed_compatibility_warnings: Vec::new(),
     }
   }
 }
@@ -681,7 +690,7 @@ mod tests {
     };
     assert_eq!(serde_json::to_value(parsed).ok(), Some(widget));
     let binding = serde_json::json!({"id": "binding", "actionId": "dispenser.dispense",
-      "module": "", "trigger": "tap", "keyboard": null, "gamepad": {}});
+      "keyboard": null, "gamepad": {}});
     let parsed = serde_json::from_value::<CustomActionBinding>(binding.clone());
     assert!(parsed.is_ok(), "Capability binding rejected: {:?}", parsed.as_ref().err());
     let Ok(parsed) = parsed else {

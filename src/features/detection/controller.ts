@@ -2,6 +2,7 @@ import { toast } from '@manafishrov/ui/toaster';
 import { unwrap } from 'solid-js/store';
 
 import { logError, logInfo, logWarn } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { detectionStore, setDetectionStore } from '@/stores/detection';
@@ -124,6 +125,9 @@ export const refreshDetectionModels = (): Promise<void> =>
 
 /** Starts, restarts and stops detection to match the detection settings. */
 export const createDetectionController = (): void => {
+  if (isMobile) {
+    return;
+  }
   const restart: RestartState = { timer: 0, generation: 0, pending: Promise.resolve() };
 
   refreshDetectionModels().catch(logError);
@@ -145,6 +149,9 @@ export const createDetectionController = (): void => {
 };
 
 export const toggleObjectDetection = (): Promise<void> => {
+  if (isMobile) {
+    return Promise.resolve();
+  }
   const detection = structuredClone(unwrap(configStore.detection));
   if (!detection.enabled && detection.modelId === null) {
     toast.create({

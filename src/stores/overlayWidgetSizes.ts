@@ -28,6 +28,11 @@ const control = [
   { columns: 6, rows: 6 },
   { columns: 8, rows: 8 },
 ] as const;
+const capabilityStatus = [
+  { columns: 12, rows: 2 },
+  { columns: 16, rows: 3 },
+  { columns: 20, rows: 4 },
+] as const;
 const attitude = [
   { columns: 10, rows: 10 },
   { columns: 12, rows: 12 },
@@ -36,29 +41,23 @@ const attitude = [
   { columns: 20, rows: 20 },
   { columns: 24, rows: 24 },
 ] as const;
-const capabilityText = [
-  { columns: 8, rows: 4 },
-  { columns: 12, rows: 4 },
-  { columns: 16, rows: 6 },
-] as const;
-const capabilityLight = [
-  { columns: 4, rows: 4 },
-  { columns: 6, rows: 6 },
-  { columns: 8, rows: 8 },
-] as const;
-
 /** Capability widgets take the shape of how they display their source. */
 const capabilityDisplaySizes: Record<CapabilityDisplay, WidgetSizes> = {
-  text: capabilityText,
+  text: reading,
+  array: [
+    { columns: 24, rows: 6 },
+    { columns: 32, rows: 8 },
+    { columns: 40, rows: 10 },
+  ],
   badge: [
     { columns: 8, rows: 4 },
     { columns: 12, rows: 4 },
     { columns: 8, rows: 8 },
   ],
-  status: capabilityLight,
-  warningYellow: capabilityLight,
-  warningRed: capabilityLight,
-  ping: capabilityLight,
+  status: capabilityStatus,
+  warningYellow: capabilityStatus,
+  warningRed: capabilityStatus,
+  ping: capabilityStatus,
   bar: [
     { columns: 12, rows: 4 },
     { columns: 16, rows: 4 },
@@ -77,7 +76,7 @@ const capabilityDisplaySizes: Record<CapabilityDisplay, WidgetSizes> = {
 };
 
 export const overlayWidgetSizes: Record<OverlayWidgetType, WidgetSizes> = {
-  capability: capabilityText,
+  capability: reading,
   connectionStatus: status,
   recording: status,
   workIndicator: status,

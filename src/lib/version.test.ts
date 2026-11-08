@@ -4,6 +4,7 @@ import {
   compareVersions,
   formatVersionForDisplay,
   isPrereleaseVersion,
+  newestVersion,
   parseVersion,
 } from './version';
 
@@ -34,6 +35,11 @@ describe('version parsing', () => {
   it('orders numeric prerelease identifiers numerically', () => {
     expect(compareVersions('1.2.3-rc.10', '1.2.3-rc.9')).toBe(VERSION_GREATER_THAN);
     expect(compareVersions('1.2.3-rc.1', '1.2.3')).toBe(VERSION_LESS_THAN);
+  });
+
+  it('picks the newest version', () => {
+    expect(newestVersion(['v1.1.4', 'v1.1.6', 'v1.0.27'])).toBe('v1.1.6');
+    expect(newestVersion([])).toBeUndefined();
   });
 
   it('identifies prereleases from their version instead of release metadata', () => {

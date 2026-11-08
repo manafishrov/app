@@ -8,13 +8,15 @@ current defaults cannot accidentally pass the upgrade test.
 
 That stable schema has the fixed-overlay fields `overlayScale`,
 `attitudeIndicator`, `workIndicator`, and `thrusterRpmOverlay`, not an overlay
-layout. The native migration converts them directly into current widgets. It
-also removes the stable `dismissedCompatibilityWarnings` list, whose warning
-UI no longer exists. Detection settings and the new input binding default when
-absent, while existing bindings and other settings are preserved.
+layout. The native migration converts them directly into current widgets.
+The active compatibility warning UI retains the stable
+`dismissedCompatibilityWarnings` list. Detection settings and the new input
+binding default when absent, while existing bindings and other settings are
+preserved.
 
 Grouped layout widget types, per-attitude `options.workIndicator`, and older
 grid resolutions belonged only to intermediate release candidates. They are
-not part of the supported stable-to-current upgrade path. The module-based
-custom-action binding and historical update-key cleanup did ship in stable
-versions and are not removed as release-candidate shims.
+not part of the supported stable-to-current upgrade path. Main intentionally
+removed module-based custom actions: migration drops those
+bindings, preserves capability action IDs and their inputs, and removes their
+obsolete trigger field. Historical update-key cleanup remains.

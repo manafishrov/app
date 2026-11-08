@@ -15,7 +15,7 @@ import {
 
 import * as m from '@/paraglide/messages';
 
-export const ReplaceDraftAlertDialog: Component<{
+export const DiscardDraftAlertDialog: Component<{
   open: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -33,9 +33,9 @@ export const ReplaceDraftAlertDialog: Component<{
       <AlertDialogPositioner>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{m.custom_action_scripts_replace_title()}</AlertDialogTitle>
+            <AlertDialogTitle>{m.custom_action_scripts_discard_title()}</AlertDialogTitle>
             <AlertDialogDescription>
-              {m.custom_action_scripts_replace_description()}
+              {m.custom_action_scripts_discard_description()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -43,7 +43,7 @@ export const ReplaceDraftAlertDialog: Component<{
               {m.custom_action_scripts_cancel()}
             </AlertDialogCancel>
             <AlertDialogAction onClick={props.onConfirm}>
-              {m.custom_action_scripts_replace()}
+              {m.custom_action_scripts_discard()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

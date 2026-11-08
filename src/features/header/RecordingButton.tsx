@@ -15,6 +15,8 @@ import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 import { playConfirmHaptic } from '@/tauri/gamepad';
 
+import { headerButtonSize } from './buttonSize';
+
 const [undef] = [] as (number | undefined)[];
 
 const handleRecordingClick = (): void => {
@@ -34,7 +36,7 @@ const RecordingButton = (): JSXElement => (
         asChild={(props) => (
           <Button
             {...props()}
-            size='icon-xs'
+            size={headerButtonSize}
             variant={recordingStore.isRecording ? 'destructive' : 'outline'}
             onClick={handleRecordingClick}
             aria-label={

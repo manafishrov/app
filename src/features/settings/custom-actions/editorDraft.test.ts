@@ -85,3 +85,20 @@ it('marks installed source clean without erasing later edits', () => {
       expect(draft.dirty()).toBe(true);
     });
 });
+
+it('discards an edited name and source after an installation fails', () => {
+  const draft = createCustomActionDraft();
+  draft.load('# installed', true, 'Original name');
+  draft.setSource('# renamed');
+  api.install.mockRejectedValue(new Error('Disconnected'));
+  return draft
+    .validate()
+    .then(() => expect(draft.install()).rejects.toThrow('Disconnected'))
+    .then(() => {
+      draft.discard();
+      expect(draft.source()).toBe('# installed');
+      expect(draft.name()).toBe('Original name');
+      expect(draft.dirty()).toBe(false);
+      expect(draft.validation()).toBeNull();
+    });
+});

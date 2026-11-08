@@ -19,15 +19,19 @@
     "prepare": "lefthook install",
     "tauri": "tauri",
     "test": "bunx vitest run",
-    "editor:prepare": "bun scripts/preparePythonEditor.ts"
+    "editor:prepare": "bun scripts/preparePythonEditor.ts",
+    "android:init": "tauri android init && cp -R src-tauri/icons/android/. src-tauri/gen/android/app/src/main/res",
+    "ios:init": "tauri ios init && cp src-tauri/icons/ios/*.png src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset"
   },
   "dependencies": {
     "@chenglou/pretext": "1.0.0",
+    "@codemirror/commands": "6.11.1",
     "@codemirror/lang-python": "6.2.1",
     "@codemirror/language": "6.13.1",
     "@codemirror/lint": "6.9.7",
     "@codemirror/lsp-client": "6.3.0",
     "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
     "@lezer/highlight": "1.2.5",
     "@manafishrov/ui": "1.5.14",
     "@tailwindcss/vite": "4.3.3",

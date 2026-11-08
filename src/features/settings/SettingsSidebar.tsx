@@ -33,17 +33,16 @@ import SportsEsportsIcon from '~icons/material-symbols/sports-esports';
 import SystemUpdateAltIcon from '~icons/material-symbols/system-update-alt';
 import TableIcon from '~icons/material-symbols/table-chart';
 
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
-
 type SidebarItem = {
   label: () => string;
   ariaLabel: () => string;
   to: NonNullable<ComponentProps<typeof Link>['to']>;
   Icon: Component<ComponentProps<'svg'>>;
 };
-
 const APPLICATION_ITEMS = [
   {
     label: (): string => m.settings_application_general(),
@@ -134,8 +133,10 @@ const ROV_ITEMS = [
   },
 ] as const satisfies readonly SidebarItem[];
 
+const VISIBLE_APPLICATION_ITEMS = APPLICATION_ITEMS.filter(
+  (item) => !isMobile || item.to !== '/settings/detection',
+);
 const SLICE_LAST_CHAR = -1;
-
 const CUSTOM_ACTION_ITEMS = [
   {
     label: (): string => m.custom_action_scripts_title(),
@@ -150,10 +151,8 @@ const CUSTOM_ACTION_ITEMS = [
     Icon: TableIcon,
   },
 ] as const satisfies readonly SidebarItem[];
-
 const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, SLICE_LAST_CHAR) : path;
-
 type SidebarLinkItemProps = {
   item:
     | (typeof APPLICATION_ITEMS)[number]
@@ -161,11 +160,9 @@ type SidebarLinkItemProps = {
     | (typeof CUSTOM_ACTION_ITEMS)[number];
   isActive: (path: string) => boolean;
 };
-
 type SettingsSidebarProps = {
   isFullscreen?: boolean | undefined;
 };
-
 const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => (
   <SidebarMenuItem>
     <SidebarMenuButton
@@ -185,7 +182,6 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => (
     />
   </SidebarMenuItem>
 );
-
 const SettingsSidebarHeader: Component<{ isFullscreen?: boolean | undefined }> = (props) => (
   <SidebarHeader {...(props.isFullscreen === true ? { class: 'mt-6' } : {})}>
     <SidebarMenu>
@@ -204,7 +200,6 @@ const SettingsSidebarHeader: Component<{ isFullscreen?: boolean | undefined }> =
     </SidebarMenu>
   </SidebarHeader>
 );
-
 const SettingsSidebarContent: Component<{
   isActive: (path: string) => boolean;
   isConnected: () => boolean;
@@ -214,7 +209,7 @@ const SettingsSidebarContent: Component<{
       <SidebarGroupLabel>{m.settings_application_title()}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {APPLICATION_ITEMS.map((item) => (
+          {VISIBLE_APPLICATION_ITEMS.map((item) => (
             <SidebarLinkItem item={item} isActive={props.isActive} />
           ))}
         </SidebarMenu>
@@ -238,23 +233,24 @@ const SettingsSidebarContent: Component<{
     </SidebarGroup>
   </SidebarContent>
 );
-
 const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> = (props) => (
   <SidebarFooter>
     <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={m.settings_sd_card_title()}
-          aria-label={m.aria_labels_sd_card_button()}
-          isActive={props.isActive('/settings/sd-card')}
-          asChild={(triggerProps) => (
-            <Link {...triggerProps()} to='/settings/sd-card' activeOptions={{ exact: true }}>
-              <SdCardIcon aria-hidden='true' />
-              <span>{m.settings_sd_card_title()}</span>
-            </Link>
-          )}
-        />
-      </SidebarMenuItem>
+      <Show when={!isMobile}>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip={m.settings_sd_card_title()}
+            aria-label={m.aria_labels_sd_card_button()}
+            isActive={props.isActive('/settings/sd-card')}
+            asChild={(triggerProps) => (
+              <Link {...triggerProps()} to='/settings/sd-card' activeOptions={{ exact: true }}>
+                <SdCardIcon aria-hidden='true' />
+                <span>{m.settings_sd_card_title()}</span>
+              </Link>
+            )}
+          />
+        </SidebarMenuItem>
+      </Show>
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={m.settings_debug_title()}
@@ -271,16 +267,12 @@ const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> 
     </SidebarMenu>
   </SidebarFooter>
 );
-
 const isConnected = (): boolean => connectionStatusStore.isConnected;
-
 const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   const [local] = splitProps(props, ['isFullscreen']);
   const location = useLocation();
-
   const isActive = (path: string): boolean =>
     normalizePath(location().pathname) === normalizePath(path);
-
   return (
     <Sidebar
       collapsible='icon'
@@ -294,5 +286,4 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
     </Sidebar>
   );
 };
-
 export { SettingsSidebar };

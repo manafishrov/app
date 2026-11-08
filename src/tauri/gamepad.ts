@@ -100,12 +100,12 @@ const createGamepadFromEvent = (event: GamepadData): Gamepad => {
   return gamepad;
 };
 
-const dispatchConnectionEvent = (
-  eventName: 'gamepadconnected' | 'gamepaddisconnected',
-  gamepad: Gamepad,
-): void => {
-  const customEvent = new GamepadEvent(eventName, { gamepad });
-  globalThis.dispatchEvent(customEvent);
+/*
+ * A plain event: Chromium webviews (Android, Windows) refuse to build a
+ * GamepadEvent around a bridged gamepad. Listeners read navigator.getGamepads().
+ */
+const dispatchConnectionEvent = (eventName: 'gamepadconnected' | 'gamepaddisconnected'): void => {
+  globalThis.dispatchEvent(new Event(eventName));
 };
 
 const handleGamepadEvent = ({ payload }: { payload: GamepadData }): void => {
@@ -115,10 +115,10 @@ const handleGamepadEvent = ({ payload }: { payload: GamepadData }): void => {
 
   if (payload.connected && !prevConnected) {
     gamepads.set(gamepad.index, gamepad);
-    dispatchConnectionEvent('gamepadconnected', gamepad);
+    dispatchConnectionEvent('gamepadconnected');
   } else if (!payload.connected && prevConnected) {
     gamepads.delete(gamepad.index);
-    dispatchConnectionEvent('gamepaddisconnected', gamepad);
+    dispatchConnectionEvent('gamepaddisconnected');
   } else {
     gamepads.set(gamepad.index, gamepad);
   }

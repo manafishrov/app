@@ -8,24 +8,29 @@ import { useIsOverlayPreview } from '@/features/overlay/OverlayPreview';
 import { capabilityStore, type ReadingDescriptor, type ReadingSample } from '@/stores/capabilities';
 
 import { ActionWidget } from './ActionWidget';
-import { compatibleReadingDisplay, formatReading, normalisedLevel } from './capabilityDisplay';
+import {
+  compatibleReadingDisplay,
+  formatReading,
+  formatUnit,
+  normalisedLevel,
+} from './capabilityDisplay';
 import { readingStateLabel, useReadingFreshness } from './readingFreshness';
 
 const SECOND_MS = 1000;
 const DEFAULT_DECAY = 0.5;
 const PERCENT = 100;
 const INACTIVE_OPACITY = 0.25;
+const ARRAY_CELLS = 8;
 
 const usePing = (props: { widget: OverlayWidget }): (() => boolean) => {
   const [active, setActive] = createSignal(false);
   createEffect(() => {
     const sample = capabilityStore.samples[props.widget.options.sourceId ?? ''];
-    const sequence = sample ? sample.sequence : 0;
     if (
       props.widget.options.display !== 'ping' ||
       !sample ||
       sample.value !== true ||
-      sequence < 0
+      sample.sequence < 0
     ) {
       setActive(false);
       return;
@@ -40,53 +45,90 @@ const usePing = (props: { widget: OverlayWidget }): (() => boolean) => {
   return active;
 };
 
-const ReadingValue: Component<{ widget: OverlayWidget; value: unknown; valueType: string }> = (
-  props,
-) => {
-  const ping = usePing(props);
-  const display = (): string =>
-    compatibleReadingDisplay(props.valueType, props.widget.options.display);
+type ValueProps = {
+  widget: OverlayWidget;
+  value: unknown;
+  display: string;
+  unit: string | null | undefined;
+};
+const ReadingBar: Component<ValueProps> = (props) => {
+  const bar = (): boolean => ['bar', 'verticalBar'].includes(props.display);
   const level = (): number => normalisedLevel(props.value, props.widget.options);
-  const warning = (): boolean => display().startsWith('warning');
-  const light = (): boolean => ['status', 'ping'].includes(display()) || warning();
   return (
-    <Switch fallback={<span class='overlay-value truncate'>{formatReading(props.value)}</span>}>
-      <Match when={light()}>
+    <Show when={bar()}>
+      <span
+        class='overlay-capability-bar'
+        data-vertical={props.display === 'verticalBar'}
+        role='meter'
+        aria-valuenow={level()}
+        aria-valuemin={0}
+        aria-valuemax={1}
+        aria-label={props.widget.options.label}
+      >
+        <span
+          style={
+            props.display === 'verticalBar'
+              ? { height: `${level() * PERCENT}%` }
+              : { width: `${level() * PERCENT}%` }
+          }
+        />
+      </span>
+    </Show>
+  );
+};
+
+const ReadingValue: Component<ValueProps> = (props) => {
+  const ping = usePing(props);
+  const level = (): number => normalisedLevel(props.value, props.widget.options);
+  const warning = (): boolean => props.display.startsWith('warning');
+  const light = (): boolean => ['status', 'ping'].includes(props.display) || warning();
+  return (
+    <>
+      <Show when={light()}>
         <span
           class='overlay-capability-light'
-          data-warning={display()}
-          data-active={display() === 'ping' ? ping() : level() > 0}
+          data-warning={props.display}
+          data-active={props.display === 'ping' ? ping() : level() > 0}
           style={{
             opacity:
               INACTIVE_OPACITY +
-              (1 - INACTIVE_OPACITY) * (display() === 'ping' ? Number(ping()) : level()),
+              (1 - INACTIVE_OPACITY) * (props.display === 'ping' ? Number(ping()) : level()),
           }}
         >
-          <Show when={warning()} fallback={<span class='block size-4 rounded-full bg-current' />}>
-            <WarningIcon class='size-5' />
+          <Show when={warning()} fallback={<span class='block size-2 rounded-full bg-current' />}>
+            <WarningIcon class='size-3' />
           </Show>
         </span>
-      </Match>
-      <Match when={display() === 'bar' || display() === 'verticalBar'}>
-        <span
-          class='overlay-capability-bar'
-          data-vertical={display() === 'verticalBar'}
-          role='meter'
-          aria-valuenow={level()}
-          aria-valuemin={0}
-          aria-valuemax={1}
-          aria-label={props.widget.options.label}
-        >
-          <span
-            style={
-              display() === 'verticalBar'
-                ? { height: `${level() * PERCENT}%` }
-                : { width: `${level() * PERCENT}%` }
-            }
-          />
-        </span>
-      </Match>
-    </Switch>
+      </Show>
+      <span class='overlay-value' data-text={typeof props.value === 'string'}>
+        {formatReading(props.value)}
+        <Show when={typeof props.value === 'number'}>
+          <span class='overlay-unit'>{formatUnit(props.unit)}</span>
+        </Show>
+      </span>
+      <ReadingBar {...props} />
+    </>
+  );
+};
+
+const ArrayReading: Component<{ value: unknown }> = (props) => {
+  const items = (): unknown[] => (Array.isArray(props.value) ? props.value : []);
+  const visible = (): unknown[] =>
+    items().slice(0, items().length > ARRAY_CELLS ? ARRAY_CELLS - 1 : ARRAY_CELLS);
+  return (
+    <div class='overlay-array-values'>
+      <For each={visible()}>
+        {(value, index) => (
+          <span class='overlay-array-cell'>
+            <span class='overlay-label'>{index() + 1}</span>
+            <span class='overlay-value'>{formatReading(value)}</span>
+          </span>
+        )}
+      </For>
+      <Show when={items().length > ARRAY_CELLS}>
+        <span class='overlay-array-cell overlay-label'>+{items().length - visible().length}</span>
+      </Show>
+    </div>
   );
 };
 
@@ -94,24 +136,70 @@ const previewValue = (reading: ReadingDescriptor | undefined): unknown => {
   if (reading && reading.valueType === 'boolean') {
     return true;
   }
+  if (reading && reading.valueType === 'numberArray') {
+    return [0, 0, 0, 0];
+  }
   return reading && reading.valueType === 'number' ? DEFAULT_DECAY : '—';
 };
 
-export const CapabilityWidget: Component<{ widget: OverlayWidget }> = (props) => {
+type CapabilityReadingModel = {
+  value: () => unknown;
+  unit: () => string | null | undefined;
+  display: () => string;
+  freshness: ReturnType<typeof useReadingFreshness>;
+  ready: () => boolean;
+  label: () => string;
+  title: () => string;
+};
+
+const useCapabilityReading = (
+  props: { widget: OverlayWidget },
+  preview: () => boolean,
+): CapabilityReadingModel => {
   const sample = (): ReadingSample | undefined =>
     capabilityStore.samples[props.widget.options.sourceId ?? ''];
   const descriptor = (): ReadingDescriptor | undefined =>
     capabilityStore.catalog.readings.find(
       (reading) => reading.id === props.widget.options.sourceId,
     );
-  const preview = useIsOverlayPreview();
   const value = (): unknown => {
     const current = sample();
-    return current && current.value !== null ? current.value : previewValue(descriptor());
+    return current ? current.value : previewValue(descriptor());
+  };
+  const unit = (): string | null | undefined => {
+    const reading = descriptor();
+    return reading ? reading.unit : null;
+  };
+  const display = (): string => {
+    const reading = descriptor();
+    return compatibleReadingDisplay(
+      reading ? reading.valueType : typeof value(),
+      props.widget.options.display,
+    );
   };
   const freshness = useReadingFreshness(descriptor, sample, preview);
-  const label = (): string => props.widget.options.label ?? props.widget.options.sourceId ?? '';
-  const caption = (): string => [label(), freshness.age()].filter(Boolean).join(' · ');
+  const ready = (): boolean =>
+    freshness.state() === 'ready' || (preview() && !sample() && Boolean(descriptor()));
+  const label = (): string => {
+    const reading = descriptor();
+    return (
+      props.widget.options.label ?? (reading ? reading.name : (props.widget.options.sourceId ?? ''))
+    );
+  };
+  const title = (): string =>
+    [
+      label(),
+      ready() ? formatReading(value(), unit()) : readingStateLabel(freshness.state()),
+      freshness.age(),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  return { value, unit, display, freshness, ready, label, title };
+};
+
+export const CapabilityWidget: Component<{ widget: OverlayWidget }> = (props) => {
+  const preview = useIsOverlayPreview();
+  const reading = useCapabilityReading(props, preview);
   return (
     <Show
       when={props.widget.options.sourceKind !== 'action'}
@@ -119,17 +207,36 @@ export const CapabilityWidget: Component<{ widget: OverlayWidget }> = (props) =>
     >
       <div
         class='overlay-surface overlay-capability'
-        data-badge={props.widget.options.display === 'badge'}
-        data-state={preview() ? 'preview' : freshness.state()}
-        title={caption()}
+        data-display={reading.display()}
+        data-state={preview() ? 'preview' : reading.freshness.state()}
+        title={reading.title()}
       >
+        <span class='overlay-label' title={reading.label()}>
+          {reading.label()}
+        </span>
         <Show
-          when={freshness.state() === 'ready' || preview()}
-          fallback={<span class='overlay-label'>{readingStateLabel(freshness.state())}</span>}
+          when={reading.ready()}
+          fallback={
+            <span class='overlay-label overlay-reading-state'>
+              {readingStateLabel(reading.freshness.state())}
+            </span>
+          }
         >
-          <ReadingValue widget={props.widget} value={value()} valueType={typeof value()} />
+          <Show
+            when={reading.display() === 'array'}
+            fallback={
+              <ReadingValue
+                widget={props.widget}
+                value={reading.value()}
+                display={reading.display()}
+                unit={reading.unit()}
+              />
+            }
+          >
+            <span class='overlay-unit'>{reading.unit()}</span>
+            <ArrayReading value={reading.value()} />
+          </Show>
         </Show>
-        <span class='overlay-label truncate'>{caption()}</span>
       </div>
     </Show>
   );

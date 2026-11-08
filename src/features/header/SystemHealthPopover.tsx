@@ -22,6 +22,7 @@ import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovStatusStore } from '@/stores/rovStatus';
 
+import { headerButtonSize } from './buttonSize';
 import { getMcuHealth, type McuHealth } from './mcuHealth';
 
 const HealthItem = (props: { label: string; healthy: boolean }): JSXElement => (
@@ -139,7 +140,7 @@ const SystemHealthPopover = (props: { isMac: boolean }): JSXElement => {
                     <Button
                       {...popoverProps()}
                       tabIndex={-1}
-                      size='icon-xs'
+                      size={headerButtonSize}
                       variant='outline'
                       aria-label={m.aria_labels_system_health()}
                     >

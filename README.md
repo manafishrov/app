@@ -4,16 +4,17 @@ Control application for the Manafish ROV built with [Tauri](https://tauri.app), 
 
 ## Custom actions and CSV logging
 
-Create or import Python scripts in **Settings → Custom actions**. The instructions
-accordion contains the SDK guide and water-sensor example; **Copy instructions**
-also includes the connected ROV's available readings and actions. Scripts and their
-enablement/trigger settings are stored on the ROV. Choose widgets in Appearance
-and bindings in Keyboard or Controller. Download recordings from CSV logging.
+Create or import Python scripts in **Settings → Custom actions**. The firmware
+installs the Water sensor, Blackbox logging, and Extended telemetry scripts
+disabled; enable them there and open them as examples. The instructions accordion
+contains the SDK guide; **Copy instructions** also includes the connected ROV's
+available readings and actions. Scripts and their enablement/trigger settings are
+stored on the ROV. Choose widgets in Appearance and bindings in Keyboard or
+Controller. Download recordings from CSV logging.
 
 This branch requires matching capability protocol V1 firmware. Upgrade firmware
-first, then use the matching app before operating the vehicle. Legacy custom-action
-modules must be ported to SDK scripts and rebound. Existing built-in layouts and
-bindings are retained. The MCU protocol is unchanged.
+first, then use the matching app before operating the vehicle. The MCU protocol is
+unchanged.
 
 The Python editor uses bundled ty for completion and diagnostics without executing
 drafts. Connect to the ROV to fetch actual SDK types; cached types work offline.
@@ -70,6 +71,64 @@ bun run tauri dev
 bun run tauri build
 ```
 
+## Mobile (Android and iOS)
+
+The same app builds for Android and iOS phones and tablets. Mobile builds add
+on-screen sticks (hidden while the selected gamepad is connected), lock to landscape and
+keep the screen awake while open. Native code (game controllers, file pickers,
+the ethernet route to the ROV) lives in the `src-tauri/plugins/mobile` Tauri
+plugin, so the generated `src-tauri/gen/android` and `src-tauri/gen/apple`
+projects are not committed; recreate them with the init scripts below.
+
+Differences from desktop:
+
+- Connect the ROV through a USB-C ethernet adapter. Android routes the app over
+  the ethernet network that contains the ROV address, so other apps keep using
+  Wi-Fi, but the app itself has no internet while tethered.
+- Recordings are copied to a folder picked in the system file picker, or by
+  default to Movies/Manafish (Android) or the app's folder in the Files app
+  (iOS). They keep the recorder's container; there is no MP4 remux.
+- Logs, CSV files and ROV config backups are saved through the system export
+  sheet.
+- Custom-action scripts can be edited, but Python completion and checking are
+  desktop-only.
+- No in-app updater, SD-card flashing or object detection. Detection settings
+  survive config imports but inference runs only in the desktop app.
+
+`nix develop .#mobile` provides the Rust mobile targets, the Android SDK, NDK
+and JDK 17, and on macOS XcodeGen and CocoaPods. iOS also needs Xcode. To run on
+a phone over USB, pass `--host` so it can reach the dev server on this computer's
+network.
+
+### Android
+
+Turn on USB debugging in Developer options.
+
+```bash
+bun run android:init
+bun tauri android dev --host
+```
+
+### iOS
+
+Turn on Developer Mode on the iPhone. A physical device needs the ID of an Apple
+team you have an Apple Development certificate for; simulators do not.
+
+```bash
+bun run ios:init
+APPLE_DEVELOPMENT_TEAM=<team id> bun tauri ios dev --host
+```
+
+### Releases
+
+Release tags also attach `Manafish_<version>_android_aarch64.apk` and
+`Manafish_<version>_ios_unsigned.ipa`. The APK is signed with the release
+keystore from the `ANDROID_KEYSTORE` (base64), `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` secrets; keep the keystore safe,
+since installed apps only accept updates signed with the same key. The IPA is
+unsigned, so install it with a tool that signs it for your device, such as
+AltStore or Sideloadly.
+
 ## Scripts
 
 | Script                 | Description                  |
@@ -84,6 +143,8 @@ bun run tauri build
 | `bun run lint:rs:fix`  | Lint and auto-fix Rust       |
 | `bun run fmt:rs`       | Format Rust                  |
 | `bun run fmt:rs:check` | Check Rust formatting        |
+| `bun run android:init` | Generate the Android project |
+| `bun run ios:init`     | Generate the Xcode project   |
 
 ## License
 

@@ -193,7 +193,10 @@ const readingDefinition = (
     sourceId: reading.id,
     sourceKind: 'reading',
     label: reading.name,
-    display: displays.find((display) => display === suggested) ?? displays[0],
+    display:
+      reading.valueType === 'numberArray'
+        ? 'array'
+        : (displays.find((display) => display === suggested) ?? displays[0]),
   };
   return {
     ...base,
@@ -228,7 +231,7 @@ export const availableWidgetDefinitions = (): readonly OverlayWidgetDefinition[]
     return definitions;
   }
   const readings = capabilityStore.catalog.readings
-    .filter((reading) => ['boolean', 'number', 'string'].includes(reading.valueType))
+    .filter((reading) => ['boolean', 'number', 'string', 'numberArray'].includes(reading.valueType))
     .map((reading) => readingDefinition(base, reading));
   const actions = capabilityStore.catalog.actions
     .filter((action) => action.inputType === 'none')

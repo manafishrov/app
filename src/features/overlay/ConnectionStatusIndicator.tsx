@@ -11,7 +11,7 @@ const ConnectionStatusIndicator: Component = () => (
       />
       <span class='overlay-value'>
         {connectionStatusStore.isConnected
-          ? `${connectionStatusStore.delay} ${m.units_milliseconds()}`
+          ? `${connectionStatusStore.delay ?? '–'} ${m.units_milliseconds()}`
           : m.overlay_connection_offline()}
       </span>
     </span>

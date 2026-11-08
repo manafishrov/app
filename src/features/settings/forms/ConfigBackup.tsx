@@ -3,14 +3,13 @@ import type { Component } from 'solid-js';
 import { Button } from '@manafishrov/ui/button';
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from '@manafishrov/ui/card';
 import { toast } from '@manafishrov/ui/toaster';
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { unwrap } from 'solid-js/store';
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { rovConfigStore } from '@/stores/rovConfig';
 import { importRovConfig } from '@/tauri';
+import { openTextFile, saveTextFile } from '@/tauri/files';
 
 const JSON_INDENT = 2;
 const FILE_NAME_FALLBACK = 'rov-config';
@@ -47,11 +46,6 @@ const tryParseJson = (text: string): ParseOutcome => {
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const writeConfigFile = (filePath: string, json: string): Promise<void> =>
-  writeTextFile(filePath, json).then(() => {
-    toast.create({ title: m.toasts_rov_config_exported(), type: 'success' });
-  });
-
 const handleInvalidJson = (): Promise<void> => {
   toast.create({ title: m.toasts_rov_config_import_invalid_json(), type: 'error' });
   return skip();
@@ -75,12 +69,14 @@ const processImportedContents = (contents: string): Promise<void> => {
   return sendImport(parsed.value);
 };
 
-const runExport = (json: string, defaultPath: string): Promise<void> =>
-  save({
-    title: m.general_rov_settings_config_backup_export_dialog_title(),
-    defaultPath,
-    filters: [{ name: 'JSON', extensions: [JSON_EXTENSION] }],
-  }).then((filePath) => (typeof filePath === 'string' ? writeConfigFile(filePath, json) : skip()));
+const runExport = (json: string, fileName: string): Promise<void> =>
+  saveTextFile(json, fileName, m.general_rov_settings_config_backup_export_dialog_title()).then(
+    (saved) => {
+      if (saved) {
+        toast.create({ title: m.toasts_rov_config_exported(), type: 'success' });
+      }
+    },
+  );
 
 const handleExport = (): void => {
   const snapshot = structuredClone(unwrap(rovConfigStore));
@@ -94,13 +90,8 @@ const handleExport = (): void => {
 };
 
 const runImport = (): Promise<void> =>
-  open({
-    title: m.general_rov_settings_config_backup_import_dialog_title(),
-    multiple: false,
-    directory: false,
-    filters: [{ name: 'JSON', extensions: [JSON_EXTENSION] }],
-  }).then((selected) =>
-    typeof selected === 'string' ? readTextFile(selected).then(processImportedContents) : skip(),
+  openTextFile(JSON_EXTENSION, m.general_rov_settings_config_backup_import_dialog_title()).then(
+    (contents) => (contents === null ? skip() : processImportedContents(contents)),
   );
 
 const handleImport = (): void => {

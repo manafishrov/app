@@ -23,7 +23,7 @@ export default defineConfig({
     paraglideVitePlugin({
       project: './i18n.inlang',
       outdir: './src/paraglide',
-      strategy: ['url', 'cookie', 'baseLocale'],
+      strategy: ['cookie', 'baseLocale'],
       emitTsDeclarations: true,
     }),
     tanstackRouter({
@@ -46,6 +46,7 @@ export default defineConfig({
     dedupe: ['solid-js', '@tanstack/solid-router', '@tanstack/solid-form', 'tailwindcss'],
   },
   clearScreen: false,
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
   server: {
     port: 1420,
     strictPort: true,

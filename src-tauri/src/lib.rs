@@ -1,6 +1,10 @@
 mod commands;
+#[cfg(desktop)]
 mod constants;
+#[cfg(desktop)]
 mod detection;
+mod files;
+#[cfg(desktop)]
 mod firmware;
 
 mod models {
@@ -11,7 +15,9 @@ mod models {
   pub mod toast;
 }
 
+#[cfg(desktop)]
 mod python_editor;
+#[cfg(desktop)]
 mod python_sdk;
 
 mod recording;
@@ -19,27 +25,39 @@ mod version;
 mod websocket;
 
 mod config;
+#[cfg(desktop)]
 mod gamepad;
 mod log;
 mod toast;
 
+#[cfg(desktop)]
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
+#[cfg(desktop)]
 use commands::firmware::FlashControl;
 use commands::{
-  append_recording_chunk, cancel_detection_model_download, cancel_flash,
-  cancel_regulator_auto_tuning, cancel_thruster_test, cleanup_firmware_cache, close_splashscreen,
-  confirm_rov_config, deactivate_direction_vector, delete_detection_model,
-  download_detection_model, download_firmware_update, export_logs, fetch_app_releases,
-  fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
-  import_custom_action_source, import_detection_model, import_rov_config, initialize_log_listener,
-  install_app_release, list_detection_catalog, list_detection_execution_providers,
-  list_detection_models, list_firmware_releases, list_flash_drives, prepare_flash,
-  request_capability, request_rov_config, save_csv, save_recording, send_direction_vector,
-  set_config, set_rov_config, signal_flash_image, stage_config, start_detection,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test, stop_detection,
+  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
+  confirm_rov_config, deactivate_direction_vector, flash_esc_firmware, flash_mcu_firmware,
+  gamepad_vibrate, get_config, import_custom_action_source, import_rov_config,
+  initialize_log_listener, open_text_file, request_capability, request_rov_config, save_csv,
+  save_recording, save_text_file, send_direction_vector, set_config, set_rov_config, stage_config,
+  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
+#[cfg(desktop)]
+use commands::{
+  cancel_detection_model_download, delete_detection_model, download_detection_model,
+  import_detection_model, list_detection_catalog, list_detection_execution_providers,
+  list_detection_models, start_detection, stop_detection,
+};
+#[cfg(desktop)]
+use commands::{
+  cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_app_releases,
+  fetch_firmware_manifest, install_app_release, list_firmware_releases, list_flash_drives,
+  prepare_flash, signal_flash_image,
+};
+#[cfg(mobile)]
+use commands::{describe_video_directory, pick_video_directory};
 use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;
@@ -61,9 +79,12 @@ fn setup_handlers(app: &mut App) {
   let toast_handle = app.app_handle().clone();
   toast_init(toast_handle);
 
+  #[cfg(desktop)]
   app.manage(python_editor::PythonEditorState::default());
+  #[cfg(desktop)]
   app.manage(Arc::new(FlashControl::default()));
   app.manage(websocket::capabilities::CapabilityState::default());
+  #[cfg(desktop)]
   app.manage(detection::DetectionRuntime::default());
 
   let websocket_handle = app.app_handle().clone();
@@ -81,6 +102,7 @@ fn setup_handlers(app: &mut App) {
   });
 }
 
+#[cfg(desktop)]
 fn parse_flag(prefix: &str, args: &[String]) -> Option<String> {
   for arg in args {
     if let Some(value) = arg.strip_prefix(prefix) {
@@ -90,6 +112,7 @@ fn parse_flag(prefix: &str, args: &[String]) -> Option<String> {
   None
 }
 
+#[cfg(desktop)]
 fn run_flasher_cli(args: &[String]) -> i32 {
   let Some(device) = parse_flag("--device=", args) else {
     eprintln!("flasher: --device=DEVICE is required");
@@ -234,18 +257,31 @@ fn setup_bundled_webkit() {
   }
 }
 
-/// # Errors
-/// Returns an error if the Tauri application cannot be built.
-pub fn run() -> tauri::Result<()> {
+/// Reveals the main window if the frontend never closes the splashscreen.
+/// Mobile apps have no splashscreen window.
+#[cfg(desktop)]
+fn spawn_splashscreen_watchdog(app: &App) {
   const SPLASHSCREEN_FALLBACK_SECONDS: u64 = 15;
 
-  let raw_args: Vec<String> = std::env::args().collect();
-  if raw_args.iter().any(|arg| arg == "--flash") {
-    let exit_code = run_flasher_cli(&raw_args);
-    std::process::exit(exit_code);
-  }
-  #[cfg(target_os = "linux")]
-  setup_bundled_webkit();
+  let app_handle = app.handle().clone();
+  tauri::async_runtime::spawn(async move {
+    tokio::time::sleep(std::time::Duration::from_secs(SPLASHSCREEN_FALLBACK_SECONDS)).await;
+    if app_handle.get_webview_window("splashscreen").is_some() {
+      let message = format!(
+        "Splashscreen watchdog fired after {SPLASHSCREEN_FALLBACK_SECONDS}s on {}; revealing the main window",
+        std::env::consts::OS
+      );
+      log::log_startup_diagnostic(&message);
+      if let Err(error) = close_splashscreen(app_handle.clone()) {
+        let error_message =
+          format!("Splashscreen watchdog failed to reveal the main window: {error}");
+        log::log_startup_diagnostic(&error_message);
+      }
+    }
+  });
+}
+
+fn with_plugins(builder: Builder<tauri::Wry>) -> Builder<tauri::Wry> {
   // Builds distributed through a package manager (Flatpak, Snap, AUR,
   // nixpkgs, Homebrew, winget, deb/rpm repos) must not self-update: the
   // package manager owns the binary and its version. Those builds set
@@ -253,27 +289,90 @@ pub fn run() -> tauri::Result<()> {
   // `VITE_UPDATER_DISABLED=1` for the frontend) so the updater plugin is not
   // registered. Direct downloads (AppImage, macOS .dmg/.app, Windows
   // .exe/.msi) leave it unset, keeping the updater enabled by default.
+  // Mobile builds have no in-app updater at all.
+  #[cfg(desktop)]
   let updater_disabled = matches!(option_env!("MANAFISH_UPDATER_DISABLED"), Some("1"));
 
-  let mut builder = Builder::default()
+  let mut builder = builder
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init());
 
+  #[cfg(desktop)]
   if !updater_disabled {
     builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
   }
+  #[cfg(mobile)]
+  {
+    builder = builder.plugin(tauri_plugin_manafish_mobile::init());
+  }
+  builder
+}
 
-  let builder = builder
+/// Entry point for the Android and iOS shells, which have no `main`.
+#[cfg(mobile)]
+#[tauri::mobile_entry_point]
+fn run_mobile() {
+  if let Err(error) = run() {
+    log::log_startup_diagnostic(&format!("Failed to start app: {error}"));
+  }
+}
+
+fn setup_app(app: &mut App) {
+  #[cfg(target_os = "linux")]
+  fix_gtk_dpi();
+  #[cfg(mobile)]
+  config::init_config_dir(app.handle());
+  setup_handlers(app);
+  #[cfg(desktop)]
+  spawn_splashscreen_watchdog(app);
+}
+
+/// # Errors
+/// Returns an error if the Tauri application cannot be built.
+pub fn run() -> tauri::Result<()> {
+  #[cfg(desktop)]
+  {
+    let raw_args: Vec<String> = std::env::args().collect();
+    if raw_args.iter().any(|arg| arg == "--flash") {
+      let exit_code = run_flasher_cli(&raw_args);
+      std::process::exit(exit_code);
+    }
+  }
+  #[cfg(target_os = "linux")]
+  setup_bundled_webkit();
+
+  let builder = with_plugins(Builder::default())
     .on_page_load(|webview, payload| {
       if webview.label() == "splashscreen" && payload.event() == PageLoadEvent::Finished {
         let _ = webview.window().show();
       }
     })
     .invoke_handler(generate_handler![
+      #[cfg(desktop)]
       python_editor::start_python_editor,
+      #[cfg(desktop)]
       python_editor::send_python_editor,
+      #[cfg(desktop)]
       python_editor::stop_python_editor,
+      #[cfg(desktop)]
+      cancel_detection_model_download,
+      #[cfg(desktop)]
+      delete_detection_model,
+      #[cfg(desktop)]
+      download_detection_model,
+      #[cfg(desktop)]
+      import_detection_model,
+      #[cfg(desktop)]
+      list_detection_catalog,
+      #[cfg(desktop)]
+      list_detection_execution_providers,
+      #[cfg(desktop)]
+      list_detection_models,
+      #[cfg(desktop)]
+      start_detection,
+      #[cfg(desktop)]
+      stop_detection,
       request_capability,
       import_custom_action_source,
       save_csv,
@@ -282,7 +381,8 @@ pub fn run() -> tauri::Result<()> {
       gamepad_vibrate,
       get_config,
       initialize_log_listener,
-      export_logs,
+      save_text_file,
+      open_text_file,
       set_config,
       stage_config,
       request_rov_config,
@@ -298,48 +398,34 @@ pub fn run() -> tauri::Result<()> {
       append_recording_chunk,
       flash_mcu_firmware,
       flash_esc_firmware,
+      #[cfg(desktop)]
       list_firmware_releases,
+      #[cfg(desktop)]
       fetch_firmware_manifest,
+      #[cfg(desktop)]
       download_firmware_update,
+      #[cfg(desktop)]
       cleanup_firmware_cache,
+      #[cfg(desktop)]
       list_flash_drives,
+      #[cfg(desktop)]
       prepare_flash,
+      #[cfg(desktop)]
       signal_flash_image,
+      #[cfg(desktop)]
       cancel_flash,
       save_recording,
+      #[cfg(desktop)]
       fetch_app_releases,
+      #[cfg(desktop)]
       install_app_release,
-      list_detection_models,
-      list_detection_catalog,
-      list_detection_execution_providers,
-      download_detection_model,
-      cancel_detection_model_download,
-      import_detection_model,
-      delete_detection_model,
-      start_detection,
-      stop_detection,
+      #[cfg(mobile)]
+      pick_video_directory,
+      #[cfg(mobile)]
+      describe_video_directory,
     ])
     .setup(|app| {
-      #[cfg(target_os = "linux")]
-      fix_gtk_dpi();
-      setup_handlers(app);
-      let app_handle = app.handle().clone();
-      tauri::async_runtime::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(SPLASHSCREEN_FALLBACK_SECONDS)).await;
-        if app_handle.get_webview_window("splashscreen").is_some() {
-          let message = format!(
-            "Splashscreen watchdog fired after {SPLASHSCREEN_FALLBACK_SECONDS}s on {}; revealing the main window",
-            std::env::consts::OS
-          );
-          log::log_startup_diagnostic(&message);
-          if let Err(error) = close_splashscreen(app_handle.clone()) {
-            let error_message = format!(
-              "Splashscreen watchdog failed to reveal the main window: {error}"
-            );
-            log::log_startup_diagnostic(&error_message);
-          }
-        }
-      });
+      setup_app(app);
       Ok(())
     });
 

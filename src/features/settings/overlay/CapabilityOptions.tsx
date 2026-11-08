@@ -30,6 +30,7 @@ import { capabilityStore } from '@/stores/capabilities';
 
 const labels: Record<CapabilityDisplay, () => string> = {
   text: () => m.capability_text(),
+  array: () => m.capability_array(),
   badge: () => m.capability_badge(),
   status: () => m.capability_status(),
   warningYellow: () => m.capability_warning_yellow(),

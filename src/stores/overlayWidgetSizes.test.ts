@@ -49,11 +49,11 @@ it('shapes capability widgets after their display', () => {
     expect(rows).toBeGreaterThan(columns);
   }
   for (const { columns, rows } of getWidgetSizes(capability('status'))) {
-    expect(rows).toBe(columns);
+    expect(columns).toBeGreaterThan(rows);
   }
-  expect(fitWidgetSize(capability('text'))).toMatchObject({ columnSpan: 12, rowSpan: 4 });
+  expect(fitWidgetSize(capability('text'))).toMatchObject({ columnSpan: 13, rowSpan: 3 });
   expect(fitWidgetSize(capability('verticalBar'))).toMatchObject({ columnSpan: 4, rowSpan: 8 });
-  expect(fitWidgetSize(capability('status'))).toMatchObject({ columnSpan: 4, rowSpan: 4 });
+  expect(fitWidgetSize(capability('status'))).toMatchObject({ columnSpan: 12, rowSpan: 2 });
 });
 
 it('moves a re-fitted widget aside instead of overlapping its neighbour', () => {

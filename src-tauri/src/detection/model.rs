@@ -15,18 +15,7 @@ use super::providers;
 const PAD_VALUE: u8 = 114;
 const DEFAULT_INPUT_SIZE: u32 = 640;
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub enum ExecutionProviderPreference {
-  /// Use the platform's GPU backend when it loads, otherwise the CPU.
-  #[default]
-  Auto,
-  Gpu,
-  Cpu,
-  Cuda,
-  Migraphx,
-  OpenVino,
-}
+pub use crate::models::config::ExecutionProviderPreference;
 
 /// The backend a session actually runs on.
 #[allow(dead_code, reason = "Each platform only builds its own GPU backend")]

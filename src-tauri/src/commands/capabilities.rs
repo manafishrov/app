@@ -5,8 +5,8 @@ use base64::Engine;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use tauri::{AppHandle, command};
-use tauri_plugin_dialog::DialogExt;
 
+use crate::files::{CSV, PYTHON, choose_save_destination, pick_file};
 use crate::websocket::capabilities::request;
 
 const MAX_SOURCE_BYTES: u64 = 262_144;
@@ -45,22 +45,7 @@ fn read_source(path: &Path) -> Result<String, String> {
 /// # Errors
 /// Returns an error if the selected source cannot be read. Cancellation returns null.
 pub async fn import_custom_action_source(app: AppHandle) -> Result<Option<String>, String> {
-  tauri::async_runtime::spawn_blocking(move || {
-    app
-      .dialog()
-      .file()
-      .add_filter("Python", &["py"])
-      .blocking_pick_file()
-      .map(|file| {
-        file
-          .into_path()
-          .map_err(|error| error.to_string())
-          .and_then(|path| read_source(&path))
-      })
-      .transpose()
-  })
-  .await
-  .map_err(|error| error.to_string())?
+  pick_file(&app, None, PYTHON).await?.map(|path| read_source(&path)).transpose()
 }
 
 #[derive(Deserialize)]
@@ -128,34 +113,23 @@ async fn write_snapshot(
 /// # Errors
 /// Returns snapshot, download, or filesystem errors. Cancellation leaves files unchanged.
 pub async fn save_csv(app: AppHandle, name: String) -> Result<bool, String> {
-  let dialog_app = app.clone();
   let filename = Path::new(&name)
     .file_name()
     .and_then(std::ffi::OsStr::to_str)
     .ok_or("Invalid CSV filename")?
     .to_string();
-  let selected = tauri::async_runtime::spawn_blocking(move || {
-    dialog_app
-      .dialog()
-      .file()
-      .set_file_name(filename)
-      .add_filter("CSV", &["csv"])
-      .blocking_save_file()
-  })
-  .await
-  .map_err(|error| error.to_string())?;
-  let Some(selected) = selected else {
+  let Some(destination) = choose_save_destination(&app, None, filename, CSV).await? else {
     return Ok(false);
   };
-  let path = selected.into_path().map_err(|error| error.to_string())?;
   let result = request(&app, "csv.open", json!({"name":name})).await?;
   let snapshot: CsvSnapshot = serde_json::from_value(result).map_err(|error| error.to_string())?;
-  let result = write_snapshot(&app, &snapshot, &path).await;
+  let result = write_snapshot(&app, &snapshot, destination.path()).await;
   let close = request(&app, "csv.close", json!({"token":snapshot.token})).await;
   if let Err(error) = close {
     crate::log_warn!("Failed to close CSV snapshot: {error}");
   }
-  result.map(|()| true)
+  result?;
+  destination.finish(&app).await
 }
 
 #[cfg(test)]

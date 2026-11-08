@@ -174,18 +174,9 @@ type GamepadBindings = {
   objectDetection: NullableGamepadInput;
 };
 
-export const CustomActionTrigger = {
-  tap: 'tap',
-  hold: 'hold',
-} as const;
-
-export type CustomActionTrigger = (typeof CustomActionTrigger)[keyof typeof CustomActionTrigger];
-
 type CustomActionBinding = {
   id: string;
-  actionId?: string;
-  module: string;
-  trigger: CustomActionTrigger;
+  actionId: string;
   keyboard: NullableKeyboardInput;
   gamepad: Record<string, NullableGamepadInput>;
 };
@@ -228,6 +219,7 @@ type Config = {
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
   detection: DetectionConfig;
+  dismissedCompatibilityWarnings: string[];
 };
 
 export type {

@@ -7,7 +7,7 @@ import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configT
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
 import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
-export { CustomActionTrigger, ExecutionProviderPreference } from '@/stores/configTypes';
+export { ExecutionProviderPreference } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
 
@@ -86,6 +86,7 @@ const defaultConfig: Config = {
     showLabels: true,
     showTrackIds: false,
   },
+  dismissedCompatibilityWarnings: [],
 };
 
 const [configStore, setConfigStoreInternal] = createStore<Config>(defaultConfig);

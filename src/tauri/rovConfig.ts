@@ -1,10 +1,11 @@
 import { createSignal } from 'solid-js';
 
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { setRovConfigStore, type RovConfig } from '@/stores/rovConfig';
+import { rovConfigStore, setRovConfigStore, type RovConfig } from '@/stores/rovConfig';
 import { createListener, invokeCommand } from '@/tauri/core';
 
 const EVENT = 'rov_config_received';
+const FIRMWARE_VERSION_EVENT = 'rov_firmware_version_received';
 // Allow the Pi's 8s Pico apply transaction plus persistence and response delivery.
 const CONFIG_RESPONSE_TIMEOUT_MS = 12_000;
 
@@ -141,6 +142,12 @@ const enqueueMutation = (
 
 export const setupRovConfigListener = (): Promise<() => void> =>
   createListener<ConfigResponse>(EVENT, applyRemoteRovConfig);
+
+// Sent instead of the full config when it does not match this app's config format.
+export const setupRovFirmwareVersionListener = (): Promise<() => void> =>
+  createListener<string>(FIRMWARE_VERSION_EVENT, (firmwareVersion) => {
+    setRovConfigStore({ ...rovConfigStore, firmwareVersion });
+  });
 
 export const requestRovConfig = (): Promise<void> | undefined => {
   if (!connectionStatusStore.isConnected) {

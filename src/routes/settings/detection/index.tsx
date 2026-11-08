@@ -4,6 +4,7 @@ import { H1, P } from '@manafishrov/ui/typography';
 import { createFileRoute } from '@tanstack/solid-router';
 
 import { Detection } from '@/features/settings/forms/detection';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 
 const DetectionSettingsPage: Component = () => (
@@ -12,7 +13,9 @@ const DetectionSettingsPage: Component = () => (
       <H1>{m.detection_page_title()}</H1>
       <P>{m.detection_page_description()}</P>
     </div>
-    <Detection />
+    <Show when={!isMobile} fallback={<P>{m.detection_mobile_unsupported()}</P>}>
+      <Detection />
+    </Show>
   </>
 );
 

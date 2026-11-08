@@ -25,8 +25,6 @@ vi.mock('@/lib/log', () => ({ logError: vi.fn() }));
 const binding: CustomActionBinding = {
   id: 'binding',
   actionId: 'dispenser.dispense',
-  module: '',
-  trigger: 'hold',
   keyboard: { key: 'KeyD', minValue: 0, maxValue: 1 },
   gamepad: {},
 };
