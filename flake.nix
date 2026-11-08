@@ -73,7 +73,7 @@
       default = pkgs.mkShell {
         nativeBuildInputs =
           [pkgs.pkg-config]
-          ++ pkgs.lib.optionals isLinux [pkgs.wrapGAppsHook3];
+          ++ pkgs.lib.optionals isLinux [pkgs.wrapGAppsHook3 pkgs.patchelf];
         buildInputs =
           (with pkgs; [
             rustToolchain

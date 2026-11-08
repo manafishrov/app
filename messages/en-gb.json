@@ -807,7 +807,7 @@
   "detection_confidence_title": "Minimum confidence",
   "detection_confidence_description": "Objects below this confidence are not shown. A tracked object stays visible while its confidence briefly drops.",
   "detection_hardware_title": "Hardware",
-  "detection_hardware_description": "Auto uses DirectML on Windows or Core ML on macOS when available, otherwise CPU. Linux uses CPU inference.",
+  "detection_hardware_description": "Auto tries GPU backends, then CPU. Linux: NVIDIA CUDA, AMD MIGraphX (ROCm), or Intel GPU (OpenVINO); requires compatible hardware and vendor runtimes. Windows: DirectML. macOS: Core ML. Explicit GPU choices report errors instead of using CPU.",
   "detection_hardware_auto": "Auto",
   "detection_hardware_gpu": "GPU",
   "detection_hardware_cpu": "CPU",

@@ -34,11 +34,11 @@ use commands::{
   download_detection_model, download_firmware_update, export_logs, fetch_app_releases,
   fetch_firmware_manifest, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
   import_custom_action_source, import_detection_model, import_rov_config, initialize_log_listener,
-  install_app_release, list_detection_catalog, list_detection_models, list_firmware_releases,
-  list_flash_drives, prepare_flash, request_capability, request_rov_config, save_csv,
-  save_recording, send_direction_vector, set_config, set_rov_config, signal_flash_image,
-  stage_config, start_detection, start_gamepad_stream, start_regulator_auto_tuning,
-  start_thruster_test, stop_detection,
+  install_app_release, list_detection_catalog, list_detection_execution_providers,
+  list_detection_models, list_firmware_releases, list_flash_drives, prepare_flash,
+  request_capability, request_rov_config, save_csv, save_recording, send_direction_vector,
+  set_config, set_rov_config, signal_flash_image, stage_config, start_detection,
+  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test, stop_detection,
 };
 use config::ConfigSendChannelState;
 use log::log_init;
@@ -311,6 +311,7 @@ pub fn run() -> tauri::Result<()> {
       install_app_release,
       list_detection_models,
       list_detection_catalog,
+      list_detection_execution_providers,
       download_detection_model,
       cancel_detection_model_download,
       import_detection_model,

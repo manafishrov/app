@@ -239,12 +239,6 @@ pub enum OverlayWidgetType {
   ThrusterRpm6,
   ThrusterRpm7,
   ThrusterRpm8,
-  // Legacy groups remain readable and are split by the frontend.
-  Stabilization,
-  ThrusterRpm,
-  Depth,
-  Temperature,
-  Battery,
 }
 
 /// Where a widget's content sits inside the grid rectangle it occupies.
@@ -268,8 +262,6 @@ pub enum OverlayAnchor {
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct OverlayWidgetOptions {
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub work_indicator: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub source_id: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -756,7 +748,6 @@ mod tests {
           OverlayWidgetType::ElectronicsTemperature => "electronicsTemperature",
           OverlayWidgetType::BatteryLevel => "batteryLevel",
           OverlayWidgetType::CurrentDraw => "currentDraw",
-          OverlayWidgetType::Stabilization => "stabilization",
           OverlayWidgetType::ThrusterRpm1 => "thrusterRpm1",
           OverlayWidgetType::ThrusterRpm2 => "thrusterRpm2",
           OverlayWidgetType::ThrusterRpm3 => "thrusterRpm3",
@@ -765,10 +756,6 @@ mod tests {
           OverlayWidgetType::ThrusterRpm6 => "thrusterRpm6",
           OverlayWidgetType::ThrusterRpm7 => "thrusterRpm7",
           OverlayWidgetType::ThrusterRpm8 => "thrusterRpm8",
-          OverlayWidgetType::ThrusterRpm => "thrusterRpm",
-          OverlayWidgetType::Depth => "depth",
-          OverlayWidgetType::Temperature => "temperature",
-          OverlayWidgetType::Battery => "battery",
         };
         (widget.id.as_str(), type_name)
       })

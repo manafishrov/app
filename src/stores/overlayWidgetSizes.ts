@@ -119,3 +119,25 @@ export const getWidgetSizes = (
   const byDisplay = display === undef ? undef : sizesByDisplay.get(display);
   return byDisplay ?? sizesByType.get(widget.type) ?? [];
 };
+
+const sizeDistance = (widget: OverlayWidget, size: WidgetFootprint): number =>
+  Math.abs(size.columns - widget.columnSpan) + Math.abs(size.rows - widget.rowSpan);
+
+/** Restrict a widget to its supported sizes, preferring the smallest on a tie. */
+export const fitWidgetSize = (widget: OverlayWidget): OverlayWidget => {
+  const sizes = getWidgetSizes(widget);
+  const [first] = sizes;
+  if (
+    first === undef ||
+    sizes.some((size) => size.columns === widget.columnSpan && size.rows === widget.rowSpan)
+  ) {
+    return widget;
+  }
+  let closest = first;
+  for (const size of sizes) {
+    if (sizeDistance(widget, size) < sizeDistance(widget, closest)) {
+      closest = size;
+    }
+  }
+  return { ...widget, columnSpan: closest.columns, rowSpan: closest.rows };
+};

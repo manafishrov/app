@@ -57,6 +57,7 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
+            patchelf \
             libsdl2-dev \
             libavcodec-dev \
             libavdevice-dev \
@@ -83,6 +84,8 @@ jobs:
         run: cargo fmt --check
       - name: Prepare Python language server
         run: python3 ../scripts/prepare-python-editor.py
+      - name: Prepare Linux detection runtime
+        run: python3 ../scripts/prepare-linux-detection.py
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Run tests

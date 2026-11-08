@@ -50,11 +50,7 @@ fn deactivate_direction_vector(
 }
 
 fn accept_direction_sequence(last_sequence: &AtomicU64, sequence: u64) -> bool {
-  last_sequence
-    .fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
-      (sequence > current).then_some(sequence)
-    })
-    .is_ok()
+  sequence > last_sequence.fetch_max(sequence, Ordering::AcqRel)
 }
 
 /// # Errors

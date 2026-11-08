@@ -7,7 +7,14 @@ use tauri::{State, command};
 use crate::detection::DetectionRuntime;
 use crate::detection::catalog::{self, CatalogModel, DownloadProgress};
 use crate::detection::library::{self, DetectionModelInfo};
+use crate::detection::model::ExecutionProviderPreference;
 use crate::detection::runner::{DetectionEvent, DetectionOptions, DetectionRunner};
+
+/// Preferences supported by the backends shipped in this native build.
+#[command]
+pub fn list_detection_execution_providers() -> Vec<ExecutionProviderPreference> {
+  crate::detection::model::supported_preferences()
+}
 
 #[command]
 /// # Errors

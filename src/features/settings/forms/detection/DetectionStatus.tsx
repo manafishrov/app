@@ -47,8 +47,14 @@ const providerLabel = (): string => {
     case 'directMl': {
       return 'DirectML';
     }
-    case 'webGpu': {
-      return 'WebGPU';
+    case 'cuda': {
+      return 'NVIDIA CUDA';
+    }
+    case 'migraphx': {
+      return 'AMD MIGraphX (ROCm)';
+    }
+    case 'openVino': {
+      return 'Intel GPU (OpenVINO)';
     }
     case 'cpu': {
       return m.detection_hardware_cpu();

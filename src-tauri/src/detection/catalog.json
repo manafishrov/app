@@ -9,12 +9,18 @@
       "fileName": "yolo26n.onnx",
       "fileSize": 9941957,
       "sha256": "2e947b787d9e787b93a16772a5f55b1d4d8c4d86f53146149c5d6a642442d6f7",
-      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/yolo26n.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://www.ultralytics.com/license",
     "sourceRevision": "v8.4.0",
-    "classCount": 80
+    "classCount": 80,
+    "upstreamAssetUrl": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.onnx",
+    "sourceWeights": {
+      "fileName": "yolo26n.pt",
+      "sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt"
+    }
   },
   {
     "id": "yolo26s",
@@ -26,12 +32,18 @@
       "fileName": "yolo26s.onnx",
       "fileSize": 38291130,
       "sha256": "d26b65c432111eb95798cd2320603d4d75627605dbec6c6b7f98c499a80e7321",
-      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/yolo26s.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://www.ultralytics.com/license",
     "sourceRevision": "v8.4.0",
-    "classCount": 80
+    "classCount": 80,
+    "upstreamAssetUrl": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s.onnx",
+    "sourceWeights": {
+      "fileName": "yolo26s.pt",
+      "sha256": "646f8bc3fe0a656803d95c294f7852321748cb29d13466a1af8862e2db384a1b",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s.pt"
+    }
   },
   {
     "id": "yolo26m",
@@ -43,12 +55,18 @@
       "fileName": "yolo26m.onnx",
       "fileSize": 81963157,
       "sha256": "5631854916f5d8418169580cde05647f3a1483b21a5026567f122c1fedab973d",
-      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26m.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/yolo26m.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://www.ultralytics.com/license",
     "sourceRevision": "v8.4.0",
-    "classCount": 80
+    "classCount": 80,
+    "upstreamAssetUrl": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26m.onnx",
+    "sourceWeights": {
+      "fileName": "yolo26m.pt",
+      "sha256": "401cea9ab23ad19246ff7744859816bc599f350e93c9dd30367b6f0a0745d0b7",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26m.pt"
+    }
   },
   {
     "id": "yolo11n",
@@ -60,12 +78,18 @@
       "fileName": "yolo11n.onnx",
       "fileSize": 10930182,
       "sha256": "634279b40c07c6391472c51ad45b81ebc48706a9a1fe72dd3396322acd0c053b",
-      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/yolo11n.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://www.ultralytics.com/license",
     "sourceRevision": "v8.4.0",
-    "classCount": 80
+    "classCount": 80,
+    "upstreamAssetUrl": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.onnx",
+    "sourceWeights": {
+      "fileName": "yolo11n.pt",
+      "sha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.pt"
+    }
   },
   {
     "id": "yolo11s",
@@ -77,12 +101,18 @@
       "fileName": "yolo11s.onnx",
       "fileSize": 38051729,
       "sha256": "21d6650c5097610c92c76ce5e4b717976059169eaea4962035b90c6a92c07a8f",
-      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11s.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/yolo11s.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://www.ultralytics.com/license",
     "sourceRevision": "v8.4.0",
-    "classCount": 80
+    "classCount": 80,
+    "upstreamAssetUrl": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11s.onnx",
+    "sourceWeights": {
+      "fileName": "yolo11s.pt",
+      "sha256": "85a76fe86dd8afe384648546b56a7a78580c7cb7b404fc595f97969322d502d5",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11s.pt"
+    }
   },
   {
     "id": "marine-fishinv",
@@ -94,7 +124,7 @@
       "fileName": "FishInv.onnx",
       "fileSize": 174714988,
       "sha256": "e72e6c0a4403e0caa2c5687b6ac012f86428391ecb82f955783cba2fd7314837",
-      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.0.0/FishInv.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/FishInv.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://github.com/manafishrov/detection-models/blob/v1.0.0/license-evidence/marine-detect.json",
@@ -119,7 +149,8 @@
       "sea_cucumber",
       "crown_of_thorns",
       "lobster"
-    ]
+    ],
+    "upstreamAssetUrl": "https://github.com/manafishrov/detection-models/releases/download/v1.0.0/FishInv.onnx"
   },
   {
     "id": "marine-megafauna",
@@ -131,7 +162,7 @@
       "fileName": "MegaFauna.onnx",
       "fileSize": 174677729,
       "sha256": "9d86507866a832b97e9047e493fff7065dae209971789df5e900b44198119cb5",
-      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.0.0/MegaFauna.onnx"
+      "url": "https://github.com/manafishrov/detection-models/releases/download/v1.1.0/MegaFauna.onnx"
     },
     "licenseStatus": "declared-upstream",
     "licenseEvidence": "https://github.com/manafishrov/detection-models/blob/v1.0.0/license-evidence/marine-detect.json",
@@ -144,6 +175,7 @@
       "ray",
       "shark",
       "turtle"
-    ]
+    ],
+    "upstreamAssetUrl": "https://github.com/manafishrov/detection-models/releases/download/v1.0.0/MegaFauna.onnx"
   }
 ]

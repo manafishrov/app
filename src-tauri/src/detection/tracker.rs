@@ -230,7 +230,7 @@ mod tests {
   #[test]
   fn reports_a_track_after_it_is_confirmed_and_keeps_its_id_while_moving() {
     let mut tracker = Tracker::new(OPTIONS);
-    assert!(tracker.update(&[detection(0, 0.9, 0.10)]).is_empty());
+    assert_eq!(tracker.update(&[detection(0, 0.9, 0.10)]).len(), 0);
     assert_eq!(ids(&tracker.update(&[detection(0, 0.9, 0.11)])), vec![1]);
     assert_eq!(ids(&tracker.update(&[detection(0, 0.9, 0.12)])), vec![1]);
   }
@@ -244,7 +244,7 @@ mod tests {
 
     let mut fresh = Tracker::new(OPTIONS);
     fresh.update(&[detection(0, 0.2, 0.5)]);
-    assert!(fresh.update(&[detection(0, 0.2, 0.5)]).is_empty());
+    assert_eq!(fresh.update(&[detection(0, 0.2, 0.5)]).len(), 0);
   }
 
   #[test]

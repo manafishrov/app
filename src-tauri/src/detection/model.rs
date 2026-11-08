@@ -4,13 +4,12 @@ use std::path::Path;
 use std::sync::OnceLock;
 
 use ort::environment::Environment;
-use ort::ep::{self, ExecutionProviderDispatch};
 use ort::session::Session;
-use ort::session::builder::GraphOptimizationLevel;
 use ort::value::{TensorElementType, TensorRef};
 use serde::{Deserialize, Serialize};
 
 use super::postprocess::OutputLayout;
+use super::providers;
 
 /// Grey used by Ultralytics to pad letterboxed images.
 const PAD_VALUE: u8 = 114;
@@ -24,6 +23,9 @@ pub enum ExecutionProviderPreference {
   Auto,
   Gpu,
   Cpu,
+  Cuda,
+  Migraphx,
+  OpenVino,
 }
 
 /// The backend a session actually runs on.
@@ -34,7 +36,14 @@ pub enum ExecutionProvider {
   Cpu,
   CoreMl,
   DirectMl,
-  WebGpu,
+  Cuda,
+  Migraphx,
+  OpenVino,
+}
+
+/// Preferences compiled into this build; runtime and model support are checked on load.
+pub fn supported_preferences() -> Vec<ExecutionProviderPreference> {
+  providers::supported_preferences()
 }
 
 /// What the app needs to know about a model, read from its ONNX metadata and
@@ -61,11 +70,11 @@ pub struct DetectionModel {
 
 /// # Errors
 /// Returns an error if ONNX Runtime fails to initialise.
-fn environment() -> Result<&'static Environment, String> {
+pub(super) fn environment() -> Result<&'static Environment, String> {
   static ENVIRONMENT: OnceLock<Result<Environment, String>> = OnceLock::new();
   ENVIRONMENT
     .get_or_init(|| {
-      ort::init()
+      providers::init()?
         .with_name("manafish-detection")
         .with_telemetry(false)
         .build()
@@ -73,49 +82,6 @@ fn environment() -> Result<&'static Environment, String> {
     })
     .as_ref()
     .map_err(Clone::clone)
-}
-
-/// The GPU backend this build ships, if any.
-fn gpu_provider() -> Option<(ExecutionProvider, ExecutionProviderDispatch)> {
-  #[cfg(target_os = "macos")]
-  {
-    return Some((ExecutionProvider::CoreMl, ep::CoreML::default().build().error_on_failure()));
-  }
-  #[cfg(target_os = "windows")]
-  {
-    return Some((ExecutionProvider::DirectMl, ep::DirectML::default().build().error_on_failure()));
-  }
-  // Linux uses CPU inference: WebGPU produced incorrect detections on NVIDIA.
-  #[allow(unreachable_code)]
-  None
-}
-
-/// # Errors
-/// Returns an error if the provider or the model fails to load.
-fn build_session(
-  path: &Path,
-  provider: Option<ExecutionProviderDispatch>,
-) -> Result<Session, String> {
-  let environment = environment()?;
-  let builder = Session::builder(environment)
-    .map_err(|error| error.to_string())?
-    .with_optimization_level(GraphOptimizationLevel::Level3)
-    .map_err(|error| error.to_string())?;
-  #[cfg(target_os = "windows")]
-  let builder = builder
-    .with_memory_pattern(false)
-    .map_err(|error| error.to_string())?
-    .with_parallel_execution(false)
-    .map_err(|error| error.to_string())?;
-  let mut builder = match provider {
-    Some(provider) => builder
-      .with_execution_providers([provider])
-      .map_err(|error| error.to_string())?,
-    None => builder
-      .with_execution_providers([ep::CPU::default().build()])
-      .map_err(|error| error.to_string())?,
-  };
-  builder.commit_from_file(path).map_err(|error| error.to_string())
 }
 
 impl DetectionModel {
@@ -129,24 +95,16 @@ impl DetectionModel {
     path: &Path,
     preference: ExecutionProviderPreference,
   ) -> Result<(Self, ExecutionProvider), String> {
-    let gpu = match preference {
-      ExecutionProviderPreference::Cpu => None,
-      ExecutionProviderPreference::Auto | ExecutionProviderPreference::Gpu => gpu_provider(),
-    };
-    let (session, provider) = match gpu {
-      Some((provider, dispatch)) => match build_session(path, Some(dispatch)) {
-        Ok(session) => (session, provider),
-        Err(error) if preference == ExecutionProviderPreference::Gpu => {
-          return Err(format!("The GPU backend could not load the model: {error}"));
-        },
-        Err(_) => (build_session(path, None)?, ExecutionProvider::Cpu),
-      },
-      None if preference == ExecutionProviderPreference::Gpu => {
-        return Err("No GPU backend is available on this platform".to_string());
-      },
-      None => (build_session(path, None)?, ExecutionProvider::Cpu),
-    };
-    Ok((Self::from_session(session)?, provider))
+    providers::select(preference, |provider| {
+      let session = providers::build_session(environment()?, path, provider)?;
+      let mut model = Self::from_session(session)?;
+      // Static-output models also need a real run: provider errors often happen
+      // only when the first kernel is launched.
+      model
+        .validate()
+        .map_err(|error| format!("{} {error}", providers::requirements(provider)))?;
+      Ok(model)
+    })
   }
 
   /// # Errors
@@ -261,8 +219,10 @@ impl DetectionModel {
   /// Returns an error if inference on a padded image fails.
   pub fn validate(&mut self) -> Result<(), String> {
     let output = self.run(&[], 0, 0, 0, 0, 0)?;
-    if output.len() != self.layout.expected_len() {
-      return Err("The model output does not match its declared shape".to_string());
+    if output.len() != self.layout.expected_len() || output.iter().any(|value| !value.is_finite()) {
+      return Err(
+        "The model output has an invalid shape or contains non-finite values".to_string(),
+      );
     }
     Ok(())
   }
@@ -295,7 +255,7 @@ impl DetectionModel {
         break;
       };
       let offset = (row + pad_y) * width + pad_x;
-      for (column, pixel) in source.chunks_exact(3).enumerate() {
+      for (column, pixel) in source.as_chunks::<3>().0.iter().enumerate() {
         let index = offset + column;
         self.input[index] = f32::from(pixel[0]) / 255.0;
         self.input[plane + index] = f32::from(pixel[1]) / 255.0;

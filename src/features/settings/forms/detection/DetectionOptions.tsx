@@ -1,5 +1,3 @@
-import type { Component, JSXElement } from 'solid-js';
-
 import { createListCollection } from '@ark-ui/solid/collection';
 import {
   type SelectFieldProps,
@@ -8,6 +6,7 @@ import {
   useAppForm,
 } from '@manafishrov/ui/form';
 import { SelectItem } from '@manafishrov/ui/select';
+import { createResource, type Component, type JSXElement } from 'solid-js';
 import { unwrap } from 'solid-js/store';
 import { z } from 'zod';
 
@@ -16,6 +15,7 @@ import * as m from '@/paraglide/messages';
 import { configStore, ExecutionProviderPreference } from '@/stores/config';
 import { detectionStore } from '@/stores/detection';
 import { setConfig } from '@/tauri/config';
+import { listDetectionExecutionProviders } from '@/tauri/detection';
 
 type SelectOption = { value: string; label: string };
 type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
@@ -44,6 +44,9 @@ const formSchema = z.object({
         ExecutionProviderPreference.auto,
         ExecutionProviderPreference.gpu,
         ExecutionProviderPreference.cpu,
+        ExecutionProviderPreference.cuda,
+        ExecutionProviderPreference.migraphx,
+        ExecutionProviderPreference.openVino,
       ]),
     )
     .length(1),
@@ -53,13 +56,17 @@ const formSchema = z.object({
 
 type DetectionFormValues = z.infer<typeof formSchema>;
 
-const getDefaultFormValues = (): DetectionFormValues => {
+const getDefaultFormValues = (providers: ExecutionProviderPreference[]): DetectionFormValues => {
   const { detection } = configStore;
   return {
     enabled: detection.enabled,
     modelId: detection.modelId === null ? [] : [detection.modelId],
     confidencePercent: [Math.round(detection.confidenceThreshold * PERCENT)],
-    executionProvider: [detection.executionProvider],
+    executionProvider: [
+      providers.includes(detection.executionProvider)
+        ? detection.executionProvider
+        : ExecutionProviderPreference.auto,
+    ],
     showLabels: detection.showLabels,
     showTrackIds: detection.showTrackIds,
   };
@@ -81,14 +88,19 @@ const submitDetectionOptions = (value: DetectionFormValues): Promise<void> => {
   });
 };
 
-const createExecutionProviders = (): SelectCollection =>
-  createListCollection<SelectOption>({
-    items: [
-      { value: ExecutionProviderPreference.auto, label: m.detection_hardware_auto() },
-      { value: ExecutionProviderPreference.gpu, label: m.detection_hardware_gpu() },
-      { value: ExecutionProviderPreference.cpu, label: m.detection_hardware_cpu() },
-    ],
+const createExecutionProviders = (providers: ExecutionProviderPreference[]): SelectCollection => {
+  const labels = {
+    auto: m.detection_hardware_auto(),
+    gpu: m.detection_hardware_gpu(),
+    cpu: m.detection_hardware_cpu(),
+    cuda: 'NVIDIA CUDA',
+    migraphx: 'AMD MIGraphX (ROCm)',
+    openVino: 'Intel GPU (OpenVINO)',
+  };
+  return createListCollection<SelectOption>({
+    items: providers.map((value) => ({ value, label: labels[value] })),
   });
+};
 
 const createModelOptions = (): SelectCollection =>
   createListCollection<SelectOption>({
@@ -196,12 +208,12 @@ const DisplayFields: Component<{ AppField: AppFieldComponent }> = (props) => (
   </>
 );
 
-const DetectionOptionsForm: Component = () => {
+const DetectionOptionsForm: Component<{ providers: ExecutionProviderPreference[] }> = (props) => {
   const models = createModelOptions();
-  const executionProviders = createExecutionProviders();
+  const executionProviders = createExecutionProviders(props.providers);
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
-    defaultValues: getDefaultFormValues(),
+    defaultValues: getDefaultFormValues(props.providers),
     onSubmit: ({ value }: { value: DetectionFormValues }): Promise<void> =>
       submitDetectionOptions(value).catch(logError),
   }));
@@ -229,8 +241,20 @@ const formKey = (): string =>
     ...detectionStore.models.map((model) => model.id),
   ].join(':');
 
-export const DetectionOptions: Component = () => (
-  <Show when={formKey()} keyed>
-    <DetectionOptionsForm />
-  </Show>
-);
+export const DetectionOptions: Component = () => {
+  const [providers] = createResource(() =>
+    listDetectionExecutionProviders().catch((error: unknown) => {
+      logError('Failed to load detection backends:', error);
+      return [ExecutionProviderPreference.auto, ExecutionProviderPreference.cpu];
+    }),
+  );
+  return (
+    <Show when={providers()}>
+      {(available): JSXElement => (
+        <Show when={formKey()} keyed>
+          <DetectionOptionsForm providers={available()} />
+        </Show>
+      )}
+    </Show>
+  );
+};

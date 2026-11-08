@@ -1,0 +1,85 @@
+{
+  "appVersion": "1.0.18",
+  "overlayScale": 3,
+  "attitudeIndicator": "classic",
+  "workIndicator": true,
+  "thrusterRpmOverlay": false,
+  "videoDirectory": "/home/operator/dive-recordings",
+  "checkForAppUpdatesOnStartup": false,
+  "ipAddress": "10.20.30.40",
+  "webrtcSignalingApiPort": 1985,
+  "webrtcSignalingApiPath": "/api/webrtc?src=dive",
+  "webSocketPort": 9001,
+  "automaticBitrate": false,
+  "keyboard": {
+    "surgeForward": { "key": "KeyZ", "minValue": -0.5, "maxValue": 0.75 },
+    "surgeBackward": null,
+    "swayRight": null,
+    "swayLeft": null,
+    "heaveUp": null,
+    "heaveDown": null,
+    "pitchUp": null,
+    "pitchDown": null,
+    "yawRight": null,
+    "yawLeft": null,
+    "rollLeft": null,
+    "rollRight": null,
+    "action1Positive": null,
+    "action1Negative": null,
+    "action2Positive": null,
+    "action2Negative": null,
+    "autoStabilization": null,
+    "depthHold": null,
+    "desiredDepthEntry": null,
+    "desiredDepthIncrease": null,
+    "desiredDepthDecrease": null,
+    "record": { "key": "KeyR", "minValue": 0.0, "maxValue": 1.0 }
+  },
+  "customActions": [
+    {
+      "id": "dive-light",
+      "module": "light",
+      "trigger": "hold",
+      "keyboard": { "key": "KeyT", "minValue": 0.0, "maxValue": 1.0 },
+      "gamepad": {
+        "dive-controller": {
+          "input": { "Button": 7 },
+          "minValue": 0.0,
+          "maxValue": 1.0
+        }
+      }
+    }
+  ],
+  "selectedGamepadId": "dive-controller",
+  "gamepad": {
+    "dive-controller": {
+      "surgeForward": {
+        "input": { "Axis": 1 },
+        "minValue": -1.0,
+        "maxValue": 0.0
+      },
+      "surgeBackward": null,
+      "swayRight": null,
+      "swayLeft": null,
+      "heaveUp": null,
+      "heaveDown": null,
+      "pitchUp": null,
+      "pitchDown": null,
+      "yawRight": null,
+      "yawLeft": null,
+      "rollLeft": null,
+      "rollRight": null,
+      "action1Positive": null,
+      "action1Negative": null,
+      "action2Positive": null,
+      "action2Negative": null,
+      "autoStabilization": null,
+      "depthHold": null,
+      "desiredDepthEntry": null,
+      "desiredDepthIncrease": null,
+      "desiredDepthDecrease": null,
+      "record": null
+    }
+  },
+  "dismissedCompatibilityWarnings": ["1.0.18@1.0.17"]
+}

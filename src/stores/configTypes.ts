@@ -193,6 +193,9 @@ type CustomActionBinding = {
 export const ExecutionProviderPreference = {
   auto: 'auto',
   gpu: 'gpu',
+  cuda: 'cuda',
+  migraphx: 'migraphx',
+  openVino: 'openVino',
   cpu: 'cpu',
 } as const;
 

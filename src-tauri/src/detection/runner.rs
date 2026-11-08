@@ -412,35 +412,15 @@ mod tests {
   #[ignore = "Requires MANA_FISH_TEST_MODELS and MANA_FISH_TEST_IMAGE (Ultralytics bus.jpg)"]
   fn general_catalog_models_detect_and_track_objects_in_a_decoded_image() -> Result<(), String> {
     let models = std::env::var("MANA_FISH_TEST_MODELS").map_err(|error| error.to_string())?;
-    let image = std::env::var("MANA_FISH_TEST_IMAGE").map_err(|error| error.to_string())?;
-    ffmpeg::init().map_err(|error| error.to_string())?;
-    let mut input = ffmpeg::format::input(&image).map_err(|error| error.to_string())?;
-    let stream = input.streams().best(ffmpeg::media::Type::Video).ok_or("No image stream")?;
-    let stream_index = stream.index();
-    let mut decoder = ffmpeg::codec::context::Context::from_parameters(stream.parameters())
-      .and_then(|context| context.decoder().video())
-      .map_err(|error| error.to_string())?;
-    let mut frame = ffmpeg::frame::Video::empty();
-    for (stream, packet) in input.packets() {
-      if stream.index() == stream_index {
-        decoder.send_packet(&packet).map_err(|error| error.to_string())?;
-        if decoder.receive_frame(&mut frame).is_ok() {
-          break;
-        }
-      }
-    }
-    assert!(frame.width() > 0 && frame.height() > 0, "Image did not decode");
+    let frame = test_image()?;
     for entry in super::super::catalog::list()? {
       if entry.experimental {
         continue;
       }
       let asset = entry.asset.ok_or("No model asset")?;
       let path = std::path::Path::new(&models).join(asset.file_name);
-      let (mut model, provider) = DetectionModel::load(&path, ExecutionProviderPreference::Auto)?;
-      #[cfg(target_os = "linux")]
+      let (mut model, provider) = DetectionModel::load(&path, ExecutionProviderPreference::Cpu)?;
       assert_eq!(provider, ExecutionProvider::Cpu);
-      #[cfg(not(target_os = "linux"))]
-      let _ = provider;
       let description = model.description();
       let letterbox = Letterbox::fit(
         frame.width(),
@@ -495,13 +475,131 @@ mod tests {
         max_missed_frames: 30,
         min_hits: 2,
       });
-      assert!(tracker.update(&found).is_empty());
+      assert_eq!(tracker.update(&found).len(), 0);
       let confirmed = tracker.update(&found);
       assert_eq!(confirmed.len(), found.len(), "{} confirmed tracks", entry.id);
       assert_eq!(
         tracker.update(&found).iter().map(|item| item.track_id).collect::<Vec<_>>(),
         confirmed.iter().map(|item| item.track_id).collect::<Vec<_>>()
       );
+    }
+    Ok(())
+  }
+
+  fn test_image() -> Result<ffmpeg::frame::Video, String> {
+    let image = std::env::var("MANA_FISH_TEST_IMAGE").map_err(|error| error.to_string())?;
+    ffmpeg::init().map_err(|error| error.to_string())?;
+    let mut input = ffmpeg::format::input(&image).map_err(|error| error.to_string())?;
+    let stream = input.streams().best(ffmpeg::media::Type::Video).ok_or("No image stream")?;
+    let stream_index = stream.index();
+    let mut decoder = ffmpeg::codec::context::Context::from_parameters(stream.parameters())
+      .and_then(|context| context.decoder().video())
+      .map_err(|error| error.to_string())?;
+    let mut frame = ffmpeg::frame::Video::empty();
+    for (stream, packet) in input.packets() {
+      if stream.index() == stream_index {
+        decoder.send_packet(&packet).map_err(|error| error.to_string())?;
+        if decoder.receive_frame(&mut frame).is_ok() {
+          break;
+        }
+      }
+    }
+    assert!(frame.width() > 0 && frame.height() > 0, "Image did not decode");
+    Ok(frame)
+  }
+
+  #[test]
+  #[ignore = "Requires MANA_FISH_TEST_MODELS, MANA_FISH_TEST_IMAGE, MANA_FISH_TEST_PROVIDER and GPU runtimes"]
+  fn catalog_models_match_cpu_on_requested_gpu() -> Result<(), String> {
+    use super::super::postprocess::OutputLayout;
+    let models = std::env::var("MANA_FISH_TEST_MODELS").map_err(|error| error.to_string())?;
+    let preference: ExecutionProviderPreference = serde_json::from_str(
+      &serde_json::to_string(
+        &std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|error| error.to_string())?,
+      )
+      .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    assert!(!matches!(
+      preference,
+      ExecutionProviderPreference::Auto | ExecutionProviderPreference::Cpu
+    ));
+    let frame = test_image()?;
+    for entry in super::super::catalog::list()? {
+      let asset = entry.asset.ok_or("No model asset")?;
+      let path = std::path::Path::new(&models).join(asset.file_name);
+      let (mut cpu, _) = DetectionModel::load(&path, ExecutionProviderPreference::Cpu)?;
+      let (mut gpu, provider) = DetectionModel::load(&path, preference)?;
+      assert_ne!(provider, ExecutionProvider::Cpu);
+      let description = cpu.description();
+      let letterbox = Letterbox::fit(
+        frame.width(),
+        frame.height(),
+        description.input_width,
+        description.input_height,
+      );
+      let (width, height) = letterbox.scaled_size();
+      let mut scaler = None;
+      let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+      #[allow(clippy::cast_sign_loss)]
+      let run = |model: &mut DetectionModel| {
+        model.run(
+          rgb.data(0),
+          rgb.stride(0),
+          width,
+          height,
+          letterbox.pad_x as u32,
+          letterbox.pad_y as u32,
+        )
+      };
+      let reference = run(&mut cpu)?;
+      for _ in 0..2 {
+        let actual = run(&mut gpu)?;
+        assert_eq!(actual.len(), reference.len(), "{} output length", entry.id);
+        assert!(actual.iter().all(|value| value.is_finite()), "{} finite output", entry.id);
+        // End-to-end models reorder top-k rows when nearly tied low scores
+        // differ. Compare their decoded detections instead of raw row order.
+        if !matches!(cpu.layout(), OutputLayout::EndToEnd { .. }) {
+          assert!(
+            reference
+              .iter()
+              .zip(&actual)
+              .all(|(a, b)| (a - b).abs() <= 0.05 + 0.001 * a.abs()),
+            "{} raw output disagrees with CPU",
+            entry.id
+          );
+        }
+        let options = DecodeOptions {
+          min_confidence: 0.25,
+          iou_threshold: IOU_THRESHOLD,
+          max_detections: MAX_DETECTIONS,
+          classes: None,
+        };
+        let expected = decode(&reference, cpu.layout(), &letterbox, &options);
+        let found = decode(&actual, gpu.layout(), &letterbox, &options);
+        assert_eq!(found.len(), expected.len(), "{} detection count", entry.id);
+        for item in &expected {
+          assert!(
+            found.iter().any(|other| item.class_id == other.class_id
+              && (item.confidence - other.confidence).abs() < 0.015
+              && item.corners.iter().zip(other.corners).all(|(a, b)| (a - b).abs() < 0.005)),
+            "{} detection disagrees with CPU: {item:?}",
+            entry.id
+          );
+        }
+        if !entry.experimental {
+          for label in ["person", "bus"] {
+            assert!(
+              found
+                .iter()
+                .any(|item| gpu.description().classes[item.class_id as usize] == label),
+              "{} did not detect {label}",
+              entry.id
+            );
+          }
+        }
+      }
+      eprintln!("{}: {provider:?} agrees with CPU on two real-image runs", entry.id);
     }
     Ok(())
   }

@@ -2,7 +2,7 @@ import { Channel, invoke } from '@tauri-apps/api/core';
 
 import type { ExecutionProviderPreference } from '@/stores/configTypes';
 
-export type ExecutionProvider = 'cpu' | 'coreMl' | 'directMl' | 'webGpu';
+export type ExecutionProvider = 'cpu' | 'coreMl' | 'directMl' | 'cuda' | 'migraphx' | 'openVino';
 
 export type DetectionModelInfo = {
   id: string;
@@ -84,6 +84,9 @@ const RTSP_STREAM = 'cam';
 
 export const detectionStreamUrl = (ipAddress: string): string =>
   `rtsp://${ipAddress}:${String(RTSP_PORT)}/${RTSP_STREAM}`;
+
+export const listDetectionExecutionProviders = (): Promise<ExecutionProviderPreference[]> =>
+  invoke<ExecutionProviderPreference[]>('list_detection_execution_providers');
 
 export const listDetectionModels = (): Promise<DetectionModelInfo[]> =>
   invoke<DetectionModelInfo[]>('list_detection_models');

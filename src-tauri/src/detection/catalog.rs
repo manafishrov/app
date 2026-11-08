@@ -290,6 +290,11 @@ mod tests {
 
   #[test]
   fn catalog_has_exactly_the_approved_models_and_valid_pins() -> Result<(), String> {
+    let pin: serde_json::Value =
+      serde_json::from_str(include_str!("../../../scripts/detection-catalog-pin.json"))
+        .map_err(|error| error.to_string())?;
+    assert_eq!(pin["sha256"], hex_digest(&Sha256::digest(include_bytes!("catalog.json"))));
+    let release = pin["version"].as_str().ok_or("Missing catalog release pin")?;
     let models = list()?;
     let ids: HashSet<_> = models.iter().map(|model| model.id.as_str()).collect();
     assert_eq!(
@@ -302,16 +307,17 @@ mod tests {
     assert_eq!(models.len(), ids.len());
     for model in models {
       assert!(model.source_url.starts_with("https://"));
-      if let Some(asset) = model.asset {
-        assert_eq!(asset.sha256.len(), 64);
-        assert!(asset.sha256.bytes().all(|byte| byte.is_ascii_hexdigit()));
-        assert!(asset.file_size > 0 && asset.file_size <= MAX_MODEL_BYTES);
-        if let Some(url) = asset.url {
-          assert!(url.starts_with("https://"));
-        }
-      } else {
-        assert!(model.experimental);
-      }
+      let asset = model.asset.ok_or("Missing released model asset")?;
+      assert_eq!(asset.sha256.len(), 64);
+      assert!(asset.sha256.bytes().all(|byte| byte.is_ascii_hexdigit()));
+      assert!(asset.file_size > 0 && asset.file_size <= MAX_MODEL_BYTES);
+      assert_eq!(
+        asset.url,
+        Some(format!(
+          "https://github.com/manafishrov/detection-models/releases/download/{release}/{}",
+          asset.file_name
+        ))
+      );
     }
     Ok(())
   }

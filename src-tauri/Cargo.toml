@@ -65,6 +65,9 @@ plist = "1.7.4"
 runas = "1.2.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
+# A shared core and matching provider libraries are staged by prepare-linux-detection.py.
+# load-dynamic permits multiple providers without ort's single-provider download resolver.
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["load-dynamic", "cuda", "migraphx", "openvino"] }
 libc = "0.2.181"
 nix = { version = "0.31.0", features = ["mount"] }
 gtk = "0.18.2"

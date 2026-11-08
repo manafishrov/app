@@ -180,6 +180,10 @@ jobs:
             libhyphen0 \
             libmanette-0.2-0
 
+      - name: Prepare Linux detection runtime
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
+        run: python3 scripts/prepare-linux-detection.py
+
       - name: Download WebRTC-enabled WebKitGTK
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         shell: bash
@@ -289,7 +293,7 @@ jobs:
             [ -f "$f" ] || continue
             patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../../..' "$f" || true
           done
-          echo '{"bundle": {"resources": ["*.so*", "webkit", "../LICENSE"]}}' > src-tauri/tauri.linux.conf.json
+          echo '{"bundle": {"resources": ["*.so*", "webkit", "detection-runtime", "../LICENSE"]}}' > src-tauri/tauri.linux.conf.json
 
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
@@ -419,6 +423,9 @@ jobs:
           VITE_FIRMWARE_UPDATE_MANIFEST_URL: ${{ vars.FIRMWARE_UPDATE_MANIFEST_URL }}
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
           LD_LIBRARY_PATH: ${{ github.workspace }}/src-tauri/webkit/lib
+          # Providers are optional dlopen libraries. Their vendor runtimes stay
+          # on the host; do not make AppImage construction require every GPU SDK.
+          LINUXDEPLOY_EXCLUDED_LIBRARIES: 'libcublas*.so*;libcurand.so*;libcudart.so*;libcuda.so*;libcudnn*.so*;libmigraphx*.so*;libamdhip64.so*;libopenvino*.so*'
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --bundles appimage

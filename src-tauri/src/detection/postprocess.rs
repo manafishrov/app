@@ -147,7 +147,9 @@ pub fn decode(
   match layout {
     OutputLayout::EndToEnd { detections } => {
       let mut found: Vec<RawDetection> = data
-        .chunks_exact(6)
+        .as_chunks::<6>()
+        .0
+        .iter()
         .take(detections)
         .filter_map(|row| {
           let confidence = row[4];
@@ -412,7 +414,7 @@ mod tests {
       anchors: 10,
       classes: 2,
     };
-    assert!(decode(&[0.0; 5], layout, &letterbox, &options(None)).is_empty());
+    assert_eq!(decode(&[0.0; 5], layout, &letterbox, &options(None)).len(), 0);
   }
 
   #[test]
@@ -485,6 +487,6 @@ mod tests {
         &options(None)
       )
     );
-    assert!(decode(&last, layout, &letterbox, &options(Some(&[]))).is_empty());
+    assert_eq!(decode(&last, layout, &letterbox, &options(Some(&[]))).len(), 0);
   }
 }

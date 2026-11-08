@@ -28,7 +28,7 @@ import {
   type GridCell,
   type GridSpan,
 } from '@/stores/overlayLayout';
-import { fitWidgetSize } from '@/stores/overlayMigration';
+import { fitWidgetSize } from '@/stores/overlayWidgetSizes';
 
 const [undef] = [] as undefined[];
 

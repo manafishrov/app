@@ -17,3 +17,5 @@ pub struct DetectionRuntime {
   pub runner: Arc<Mutex<Option<DetectionRunner>>>,
   pub downloads: catalog::ModelDownloads,
 }
+
+mod providers;
