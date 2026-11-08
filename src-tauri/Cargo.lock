@@ -2337,7 +2337,7 @@ checksum = "e20f57f9918e5bd7bc58c22cdd70a6afc7375d4dd9683af5f2b34bd3d2bba619"
 
 [[package]]
 name = "manafish"
-version = "1.1.0-rc.5"
+version = "1.1.0-rc.6"
 dependencies = [
  "base64 0.23.1",
  "bytes",
