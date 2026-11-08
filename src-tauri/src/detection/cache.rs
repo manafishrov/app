@@ -119,6 +119,9 @@ fn size(path: &Path, depth: usize) -> io::Result<u64> {
 /// The app runs one inference session; imports use CPU validation.
 pub struct CacheEntry {
   path: PathBuf,
+  // Held through session teardown and integrity publication. Other app
+  // processes run uncached instead of touching a cache being compiled/used.
+  _process_lock: fs::File,
 }
 
 impl CacheEntry {
@@ -155,8 +158,25 @@ pub fn prepare(path: &Path, provider: ExecutionProvider) -> Option<CacheEntry> {
 /// Returns invalid identity/storage and integrity errors.
 fn prepare_in(root: &Path, model: &Path, identity: &str) -> io::Result<CacheEntry> {
   private_directory(root)?;
+  let lock_path = root.join(".lock");
+  if fs::symlink_metadata(&lock_path)
+    .is_ok_and(|metadata| !metadata.is_file() || metadata.file_type().is_symlink())
+  {
+    return Err(io::Error::other("Unsafe compilation cache lock"));
+  }
+  let process_lock = fs::OpenOptions::new()
+    .create(true)
+    .truncate(false)
+    .write(true)
+    .open(lock_path)?;
+  process_lock.try_lock().map_err(io::Error::other)?;
   let path = root.join(key(model, identity)?);
-  let entries = fs::read_dir(root)?.collect::<Result<Vec<_>, _>>()?;
+  let entries = fs::read_dir(root)?
+    .filter_map(|entry| match entry {
+      Ok(entry) if entry.file_name() == ".lock" => None,
+      entry => Some(entry),
+    })
+    .collect::<Result<Vec<_>, _>>()?;
   // A fixed admission bound avoids evicting compiled models still used by
   // native sessions. The OS or user may clear this disposable cache at any time.
   if size(root, 0)? >= MAX_BYTES || (!path.exists() && entries.len() >= MAX_ENTRIES) {
@@ -183,7 +203,10 @@ fn prepare_in(root: &Path, model: &Path, identity: &str) -> io::Result<CacheEntr
     fs::remove_dir_all(&path)?;
     private_directory(&path)?;
   }
-  Ok(CacheEntry { path })
+  Ok(CacheEntry {
+    path,
+    _process_lock: process_lock,
+  })
 }
 
 /// # Errors
@@ -375,6 +398,19 @@ mod tests {
       drop(prepare_in(&root, &model, &index.to_string()).unwrap());
     }
     assert!(prepare_in(&root, &model, "full").is_err());
+  }
+
+  #[test]
+  fn active_sessions_exclude_other_cache_users_without_waiting() {
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path().join("cache");
+    let model = directory.path().join("model.onnx");
+    fs::write(&model, b"model").unwrap();
+    let first = prepare_in(&root, &model, "same").unwrap();
+    assert!(prepare_in(&root, &model, "same").is_err());
+    assert!(prepare_in(&root, &model, "other").is_err());
+    drop(first);
+    assert!(prepare_in(&root, &model, "same").is_ok());
   }
 
   #[cfg(unix)]

@@ -694,6 +694,105 @@ mod tests {
   }
 
   #[test]
+  #[ignore = "Opt-in 60-second execution test: model/image/provider environment as stage benchmark"]
+  fn benchmark_sustained_model_execution() -> Result<(), String> {
+    let directory =
+      std::path::PathBuf::from(std::env::var("MANA_FISH_TEST_MODELS").map_err(|e| e.to_string())?);
+    let id = std::env::var("MANA_FISH_TEST_MODEL").unwrap_or_else(|_| "yolo26n".into());
+    let entry = super::super::catalog::list()?
+      .into_iter()
+      .find(|entry| entry.id == id)
+      .ok_or("Unknown benchmark model")?;
+    let preference: ExecutionProviderPreference =
+      serde_json::from_value(serde_json::Value::String(
+        std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|e| e.to_string())?,
+      ))
+      .map_err(|e| e.to_string())?;
+    let loaded = Instant::now();
+    let (mut model, provider) = DetectionModel::load(
+      &directory.join(entry.asset.ok_or("No model asset")?.file_name),
+      preference,
+    )?;
+    let load_ms = loaded.elapsed().as_secs_f64() * 1000.0;
+    if preference != ExecutionProviderPreference::Cpu {
+      assert_ne!(provider, ExecutionProvider::Cpu);
+    }
+    let frame = test_image()?;
+    let letterbox = Letterbox::fit(
+      frame.width(),
+      frame.height(),
+      model.description().input_width,
+      model.description().input_height,
+    );
+    let (width, height) = letterbox.scaled_size();
+    let layout = model.layout();
+    let settings = DetectionSettings {
+      confidence_threshold: 0.25,
+      class_ids: None,
+    };
+    let mut tracker = settings.tracker();
+    let mut scaler = None;
+    let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+    let mut expected: Option<Vec<super::super::postprocess::RawDetection>> = None;
+    let mut samples = Vec::new();
+    let rss = || {
+      std::fs::read_to_string("/proc/self/status").ok().and_then(|text| {
+        text
+          .lines()
+          .find(|line| line.starts_with("VmRSS:"))
+          .and_then(|line| line.split_whitespace().nth(1))
+          .and_then(|value| value.parse::<u64>().ok())
+      })
+    };
+    let initial_rss = rss();
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(60) || samples.len() < 24 {
+      let frame_started = Instant::now();
+      #[allow(clippy::cast_sign_loss)]
+      let found = model.run_with(
+        rgb.data(0),
+        rgb.stride(0),
+        width,
+        height,
+        letterbox.pad_x as u32,
+        letterbox.pad_y as u32,
+        |output| decode(output, layout, &letterbox, &settings.decoder()),
+      )?;
+      if let Some(expected) = &expected {
+        assert_eq!(found.len(), expected.len());
+        for item in expected {
+          assert!(
+            found.iter().any(|other| item.class_id == other.class_id
+              && (item.confidence - other.confidence).abs() < 0.01
+              && item.corners.iter().zip(other.corners).all(|(a, b)| (a - b).abs() < 0.005)),
+            "Sustained output drift for {id}"
+          );
+        }
+      } else {
+        if !entry.experimental {
+          for label in ["person", "bus"] {
+            assert!(
+              found
+                .iter()
+                .any(|item| model.description().classes[item.class_id as usize] == label)
+            );
+          }
+        }
+        expected = Some(found.clone());
+      }
+      std::hint::black_box(tracker.update(&found));
+      samples.push(frame_started.elapsed().as_secs_f64() * 1000.0);
+    }
+    let elapsed = started.elapsed().as_secs_f64();
+    samples.sort_by(f64::total_cmp);
+    eprintln!(
+      "SUSTAINED_BENCHMARK {}",
+      serde_json::json!({"model":id,"provider":preference,"frames":samples.len(),"duration_s":elapsed,"fps":samples.len() as f64/elapsed,"frame_work_p50_ms":samples[samples.len()/2],"frame_work_p95_ms":samples[(samples.len()*95/100).min(samples.len()-1)],"session_load_ms":load_ms,"rss_before_kib":initial_rss,"rss_after_kib":rss(),"output_stable":true})
+    );
+    Ok(())
+  }
+
+  #[test]
   fn failed_channel_send_stops_the_worker() {
     let stop = Arc::new(AtomicBool::new(false));
     let events = Events {

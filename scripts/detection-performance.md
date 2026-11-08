@@ -54,6 +54,10 @@ Caches live under Tauri's sandbox-safe app-cache directory in
 | MIGraphX                      | No app compilation cache enabled. In the shipped CUDA-derived shared core, generic `SessionOptionsAppendExecutionProvider("MIGraphX", ...)` returns "not supported in this build". The vendor provider lacks `CreateEpFactories`. A separate probe of the pinned MIGraphX-derived core accepts the cache API but rejects CUDA registration ("not enabled in this build"), so swapping cores would regress NVIDIA support. rc.15's `with_save_model` / `with_load_model` populate obsolete fields ignored by ORT 1.31's `MIGraphXExecutionProviderInfo` conversion. `ORT_MIGRAPHX_MODEL_CACHE_PATH` exists, but mutating process-wide environment variables from concurrent Rust inference threads is not a defensible per-model API. No cache speedup is claimed. |
 | CUDA / NNAPI / DirectML / CPU | No new compilation cache. Existing provider precision and tuning choices are unchanged.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
+A nonblocking filesystem lock is held through session teardown and integrity
+publication. Other app processes use uncached sessions while that cache is in
+use, avoiding concurrent writers and deletion of live compiled files.
+
 Caches admit at most eight identities and 1 GiB of completed data. Once full,
 new identities run uncached; the OS/user can clear this disposable directory.
 Vendor writes are not quota-controlled during compilation; an oversized result
@@ -62,7 +66,7 @@ manifest traversal and SHA-256 integrity manifests reject linked, interrupted or
 corrupt entries before vendor deserialization. Integrity is for accidental
 corruption, not protection against the same OS account modifying both files and
 manifest. Unit tests cover changed weights, runtime/OS/device/options keys,
-corruption, incomplete writes, links and admission bounds.
+corruption, incomplete writes, links, concurrent cache users and admission bounds.
 
 API evidence is pinned to ORT v1.31.0:
 
@@ -132,21 +136,97 @@ accuracy assessment on marine imagery. Lower precision/quantization is unchanged
 
 ## Host measurements (2026-11-08)
 
-Release build on the existing host, 640x640 bus fixture, pinned seven-model
-catalog, ORT 1.31.0, default host CPU thread policy and NVIDIA RTX 5080 Laptop GPU.
-GPU runtimes are those recorded in detection-models.md. Host load and GPU power
-state affect these numbers; they are a reproducible sample, not a speed promise.
+Release build on AMD Ryzen AI 9 HX 370 (12 cores / 24 threads), Radeon 890M
+(`gfx1150`, ROCm/MIGraphX 7.2.3), NVIDIA RTX 5080 Laptop GPU (16303 MiB,
+driver 595.71.05), ORT 1.31.0, 640x640 bus fixture, and the pinned seven-model
+catalog. Host CPU sessions use the desktop default thread policy. GPU clocks,
+power state and host load affect short samples; these are measurements, not a
+speed promise. The 60-second runs below show different steady operating states.
 
-| Model            | CPU ORT p50 / p95 ms | CUDA ORT p50 / p95 ms | CUDA session loads, first / second ms |
-| ---------------- | -------------------: | --------------------: | ------------------------------------: |
-| yolo26n          |        32.75 / 43.39 |           4.85 / 5.57 |                             681 / 106 |
-| yolo26s          |       78.47 / 114.28 |         11.19 / 11.68 |                              209 / 86 |
-| yolo26m          |      196.34 / 213.98 |         31.28 / 44.74 |                             150 / 124 |
-| yolo11n          |        31.20 / 36.01 |           5.87 / 9.49 |                               77 / 72 |
-| yolo11s          |        75.17 / 76.97 |         11.22 / 11.87 |                               79 / 79 |
-| marine-fishinv   |      343.00 / 407.90 |         46.82 / 74.69 |                             165 / 147 |
-| marine-megafauna |      355.12 / 538.65 |         48.63 / 73.95 |                             169 / 153 |
+Paired input conversion benchmark, 200 alternating iterations, with the owned
+pixel copy included in both paths:
 
-Input/output copy measurements and Radeon results are recorded with the final
-validation artifacts. Real phones, macOS/iOS and Intel GPU remain unavailable;
-no battery, thermal, Core ML or Intel GPU cache speedup is claimed.
+| Conversion                   | p50 ms | p95 ms |
+| ---------------------------- | -----: | -----: |
+| previous_owned_copy_then_rgb |  1.318 |  1.526 |
+| owned_copy_direct_rgba       |  0.666 |  0.808 |
+
+The median conversion time decreased 49.5%. This isolates the owned
+pixel copy and RGB/RGBA-to-CHW conversion; it excludes canvas, packet headers,
+IPC, ORT and rendering. The eliminated RGB payload is 1,228,800 bytes at 640x640;
+allocator capacities and calls may differ from this logical payload size.
+
+The separate 2,822,400-byte output benchmark measured the old Rust Vec
+allocation/copy/drop at 0.040 ms p50 / 0.073 ms p95. Borrowing
+adds no such Rust buffer. ORT tensor allocation and GPU-to-host transfers remain.
+No end-to-end phone speedup or zero-copy transport is inferred from these tests.
+
+The stage benchmark reports 24 warmed executions per model. Values below are
+ORT p50 / p95 milliseconds; the JSON artifact also retains preprocessing,
+decode, tracking, total frame work and session loads.
+
+| Model            |      CPU ORT ms |   CUDA ORT ms |   Radeon ORT ms | Radeon session load, seconds |
+| ---------------- | --------------: | ------------: | --------------: | ---------------------------: |
+| yolo26n          |   25.20 / 28.16 |   3.83 / 3.86 |   14.97 / 17.85 |                        166.5 |
+| yolo26s          |   50.31 / 53.28 |   9.69 / 9.76 |   27.29 / 31.26 |                        231.9 |
+| yolo26m          | 117.02 / 124.11 | 26.01 / 35.64 |   41.69 / 44.16 |                        311.3 |
+| yolo11n          |   21.81 / 23.11 |   4.99 / 5.20 |     7.15 / 9.16 |                         93.2 |
+| yolo11s          |   48.43 / 51.09 |   9.08 / 9.27 |   16.74 / 17.10 |                        152.1 |
+| marine-fishinv   | 211.98 / 221.01 | 36.95 / 58.35 |  96.82 / 108.19 |                        347.6 |
+| marine-megafauna | 221.25 / 250.02 | 36.33 / 59.03 | 111.76 / 125.98 |                        399.8 |
+
+CPU and CUDA first/repeat session loads (milliseconds; existing vendor caches
+preserved):
+
+| Model            | CPU first / repeat | CUDA first / repeat |
+| ---------------- | -----------------: | ------------------: |
+| yolo26n          |        70.4 / 45.1 |       2899.0 / 62.7 |
+| yolo26s          |        97.9 / 89.3 |        172.4 / 69.8 |
+| yolo26m          |      191.2 / 181.2 |        105.4 / 99.9 |
+| yolo11n          |        87.2 / 93.1 |         79.8 / 80.8 |
+| yolo11s          |        94.4 / 76.8 |         70.2 / 78.2 |
+| marine-fishinv   |      350.9 / 349.3 |       142.6 / 120.3 |
+| marine-megafauna |      336.8 / 336.6 |       118.5 / 118.8 |
+
+One-minute continuous YOLO26n runs include input conversion, ORT, decode,
+tracking and per-frame output-stability assertions. FFmpeg scaling, IPC,
+playback and compositor work are excluded. These are host inference-loop
+throughput measurements, not the app's capture rate or phone FPS:
+
+| Provider | Frames / seconds | Frame work p50 / p95 ms | Native RSS before / after, MiB |
+| -------- | ---------------: | ----------------------: | -----------------------------: |
+| cuda     |    13265 / 60.00 |             4.51 / 4.68 |                1131.5 / 1134.0 |
+| migraphx |     6788 / 60.01 |            8.15 / 13.86 |                2234.4 / 2234.5 |
+
+Both runs retained stable decoded classes, confidence and boxes throughout.
+RSS snapshots are process resident memory, not GPU memory or a leak proof.
+The repeated uncached Radeon YOLO26n session load in this run was
+115.5 seconds; compilation is still expensive. The app's mobile capture
+ceiling remains 5 fps. One minute does not establish long-duration thermal,
+battery or live-playback performance.
+
+Run the same sustained check with the stage benchmark environment and
+`benchmark_sustained_model_execution -- --ignored --nocapture`.
+`MANA_FISH_TEST_MODEL` optionally selects another catalog model; the default is
+YOLO26n. This path also keeps output-stability assertions enabled.
+
+All seven models passed CPU numerical/detection parity on both GPUs, including
+direct RGBA against strided RGB. The final Radeon parity run took 1963 seconds,
+including compilation and CPU references. All seven also passed the host mobile
+worker test with six RGBA frames each: filter removal, raised/lowered confidence,
+track confirmation/recovery, dimensions and acknowledgements on one loaded
+session. The mobile worker host test proves behavior, not phone throughput.
+
+Final local regression checks: 103 Rust tests, 343 frontend tests, 19 Python
+tests, frontend/Rust formatting, frontend lint, and warnings-denied Clippy on
+Linux and Android ARM64/x86-64. The iOS frontend bundle builds; native iOS still
+requires macOS/Xcode. Android ARM64/x86-64 debug APKs and a Linux debug deb are
+recorded in `target/artifacts/optimization/build-manifest.json` with checksums,
+runtime manifest checks, signatures and 16 KiB ZIP/ELF alignment verification.
+The stage and sustained records are in `target/artifacts/optimization/performance.json`.
+
+Real phones, macOS/iOS and Intel GPU remain unavailable. Core ML/OpenVINO cache
+speedups, phone memory pressure, thermal/battery behavior and live stream
+alignment remain unmeasured. Full AppImage packaging retains the existing NixOS
+GLib schema limitation described in detection-models.md. Lower precision and
+reviewed model hashes are unchanged.
