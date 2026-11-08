@@ -30,8 +30,8 @@ read the source there instead of guessing:
 - Firmware: https://github.com/manafishrov/firmware. It contains the
   `manafish_sdk` package (`src/manafish_sdk/`), the custom-action runtime
   (`src/rov_firmware/custom_actions/`), the installed example scripts
-  (`src/rov_firmware/custom_actions/defaults/`), and `RovState`
-  (`src/rov_firmware/rov_state.py`).
+  (`src/rov_firmware/custom_actions/defaults/`; `examples/custom_actions/` in
+  v1.2.0-rc.3 and earlier), and `RovState` (`src/rov_firmware/rov_state.py`).
 - App: https://github.com/manafishrov/app
 - All repositories: https://github.com/manafishrov
 
@@ -131,5 +131,6 @@ prove that hardware exists or that an operation is safe.
 
 ## Installing
 
-A custom action needs a single Python `.py` file, which can be uploaded with
-**Import script** on the app's Custom actions page.
+A custom action needs a single Python `.py` file. Open it with **Import script**
+on the app's Custom actions page, then select **Save** while connected to the
+ROV to install it.
