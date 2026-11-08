@@ -63,7 +63,7 @@ export const fitCanvas = (canvas: HTMLCanvasElement, context: CanvasRenderingCon
     canvas.height = pixelHeight;
   }
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  context.clearRect(0, 0, width, height);
+  context.clearRect(0, 0, canvas.width / ratio, canvas.height / ratio);
   return { left: 0, top: 0, width, height };
 };
 
@@ -120,22 +120,25 @@ const draw = (
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D | null,
   frame: DetectionFrame | null,
-): void => {
+): boolean => {
   if (!context) {
-    return;
+    return false;
   }
   const size = fitCanvas(canvas, context);
   if (!frame || Date.now() - frame.capturedAt >= STALE_AFTER_MS) {
-    return;
+    return false;
   }
   const area = containRect(frame, size.width, size.height);
   setStrokeAndText(context);
   const classes = classFilter();
+  let painted = false;
   for (const detection of frame.detections) {
     if (classes === null || classes.includes(detection.classId)) {
       drawDetection(context, area, detection);
+      painted = true;
     }
   }
+  return painted;
 };
 
 const observePixelRatio = (redraw: () => void): (() => void) => {
@@ -189,27 +192,18 @@ const DetectionOverlay: Component = () => {
     if (element) {
       context ??= element.getContext('2d');
       const started = performance.now();
-      draw(element, context, document.hidden ? null : frame);
+      const painted = draw(element, context, document.hidden ? null : frame);
       recordTiming('render', performance.now() - started);
       const remaining = frame ? frame.capturedAt + STALE_AFTER_MS - Date.now() : 0;
-      if (!document.hidden && remaining > 0) {
+      if (painted && !document.hidden && remaining > 0) {
         expiration = globalThis.setTimeout(redraw, remaining);
       }
     }
   };
 
-  createEffect(
-    on(
-      () => [
-        detectionStore.frame,
-        configStore.detection.showLabels,
-        configStore.detection.showTrackIds,
-        JSON.stringify(classFilter()),
-        canvas(),
-      ],
-      redraw,
-    ),
-  );
+  // Solid merges successive results into the same store object. Track fields
+  // Read by drawing so those in-place updates repaint and renew expiration.
+  createEffect(redraw);
 
   onMount(() => {
     observeCanvas(canvas(), redraw, () => {

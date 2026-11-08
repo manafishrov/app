@@ -5,7 +5,7 @@ import { render } from 'solid-js/web';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { configStore, setConfigStore } from '@/stores/config';
-import { type DetectionFrame, setDetectionStore } from '@/stores/detection';
+import { type DetectionFrame, detectionStore, setDetectionStore } from '@/stores/detection';
 
 import { DetectionOverlay } from './DetectionOverlay';
 
@@ -60,6 +60,10 @@ beforeEach(() => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drawing context fixture.
     context as unknown as CanvasRenderingContext2D,
   );
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, modelId: null, classFilters: {} },
+  });
   setDetectionStore('frame', null);
 });
 afterEach(() => {
@@ -162,4 +166,43 @@ it('hides newly excluded classes immediately even when inference is still in fli
   // Late results are also rendered through the current filter.
   setDetectionStore('frame', frame(Date.now() + 1));
   expect(context.strokeRect).toHaveBeenCalledOnce();
+});
+
+it('repaints and renews expiry when Solid merges a new result into the existing frame', async () => {
+  mount();
+  context.clearRect.mockClear();
+  setDetectionStore('frame', frame());
+  const previous = detectionStore.frame;
+  await vi.advanceTimersByTimeAsync(500);
+  setDetectionStore('frame', frame());
+  expect(detectionStore.frame).toBe(previous);
+  expect(context.strokeRect).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(context.clearRect).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(context.clearRect).toHaveBeenCalledTimes(3);
+  expect(context.strokeRect).toHaveBeenCalledTimes(2);
+});
+
+it('does not schedule an expiration paint for an already empty overlay', async () => {
+  mount();
+  context.clearRect.mockClear();
+  setDetectionStore('frame', { ...frame(), detections: [] });
+  expect(context.clearRect).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(context.clearRect).toHaveBeenCalledOnce();
+});
+
+it('clears the entire rounded backing store at fractional pixel ratios', () => {
+  const canvas = mount();
+  Object.defineProperty(canvas, 'clientWidth', { configurable: true, value: 641 });
+  vi.stubGlobal('devicePixelRatio', 1.5);
+  setDetectionStore('frame', frame());
+  const cleared = context.clearRect.mock.lastCall;
+  if (!cleared) {
+    throw new Error('No canvas clear');
+  }
+  expect(canvas.width).toBe(962);
+  expect(Number(cleared[2]) * 1.5).toBeCloseTo(canvas.width);
+  expect(Number(cleared[3]) * 1.5).toBeCloseTo(canvas.height);
 });
