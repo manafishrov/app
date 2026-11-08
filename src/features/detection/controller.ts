@@ -17,7 +17,7 @@ import {
 } from '@/tauri/detection';
 
 import { captureReady, captureVideo, startMobileCapture } from './mobileCapture';
-import { foreground, useMobileLifecycle } from './mobileLifecycle';
+import { foreground, resumeGeneration, useMobileLifecycle } from './mobileLifecycle';
 
 /** Restarting reloads the model, so let bursts of changes (such as dragging a slider) settle. */
 const RESTART_DEBOUNCE_MS = 400;
@@ -175,7 +175,7 @@ export const createDetectionController = (): void => {
 
   createEffect(
     on(
-      () => JSON.stringify(resolveOptions()),
+      () => JSON.stringify([resolveOptions(), isMobile ? resumeGeneration() : 0]),
       () => {
         scheduleRestart(restart);
       },

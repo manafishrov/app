@@ -1,3 +1,4 @@
+import { listen } from '@tauri-apps/api/event';
 // @vitest-environment happy-dom
 import { render } from 'solid-js/web';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -191,6 +192,32 @@ it('waits for a mounted mobile video before starting an enabled imported config'
 it('lets mobile input toggle detection using the existing config command', () => {
   platform.isMobile = true;
   return expect(toggleObjectDetection()).resolves.toBeUndefined();
+});
+
+it('restarts on resume even when the webview did not report becoming hidden', () => {
+  platform.isMobile = true;
+  const video = document.createElement('video');
+  Object.defineProperties(video, {
+    paused: { value: false },
+    readyState: { value: HAVE_CURRENT_DATA },
+  });
+  const unregister = registerDetectionVideo(video);
+  mount();
+  cleanups.push(unregister);
+  return vi
+    .advanceTimersByTimeAsync(RESTART_WAIT_MS)
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledOnce();
+      const listener = vi.mocked(listen).mock.lastCall;
+      if (!listener) {
+        throw new Error('Native lifecycle listener was not registered');
+      }
+      listener[1]({ event: 'detection-foreground', id: 0, payload: true });
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledTimes(RESUMED_SESSION_COUNT);
+    });
 });
 
 it('releases the mobile worker while playback buffers and restarts on playing', () => {

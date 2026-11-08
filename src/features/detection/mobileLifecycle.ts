@@ -4,13 +4,18 @@ import { createSignal, onCleanup } from 'solid-js';
 import { logError } from '@/lib/log';
 
 const [foreground, setForeground] = createSignal(true);
-export { foreground };
+const [resumeGeneration, setResumeGeneration] = createSignal(0);
+export { foreground, resumeGeneration };
 
 const visibility = (): void => {
   setForeground(!document.hidden);
 };
 const hide = (): void => {
   setForeground(false);
+};
+const resume = (): void => {
+  visibility();
+  setResumeGeneration((generation) => generation + 1);
 };
 
 export const useMobileLifecycle = (): void => {
@@ -19,9 +24,13 @@ export const useMobileLifecycle = (): void => {
   visibility();
   document.addEventListener('visibilitychange', visibility);
   globalThis.addEventListener('pagehide', hide);
-  globalThis.addEventListener('pageshow', visibility);
+  globalThis.addEventListener('pageshow', resume);
   listen<boolean>('detection-foreground', ({ payload }) => {
     setForeground(payload && !document.hidden);
+    // Native suspension releases the session even if the webview missed hide.
+    if (payload) {
+      setResumeGeneration((generation) => generation + 1);
+    }
   })
     .then((cleanup) => {
       if (disposed) {
@@ -38,6 +47,6 @@ export const useMobileLifecycle = (): void => {
     }
     document.removeEventListener('visibilitychange', visibility);
     globalThis.removeEventListener('pagehide', hide);
-    globalThis.removeEventListener('pageshow', visibility);
+    globalThis.removeEventListener('pageshow', resume);
   });
 };
