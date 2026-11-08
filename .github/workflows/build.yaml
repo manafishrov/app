@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-26.04
     outputs:
       prerelease: ${{ steps.validate.outputs.prerelease }}
+      mobile_config: ${{ steps.validate.outputs.mobile_config }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -37,6 +38,15 @@ jobs:
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
+
+          # App Store Connect and Play take a plain version plus an increasing
+          # build number, so `v1.1.0-rc.5` ships to both as 1.1.0 with this
+          # run's number as the build number.
+          mobile_config="$(jq -cn \
+            --arg version "${version_without_build%%-*}" \
+            --argjson build "$GITHUB_RUN_NUMBER" \
+            '{version: $version, bundle: {android: {versionCode: $build}, iOS: {bundleVersion: ($build | tostring)}}}')"
+          echo "mobile_config=$mobile_config" >> "$GITHUB_OUTPUT"
 
   create-release:
     name: Create Draft Release
@@ -432,12 +442,13 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: --bundles appimage
 
-  # Android: a sideloadable APK for arm64 phones and tablets, signed with the
-  # release keystore. The Gradle project is generated fresh from the Tauri
-  # config; native code lives in src-tauri/plugins/mobile.
+  # Android: one arm64 build, signed with the release keystore, as a
+  # sideloadable APK on the release and an AAB on Play internal testing. The
+  # Gradle project is generated fresh from the Tauri config; native code lives
+  # in src-tauri/plugins/mobile.
   build-android:
     name: Build Android
-    needs: create-release
+    needs: [validate-release, create-release]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
@@ -471,10 +482,12 @@ jobs:
       - name: Generate Android project
         run: bun run android:init
 
-      - name: Build APK
-        run: bun tauri android build --apk --target aarch64
+      - name: Build APK and AAB
+        env:
+          MOBILE_CONFIG: ${{ needs.validate-release.outputs.mobile_config }}
+        run: bun tauri android build --apk --aab --target aarch64 --config "$MOBILE_CONFIG"
 
-      - name: Sign and upload APK
+      - name: Sign APK and AAB, upload APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
@@ -489,6 +502,8 @@ jobs:
           keystore="$RUNNER_TEMP/release.keystore"
           aligned="$RUNNER_TEMP/aligned.apk"
           signed="Manafish_${TAG#v}_android_aarch64.apk"
+          bundle="$(find src-tauri/gen/android/app/build/outputs/bundle -name '*-release.aab' | head -n 1)"
+          signed_bundle="Manafish_${TAG#v}_android_aarch64.aab"
 
           printf '%s' "$ANDROID_KEYSTORE" | base64 --decode > "$keystore"
           "$build_tools/zipalign" -P 16 -f 4 "$unsigned" "$aligned"
@@ -502,12 +517,39 @@ jobs:
           "$build_tools/apksigner" verify "$signed"
           gh release upload "$TAG" "$signed" --clobber -R "$GITHUB_REPOSITORY"
 
-  # iOS: an unsigned IPA. iOS only installs apps signed for the device, so
-  # users sideload it with a tool that re-signs it with their own Apple ID
-  # (AltStore, Sideloadly). App Store/TestFlight distribution is not set up.
+          cp "$bundle" "$signed_bundle"
+          jarsigner \
+            -keystore "$keystore" \
+            -storepass:env ANDROID_KEYSTORE_PASSWORD \
+            -keypass:env ANDROID_KEY_PASSWORD \
+            "$signed_bundle" \
+            "$ANDROID_KEY_ALIAS"
+          echo "SIGNED_BUNDLE=$signed_bundle" >> "$GITHUB_ENV"
+
+      # Play only accepts API uploads once a first AAB was uploaded by hand.
+      - name: Keep AAB as a workflow artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: android-aab
+          path: ${{ env.SIGNED_BUNDLE }}
+
+      - name: Upload to Play internal testing
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.manafishrov.manafish
+          releaseFiles: ${{ env.SIGNED_BUNDLE }}
+          releaseName: ${{ github.ref_name }}
+          track: internal
+          status: completed
+
+  # iOS: an App Store Connect IPA, uploaded to TestFlight and attached to the
+  # release. Xcode signs the export with cloud-managed certificates through the
+  # App Store Connect API key. Sideloading tools (AltStore, Sideloadly) re-sign
+  # the attached IPA with the user's own Apple ID.
   build-ios:
     name: Build iOS
-    needs: create-release
+    needs: [validate-release, create-release]
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -537,8 +579,29 @@ jobs:
           command -v xcodegen >/dev/null || brew install xcodegen
           bun run ios:init
 
-      - name: Build unsigned IPA
-        run: bun tauri ios build --no-sign --target aarch64
+      # Tauri signs with the key at APPLE_API_KEY_PATH; altool finds the same
+      # AuthKey_<id>.p8 through API_PRIVATE_KEYS_DIR.
+      - name: Prepare App Store Connect key
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          keys_dir="$RUNNER_TEMP/private_keys"
+          api_key_path="$keys_dir/AuthKey_${APPLE_API_KEY}.p8"
+          mkdir -p "$keys_dir"
+          printf '%s' "$APPLE_API_KEY_P8" > "$api_key_path"
+          chmod 600 "$api_key_path"
+          echo "APPLE_API_KEY_PATH=$api_key_path" >> "$GITHUB_ENV"
+          echo "API_PRIVATE_KEYS_DIR=$keys_dir" >> "$GITHUB_ENV"
+
+      - name: Build IPA
+        env:
+          MOBILE_CONFIG: ${{ needs.validate-release.outputs.mobile_config }}
+          APPLE_DEVELOPMENT_TEAM: ${{ vars.APPLE_DEVELOPMENT_TEAM }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: bun tauri ios build --export-method app-store-connect --target aarch64 --config "$MOBILE_CONFIG"
 
       - name: Upload IPA
         env:
@@ -547,6 +610,15 @@ jobs:
         run: |
           set -euo pipefail
           ipa="$(find src-tauri/gen/apple/build -name '*.ipa' | head -n 1)"
-          renamed="Manafish_${TAG#v}_ios_unsigned.ipa"
+          renamed="Manafish_${TAG#v}_ios.ipa"
           cp "$ipa" "$renamed"
           gh release upload "$TAG" "$renamed" --clobber -R "$GITHUB_REPOSITORY"
+          echo "IPA=$renamed" >> "$GITHUB_ENV"
+
+      - name: Upload to TestFlight
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          xcrun altool --upload-app --type ios --file "$IPA" \
+            --apiKey "$APPLE_API_KEY" --apiIssuer "$APPLE_API_ISSUER"
