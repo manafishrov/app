@@ -366,3 +366,26 @@ it('restarts when a ready mobile video element is replaced', async () => {
   await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
   expect(startDetection).toHaveBeenCalledTimes(2);
 });
+
+it('keeps live settings available while a desktop frame error recovers', async () => {
+  mount();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  lastReceiver()({
+    type: 'status',
+    state: 'error',
+    message: 'Transient frame error',
+    executionProvider: 'cpu',
+  });
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, confidenceThreshold: CONFIDENCE },
+  });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(updateDetectionSettings).toHaveBeenLastCalledWith(startedRun(0), {
+    confidenceThreshold: CONFIDENCE,
+    classIds: null,
+  });
+  lastReceiver()(running);
+  expect(startDetection).toHaveBeenCalledOnce();
+  expect(detectionStore.state).toBe('running');
+});

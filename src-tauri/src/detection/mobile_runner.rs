@@ -21,7 +21,7 @@ use super::library;
 use super::mobile_frame::MobileFrame;
 use super::model::{DetectionModel, ExecutionProvider};
 use super::postprocess::{Letterbox, decode};
-use super::settings::{DetectionSettings, LiveSettings};
+use super::settings::{DetectionSettings, LiveSettings, SettingsTarget};
 use super::tracker::Tracker;
 
 struct Request {
@@ -78,6 +78,7 @@ impl DetectionRunner {
         if let Err(error) = result {
           status(DetectionState::Error, Some(error), None);
         }
+        thread_stop.store(true, Ordering::Relaxed);
         // Dropping the receiver releases any pending IPC acknowledgement.
       })
       .map_err(|error| error.to_string())?;
@@ -91,19 +92,8 @@ impl DetectionRunner {
     })
   }
 
-  /// # Errors
-  /// Rejects updates for stopped or superseded runs.
-  pub fn update_settings(
-    &self,
-    run_id: u32,
-    mut settings: DetectionSettings,
-  ) -> Result<(), String> {
-    settings.validate()?;
-    if run_id != self.run_id || self.stop.load(Ordering::Relaxed) {
-      return Err("Detection session has stopped".into());
-    }
-    *self.settings.lock().map_err(|error| error.to_string())? = settings;
-    Ok(())
+  pub fn settings_target(&self) -> SettingsTarget {
+    SettingsTarget::new(self.run_id, Arc::clone(&self.stop), Arc::clone(&self.settings))
   }
 
   pub fn model_id(&self) -> &str {
@@ -319,7 +309,8 @@ mod tests {
     };
     assert!(
       runner
-        .update_settings(
+        .settings_target()
+        .update(
           6,
           DetectionSettings {
             confidence_threshold: 0.8,
@@ -329,7 +320,8 @@ mod tests {
         .is_err()
     );
     runner
-      .update_settings(
+      .settings_target()
+      .update(
         7,
         DetectionSettings {
           confidence_threshold: 0.8,
@@ -346,7 +338,8 @@ mod tests {
     runner.request_stop();
     assert!(
       runner
-        .update_settings(
+        .settings_target()
+        .update(
           7,
           DetectionSettings {
             confidence_threshold: 0.4,

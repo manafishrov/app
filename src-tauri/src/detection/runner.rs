@@ -16,7 +16,7 @@ use super::model::{DetectionModel, ExecutionProvider};
 #[cfg(test)]
 use super::postprocess::DecodeOptions;
 use super::postprocess::{Letterbox, decode};
-use super::settings::{DetectionSettings, LiveSettings};
+use super::settings::{DetectionSettings, LiveSettings, SettingsTarget};
 use super::stream::{self, LatestFrame, StreamState};
 #[cfg(test)]
 use super::tracker::{Tracker, TrackerOptions};
@@ -60,6 +60,7 @@ impl DetectionRunner {
             stop: Arc::clone(&stop),
           };
           run(&options, &settings, &stop, &events);
+          stop.store(true, Ordering::Relaxed);
         })
         .map_err(|error| format!("Failed to start detection: {error}"))?
     };
@@ -72,19 +73,8 @@ impl DetectionRunner {
     })
   }
 
-  /// # Errors
-  /// Rejects updates for stopped or superseded runs.
-  pub fn update_settings(
-    &self,
-    run_id: u32,
-    mut settings: DetectionSettings,
-  ) -> Result<(), String> {
-    settings.validate()?;
-    if run_id != self.run_id || self.stop.load(Ordering::Relaxed) {
-      return Err("Detection session has stopped".into());
-    }
-    *self.settings.lock().map_err(|error| error.to_string())? = settings;
-    Ok(())
+  pub fn settings_target(&self) -> SettingsTarget {
+    SettingsTarget::new(self.run_id, Arc::clone(&self.stop), Arc::clone(&self.settings))
   }
 
   pub fn model_id(&self) -> &str {

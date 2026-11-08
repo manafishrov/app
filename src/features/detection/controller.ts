@@ -151,7 +151,7 @@ const start = (
   return startDetection({ ...options, runId }, (event) => {
     if (isCurrent()) {
       handleEvent(event);
-      if (event.type === 'status' && event.state === 'error') {
+      if (isMobile && event.type === 'status' && event.state === 'error') {
         cancelCapture(restart);
       }
     }

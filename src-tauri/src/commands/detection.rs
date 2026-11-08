@@ -162,11 +162,11 @@ pub async fn update_detection_settings(
 ) -> Result<(), String> {
   let runners = Arc::clone(&runtime.runner);
   tauri::async_runtime::spawn_blocking(move || {
-    let runners = runners.lock().map_err(|error| error.to_string())?;
-    runners
-      .as_ref()
-      .ok_or("Detection session has stopped")?
-      .update_settings(run_id, settings)
+    let target = {
+      let runners = runners.lock().map_err(|error| error.to_string())?;
+      runners.as_ref().ok_or("Detection session has stopped")?.settings_target()
+    };
+    target.update(run_id, settings)
   })
   .await
   .map_err(|error| error.to_string())?

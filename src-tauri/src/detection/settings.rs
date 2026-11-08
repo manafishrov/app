@@ -1,5 +1,8 @@
 //! One bounded latest value shared by IPC and the inference worker.
-use std::sync::{Arc, Mutex};
+use std::sync::{
+  Arc, Mutex,
+  atomic::{AtomicBool, Ordering},
+};
 
 use serde::Deserialize;
 
@@ -62,10 +65,64 @@ impl DetectionSettings {
 
 pub type LiveSettings = Arc<Mutex<DetectionSettings>>;
 
+/// A run-scoped update target, cloned while briefly holding the runner lock.
+/// Waiting for a frame's postprocessing never makes frame submission busy.
+pub struct SettingsTarget {
+  run_id: u32,
+  stop: Arc<AtomicBool>,
+  latest: LiveSettings,
+}
+
+impl SettingsTarget {
+  pub fn new(run_id: u32, stop: Arc<AtomicBool>, latest: LiveSettings) -> Self {
+    Self {
+      run_id,
+      stop,
+      latest,
+    }
+  }
+
+  /// # Errors
+  /// Rejects invalid settings and runs stopped/replaced while waiting for a frame.
+  pub fn update(&self, run_id: u32, mut settings: DetectionSettings) -> Result<(), String> {
+    settings.validate()?;
+    let mut latest = self.latest.lock().map_err(|error| error.to_string())?;
+    if run_id != self.run_id || self.stop.load(Ordering::Relaxed) {
+      return Err("Detection session has stopped".into());
+    }
+    *latest = settings;
+    Ok(())
+  }
+}
+
 #[cfg(test)]
 mod tests {
   #![allow(clippy::unwrap_used, clippy::missing_panics_doc)]
   use super::*;
+
+  #[test]
+  fn update_waiting_for_postprocessing_cannot_modify_a_stopped_run() {
+    let latest = Arc::new(Mutex::new(DetectionSettings {
+      confidence_threshold: 0.4,
+      class_ids: None,
+    }));
+    let stop = Arc::new(AtomicBool::new(false));
+    let target = SettingsTarget::new(7, Arc::clone(&stop), Arc::clone(&latest));
+    let guard = latest.lock().unwrap();
+    let update = std::thread::spawn(move || {
+      target.update(
+        7,
+        DetectionSettings {
+          confidence_threshold: 0.8,
+          class_ids: None,
+        },
+      )
+    });
+    stop.store(true, Ordering::Relaxed);
+    drop(guard);
+    assert!(update.join().unwrap().is_err());
+    assert_eq!(latest.lock().unwrap().confidence_threshold, 0.4);
+  }
 
   #[test]
   fn validates_finite_thresholds_and_bounds_the_latest_filter() {
