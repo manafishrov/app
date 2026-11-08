@@ -85,6 +85,47 @@ while the script is enabled and an app is connected. With
 a ROV restart. Loop with `await asyncio.sleep(seconds)`, and keep actuator
 control in explicitly invoked actions.
 
+## Hardware and libraries
+
+The ROV is a Raspberry Pi 3 Model B+ (4 cores, 1 GB RAM). Scripts run as the
+`pi` user without root, so use the interfaces below. GPIO is 3.3 V and not 5 V
+tolerant. Pins are BCM GPIO numbers.
+
+- GPIO: `gpiozero` (lgpio backend) for inputs, outputs, buttons, and relays.
+  Its PWM is software-timed and jitters; use hardware PWM for servos.
+- I2C: `/dev/i2c-1` (GPIO2 SDA, GPIO3 SCL) with `smbus2`. The bus runs at 1 MHz
+  and is shared with the ROV's pressure sensor (0x76) and IMU (0x68), so a device
+  must support 1 MHz and use another address.
+- SPI: `/dev/spidev0.0` (CE0 GPIO8) and `/dev/spidev0.1` (CE1 GPIO7); MOSI GPIO10,
+  MISO GPIO9, SCLK GPIO11. Use `spidev`.
+- Addressable LED strips (WS2812/NeoPixel): connect Din to GPIO10 and send SPI
+  at 2.4 MHz with three SPI bits per LED bit (`0` -> `100`, `1` -> `110`), GRB
+  byte order, followed by at least 300 µs of zero bytes. `rpi_ws281x` and
+  `neopixel` are not installed and would need root.
+- Hardware PWM: GPIO18 is `/sys/class/pwm/pwmchip0` channel 0, GPIO19 is channel 1.
+  Write the channel to `export`, then `period` and `duty_cycle` in nanoseconds
+  and `1` to `enable` under `pwm0/` or `pwm1/`. udev grants access shortly after
+  export, so retry briefly. Disable and `unexport` in cleanup. Servos use a
+  20 ms period and 1-2 ms pulses.
+- 1-Wire: GPIO4 with an external 4.7 kΩ pull-up to 3.3 V. DS18B20 probes appear as
+  `/sys/bus/w1/devices/28-*/temperature` (millidegrees Celsius). Each read takes
+  about 750 ms; use `asyncio.to_thread`.
+- Serial: USB-serial adapters appear as `/dev/ttyUSB*` or `/dev/ttyACM*`. Use
+  `serial_asyncio_fast` or `pyserial`. The ROV's own Raspberry Pi Pico
+  microcontroller is also a `/dev/ttyACM*` device: select your adapter by USB
+  VID/PID or serial number with `serial.tools.list_ports`, never by index. The
+  GPIO14/15 UART is the system console and is not available.
+
+Installed libraries: the Python standard library, `numpy`, `scipy`, `pydantic`,
+`gpiozero`, `lgpio`, `smbus2`, `spidev`, `pyserial`, `serial_asyncio_fast`,
+`pynmea2` (GPS NMEA sentences), `pymodbus` (Modbus RTU/TCP for RS-485
+instruments), `psutil`, `websockets`, `ms5837`, and `bmi270`.
+
+Not available: root, `/dev/mem`, DMA, the camera (the video stream owns it),
+internet access, and installing packages. Firmware v1.2.0-rc.3 and earlier
+lacks SPI, hardware PWM, 1-Wire, serial adapter access, `spidev`, `pynmea2`, and
+`pymodbus`. When a device or library is missing, raise an error that names it.
+
 ## Rules
 
 - Module initialization only declares configuration, readings, and functions.

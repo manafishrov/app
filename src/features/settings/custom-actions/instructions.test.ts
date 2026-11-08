@@ -25,6 +25,9 @@ it('includes shared instructions and available declarations without live values 
   expect(output).toContain('ctx.log_csv');
   expect(output).toContain('https://github.com/manafishrov/firmware');
   expect(output).toContain('single Python `.py` file');
+  // Agents need the ROV's hardware interfaces and installed libraries.
+  expect(output).toContain('/dev/spidev0.0');
+  expect(output).toContain('Installed libraries:');
   // Complete examples are the installed default scripts, not part of the guide.
   expect(output).not.toContain('WATER_SENSOR_GPIO_PIN');
 });
