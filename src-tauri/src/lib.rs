@@ -84,6 +84,7 @@ fn setup_handlers(app: &mut App) {
   app.manage(websocket::capabilities::CapabilityState::default());
   #[cfg(mobile)]
   detection::library::init_models_dir(app.handle());
+  detection::cache::init(app.handle());
   app.manage(detection::DetectionRuntime::default());
 
   let websocket_handle = app.app_handle().clone();
@@ -362,6 +363,7 @@ pub fn run() -> tauri::Result<()> {
       list_detection_execution_providers,
       list_detection_models,
       start_detection,
+      commands::detection::update_detection_settings,
       stop_detection,
       pick_detection_model,
       #[cfg(mobile)]

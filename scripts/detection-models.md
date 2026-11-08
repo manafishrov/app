@@ -125,12 +125,20 @@ intra-op threads and one inter-op thread.
 
 ### Capture, storage and lifecycle
 
-Capture samples the newest playing video frame at up to 5 fps. It waits for
+Capture requests the newest decoded video frame with `requestVideoFrameCallback`
+when available, with a timer/currentTime fallback. Its ceiling is 5 fps. An
+exponential moving average of acknowledged processing latency lowers the rate
+for slow models, leaving at least 20% idle time between requests. This is a
+playback/controls budget, not a thermal sensor. It waits for
 native inference to acknowledge each binary request before reading another
 frame, so slow inference drops sampling opportunities instead of building a
 backlog. Native input also has a one-frame queue. A session identifier rejects
 late frames after a restart. Each request contains the original video dimensions,
-a capture timestamp and a letterboxed RGBA image, with a 32-byte header. Native
+a capture timestamp and a letterboxed RGBA image, with a 32-byte header. The
+capture canvas/context and outgoing packet are reused until dimensions change.
+Rust converts RGBA directly into its reused planar float input and decodes the
+borrowed ORT output. Tauri's borrowed body still requires one owned native copy;
+this is not zero-copy IPC. Native
 code checks dimensions, timestamp and exact byte length before copying pixels;
 model inputs are limited to 1024 pixels per dimension on mobile (at most 4 MiB
 of pixels per request). The application sends a binary body rather than a JSON pixel array or an
@@ -153,6 +161,24 @@ Android picker copies have unique cache filenames. Files over 512 MiB are
 rejected before library staging, IDs cannot escape the library directory,
 downloads retain catalog size/hash verification and cancellation, and installation
 remains atomic after model validation.
+
+Confidence and class-filter changes update the existing worker without a model
+or stream reload. Both IPC and the worker retain only the latest settings, and
+updates carry the run ID so an old run cannot modify its replacement. The
+threshold governs new tracks; low-confidence observations down to
+`min(threshold, 0.1)` may continue existing tracks. Excluded classes are removed
+from tracker history and hidden immediately in the overlay. Model/provider,
+source, playback and foreground/resume changes still restart the session. A
+ready video-element replacement also counts as a source change.
+
+The overlay resizes its backing store only when CSS size or pixel ratio changes.
+It paints on results, display settings, resize/DPR/visibility changes and one
+stale-result deadline, replacing the previous 250 ms polling repaint. Results
+still expire after one second. All timers, video callbacks and observers are
+cancelled when their owner is disposed.
+
+See [detection performance](detection-performance.md) for stage definitions,
+reproducible benchmarks, cache support and measured limitations.
 
 ### Building and validation
 

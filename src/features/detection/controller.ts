@@ -14,6 +14,7 @@ import {
   listDetectionModels,
   startDetection,
   stopDetection,
+  updateDetectionSettings,
 } from '@/tauri/detection';
 
 import { captureReady, captureVideo, startMobileCapture } from './mobileCapture';
@@ -87,6 +88,9 @@ type RestartState = {
   generation: number;
   pending: Promise<void>;
   stopCapture: (() => void) | null;
+  runId: number | null;
+  settingsDirty: boolean;
+  updating: boolean;
 };
 
 const cancelCapture = (restart: RestartState): void => {
@@ -95,6 +99,39 @@ const cancelCapture = (restart: RestartState): void => {
     restart.stopCapture();
   }
   restart.stopCapture = null;
+  restart.runId = null;
+};
+
+// At most one settings IPC in flight and one latest value waiting. Settings
+// Arriving during native startup are read again after its acknowledgement.
+const syncSettings = (restart: RestartState): void => {
+  restart.settingsDirty = true;
+  if (restart.updating || restart.runId === null) {
+    return;
+  }
+  const options = resolveOptions();
+  if (!options) {
+    return;
+  }
+  restart.updating = true;
+  restart.settingsDirty = false;
+  const { generation, runId } = restart;
+  updateDetectionSettings(runId, {
+    confidenceThreshold: options.confidenceThreshold,
+    classIds: options.classIds,
+  })
+    .catch((error: unknown) => {
+      if (generation === restart.generation) {
+        logError('Failed to update object detection settings:', error);
+      }
+    })
+    .finally(() => {
+      restart.updating = false;
+      if (restart.settingsDirty) {
+        syncSettings(restart);
+      }
+    })
+    .catch(logError);
 };
 
 const start = (
@@ -120,6 +157,10 @@ const start = (
     }
   })
     .then(() => {
+      if (isCurrent() && detectionStore.state !== 'error') {
+        restart.runId = runId;
+        syncSettings(restart);
+      }
       if (isMobile && isCurrent() && detectionStore.state !== 'error') {
         restart.stopCapture = startMobileCapture(runId, options.modelId, isCurrent);
       }
@@ -145,7 +186,10 @@ const scheduleRestart = (restart: RestartState): void => {
   }
   restart.timer = globalThis.setTimeout(() => {
     restart.pending = restart.pending
-      .then(() => (isCurrent() ? start(options, isCurrent, restart) : Promise.resolve()))
+      .then(() => {
+        const latest = resolveOptions();
+        return isCurrent() && latest ? start(latest, isCurrent, restart) : Promise.resolve();
+      })
       .catch(logError);
   }, RESTART_DEBOUNCE_MS);
 };
@@ -166,6 +210,9 @@ export const createDetectionController = (): void => {
     generation: 0,
     pending: Promise.resolve(),
     stopCapture: null,
+    runId: null,
+    settingsDirty: false,
+    updating: false,
   };
 
   if (isMobile) {
@@ -173,13 +220,26 @@ export const createDetectionController = (): void => {
   }
   refreshDetectionModels().catch(logError);
 
+  const sessionKey = createMemo(() => {
+    const options = resolveOptions();
+    return JSON.stringify([
+      options && [options.modelId, options.executionProvider, options.streamUrl],
+      isMobile ? resumeGeneration() : 0,
+    ]);
+  });
+  const settingsKey = createMemo(() => {
+    const options = resolveOptions();
+    return JSON.stringify(options && [options.confidenceThreshold, options.classIds]);
+  });
   createEffect(
-    on(
-      () => JSON.stringify([resolveOptions(), isMobile ? resumeGeneration() : 0]),
-      () => {
-        scheduleRestart(restart);
-      },
-    ),
+    on([sessionKey, (): HTMLVideoElement | null => (isMobile ? captureVideo() : null)], () => {
+      scheduleRestart(restart);
+    }),
+  );
+  createEffect(
+    on(settingsKey, () => {
+      syncSettings(restart);
+    }),
   );
 
   onCleanup(() => {

@@ -1,6 +1,8 @@
 //! Object detection on the ROV camera stream with ONNX YOLO models.
 
+pub mod cache;
 pub mod catalog;
+pub mod diagnostics;
 mod events;
 pub mod library;
 #[cfg(any(mobile, test))]
@@ -15,6 +17,7 @@ pub mod runner;
 #[cfg(mobile)]
 #[path = "mobile_runner.rs"]
 pub mod runner;
+pub mod settings;
 #[cfg(desktop)]
 pub mod stream;
 pub mod tracker;

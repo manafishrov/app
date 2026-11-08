@@ -72,6 +72,14 @@ impl Tracker {
     }
   }
 
+  /// Keeps identities through threshold changes, but forgets excluded classes.
+  pub fn configure(&mut self, threshold: f32, classes: Option<&[u32]>) {
+    self.options.high_confidence = threshold;
+    self
+      .tracks
+      .retain(|track| classes.is_none_or(|ids| ids.contains(&track.class_id)));
+  }
+
   /// Feeds one frame of detections and returns those that belong to a
   /// confirmed track. Detections must already be filtered to the lowest
   /// confidence worth tracking.
@@ -261,6 +269,19 @@ mod tests {
     }
     tracker.update(&[detection(0, 0.9, 0.14)]);
     assert_eq!(ids(&tracker.update(&[detection(0, 0.9, 0.14)])), vec![2]);
+  }
+
+  #[test]
+  fn live_settings_preserve_low_confidence_tracks_and_forget_excluded_classes() {
+    let mut tracker = Tracker::new(OPTIONS);
+    tracker.update(&[detection(0, 0.9, 0.1)]);
+    assert_eq!(ids(&tracker.update(&[detection(0, 0.9, 0.1)])), vec![1]);
+    tracker.configure(0.95, None);
+    assert_eq!(ids(&tracker.update(&[detection(0, 0.2, 0.1)])), vec![1]);
+    tracker.configure(0.1, Some(&[]));
+    tracker.configure(0.1, Some(&[0]));
+    assert_eq!(tracker.update(&[detection(0, 0.2, 0.1)]), []);
+    assert_eq!(ids(&tracker.update(&[detection(0, 0.2, 0.1)])), vec![2]);
   }
 
   #[test]

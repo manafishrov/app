@@ -8,27 +8,33 @@ use std::time::{Duration, Instant, UNIX_EPOCH};
 use ffmpeg_next as ffmpeg;
 use tauri::ipc::Channel;
 
+use super::diagnostics::Diagnostics;
 use super::library;
 #[cfg(test)]
 use super::model::ExecutionProviderPreference;
 use super::model::{DetectionModel, ExecutionProvider};
-use super::postprocess::{DecodeOptions, Letterbox, decode};
+#[cfg(test)]
+use super::postprocess::DecodeOptions;
+use super::postprocess::{Letterbox, decode};
+use super::settings::{DetectionSettings, LiveSettings};
 use super::stream::{self, LatestFrame, StreamState};
+#[cfg(test)]
 use super::tracker::{Tracker, TrackerOptions};
 use crate::log_warn;
 
-/// Ultralytics' default for prediction.
+#[cfg(test)]
 const IOU_THRESHOLD: f32 = 0.7;
+#[cfg(test)]
 const MAX_DETECTIONS: usize = 300;
-/// Detections between this and the user's threshold only continue existing
-/// tracks; see `tracker`.
-const LOW_CONFIDENCE_FLOOR: f32 = 0.1;
 const STATS_INTERVAL: Duration = Duration::from_secs(1);
 
 pub use super::events::*;
 
 pub struct DetectionRunner {
   model_id: String,
+  settings: LiveSettings,
+  run_id: u32,
+
   stop: Arc<AtomicBool>,
   thread: Option<JoinHandle<()>>,
 }
@@ -37,10 +43,15 @@ impl DetectionRunner {
   /// # Errors
   /// Returns an error if the worker thread cannot be created.
   pub fn start(options: DetectionOptions, events: Channel<DetectionEvent>) -> Result<Self, String> {
+    let mut initial = DetectionSettings::from_options(&options);
+    initial.validate()?;
+    let settings = Arc::new(std::sync::Mutex::new(initial));
+    let run_id = options.run_id;
     let stop = Arc::new(AtomicBool::new(false));
     let model_id = options.model_id.clone();
     let thread = {
       let stop = Arc::clone(&stop);
+      let settings = Arc::clone(&settings);
       std::thread::Builder::new()
         .name("detection".to_string())
         .spawn(move || {
@@ -48,15 +59,32 @@ impl DetectionRunner {
             channel: events,
             stop: Arc::clone(&stop),
           };
-          run(&options, &stop, &events);
+          run(&options, &settings, &stop, &events);
         })
         .map_err(|error| format!("Failed to start detection: {error}"))?
     };
     Ok(Self {
       model_id,
+      settings,
+      run_id,
       stop,
       thread: Some(thread),
     })
+  }
+
+  /// # Errors
+  /// Rejects updates for stopped or superseded runs.
+  pub fn update_settings(
+    &self,
+    run_id: u32,
+    mut settings: DetectionSettings,
+  ) -> Result<(), String> {
+    settings.validate()?;
+    if run_id != self.run_id || self.stop.load(Ordering::Relaxed) {
+      return Err("Detection session has stopped".into());
+    }
+    *self.settings.lock().map_err(|error| error.to_string())? = settings;
+    Ok(())
   }
 
   pub fn model_id(&self) -> &str {
@@ -106,7 +134,12 @@ fn send_status(
   });
 }
 
-fn run(options: &DetectionOptions, stop: &Arc<AtomicBool>, events: &Events) {
+fn run(
+  options: &DetectionOptions,
+  settings: &LiveSettings,
+  stop: &Arc<AtomicBool>,
+  events: &Events,
+) {
   send_status(events, DetectionState::Loading, None, None);
   let loaded = library::model_path(&options.model_id)
     .and_then(|path| DetectionModel::load(&path, options.execution_provider));
@@ -151,7 +184,7 @@ fn run(options: &DetectionOptions, stop: &Arc<AtomicBool>, events: &Events) {
     },
   };
 
-  infer(model, provider, options, stop, &latest, events);
+  infer(model, provider, settings, stop, &latest, events);
   stop.store(true, Ordering::Relaxed);
   let _ = reader.join();
 }
@@ -233,37 +266,26 @@ impl Stats {
 fn infer(
   mut model: DetectionModel,
   provider: ExecutionProvider,
-  options: &DetectionOptions,
+  settings: &LiveSettings,
   stop: &AtomicBool,
   latest: &LatestFrame,
   events: &Events,
 ) {
-  let threshold = options.confidence_threshold.clamp(0.01, 1.0);
-  let decode_options = DecodeOptions {
-    min_confidence: threshold.min(LOW_CONFIDENCE_FLOOR),
-    iou_threshold: IOU_THRESHOLD,
-    max_detections: MAX_DETECTIONS,
-    classes: options.class_ids.as_deref(),
-  };
-  let mut tracker = Tracker::new(TrackerOptions {
-    high_confidence: threshold,
-    match_iou: 0.2,
-    low_match_iou: 0.5,
-    max_missed_frames: 30,
-    min_hits: 2,
-  });
+  let mut tracker = settings.lock().unwrap_or_else(std::sync::PoisonError::into_inner).tracker();
   let classes = model.description().classes.clone();
   let (input_width, input_height) =
     (model.description().input_width, model.description().input_height);
   let layout = model.layout();
   let mut scaler: Option<Scaler> = None;
   let mut stats = Stats::default();
+  let mut diagnostics = Diagnostics::default();
   let mut last_error: Option<String> = None;
 
   while !stop.load(Ordering::Relaxed) {
     let Some(decoded) = latest.take(Duration::from_millis(200)) else {
       continue;
     };
+    let queue = decoded.decoded_at.elapsed();
     let started = Instant::now();
     let frame = &decoded.frame;
     let (width, height) = (frame.width(), frame.height());
@@ -273,12 +295,29 @@ fn infer(
     let letterbox = Letterbox::fit(width, height, input_width, input_height);
     let (scaled_width, scaled_height) = letterbox.scaled_size();
 
+    let mut frame_settings = None;
+    let mut conversion = Duration::ZERO;
     let output =
       Scaler::convert(&mut scaler, frame, (scaled_width, scaled_height)).and_then(|rgb| {
+        conversion = started.elapsed();
         #[allow(clippy::cast_sign_loss)] // Padding is never negative.
         let padding = (letterbox.pad_x as u32, letterbox.pad_y as u32);
         model
-          .run(rgb.data(0), rgb.stride(0), scaled_width, scaled_height, padding.0, padding.1)
+          .run_with(
+            rgb.data(0),
+            rgb.stride(0),
+            scaled_width,
+            scaled_height,
+            padding.0,
+            padding.1,
+            |output| {
+              let settings = settings.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+              tracker.configure(settings.confidence_threshold, settings.class_ids.as_deref());
+              let found = decode(output, layout, &letterbox, &settings.decoder());
+              frame_settings = Some(settings);
+              found
+            },
+          )
           .map_err(|error| format!("Inference failed: {error}"))
       });
     let output = match output {
@@ -292,7 +331,8 @@ fn infer(
       send_status(events, DetectionState::Running, None, Some(provider));
     }
 
-    let found = decode(&output, layout, &letterbox, &decode_options);
+    let found = output;
+    let tracking = Instant::now();
     let detections = tracker
       .update(&found)
       .into_iter()
@@ -315,6 +355,9 @@ fn infer(
       })
       .collect();
 
+    let mut timings = model.timings();
+    timings.preprocessing += conversion;
+    diagnostics.record(queue, timings, tracking.elapsed());
     let captured_at = decoded
       .captured_at
       .duration_since(UNIX_EPOCH)
@@ -325,6 +368,8 @@ fn infer(
       frame_height: height,
       detections,
     });
+    // Publish old-settings results before acknowledging a newer update.
+    drop(frame_settings);
     stats.record(started.elapsed(), decoded.decoded_at.elapsed(), events);
   }
 }
@@ -451,6 +496,10 @@ mod tests {
 
   #[test]
   #[ignore = "Requires MANA_FISH_TEST_MODELS, MANA_FISH_TEST_IMAGE, MANA_FISH_TEST_PROVIDER and GPU runtimes"]
+  #[allow(
+    clippy::too_many_lines,
+    reason = "Real-model tensor, decoded detection and color-path parity in one fixture"
+  )]
   fn catalog_models_match_cpu_on_requested_gpu() -> Result<(), String> {
     use super::super::postprocess::OutputLayout;
     let models = std::env::var("MANA_FISH_TEST_MODELS").map_err(|error| error.to_string())?;
@@ -472,7 +521,7 @@ mod tests {
       let (mut cpu, _) = DetectionModel::load(&path, ExecutionProviderPreference::Cpu)?;
       let (mut gpu, provider) = DetectionModel::load(&path, preference)?;
       assert_ne!(provider, ExecutionProvider::Cpu);
-      let description = cpu.description();
+      let description = cpu.description().clone();
       let letterbox = Letterbox::fit(
         frame.width(),
         frame.height(),
@@ -494,6 +543,26 @@ mod tests {
         )
       };
       let reference = run(&mut cpu)?;
+      let mut rgba =
+        vec![114_u8; description.input_width as usize * description.input_height as usize * 4];
+      #[allow(clippy::cast_sign_loss)]
+      for row in 0..height as usize {
+        for column in 0..width as usize {
+          let source = row * rgb.stride(0) + column * 3;
+          let target = ((row + letterbox.pad_y as usize) * description.input_width as usize
+            + column
+            + letterbox.pad_x as usize)
+            * 4;
+          rgba[target..target + 3].copy_from_slice(&rgb.data(0)[source..source + 3]);
+        }
+      }
+      let direct = gpu.run_rgba_with(&rgba, <[f32]>::to_vec)?;
+      let via_rgb = run(&mut gpu)?;
+      assert!(
+        direct.iter().zip(&via_rgb).all(|(a, b)| (a - b).abs() < 0.0001),
+        "{} RGBA differs from RGB",
+        entry.id
+      );
       for _ in 0..2 {
         let actual = run(&mut gpu)?;
         assert_eq!(actual.len(), reference.len(), "{} output length", entry.id);
@@ -546,6 +615,95 @@ mod tests {
   }
 
   #[test]
+  #[ignore = "Opt-in benchmark: MANA_FISH_TEST_MODELS, MANA_FISH_TEST_IMAGE, MANA_FISH_TEST_PROVIDER"]
+  fn benchmark_catalog_stage_latency() -> Result<(), String> {
+    let directory =
+      std::path::PathBuf::from(std::env::var("MANA_FISH_TEST_MODELS").map_err(|e| e.to_string())?);
+    let preference: ExecutionProviderPreference =
+      serde_json::from_value(serde_json::Value::String(
+        std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|e| e.to_string())?,
+      ))
+      .map_err(|e| e.to_string())?;
+    let frame = test_image()?;
+    for entry in super::super::catalog::list()? {
+      let path = directory.join(entry.asset.ok_or("Missing model asset")?.file_name);
+      let mut loads = Vec::new();
+      let mut warm = None;
+      // MIGraphX has no usable per-session cache API in the staged core. One
+      // load still measures startup plus warm executions without repeating
+      // minutes of compilation. CPU/CUDA also measure a second session load.
+      let load_count = if preference == ExecutionProviderPreference::Migraphx {
+        1
+      } else {
+        2
+      };
+      for _ in 0..load_count {
+        drop(warm.take());
+        let started = Instant::now();
+        let (model, provider) = DetectionModel::load(&path, preference)?;
+        if preference != ExecutionProviderPreference::Cpu {
+          assert_ne!(provider, ExecutionProvider::Cpu);
+        }
+        loads.push(started.elapsed().as_secs_f64() * 1000.0);
+        warm = Some(model);
+      }
+      let mut model = warm.ok_or("Missing benchmark session")?;
+      let (iw, ih) = (model.description().input_width, model.description().input_height);
+      let layout = model.layout();
+      let letterbox = Letterbox::fit(frame.width(), frame.height(), iw, ih);
+      let (width, height) = letterbox.scaled_size();
+      let mut scaler = None;
+      let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+      let settings = DetectionSettings {
+        confidence_threshold: 0.25,
+        class_ids: None,
+      };
+      let mut tracker = settings.tracker();
+      let mut stages = [Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+      // Warmups are included in startup above; report 24 sustained executions.
+      for _ in 0..24 {
+        let started = Instant::now();
+        #[allow(clippy::cast_sign_loss)]
+        let found = model.run_with(
+          rgb.data(0),
+          rgb.stride(0),
+          width,
+          height,
+          letterbox.pad_x as u32,
+          letterbox.pad_y as u32,
+          |output| decode(output, layout, &letterbox, &settings.decoder()),
+        )?;
+        let tracking = Instant::now();
+        std::hint::black_box(tracker.update(&found));
+        let tracking_ms = tracking.elapsed().as_secs_f64() * 1000.0;
+        let timings = model.timings();
+        for (samples, value) in stages.iter_mut().zip([
+          timings.preprocessing.as_secs_f64() * 1000.0,
+          timings.inference.as_secs_f64() * 1000.0,
+          timings.decode.as_secs_f64() * 1000.0,
+          tracking_ms,
+          started.elapsed().as_secs_f64() * 1000.0,
+        ]) {
+          samples.push(value);
+        }
+      }
+      let mut summary = serde_json::Map::new();
+      for (name, samples) in ["preprocessing", "ort", "decode", "tracking", "total"]
+        .into_iter()
+        .zip(&mut stages)
+      {
+        samples.sort_by(f64::total_cmp);
+        summary.insert(name.into(), serde_json::json!({"p50_ms": samples[12], "p95_ms": samples[22], "mean_ms": samples.iter().sum::<f64>() / samples.len() as f64}));
+      }
+      eprintln!(
+        "BENCHMARK {}",
+        serde_json::json!({"model":entry.id,"provider":preference,"session_load_ms":loads,"frames":24,"stages":summary,"input":[iw,ih],"profile":if cfg!(debug_assertions){"debug"}else{"release"}})
+      );
+    }
+    Ok(())
+  }
+
+  #[test]
   fn failed_channel_send_stops_the_worker() {
     let stop = Arc::new(AtomicBool::new(false));
     let events = Events {
@@ -572,6 +730,11 @@ mod tests {
     };
     DetectionRunner {
       model_id: "test".to_string(),
+      run_id: 1,
+      settings: Arc::new(Mutex::new(DetectionSettings {
+        confidence_threshold: 0.4,
+        class_ids: None,
+      })),
       stop,
       thread: Some(thread),
     }

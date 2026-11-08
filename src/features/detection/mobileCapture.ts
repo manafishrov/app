@@ -1,12 +1,13 @@
 import { createSignal } from 'solid-js';
 
-import { logWarn } from '@/lib/log';
-import { detectionStore, setDetectionStore } from '@/stores/detection';
+import { detectionStore } from '@/stores/detection';
 import { submitDetectionFrame } from '@/tauri/detection';
 
-// Inference shares the device with playback and controls. Do not queue work
-// Sample the current video after completion when a slow model misses this rate.
-const FRAME_INTERVAL_MS = 200;
+import { recordTiming } from './diagnostics';
+import { createFramePump } from './framePump';
+
+export { createFramePump } from './framePump';
+
 const HEADER_BYTES = 32;
 const MAX_INPUT_SIZE = 1024;
 const HALF = 0.5;
@@ -91,13 +92,17 @@ export const letterboxRect = ({
 export const framePacket = (
   { runId, size, capturedAt }: { runId: number; size: CaptureSize; capturedAt: number },
   rgba: Uint8ClampedArray,
+  reusable?: Uint8Array,
 ): Uint8Array => {
   validateCaptureSize(size);
   if (rgba.length !== size.width * size.height * RGBA_CHANNELS || !Number.isFinite(capturedAt)) {
     throw new Error('Invalid detection capture dimensions');
   }
-  const bytes = new Uint8Array(HEADER_BYTES + rgba.length);
-  const header = new DataView(bytes.buffer);
+  const bytes =
+    reusable && reusable.length === HEADER_BYTES + rgba.length
+      ? reusable
+      : new Uint8Array(HEADER_BYTES + rgba.length);
+  const header = new DataView(bytes.buffer, bytes.byteOffset, HEADER_BYTES);
   for (const [index, value] of [
     runId,
     size.sourceWidth,
@@ -112,14 +117,19 @@ export const framePacket = (
   return bytes;
 };
 
-const drawVideo = (
-  canvas: HTMLCanvasElement,
+// oxlint-disable-next-line max-statements -- Capture validates then fills, draws and reads one complete frame.
+export const drawVideo = (
+  { canvas, context }: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D | null },
   video: HTMLVideoElement,
   size: CaptureSize,
 ): Uint8ClampedArray => {
   validateCaptureSize(size);
-  Object.assign(canvas, { width: size.width, height: size.height });
-  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (canvas.width !== size.width) {
+    canvas.width = size.width;
+  }
+  if (canvas.height !== size.height) {
+    canvas.height = size.height;
+  }
   if (!context) {
     throw new Error('Video frame capture is unavailable in this webview');
   }
@@ -131,8 +141,12 @@ const drawVideo = (
   return context.getImageData(0, 0, size.width, size.height).data;
 };
 
-type CaptureSession = { runId: number; modelId: string; previousTime: number };
-const sampleVideo = (canvas: HTMLCanvasElement, session: CaptureSession): Promise<void> => {
+type CaptureSession = { runId: number; modelId: string; previousTime: number; packet?: Uint8Array };
+// oxlint-disable-next-line max-statements -- One guarded readback and acknowledged IPC per sample.
+const sampleVideo = (
+  surface: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D | null },
+  session: CaptureSession,
+): Promise<void> => {
   const video = captureVideo();
   const model = detectionStore.models.find((item) => item.id === session.modelId);
   // Model compilation can take time. Read the newest frame after it is ready.
@@ -155,46 +169,15 @@ const sampleVideo = (canvas: HTMLCanvasElement, session: CaptureSession): Promis
     width: model.inputWidth,
     height: model.inputHeight,
   };
+  const captureStarted = performance.now();
   const capturedAt = Date.now();
-  const rgba = drawVideo(canvas, video, size);
-  return submitDetectionFrame(framePacket({ runId: session.runId, size, capturedAt }, rgba));
-};
-
-/** Acknowledgement gates the next readback. There is no queue of old frames. */
-export const createFramePump = (
-  sample: () => Promise<void>,
-  isCurrent: () => boolean,
-): (() => void) => {
-  let stopped = false;
-  let timer = 0;
-  const current = (): boolean => !stopped && isCurrent() && !document.hidden;
-  const tick = (): void => {
-    if (!current()) {
-      return;
-    }
-    const started = performance.now();
-    Promise.resolve()
-      .then(() => (current() ? sample() : Promise.resolve()))
-      .then(() => {
-        if (current()) {
-          timer = globalThis.setTimeout(
-            tick,
-            Math.max(0, FRAME_INTERVAL_MS - (performance.now() - started)),
-          );
-        }
-      })
-      .catch((error: unknown) => {
-        if (current()) {
-          logWarn('Mobile detection capture stopped:', error);
-          setDetectionStore({ state: 'error', message: String(error), frame: null });
-        }
-      });
-  };
-  tick();
-  return (): void => {
-    stopped = true;
-    globalThis.clearTimeout(timer);
-  };
+  const rgba = drawVideo(surface, video, size);
+  session.packet = framePacket({ runId: session.runId, size, capturedAt }, rgba, session.packet);
+  recordTiming('capture', performance.now() - captureStarted);
+  const submitted = performance.now();
+  return submitDetectionFrame(session.packet).then(() => {
+    recordTiming('submitRoundTrip', performance.now() - submitted);
+  });
 };
 
 /** Returns cancellation immediately, even with native inference in flight. */
@@ -204,8 +187,9 @@ export const startMobileCapture = (
   isCurrent: () => boolean,
 ): (() => void) => {
   const canvas = document.createElement('canvas');
+  const surface = { canvas, context: canvas.getContext('2d', { willReadFrequently: true }) };
   const session = { runId, modelId, previousTime: -1 };
-  const cancel = createFramePump(() => sampleVideo(canvas, session), isCurrent);
+  const cancel = createFramePump(() => sampleVideo(surface, session), isCurrent, captureVideo());
   return (): void => {
     cancel();
     canvas.width = 0;

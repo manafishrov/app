@@ -131,6 +131,13 @@ export const startDetection = (
   return invoke('start_detection', { options, onEvent: events });
 };
 
+export type DetectionSettings = Pick<DetectionOptions, 'confidenceThreshold' | 'classIds'>;
+
+export const updateDetectionSettings = (
+  runId: number,
+  settings: DetectionSettings,
+): Promise<void> => invoke('update_detection_settings', { runId, settings });
+
 export const stopDetection = (): Promise<void> => invoke('stop_detection');
 
 export const pickDetectionModel = (): Promise<DetectionModelInfo | null> =>

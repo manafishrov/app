@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await, max-statements, no-magic-numbers -- Sequential clock and pixel regression fixtures. */
 // @vitest-environment happy-dom
 /* oxlint-disable no-magic-numbers -- Pixel and wire-format fixtures. */
 import { afterEach, expect, it, vi } from 'vitest';
@@ -7,6 +8,7 @@ import { type DetectionModelInfo, submitDetectionFrame } from '@/tauri/detection
 
 import {
   createFramePump,
+  drawVideo,
   framePacket,
   letterboxRect,
   registerDetectionVideo,
@@ -125,7 +127,7 @@ it('drops sampling opportunities during slow inference and cancels an outstandin
     .then(() => {
       expect(sample).toHaveBeenCalledOnce();
       acknowledge();
-      return vi.advanceTimersByTimeAsync(200);
+      return vi.advanceTimersByTimeAsync(500);
     })
     .then(() => {
       expect(sample).toHaveBeenCalledTimes(2);
@@ -147,4 +149,96 @@ it('stops after a capture failure and makes the error visible', () => {
     expect(detectionStore.message).toContain('Canvas readback failed');
     cancel();
   });
+});
+
+it('reuses the canvas backing store and packet allocation at a stable model size', () => {
+  const canvas = document.createElement('canvas');
+  const video = document.createElement('video');
+  const width = vi.spyOn(canvas, 'width', 'set');
+  const height = vi.spyOn(canvas, 'height', 'set');
+  const context = {
+    fillRect: vi.fn(),
+    drawImage: vi.fn(),
+    getImageData: vi.fn().mockReturnValue({ data: new Uint8ClampedArray(16) }),
+  };
+  const size = { sourceWidth: 1920, sourceHeight: 1080, width: 2, height: 2 };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Canvas fixture.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Capture fixture provides all used methods.
+  const surface = { canvas, context: context as unknown as CanvasRenderingContext2D };
+  const rgba = drawVideo(surface, video, size);
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Canvas fixture.
+  drawVideo(surface, video, size);
+  expect(width).toHaveBeenCalledOnce();
+  expect(height).toHaveBeenCalledOnce();
+  expect(context.fillRect).toHaveBeenCalledTimes(2);
+  const packet = framePacket({ runId: 1, size, capturedAt: 1 }, rgba);
+  expect(framePacket({ runId: 2, size, capturedAt: 2 }, rgba, packet)).toBe(packet);
+  expect(new DataView(packet.buffer).getUint32(0, true)).toBe(2);
+});
+
+it('waits for a newly decoded frame, adapts to latency and cancels video callbacks', async () => {
+  vi.useFakeTimers();
+  const callbacks = new Map<number, VideoFrameRequestCallback>();
+  let callbackId = 0;
+  const video = document.createElement('video');
+  const requestFrame = vi.fn((callback: VideoFrameRequestCallback): number => {
+    callbackId += 1;
+    callbacks.set(callbackId, callback);
+    return callbackId;
+  });
+  const cancelFrame = vi.fn((id: number): void => {
+    callbacks.delete(id);
+  });
+  video.requestVideoFrameCallback = requestFrame;
+  video.cancelVideoFrameCallback = cancelFrame;
+  let acknowledge: () => void = noPendingFrame;
+  const sample = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        acknowledge = resolve;
+      }),
+  );
+  const cancel = createFramePump(sample, () => true, video);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(sample).not.toHaveBeenCalled();
+  const decoded = callbacks.get(1);
+  if (!decoded) {
+    throw new Error('Missing video callback');
+  }
+  callbacks.delete(1);
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Metadata is unused by pump.
+  decoded(0, {} as VideoFrameCallbackMetadata);
+  await vi.advanceTimersByTimeAsync(800);
+  expect(sample).toHaveBeenCalledOnce();
+  expect(requestFrame).toHaveBeenCalledOnce();
+  acknowledge();
+  await vi.advanceTimersByTimeAsync(199);
+  expect(requestFrame).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(1);
+  expect(requestFrame).toHaveBeenCalledTimes(2);
+  cancel();
+  expect(cancelFrame).toHaveBeenCalledWith(2);
+  expect(callbacks.size).toBe(0);
+});
+
+it('ignores completion and rejection from a superseded run', async () => {
+  vi.useFakeTimers();
+  let reject: (reason: Error) => void = noPendingFrame;
+  let current = true;
+  const sample = vi.fn(
+    () =>
+      new Promise<void>((_resolve, fail) => {
+        reject = fail;
+      }),
+  );
+  const cancel = createFramePump(sample, () => current);
+  await vi.advanceTimersByTimeAsync(0);
+  current = false;
+  setDetectionStore({ state: 'paused', message: null });
+  reject(new Error('Old native worker'));
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(detectionStore.state).toBe('paused');
+  expect(detectionStore.message).toBeNull();
+  expect(sample).toHaveBeenCalledOnce();
+  cancel();
 });

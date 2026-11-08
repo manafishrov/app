@@ -8,8 +8,10 @@ use ort::session::Session;
 use ort::value::{TensorElementType, TensorRef};
 use serde::{Deserialize, Serialize};
 
+use super::diagnostics::ModelTimings;
 use super::postprocess::OutputLayout;
 use super::providers;
+use std::time::Instant;
 
 /// Grey used by Ultralytics to pad letterboxed images.
 const PAD_VALUE: u8 = 114;
@@ -51,11 +53,13 @@ pub struct ModelDescription {
 
 pub struct DetectionModel {
   session: Session,
+  cache: Option<super::cache::CacheEntry>,
   input_name: String,
   layout: OutputLayout,
   description: ModelDescription,
   /// Reused CHW float buffer for the model input.
   input: Vec<f32>,
+  timings: ModelTimings,
 }
 
 /// # Errors
@@ -86,13 +90,38 @@ impl DetectionModel {
     preference: ExecutionProviderPreference,
   ) -> Result<(Self, ExecutionProvider), String> {
     providers::select(preference, |provider| {
-      let session = providers::build_session(environment()?, path, provider)?;
-      let mut model = Self::from_session(session)?;
-      // Static-output models also need a real run: provider errors often happen
-      // only when the first kernel is launched.
-      model
-        .validate()
-        .map_err(|error| format!("{} {error}", providers::requirements(provider)))?;
+      let environment = environment()?;
+      #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+      if provider == ExecutionProvider::OpenVino {
+        providers::openvino_device(environment)
+          .map_err(|error| format!("{} {error}", providers::requirements(provider)))?;
+      }
+      let cache = super::cache::prepare(path, provider);
+      let load = |cache: Option<&super::cache::CacheEntry>| {
+        let session = providers::build_session(
+          environment,
+          path,
+          provider,
+          cache.map(super::cache::CacheEntry::path),
+        )?;
+        let mut model = Self::from_session(session)?;
+        model
+          .validate()
+          .map_err(|error| format!("{} {error}", providers::requirements(provider)))?;
+        Ok(model)
+      };
+      let mut model = match load(cache.as_ref()) {
+        Ok(model) => model,
+        Err(_) if cache.is_some() => {
+          if let Some(cache) = &cache {
+            cache.invalidate();
+          }
+          load(None)?
+        },
+        Err(error) => return Err(error),
+      };
+      model.cache = cache;
+
       Ok(model)
     })
   }
@@ -200,13 +229,19 @@ impl DetectionModel {
       input_name,
       layout,
       input: vec![0.0; 3 * input_width as usize * input_height as usize],
+      timings: ModelTimings::default(),
       description,
       session,
+      cache: None,
     })
   }
 
   pub fn description(&self) -> &ModelDescription {
     &self.description
+  }
+
+  pub fn timings(&self) -> ModelTimings {
+    self.timings
   }
 
   pub fn layout(&self) -> OutputLayout {
@@ -216,8 +251,9 @@ impl DetectionModel {
   /// # Errors
   /// Returns an error if inference on a padded image fails.
   pub fn validate(&mut self) -> Result<(), String> {
-    let output = self.run(&[], 0, 0, 0, 0, 0)?;
-    if output.len() != self.layout.expected_len() || output.iter().any(|value| !value.is_finite()) {
+    let valid =
+      self.run_with(&[], 0, 0, 0, 0, 0, |output| output.iter().all(|value| value.is_finite()))?;
+    if !valid {
       return Err(
         "The model output has an invalid shape or contains non-finite values".to_string(),
       );
@@ -225,12 +261,11 @@ impl DetectionModel {
     Ok(())
   }
 
-  /// Runs the model on an RGB24 image already scaled to `scaled_width` x
-  /// `scaled_height` and returns the raw output tensor.
-  ///
+  /// Runs RGB24 input and consumes the borrowed ORT output before releasing it.
   /// # Errors
-  /// Returns an error if inference fails or the output is not `f32`.
-  pub fn run(
+  /// Rejects invalid shapes/strides, inference errors and non-f32 output.
+  #[allow(clippy::too_many_arguments)]
+  pub fn run_with<T>(
     &mut self,
     rgb: &[u8],
     stride: usize,
@@ -238,38 +273,137 @@ impl DetectionModel {
     scaled_height: u32,
     pad_x: u32,
     pad_y: u32,
-  ) -> Result<Vec<f32>, String> {
+    consume: impl FnOnce(&[f32]) -> T,
+  ) -> Result<T, String> {
+    let started = Instant::now();
+    prepare_input(
+      &mut self.input,
+      (self.description.input_width, self.description.input_height),
+      rgb,
+      stride,
+      (scaled_width, scaled_height),
+      (pad_x, pad_y),
+      3,
+    )?;
+    self.timings.preprocessing = started.elapsed();
+    self.infer_with(consume)
+  }
+
+  /// Canvas already letterboxed this tightly packed RGBA image. Alpha is ignored.
+  /// # Errors
+  /// Rejects malformed input and inference errors.
+  #[cfg(any(mobile, test))]
+  pub fn run_rgba_with<T>(
+    &mut self,
+    rgba: &[u8],
+    consume: impl FnOnce(&[f32]) -> T,
+  ) -> Result<T, String> {
+    let (width, height) = (self.description.input_width, self.description.input_height);
+    let started = Instant::now();
+    prepare_input(
+      &mut self.input,
+      (width, height),
+      rgba,
+      width as usize * 4,
+      (width, height),
+      (0, 0),
+      4,
+    )?;
+    self.timings.preprocessing = started.elapsed();
+    self.infer_with(consume)
+  }
+
+  /// # Errors
+  /// Returns ORT execution, shape or element type errors.
+  fn infer_with<T>(&mut self, consume: impl FnOnce(&[f32]) -> T) -> Result<T, String> {
     let width = self.description.input_width as usize;
     let height = self.description.input_height as usize;
-    let plane = width * height;
-    let pad = f32::from(PAD_VALUE) / 255.0;
-    self.input.fill(pad);
-
-    let (pad_x, pad_y) = (pad_x as usize, pad_y as usize);
-    let rows = (scaled_height as usize).min(height.saturating_sub(pad_y));
-    let columns = (scaled_width as usize).min(width.saturating_sub(pad_x));
-    for row in 0..rows {
-      let Some(source) = rgb.get(row * stride..row * stride + columns * 3) else {
-        break;
-      };
-      let offset = (row + pad_y) * width + pad_x;
-      for (column, pixel) in source.as_chunks::<3>().0.iter().enumerate() {
-        let index = offset + column;
-        self.input[index] = f32::from(pixel[0]) / 255.0;
-        self.input[plane + index] = f32::from(pixel[1]) / 255.0;
-        self.input[2 * plane + index] = f32::from(pixel[2]) / 255.0;
-      }
-    }
-
     let tensor = TensorRef::from_array_view(([1_usize, 3, height, width], self.input.as_slice()))
       .map_err(|error| error.to_string())?;
+    let started = Instant::now();
     let outputs = self
       .session
       .run(ort::inputs![self.input_name.as_str() => tensor])
       .map_err(|error| error.to_string())?;
+    self.timings.inference = started.elapsed();
     let (_, data) = outputs[0].try_extract_tensor::<f32>().map_err(|error| error.to_string())?;
-    Ok(data.to_vec())
+    if data.len() != self.layout.expected_len() {
+      return Err("The model output changed shape".into());
+    }
+    let started = Instant::now();
+    let result = consume(data);
+    self.timings.decode = started.elapsed();
+    Ok(result)
   }
+
+  /// # Errors
+  /// Returns invalid input or ORT execution errors.
+  // Owned output is useful for test comparisons. The live workers borrow it.
+  #[cfg(test)]
+  pub fn run(
+    &mut self,
+    rgb: &[u8],
+    stride: usize,
+    width: u32,
+    height: u32,
+    x: u32,
+    y: u32,
+  ) -> Result<Vec<f32>, String> {
+    self.run_with(rgb, stride, width, height, x, y, <[f32]>::to_vec)
+  }
+}
+
+/// Converts RGB/RGBA directly into the reused planar input. Validate the whole
+/// image before writing, including FFmpeg row strides and model padding.
+#[allow(clippy::too_many_arguments)]
+/// # Errors
+/// Rejects incomplete pixels and inconsistent shapes, strides or padding.
+fn prepare_input(
+  input: &mut [f32],
+  (width, height): (u32, u32),
+  pixels: &[u8],
+  stride: usize,
+  (columns, rows): (u32, u32),
+  (pad_x, pad_y): (u32, u32),
+  channels: usize,
+) -> Result<(), String> {
+  let (width, height, columns, rows, pad_x, pad_y) = (
+    width as usize, height as usize, columns as usize, rows as usize, pad_x as usize,
+    pad_y as usize,
+  );
+  let row_bytes = columns.checked_mul(channels).ok_or("Invalid image stride")?;
+  let required = rows
+    .saturating_sub(1)
+    .checked_mul(stride)
+    .and_then(|n| n.checked_add(row_bytes))
+    .ok_or("Invalid image stride")?;
+  if !matches!(channels, 3 | 4)
+    || pad_x > width
+    || pad_y > height
+    || columns > width - pad_x
+    || rows > height - pad_y
+    || stride < row_bytes
+    || (rows > 0 && pixels.len() < required)
+    || input.len() != 3 * width * height
+  {
+    return Err("Invalid detection image dimensions, padding or stride".into());
+  }
+  let plane = width * height;
+  // Fully covered mobile input needs no redundant grey fill.
+  if columns != width || rows != height {
+    input.fill(f32::from(PAD_VALUE) / 255.0);
+  }
+  for row in 0..rows {
+    let source = &pixels[row * stride..row * stride + row_bytes];
+    let offset = (row + pad_y) * width + pad_x;
+    for (column, pixel) in source.chunks_exact(channels).enumerate() {
+      let index = offset + column;
+      input[index] = f32::from(pixel[0]) / 255.0;
+      input[plane + index] = f32::from(pixel[1]) / 255.0;
+      input[2 * plane + index] = f32::from(pixel[2]) / 255.0;
+    }
+  }
+  Ok(())
 }
 
 /// Parses Ultralytics' `names` metadata, a Python dict literal such as
@@ -331,6 +465,98 @@ mod tests {
   #![allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
 
   use super::*;
+
+  #[test]
+  fn rgba_matches_strided_rgb_and_padding_without_an_intermediate_buffer() -> Result<(), String> {
+    let mut rgb = vec![0.0; 12];
+    let mut rgba = vec![0.0; 12];
+    prepare_input(&mut rgb, (2, 2), &[255, 0, 10, 99, 99, 0, 128, 40], 5, (1, 2), (1, 0), 3)?;
+    prepare_input(&mut rgba, (2, 2), &[255, 0, 10, 0, 0, 128, 40, 255], 4, (1, 2), (1, 0), 4)?;
+    assert_eq!(rgb, rgba);
+    assert_eq!(rgb[1], 1.0);
+    assert_eq!(rgb[7], 128.0 / 255.0);
+    assert_eq!(rgb[9], 10.0 / 255.0);
+    assert_eq!(rgb[0], 114.0 / 255.0);
+    let before = rgba.clone();
+    for (stride, size, pad, pixels) in [
+      (3, (1, 2), (0, 0), vec![0; 8]),
+      (4, (1, 2), (2, 0), vec![0; 8]),
+      (4, (1, 2), (0, 0), vec![0; 7]),
+    ] {
+      assert!(prepare_input(&mut rgba, (2, 2), &pixels, stride, size, pad, 4).is_err());
+      assert_eq!(rgba, before);
+    }
+    Ok(())
+  }
+
+  #[test]
+  #[ignore = "Opt-in release microbenchmark; no model/runtime required"]
+  fn benchmark_mobile_input_copies() -> Result<(), String> {
+    use std::hint::black_box;
+    let rgba: Vec<u8> = (0_usize..640 * 640)
+      .flat_map(|index| [index as u8, (index / 3) as u8, (index / 7) as u8, 255])
+      .collect();
+    let mut input = vec![0.0; 3 * 640 * 640];
+    let mut samples = [Vec::new(), Vec::new()];
+    for _ in 0..200 {
+      let started = Instant::now();
+      // Previous mobile path: parse copied RGBA, frame.rgb allocated RGB24,
+      // then run converted it to the persistent planar input after a grey fill.
+      let copied = black_box(rgba.clone());
+      let rgb: Vec<u8> = copied
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .flat_map(|pixel| pixel[..3].iter().copied())
+        .collect();
+      input.fill(114.0 / 255.0);
+      prepare_input(&mut input, (640, 640), &rgb, 640 * 3, (640, 640), (0, 0), 3)?;
+      black_box(&input);
+      samples[0].push(started.elapsed().as_secs_f64() * 1000.0);
+      let started = Instant::now();
+      // Tauri borrows the raw request body: the new worker still needs one
+      // owned copy, just like the old parser. Include it on both sides.
+      let owned = black_box(rgba.clone());
+      prepare_input(&mut input, (640, 640), &owned, 640 * 4, (640, 640), (0, 0), 4)?;
+      black_box(&input);
+      samples[1].push(started.elapsed().as_secs_f64() * 1000.0);
+    }
+    for (method, samples) in ["previous_owned_copy_then_rgb", "owned_copy_direct_rgba"]
+      .into_iter()
+      .zip(&mut samples)
+    {
+      samples.sort_by(f64::total_cmp);
+      eprintln!(
+        "INPUT_BENCHMARK {}",
+        serde_json::json!({"method":method,"iterations":samples.len(),"p50_ms":samples[100],"p95_ms":samples[190],"profile":if cfg!(debug_assertions){"debug"}else{"release"}})
+      );
+    }
+    Ok(())
+  }
+
+  #[test]
+  #[ignore = "Opt-in release output-copy microbenchmark; no model/runtime required"]
+  fn benchmark_output_copy() {
+    use std::hint::black_box;
+    let output = vec![0.5_f32; 84 * 8400];
+    let mut samples = [Vec::new(), Vec::new()];
+    for _ in 0..200 {
+      let started = Instant::now();
+      black_box(black_box(output.as_slice()).to_vec());
+      samples[0].push(started.elapsed().as_secs_f64() * 1000.0);
+      let started = Instant::now();
+      black_box(black_box(output.as_slice()));
+      samples[1].push(started.elapsed().as_secs_f64() * 1000.0);
+    }
+    for (method, samples) in ["owned_output_copy", "borrowed_output"].into_iter().zip(&mut samples)
+    {
+      samples.sort_by(f64::total_cmp);
+      eprintln!(
+        "OUTPUT_BENCHMARK {}",
+        serde_json::json!({"method":method,"bytes":output.len()*4,"p50_ms":samples[100],"p95_ms":samples[190]})
+      );
+    }
+  }
 
   #[test]
   fn parses_python_dict_class_names() {

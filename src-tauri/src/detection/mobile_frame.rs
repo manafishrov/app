@@ -1,6 +1,8 @@
 //! Bounded binary RGBA transport from the `WebRTC` video element. All integers
 //! are little endian. Canvas pixels already contain the model's letterbox.
 
+use std::borrow::Cow;
+
 pub const HEADER_BYTES: usize = 32;
 pub const MAX_INPUT_SIZE: u32 = 1024;
 
@@ -11,13 +13,24 @@ pub struct MobileFrame {
   pub input_width: u32,
   pub input_height: u32,
   pub captured_at: f64,
-  pub rgba: Vec<u8>,
+  packet: Vec<u8>,
 }
 
 impl MobileFrame {
   /// # Errors
   /// Rejects truncated, oversized, non-finite or inconsistent frame packets.
-  pub fn parse(packet: &[u8]) -> Result<Self, String> {
+  pub fn parse<'a>(packet: impl Into<Cow<'a, [u8]>>) -> Result<Self, String> {
+    let packet = packet.into();
+    let mut frame = Self::validate_packet(&packet)?;
+    // Tauri borrows the body: copy it only after validation. Tests and future
+    // owned transports can transfer their allocation without another copy.
+    frame.packet = packet.into_owned();
+    Ok(frame)
+  }
+
+  /// # Errors
+  /// Rejects truncated, oversized or inconsistent packets without copying them.
+  fn validate_packet(packet: &[u8]) -> Result<Self, String> {
     if packet.len() < HEADER_BYTES {
       return Err("Truncated detection frame header".into());
     }
@@ -55,18 +68,12 @@ impl MobileFrame {
       input_width,
       input_height,
       captured_at,
-      rgba: packet[HEADER_BYTES..].to_vec(),
+      packet: Vec::new(),
     })
   }
 
-  pub fn rgb(&self) -> Vec<u8> {
-    self
-      .rgba
-      .as_chunks::<4>()
-      .0
-      .iter()
-      .flat_map(|pixel| pixel[..3].iter().copied())
-      .collect()
+  pub fn rgba(&self) -> &[u8] {
+    &self.packet[HEADER_BYTES..]
   }
 }
 
@@ -87,24 +94,29 @@ mod tests {
 
   #[test]
   fn binary_transport_preserves_source_dimensions_and_rgb() -> Result<(), String> {
-    let frame = MobileFrame::parse(&packet())?;
+    let frame = MobileFrame::parse(packet())?;
     assert_eq!((frame.source_width, frame.source_height), (1920, 1080));
     assert_eq!(frame.run_id, 7);
-    assert_eq!(frame.rgb(), [10, 20, 30]);
+    assert_eq!(frame.rgba(), [10, 20, 30, 255]);
+    let packet = packet();
+    let pointer = packet.as_ptr();
+    let frame = MobileFrame::parse(packet)?;
+    assert_eq!(frame.rgba().as_ptr(), pointer.wrapping_add(HEADER_BYTES));
+    assert_eq!(MobileFrame::parse(frame.packet.as_slice())?.rgba(), frame.rgba());
     Ok(())
   }
 
   #[test]
   fn rejects_bad_sizes_and_timestamps_before_allocating_pixels() {
-    assert!(MobileFrame::parse(&[]).is_err());
+    assert!(MobileFrame::parse(vec![]).is_err());
     let mut bytes = packet();
     bytes.pop();
-    assert!(MobileFrame::parse(&bytes).is_err());
+    assert!(MobileFrame::parse(bytes).is_err());
     let mut bytes = packet();
     bytes[12..16].copy_from_slice(&u32::MAX.to_le_bytes());
-    assert!(MobileFrame::parse(&bytes).is_err());
+    assert!(MobileFrame::parse(bytes).is_err());
     let mut bytes = packet();
     bytes[24..32].copy_from_slice(&f64::NAN.to_le_bytes());
-    assert!(MobileFrame::parse(&bytes).is_err());
+    assert!(MobileFrame::parse(bytes).is_err());
   }
 }

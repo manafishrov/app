@@ -119,7 +119,7 @@ pub async fn submit_detection_frame(
   let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
     return Err("Detection frames require a binary body".into());
   };
-  let frame = crate::detection::mobile_frame::MobileFrame::parse(bytes)?;
+  let frame = crate::detection::mobile_frame::MobileFrame::parse(bytes.as_slice())?;
   let completion = runtime
     .runner
     .try_lock()
@@ -146,6 +146,27 @@ pub async fn delete_detection_model(
       running.stop_and_wait();
     }
     library::delete(&id)
+  })
+  .await
+  .map_err(|error| error.to_string())?
+}
+
+#[command]
+/// Replaces postprocessing settings without reloading a model or stream.
+/// # Errors
+/// Rejects stale runs, invalid settings and unavailable workers.
+pub async fn update_detection_settings(
+  runtime: State<'_, DetectionRuntime>,
+  run_id: u32,
+  settings: crate::detection::settings::DetectionSettings,
+) -> Result<(), String> {
+  let runners = Arc::clone(&runtime.runner);
+  tauri::async_runtime::spawn_blocking(move || {
+    let runners = runners.lock().map_err(|error| error.to_string())?;
+    runners
+      .as_ref()
+      .ok_or("Detection session has stopped")?
+      .update_settings(run_id, settings)
   })
   .await
   .map_err(|error| error.to_string())?

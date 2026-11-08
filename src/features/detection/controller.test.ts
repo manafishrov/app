@@ -1,3 +1,5 @@
+/* oxlint-disable max-lines -- Shared mounted fixtures exercise session and settings lifecycle together. */
+/* oxlint-disable oxc/no-async-await, max-statements, no-magic-numbers -- Sequential clock and pixel regression fixtures. */
 import { listen } from '@tauri-apps/api/event';
 // @vitest-environment happy-dom
 import { render } from 'solid-js/web';
@@ -10,6 +12,7 @@ import {
   listDetectionModels,
   startDetection,
   stopDetection,
+  updateDetectionSettings,
 } from '@/tauri/detection';
 
 import { createDetectionController, toggleObjectDetection } from './controller';
@@ -28,6 +31,7 @@ vi.mock('@/tauri/detection', () => ({
   listDetectionModels: vi.fn().mockResolvedValue([]),
   startDetection: vi.fn<typeof startDetection>().mockResolvedValue(),
   stopDetection: vi.fn<typeof stopDetection>().mockResolvedValue(),
+  updateDetectionSettings: vi.fn<typeof updateDetectionSettings>().mockResolvedValue(),
 }));
 
 const RESTART_WAIT_MS = 500;
@@ -55,6 +59,14 @@ const mount = (): void => {
       return null;
     }, host),
   );
+};
+
+const startedRun = (index: number): number => {
+  const call = vi.mocked(startDetection).mock.calls[index];
+  if (!call || typeof call[0].runId !== 'number') {
+    throw new Error('Detection run missing');
+  }
+  return call[0].runId;
 };
 
 const lastReceiver = (): ((event: DetectionEvent) => void) => {
@@ -86,6 +98,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   platform.isMobile = false;
   configure(true);
+  setConfigStore({ ...configStore, detection: { ...configStore.detection, classFilters: {} } });
   setDetectionStore({ state: 'stopped', frame: null });
 });
 
@@ -131,7 +144,7 @@ it('waits for an in-flight start before stopping it', () => {
   });
 });
 
-it('coalesces a burst of option changes into one start using the latest options', () => {
+it('reads the latest postprocessing settings when the session debounce finishes', () => {
   mount();
   return vi.advanceTimersByTimeAsync(BURST_WAIT_MS).then(() => {
     setConfigStore({
@@ -139,7 +152,7 @@ it('coalesces a burst of option changes into one start using the latest options'
       detection: { ...configStore.detection, confidenceThreshold: CONFIDENCE },
     });
     return vi.advanceTimersByTimeAsync(BURST_WAIT_MS).then(() => {
-      expect(startDetection).not.toHaveBeenCalled();
+      expect(startDetection).toHaveBeenCalledOnce();
       return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS).then(() => {
         expect(startDetection).toHaveBeenCalledOnce();
         expect(startDetection).toHaveBeenCalledWith(
@@ -246,4 +259,110 @@ it('releases the mobile worker while playback buffers and restarts on playing', 
     .then(() => {
       expect(startDetection).toHaveBeenCalledTimes(RESUMED_SESSION_COUNT);
     });
+});
+
+it('updates threshold and classes live without restarting the session', async () => {
+  mount();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  lastReceiver()(running);
+  vi.mocked(updateDetectionSettings).mockClear();
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, confidenceThreshold: CONFIDENCE },
+  });
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, classFilters: { first: [1, 3] } },
+  });
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  expect(startDetection).toHaveBeenCalledOnce();
+  expect(stopDetection).not.toHaveBeenCalled();
+  expect(detectionStore.state).toBe('running');
+  expect(updateDetectionSettings).toHaveBeenLastCalledWith(startedRun(0), {
+    confidenceThreshold: CONFIDENCE,
+    classIds: [1, 3],
+  });
+});
+
+it('coalesces live updates and discards an old run after mobile resume', async () => {
+  platform.isMobile = true;
+  const video = document.createElement('video');
+  Object.defineProperties(video, {
+    paused: { value: false },
+    readyState: { value: HAVE_CURRENT_DATA },
+  });
+  cleanups.push(registerDetectionVideo(video));
+  mount();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  const pending = createDeferred();
+  vi.mocked(updateDetectionSettings).mockReturnValueOnce(pending.promise);
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, confidenceThreshold: 0.5 },
+  });
+  for (const threshold of [0.6, 0.7, 0.8]) {
+    setConfigStore({
+      ...configStore,
+      detection: { ...configStore.detection, confidenceThreshold: threshold },
+    });
+  }
+  // The initial update plus one in flight; slider changes occupy one latest slot.
+  expect(updateDetectionSettings).toHaveBeenCalledTimes(2);
+  globalThis.dispatchEvent(new Event('pageshow'));
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  expect(startDetection).toHaveBeenCalledTimes(2);
+  pending.resolve();
+  await vi.advanceTimersByTimeAsync(0);
+  const newest = startedRun(1);
+  expect(updateDetectionSettings).toHaveBeenLastCalledWith(newest, {
+    confidenceThreshold: 0.8,
+    classIds: null,
+  });
+  expect(updateDetectionSettings).toHaveBeenCalledTimes(3);
+});
+
+it('applies changes made while native start is pending to the same run', async () => {
+  const pending = createDeferred();
+  vi.mocked(startDetection).mockReturnValueOnce(pending.promise);
+  mount();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, confidenceThreshold: CONFIDENCE },
+  });
+  setConfigStore({
+    ...configStore,
+    detection: { ...configStore.detection, classFilters: { first: [] } },
+  });
+  expect(updateDetectionSettings).not.toHaveBeenCalled();
+  pending.resolve();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  expect(startDetection).toHaveBeenCalledOnce();
+  expect(updateDetectionSettings).toHaveBeenLastCalledWith(expect.any(Number), {
+    confidenceThreshold: CONFIDENCE,
+    classIds: [],
+  });
+});
+
+const readyVideo = (): HTMLVideoElement => {
+  const element = document.createElement('video');
+  Object.defineProperties(element, {
+    paused: { value: false },
+    readyState: { value: HAVE_CURRENT_DATA },
+  });
+  return element;
+};
+
+it('restarts when a ready mobile video element is replaced', async () => {
+  platform.isMobile = true;
+
+  cleanups.push(registerDetectionVideo(readyVideo()));
+  mount();
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  const previous = lastReceiver();
+  cleanups.push(registerDetectionVideo(readyVideo()));
+  previous(running);
+  expect(detectionStore.state).toBe('stopped');
+  await vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+  expect(startDetection).toHaveBeenCalledTimes(2);
 });

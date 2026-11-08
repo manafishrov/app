@@ -5,9 +5,10 @@ import type { Detection } from '@/tauri/detection';
 import { configStore } from '@/stores/config';
 import { type DetectionFrame, detectionStore } from '@/stores/detection';
 
+import { recordTiming } from './diagnostics';
+
 // Results this old mean the stream or inference has stalled.
 const STALE_AFTER_MS = 1000;
-const STALE_CHECK_INTERVAL_MS = 250;
 const LINE_WIDTH = 2;
 const FONT_SIZE = 12;
 const LABEL_PADDING = 3;
@@ -48,12 +49,19 @@ const labelFor = (detection: Detection): string => {
 };
 
 /** Sizes the backing store to the element and returns its size in CSS pixels. */
-const fitCanvas = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): Rect => {
+// oxlint-disable-next-line max-statements -- Resize each dimension independently before clearing.
+export const fitCanvas = (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): Rect => {
   const ratio = globalThis.devicePixelRatio || 1;
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
-  canvas.width = Math.round(width * ratio);
-  canvas.height = Math.round(height * ratio);
+  const pixelWidth = Math.round(width * ratio);
+  const pixelHeight = Math.round(height * ratio);
+  if (canvas.width !== pixelWidth) {
+    canvas.width = pixelWidth;
+  }
+  if (canvas.height !== pixelHeight) {
+    canvas.height = pixelHeight;
+  }
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
   context.clearRect(0, 0, width, height);
   return { left: 0, top: 0, width, height };
@@ -102,46 +110,110 @@ const setStrokeAndText = (context: CanvasRenderingContext2D): void => {
   context.textBaseline = 'top';
 };
 
-const draw = (canvas: HTMLCanvasElement, frame: DetectionFrame | null): void => {
-  const context = canvas.getContext('2d');
+const classFilter = (): number[] | null => {
+  const { modelId, classFilters } = configStore.detection;
+  return modelId === null ? null : (classFilters[modelId] ?? null);
+};
+
+// oxlint-disable-next-line max-statements -- Clear, map coordinates and paint the current filtered result.
+const draw = (
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D | null,
+  frame: DetectionFrame | null,
+): void => {
   if (!context) {
     return;
   }
   const size = fitCanvas(canvas, context);
-  if (!frame || Date.now() - frame.capturedAt > STALE_AFTER_MS) {
+  if (!frame || Date.now() - frame.capturedAt >= STALE_AFTER_MS) {
     return;
   }
   const area = containRect(frame, size.width, size.height);
   setStrokeAndText(context);
+  const classes = classFilter();
   for (const detection of frame.detections) {
-    drawDetection(context, area, detection);
+    if (classes === null || classes.includes(detection.classId)) {
+      drawDetection(context, area, detection);
+    }
   }
+};
+
+const observePixelRatio = (redraw: () => void): (() => void) => {
+  let query = globalThis.matchMedia(
+    `(resolution: ${String(globalThis.devicePixelRatio || 1)}dppx)`,
+  );
+  const changed = (): void => {
+    query.removeEventListener('change', changed);
+    query = globalThis.matchMedia(`(resolution: ${String(globalThis.devicePixelRatio || 1)}dppx)`);
+    query.addEventListener('change', changed);
+    redraw();
+  };
+  query.addEventListener('change', changed);
+  return (): void => {
+    query.removeEventListener('change', changed);
+  };
+};
+
+const observeCanvas = (
+  element: HTMLCanvasElement | undefined,
+  redraw: () => void,
+  cancel: () => void,
+): void => {
+  const stopPixelRatio = observePixelRatio(redraw);
+  const observer = new ResizeObserver(redraw);
+  if (element) {
+    observer.observe(element);
+  }
+  globalThis.addEventListener('resize', redraw);
+  document.addEventListener('visibilitychange', redraw);
+  onCleanup(() => {
+    observer.disconnect();
+    stopPixelRatio();
+    cancel();
+    globalThis.removeEventListener('resize', redraw);
+    document.removeEventListener('visibilitychange', redraw);
+  });
 };
 
 /** Draws detection boxes over the camera stream. */
 const DetectionOverlay: Component = () => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement>();
 
+  let context: CanvasRenderingContext2D | null = null;
+  let expiration = 0;
+  // oxlint-disable-next-line max-statements -- Paint and arm one stale-result deadline together.
   const redraw = (): void => {
+    globalThis.clearTimeout(expiration);
     const element = canvas();
+    const { frame } = detectionStore;
     if (element) {
-      draw(element, detectionStore.frame);
+      context ??= element.getContext('2d');
+      const started = performance.now();
+      draw(element, context, document.hidden ? null : frame);
+      recordTiming('render', performance.now() - started);
+      const remaining = frame ? frame.capturedAt + STALE_AFTER_MS - Date.now() : 0;
+      if (!document.hidden && remaining > 0) {
+        expiration = globalThis.setTimeout(redraw, remaining);
+      }
     }
   };
 
-  // Drawing reads the frame and label settings, so this repaints on any change.
-  createEffect(redraw);
+  createEffect(
+    on(
+      () => [
+        detectionStore.frame,
+        configStore.detection.showLabels,
+        configStore.detection.showTrackIds,
+        JSON.stringify(classFilter()),
+        canvas(),
+      ],
+      redraw,
+    ),
+  );
 
   onMount(() => {
-    const observer = new ResizeObserver(redraw);
-    const element = canvas();
-    if (element) {
-      observer.observe(element);
-    }
-    const staleCheck = setInterval(redraw, STALE_CHECK_INTERVAL_MS);
-    onCleanup(() => {
-      observer.disconnect();
-      clearInterval(staleCheck);
+    observeCanvas(canvas(), redraw, () => {
+      globalThis.clearTimeout(expiration);
     });
   });
 

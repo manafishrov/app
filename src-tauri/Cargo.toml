@@ -89,4 +89,5 @@ runas = "1.2.0"
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["nnapi"] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
+libc = "0.2.181"
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["coreml"] }

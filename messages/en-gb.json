@@ -798,7 +798,7 @@
   "detection_status_state": "State",
   "detection_status_hardware": "Hardware in use",
   "detection_status_rate": "Detection rate",
-  "detection_status_inference_time": "Inference time",
+  "detection_status_inference_time": "Frame processing time",
   "detection_status_delay": "Delay",
   "detection_status_disabled": "Off",
   "detection_status_no_model": "No model selected",

@@ -124,7 +124,7 @@ fn runtime_path() -> Result<std::path::PathBuf, String> {
     directory.join("detection-runtime/libonnxruntime.so"),
     directory.join("../lib/Manafish/detection-runtime/libonnxruntime.so"),
   ];
-  if cfg!(debug_assertions) {
+  if cfg!(any(debug_assertions, test)) {
     candidates
       .push(Path::new(env!("CARGO_MANIFEST_DIR")).join("detection-runtime/libonnxruntime.so"));
   }
@@ -137,7 +137,7 @@ fn runtime_path() -> Result<std::path::PathBuf, String> {
 /// # Errors
 /// Returns an error if the plugin/runtime is missing or no Intel GPU is discovered.
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-fn openvino_device(environment: &Environment) -> ort::Result<ort::device::Device<'_>> {
+pub(super) fn openvino_device(environment: &Environment) -> ort::Result<ort::device::Device<'_>> {
   use std::sync::OnceLock;
   static REGISTERED: OnceLock<Result<(), String>> = OnceLock::new();
   REGISTERED
@@ -168,7 +168,9 @@ pub fn build_session(
   environment: &Environment,
   path: &Path,
   provider: ExecutionProvider,
+  cache: Option<&Path>,
 ) -> Result<Session, String> {
+  let _ = cache; // Some platforms have no supported provider compilation cache.
   let build = || -> ort::Result<Session> {
     let builder = Session::builder(environment)?
       .with_optimization_level(GraphOptimizationLevel::Level3)?
@@ -182,24 +184,34 @@ pub fn build_session(
       // The CUDA core does not compile in the legacy OpenVINO registration.
       // Load the same-version plugin and select an actual GPU device explicitly.
       let device = openvino_device(environment)?;
+      let mut config = serde_json::json!({ "GPU": { "INFERENCE_PRECISION_HINT": "f32" } });
+      if let Some(cache) = cache {
+        config["GPU"]["CACHE_DIR"] =
+          serde_json::Value::String(cache.to_string_lossy().into_owned());
+      }
       return builder
         .with_devices(
           [device],
-          Some(&[(
-            "OpenVINOExecutionProvider.load_config".to_string(),
-            r#"{"GPU":{"INFERENCE_PRECISION_HINT":"f32"}}"#.to_string(),
-          )]),
+          Some(&[("OpenVINOExecutionProvider.load_config".to_string(), config.to_string())]),
         )?
         .commit_from_file(path);
     }
     let dispatch = match provider {
       ExecutionProvider::Cpu => ep::CPU::default().build(),
       #[cfg(target_os = "macos")]
-      ExecutionProvider::CoreMl => ep::CoreML::default().build(),
+      ExecutionProvider::CoreMl => {
+        let provider = ep::CoreML::default();
+        cache
+          .map_or(provider.clone(), |path| provider.with_model_cache_dir(path.to_string_lossy()))
+          .build()
+      },
       #[cfg(target_os = "ios")]
-      ExecutionProvider::CoreMl => ep::CoreML::default()
-        .with_model_format(ep::coreml::ModelFormat::MLProgram)
-        .build(),
+      ExecutionProvider::CoreMl => {
+        let provider = ep::CoreML::default().with_model_format(ep::coreml::ModelFormat::MLProgram);
+        cache
+          .map_or(provider.clone(), |path| provider.with_model_cache_dir(path.to_string_lossy()))
+          .build()
+      },
       #[cfg(target_os = "android")]
       ExecutionProvider::Nnapi => ep::NNAPI::default().with_disable_cpu(true).build(),
       #[cfg(target_os = "windows")]
