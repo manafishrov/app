@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
   name: "tauri-plugin-manafish-mobile",
   platforms: [
-    .iOS(.v14)
+    .iOS("15.1")
   ],
   products: [
     .library(

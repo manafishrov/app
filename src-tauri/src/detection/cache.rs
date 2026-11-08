@@ -285,7 +285,7 @@ fn identity(provider: ExecutionProvider) -> Option<String> {
           libc::sysctlbyname(
             name.as_ptr(),
             buffer.as_mut_ptr().cast(),
-            &mut length,
+            &raw mut length,
             std::ptr::null_mut(),
             0,
           )

@@ -339,7 +339,7 @@ impl DetectionModel {
   /// # Errors
   /// Returns invalid input or ORT execution errors.
   // Owned output is useful for test comparisons. The live workers borrow it.
-  #[cfg(test)]
+  #[cfg(all(test, desktop))]
   pub fn run(
     &mut self,
     rgb: &[u8],
