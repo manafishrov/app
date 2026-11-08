@@ -213,17 +213,26 @@ Laptop GPU with driver 595.71.05, CUDA runtime 13.5.37, cuBLAS 13.10.0.20,
 cuRAND 10.4.5.25 and cuDNN 9.28.1.4. The two marine models passed raw tensor
 comparison on the bus fixture; this is numerical validation, not an accuracy
 assessment on marine imagery. CPU inference through the packaged core and
-missing-runtime fallback also passed. Native MIGraphX inference is untested:
-ROCm/MIGraphX are absent on this host. Intel GPU inference is untested because
+missing-runtime fallback also passed. Native MIGraphX inference is untested. ROCm identifies the local Radeon 890M
+as `gfx1150`, but the required numerical libraries were not available. The
+ROCm 7.2.3 dependency download was stopped before completion; no native
+MIGraphX numerical result is claimed. Intel GPU inference is untested because
 there is no Intel GPU. With the matching OpenVINO runtime installed, its plugin
 loaded and correctly rejected this machine instead of using its CPU device.
 These providers require hardware validation with the
 command above before claiming compatibility with a specific GPU/runtime.
 
-Local debug packaging produced a `.deb` whose extracted runtime passed all
-seven CUDA comparisons, and an RPM using a temporary stable-version override.
-The existing RPM bundler rejects the app's `1.1.0-rc.3` prerelease string; the
-app version was not changed. Pinned linuxdeploy successfully processed the GPU
+After integrating main at `fe3847a`, all seven CUDA comparisons passed again.
+The `1.1.0-rc.5` debug `.deb` built successfully; its runtime manifest hashes
+and read permissions passed verification, and all seven comparisons passed
+using the extracted runtime. Loader tracing confirmed that the packaged core
+was used. Missing-runtime Auto fallback, explicit-provider errors, and
+OpenVINO CPU-device rejection also passed.
+
+Before integration, local packaging also produced an RPM using a temporary
+stable-version override. RPM bundling rejects SemVer prerelease strings; main
+now intentionally skips RPM releases for prereleases. No app version override
+was committed. Pinned linuxdeploy successfully processed the GPU
 libraries with the vendor dependency exclusions. A complete AppImage could not
 be built on this NixOS host: its GTK plugin could not locate the host GTK
 installation (after adapting copied helper scripts' `/bin/bash` shebangs for
