@@ -1,164 +1,38 @@
 # Manafish App
 
-Control application for the Manafish ROV built with [Tauri](https://tauri.app), [SolidJS](https://solidjs.com), and Rust.
-
-## Custom actions and CSV logging
-
-Create or import Python scripts in **Settings → Custom actions**. The firmware
-installs the Water sensor, Blackbox logging, and Extended telemetry scripts
-disabled; enable them there and open them as examples. The instructions accordion
-contains the SDK guide; **Copy instructions** also includes the connected ROV's
-available readings and actions. Scripts and their enablement/trigger settings are
-stored on the ROV. Choose widgets in Appearance and bindings in Keyboard or
-Controller. Download recordings from CSV logging.
-
-This branch requires matching capability protocol V1 firmware. Upgrade firmware
-first, then use the matching app before operating the vehicle. The MCU protocol is
-unchanged.
-
-The Python editor uses bundled ty for completion and diagnostics without executing
-drafts. Connect to the ROV to fetch actual SDK types; cached types work offline.
-Python 3 is needed to prepare the language server during development/builds, but
-users do not need Python installed. Tauri dev/build commands prepare it automatically;
-run `bun run editor:prepare` before invoking Cargo directly.
-
-## Current display
-
-Current is the sum of two MCU-calibrated board readings above idle. The MCU
-owns the fixed two-board shared-sensor layout; there is no per-motor/shared-bus
-setting. Auto-zero does not support other sensor layouts or validate sensor gain.
-Missing calibration or telemetry is shown as `— A`, not zero. No offset or
-board averaging is applied in the app.
-
-The estimate is not absolute battery current or overcurrent protection. Follow
-the capability-protocol upgrade order above for this branch.
-
-## Logs
-
-The debug viewer displays pages of up to 500 records. Search and filters apply
-only to the current page; older pages pause live display until returning to
-Latest logs. Export captures all records still stored, regardless of the viewer.
-It never runs retention cleanup or resets the database on a read failure.
-
-Logs retain the seven-day age policy. Successful writes schedule background
-cleanup, at most once per hour after a sweep finishes. Each transaction deletes
-at most 200 expired records through the timestamp index, with a one-second delay
-before the first batch and between batches. Viewer reads and writes do not await
-cleanup. Expired records can remain until maintenance catches up; a failed sweep
-waits for a later write after the hourly cooldown rather than resetting storage.
-
-## Prerequisites
-
-- [Bun](https://bun.sh)
-- [Rust](https://www.rust-lang.org/tools/install)
-- Python 3 (build tooling only)
-
-## Setup
-
-```bash
-bun install
-```
+Control app for the Manafish ROV, built with [Tauri](https://tauri.app) and
+[SolidJS](https://solidjs.com). It runs on macOS, Windows, Linux, Android and
+iOS.
 
 ## Development
 
-```bash
+Install [Bun](https://bun.sh), [Rust](https://rustup.rs) and Python 3, or use
+`nix develop`.
+
+```sh
+bun install
 bun run tauri dev
 ```
 
-## Build
+### Mobile
 
-```bash
-bun run tauri build
-```
+`nix develop .#mobile` provides the Android and iOS toolchains; iOS also needs
+Xcode. Connect the phone over USB, then:
 
-## Mobile (Android and iOS)
-
-The same app builds for Android and iOS phones and tablets. Mobile builds add
-on-screen sticks (hidden while the selected gamepad is connected), lock to landscape and
-keep the screen awake while open. Native code (game controllers, file pickers,
-the ethernet route to the ROV) lives in the `src-tauri/plugins/mobile` Tauri
-plugin, so the generated `src-tauri/gen/android` and `src-tauri/gen/apple`
-projects are not committed; recreate them with the init scripts below.
-
-Differences from desktop:
-
-- Connect the ROV through a USB-C ethernet adapter. Android routes the app over
-  the ethernet network that contains the ROV address, so other apps keep using
-  Wi-Fi, but the app itself has no internet while tethered.
-- Recordings are copied to a folder picked in the system file picker, or by
-  default to Movies/Manafish (Android) or the app's folder in the Files app
-  (iOS). They keep the recorder's container; there is no MP4 remux.
-- Logs, CSV files and ROV config backups are saved through the system export
-  sheet.
-- Custom-action scripts can be edited, but Python completion and checking are
-  desktop-only.
-- Object detection runs locally on the playing video. Start with YOLO26n,
-  download models before connecting the tether, and use CPU if the phone's
-  accelerator cannot load a model. See [detection support](scripts/detection-models.md#android-and-ios)
-  for build targets and hardware validation limits.
-- No in-app updater or SD-card flashing.
-
-`nix develop .#mobile` provides the Rust mobile targets, the Android SDK, NDK
-and JDK 17, and on macOS XcodeGen and CocoaPods. iOS also needs Xcode. To run on
-a phone over USB, pass `--host` so it can reach the dev server on this computer's
-network.
-
-### Android
-
-Turn on USB debugging in Developer options.
-
-```bash
+```sh
 bun run android:init
 bun tauri android dev --host
-```
 
-### iOS
-
-Turn on Developer Mode on the iPhone. A physical device needs the ID of an Apple
-team you have an Apple Development certificate for; simulators do not.
-
-```bash
 bun run ios:init
 APPLE_DEVELOPMENT_TEAM=<team id> bun tauri ios dev --host
 ```
 
-### Releases
+## Releases
 
-Release tags upload the iOS build to TestFlight and the Android build to Play
-internal testing, and attach `Manafish_<version>_android_aarch64.apk` and
-`Manafish_<version>_ios.ipa` for sideloading. Install the IPA with a tool that
-re-signs it for your device, such as AltStore or Sideloadly.
-
-The stores get the version without its prerelease tag (`v1.1.0-rc.5` ships as
-1.1.0) and the release workflow's run number as the build number, so every tag
-is a new, higher build in both stores.
-
-Android builds are signed with the release keystore from the `ANDROID_KEYSTORE`
-(base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and
-`ANDROID_KEY_PASSWORD` secrets; keep the keystore safe, since installed apps
-only accept updates signed with the same key. Play uploads use the
-`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` secret. iOS builds are signed and uploaded
-with the App Store Connect API key in `APPLE_API_KEY`, `APPLE_API_ISSUER` and
-`APPLE_API_KEY_P8`, which needs the Admin role for cloud-managed signing, and
-the team ID in the `APPLE_DEVELOPMENT_TEAM` variable.
-
-## Scripts
-
-| Script                 | Description                  |
-| ---------------------- | ---------------------------- |
-| `bun run dev`          | Start Vite dev server        |
-| `bun run build`        | Build frontend               |
-| `bun run lint`         | Lint TypeScript              |
-| `bun run lint:fix`     | Lint and auto-fix TypeScript |
-| `bun run fmt`          | Format TypeScript            |
-| `bun run fmt:check`    | Check TypeScript formatting  |
-| `bun run lint:rs`      | Lint Rust                    |
-| `bun run lint:rs:fix`  | Lint and auto-fix Rust       |
-| `bun run fmt:rs`       | Format Rust                  |
-| `bun run fmt:rs:check` | Check Rust formatting        |
-| `bun run android:init` | Generate the Android project |
-| `bun run ios:init`     | Generate the Xcode project   |
+Pushing a `vX.Y.Z` tag builds the desktop installers and the Android APK into a
+draft GitHub release, and uploads the mobile builds to TestFlight and Google
+Play internal testing.
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0 or later - see the [LICENSE](LICENSE) file for details.
+[AGPL-3.0-or-later](LICENSE)
