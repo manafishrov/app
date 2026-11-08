@@ -517,6 +517,13 @@ jobs:
             "$ANDROID_KEY_ALIAS"
           echo "SIGNED_BUNDLE=$signed_bundle" >> "$GITHUB_ENV"
 
+      # Play only accepts API uploads once a first AAB was uploaded by hand.
+      - name: Keep AAB as a workflow artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: android-aab
+          path: ${{ env.SIGNED_BUNDLE }}
+
       - name: Upload to Play internal testing
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
