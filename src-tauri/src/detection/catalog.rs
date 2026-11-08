@@ -139,9 +139,18 @@ impl ModelDownloads {
       .https_only(true)
       .connect_timeout(Duration::from_secs(30))
       .read_timeout(Duration::from_secs(30))
-      .timeout(Duration::from_mins(30))
-      .build()
-      .map_err(|error| error.to_string())?;
+      .timeout(Duration::from_mins(30));
+    // reqwest's platform verifier needs JVM setup on Android that the app does
+    // not do, and panics without it, so verify against bundled Mozilla roots.
+    #[cfg(target_os = "android")]
+    let client = client.tls_certs_only(
+      webpki_root_certs::TLS_SERVER_ROOT_CERTS
+        .iter()
+        .map(|cert| reqwest::Certificate::from_der(cert))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?,
+    );
+    let client = client.build().map_err(|error| error.to_string())?;
     let staged = receive(&client, &asset, &token, &progress).await?;
     if token.is_cancelled() {
       return Err(CANCELLED.to_string());

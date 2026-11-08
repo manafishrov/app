@@ -2372,6 +2372,7 @@ dependencies = [
  "tokio-tungstenite",
  "tokio-util",
  "url",
+ "webpki-root-certs",
  "windows",
 ]
 
