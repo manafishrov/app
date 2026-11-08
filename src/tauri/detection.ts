@@ -2,7 +2,14 @@ import { Channel, invoke } from '@tauri-apps/api/core';
 
 import type { ExecutionProviderPreference } from '@/stores/configTypes';
 
-export type ExecutionProvider = 'cpu' | 'coreMl' | 'directMl' | 'cuda' | 'migraphx' | 'openVino';
+export type ExecutionProvider =
+  | 'cpu'
+  | 'nnapi'
+  | 'coreMl'
+  | 'directMl'
+  | 'cuda'
+  | 'migraphx'
+  | 'openVino';
 
 export type DetectionModelInfo = {
   id: string;
@@ -76,6 +83,7 @@ export type DetectionOptions = {
   confidenceThreshold: number;
   classIds: number[] | null;
   streamUrl: string;
+  runId?: number;
 };
 
 // The ROV's go2rtc service serves the camera over RTSP on this port.
@@ -124,3 +132,9 @@ export const startDetection = (
 };
 
 export const stopDetection = (): Promise<void> => invoke('stop_detection');
+
+export const pickDetectionModel = (): Promise<DetectionModelInfo | null> =>
+  invoke('pick_detection_model');
+
+export const submitDetectionFrame = (bytes: Uint8Array): Promise<void> =>
+  invoke('submit_detection_frame', bytes);

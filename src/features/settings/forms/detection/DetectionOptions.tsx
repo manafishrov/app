@@ -88,10 +88,20 @@ const submitDetectionOptions = (value: DetectionFormValues): Promise<void> => {
   });
 };
 
+const acceleratorLabel = (): string => {
+  if (import.meta.env['TAURI_ENV_PLATFORM'] === 'android') {
+    return m.detection_hardware_nnapi();
+  }
+  if (import.meta.env['TAURI_ENV_PLATFORM'] === 'ios') {
+    return m.detection_hardware_coreml();
+  }
+  return m.detection_hardware_gpu();
+};
+
 const createExecutionProviders = (providers: ExecutionProviderPreference[]): SelectCollection => {
   const labels = {
     auto: m.detection_hardware_auto(),
-    gpu: m.detection_hardware_gpu(),
+    gpu: acceleratorLabel(),
     cpu: m.detection_hardware_cpu(),
     cuda: 'NVIDIA CUDA',
     migraphx: 'AMD MIGraphX (ROCm)',

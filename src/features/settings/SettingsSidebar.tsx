@@ -133,9 +133,6 @@ const ROV_ITEMS = [
   },
 ] as const satisfies readonly SidebarItem[];
 
-const VISIBLE_APPLICATION_ITEMS = APPLICATION_ITEMS.filter(
-  (item) => !isMobile || item.to !== '/settings/detection',
-);
 const SLICE_LAST_CHAR = -1;
 const CUSTOM_ACTION_ITEMS = [
   {
@@ -209,7 +206,7 @@ const SettingsSidebarContent: Component<{
       <SidebarGroupLabel>{m.settings_application_title()}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {VISIBLE_APPLICATION_ITEMS.map((item) => (
+          {APPLICATION_ITEMS.map((item) => (
             <SidebarLinkItem item={item} isActive={props.isActive} />
           ))}
         </SidebarMenu>

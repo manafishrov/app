@@ -12,7 +12,6 @@ import {
 } from '@manafishrov/ui/item';
 import { toast } from '@manafishrov/ui/toaster';
 import { H3, P } from '@manafishrov/ui/typography';
-import { open } from '@tauri-apps/plugin-dialog';
 import { unwrap } from 'solid-js/store';
 import DeleteIcon from '~icons/material-symbols/delete';
 import DownloadIcon from '~icons/material-symbols/download';
@@ -28,7 +27,7 @@ import { setConfig } from '@/tauri/config';
 import {
   type DetectionModelInfo,
   deleteDetectionModel,
-  importDetectionModel,
+  pickDetectionModel,
 } from '@/tauri/detection';
 
 import { ModelCatalog } from './ModelCatalog';
@@ -46,41 +45,32 @@ const describeModel = (model: DetectionModelInfo): string =>
     .filter((part) => part !== null && part !== '')
     .join(' · ');
 
-const importModel = (): void => {
-  open({
-    multiple: false,
-    directory: false,
-    title: m.detection_import_dialog_title(),
-    filters: [{ name: m.detection_import_filter_name(), extensions: ['onnx'] }],
-  })
-    .then((path) => {
-      if (typeof path !== 'string') {
+const importModel = (setImporting: (value: boolean) => void): void => {
+  setImporting(true);
+  pickDetectionModel()
+    .then((model) => {
+      if (model === null) {
         return;
       }
-      const toastId = toast.create({ title: m.detection_import_loading(), type: 'loading' });
-      return importDetectionModel(path)
-        .then((model) =>
-          refreshDetectionModels()
-            .then(() => selectModelIfNoneActive(model.id))
-            .then(() => {
-              toast.update(toastId, {
-                title: m.detection_import_success({ name: model.name }),
-                type: 'success',
-              });
-            }),
-        )
-        .catch((error: unknown) => {
-          logError('Failed to import detection model:', error);
-          toast.update(toastId, {
-            title: m.detection_import_failed(),
-            description: String(error),
-            type: 'error',
+      return refreshDetectionModels()
+        .then(() => selectModelIfNoneActive(model.id))
+        .then(() => {
+          toast.create({
+            title: m.detection_import_success({ name: model.name }),
+            type: 'success',
           });
         });
     })
     .catch((error: unknown) => {
-      logError('Error opening file picker dialog:', error);
-      toast.create({ title: m.toasts_failed_to_open_file_picker_dialog(), type: 'error' });
+      logError('Failed to import detection model:', error);
+      toast.create({
+        title: m.detection_import_failed(),
+        description: String(error),
+        type: 'error',
+      });
+    })
+    .finally(() => {
+      setImporting(false);
     });
 };
 
@@ -140,6 +130,7 @@ const ModelItem: Component<{ model: DetectionModelInfo }> = (props) => (
 
 export const ModelLibrary: Component = () => {
   const [showCatalog, setShowCatalog] = createSignal(false);
+  const [isImporting, setImporting] = createSignal(false);
   return (
     <section class='flex flex-col gap-3'>
       <div class='flex flex-wrap items-start justify-between gap-4'>
@@ -158,9 +149,15 @@ export const ModelLibrary: Component = () => {
             <DownloadIcon />
             {m.detection_download_model_button()}
           </Button>
-          <Button variant='outline' onClick={importModel}>
+          <Button
+            variant='outline'
+            disabled={isImporting()}
+            onClick={() => {
+              importModel(setImporting);
+            }}
+          >
             <UploadFileIcon />
-            {m.detection_import_button()}
+            {isImporting() ? m.detection_import_loading() : m.detection_import_button()}
           </Button>
         </div>
       </div>

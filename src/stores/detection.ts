@@ -22,7 +22,7 @@ type DetectionStats = {
 
 type DetectionStore = {
   models: DetectionModelInfo[];
-  state: DetectionRunState | 'stopped';
+  state: DetectionRunState | 'stopped' | 'paused';
   message: string | null;
   executionProvider: ExecutionProvider | null;
   stats: DetectionStats | null;

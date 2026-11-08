@@ -28,6 +28,7 @@ impl Letterbox {
   }
 
   /// Scaled frame size inside the model input.
+  #[cfg(any(desktop, test))]
   #[allow(clippy::cast_sign_loss)] // Sizes and scale are positive.
   pub fn scaled_size(&self) -> (u32, u32) {
     (

@@ -24,6 +24,7 @@ pub use crate::models::config::ExecutionProviderPreference;
 pub enum ExecutionProvider {
   Cpu,
   CoreMl,
+  Nnapi,
   DirectMl,
   Cuda,
   Migraphx,
@@ -131,6 +132,14 @@ impl DetectionModel {
     let input_height = dimension(2, image_size.map(|(height, _)| height));
     let input_width = dimension(3, image_size.map(|(_, width)| width));
 
+    // Bound allocations from imported dimensions before creating input tensors.
+    if input_width > 2048 || input_height > 2048 {
+      return Err("Model input dimensions must not exceed 2048 pixels".to_string());
+    }
+    #[cfg(mobile)]
+    if input_width > 1024 || input_height > 1024 {
+      return Err("Mobile model input dimensions must not exceed 1024 pixels".to_string());
+    }
     let [output] = session.outputs() else {
       return Err(format!(
         "Expected one model output, found {}. Segmentation and pose models are not supported",

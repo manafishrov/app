@@ -92,8 +92,11 @@ Differences from desktop:
   sheet.
 - Custom-action scripts can be edited, but Python completion and checking are
   desktop-only.
-- No in-app updater, SD-card flashing or object detection. Detection settings
-  survive config imports but inference runs only in the desktop app.
+- Object detection runs locally on the playing video. Start with YOLO26n,
+  download models before connecting the tether, and use CPU if the phone's
+  accelerator cannot load a model. See [detection support](scripts/detection-models.md#android-and-ios)
+  for build targets and hardware validation limits.
+- No in-app updater or SD-card flashing.
 
 `nix develop .#mobile` provides the Rust mobile targets, the Android SDK, NDK
 and JDK 17, and on macOS XcodeGen and CocoaPods. iOS also needs Xcode. To run on

@@ -2,7 +2,9 @@ import type { Component } from 'solid-js';
 
 import { useLocation } from '@tanstack/solid-router';
 
+import { registerDetectionVideo } from '@/features/detection/mobileCapture';
 import { logInfo } from '@/lib/log';
+import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
@@ -79,6 +81,12 @@ const useRecordingEffects = (
   });
 };
 
+const useDetectionVideo = (video: HTMLVideoElement, preview: boolean): void => {
+  if (isMobile && !preview) {
+    onCleanup(registerDetectionVideo(video));
+  }
+};
+
 const VideoStream: Component<{ preview?: boolean }> = (props) => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);
@@ -104,6 +112,7 @@ const VideoStream: Component<{ preview?: boolean }> = (props) => {
       <video
         ref={(el): void => {
           video = el;
+          useDetectionVideo(el, props.preview === true);
         }}
         class='absolute inset-0 h-full w-full object-contain'
         autoplay

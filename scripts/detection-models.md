@@ -84,26 +84,118 @@ MANA_FISH_TEST_IMAGE=/path/to/ultralytics/assets/bus.jpg \
 
 ## Android and iOS
 
-Detection is desktop-only. Mobile builds omit ONNX Runtime, FFmpeg decoding,
-the detection worker and its Tauri commands. The settings entry and input
-bindings are hidden; opening the detection settings URL directly shows an
-unavailable message. An imported config may retain detection settings, but
-the mobile controller never starts inference or invokes desktop commands.
+Android and iOS run the same Rust ONNX model parser, postprocessing and tracker
+as desktop. They use the existing WebRTC video element for frames instead of
+opening another RTSP connection. Detection settings, downloads/imports, class
+filters, overlay and input bindings are available on mobile. Start with YOLO26n;
+the larger models can use substantially more memory and time. Download models
+before attaching the Android ROV tether, which routes the app away from the
+internet.
 
-Mobile support needs a packaged ONNX Runtime for each target, a mobile frame
-source (the desktop worker currently reads RTSP through FFmpeg), sandboxed
-model downloads/imports and storage, and lifecycle/cancellation handling.
-Android acceleration needs a validated NNAPI or other supported execution
-provider; iOS needs a validated Core ML provider. CPU inference must also be
-tested on both platforms. Performance, memory, thermal load, orientation and
-overlay alignment need tests on real phones before enabling the UI.
+### Runtime and acceleration
 
-The integrated branch passes an Android ARM64 Rust `cargo check --lib`,
-Android/iOS frontend builds, and dependency checks excluding ONNX Runtime,
-FFmpeg and SDL from both mobile targets. The frontend regression test imports
-an enabled detection config on mobile and verifies that no detection IPC is
-called. No APK/IPA or mobile hardware test was performed; iOS native checks
-require macOS and Xcode.
+`ort = 2.0.0-rc.15` downloads and verifies pinned ONNX Runtime 1.31.0 / API 31
+static archives for Android ARM64/x86-64 and iOS ARM64 device/ARM64 simulator.
+These are the supported detection build targets. The pinned artifacts do not
+include Android 32-bit or Intel iOS simulator builds. Tauri packages Android's
+NDK `libc++_shared.so` alongside the app library. Both local APKs passed debug-signature verification and
+runtime-notice checks; ARM64 also passed 16 KiB ZIP/ELF alignment checks.
+iOS links Foundation and Core ML
+through `ort-sys`; the archive's Mach-O minimum is iOS 15.1, matching the app's
+minimum deployment target. Both mobile bundles contain the runtime's MIT
+license and full third-party notices from the same pinned release, under
+`licenses/onnxruntime`.
+
+Android Auto tries NNAPI with FP16 disabled and NNAPI CPU devices excluded,
+then falls back to ONNX Runtime CPU. The accelerator selector names NNAPI
+explicitly, because a device may expose a GPU, an NPU, or neither. NNAPI is
+supported by this pinned ONNX Runtime but deprecated in Android API 35; it is
+not a promise of optimal performance on recent phones. The current upstream
+Rust distributions ship NNAPI, while QNN needs a separate Qualcomm runtime and
+device/model constraints. No QNN SDK or unvalidated WebGPU path is bundled.
+
+On iOS, Auto tries Core ML's MLProgram format, then CPU. Explicit accelerator
+requests report errors instead of falling back to CPU. All accelerator sessions
+must accept model nodes and pass an inference warmup; a registered provider
+that leaves the whole graph on ONNX Runtime CPU is rejected. Unsupported
+operators may still use CPU. Status reports the selected backend; Core ML
+chooses its underlying Apple compute units, so its name does not prove that
+every operator ran on the GPU or Neural Engine. Mobile CPU sessions use two
+intra-op threads and one inter-op thread.
+
+### Capture, storage and lifecycle
+
+Capture samples the newest playing video frame at up to 5 fps. It waits for
+native inference to acknowledge each binary request before reading another
+frame, so slow inference drops sampling opportunities instead of building a
+backlog. Native input also has a one-frame queue. A session identifier rejects
+late frames after a restart. Each request contains the original video dimensions,
+a capture timestamp and a letterboxed RGBA image, with a 32-byte header. Native
+code checks dimensions, timestamp and exact byte length before copying pixels;
+model inputs are limited to 1024 pixels per dimension on mobile (at most 4 MiB
+of pixels per request). The application sends a binary body rather than a JSON pixel array or an
+application-level base64 encoding.
+
+Canvas uses the displayed video's natural orientation. Letterboxing and the
+existing object-contain overlay use its source dimensions; resizing/orientation
+changes also reset tracking. Playback does not wait for inference. The controller
+waits for actual video playback, pauses when the video buffers, disappears or the
+app becomes inactive, and restarts after playback/foreground returns. Native
+Android/iOS suspend events also signal the worker and arrange cleanup off the
+UI thread. Cancellation discards old results and waits for native sessions to
+release before replacement; an in-progress vendor model compilation/kernel must
+finish before its resources can be released. A ten-second no-frame timeout is
+a final cleanup backstop.
+
+Model downloads and imports use Tauri's sandboxed app-data directory. Imports
+use the native document picker and remove its temporary copy after validation.
+Android picker copies have unique cache filenames. Files over 512 MiB are
+rejected before library staging, IDs cannot escape the library directory,
+downloads retain catalog size/hash verification and cancellation, and installation
+remains atomic after model validation.
+
+### Building and validation
+
+On Linux, the Nix mobile shell supplies Rust 1.99, SDK/NDK and Java. Build a
+local ARM64 debug APK without release signing credentials:
+
+```sh
+nix develop .#mobile
+bun run android:init
+bun tauri android build --debug --apk --target aarch64 --ci
+```
+
+The APK is generated under
+`src-tauri/gen/android/app/build/outputs/apk/universal/debug/`.
+`--target x86_64` uses the pinned Android emulator architecture instead.
+On a Mac with Xcode, use `bun run ios:init` and
+`bun tauri ios build --no-sign --target aarch64`; Apple Silicon simulator
+builds use Tauri's ARM64 simulator target. CI builds a debug Android APK and
+an unsigned iOS app in addition to mobile Clippy checks.
+
+The mobile worker also compiles in host tests. The opt-in real-image test
+exercises RGBA conversion, inference, source dimensions, tracking and IPC
+acknowledgements with all seven models. Prepare the same letterboxed RGB24
+bus fixture, then run:
+
+```sh
+ffmpeg -i /path/to/bus.jpg -vf 'scale=480:640,pad=640:640:80:0:color=0x727272' \
+  -f rawvideo -pix_fmt rgb24 /tmp/bus.rgb
+MANA_FISH_TEST_MODELS=/path/to/all-seven-onnx-files \
+MANA_FISH_TEST_RGB=/tmp/bus.rgb \
+  cargo test --manifest-path src-tauri/Cargo.toml --lib \
+  mobile_frames_run_real_catalog_models_and_release_pending_ipc -- --ignored
+```
+
+This host test passed with all seven catalog models, including person/bus
+tracking for the general models. It does not execute Android NNAPI or iOS
+Core ML. Android ARM64 and x86-64 debug APK builds and Clippy, frontend builds, binary packet
+validation, bounded capture, cancellation, playback/foreground lifecycle and
+backend status tests are covered locally. No phone, accessible emulator or
+Mac/Xcode was available through the device service. iOS native linking, real
+mobile accelerator correctness, live stream alignment, sustained frame rate,
+thermal behavior and memory pressure still need device validation. The workflow
+changes have not been run on GitHub.
 
 ## Linux GPU backends
 
@@ -213,10 +305,14 @@ Laptop GPU with driver 595.71.05, CUDA runtime 13.5.37, cuBLAS 13.10.0.20,
 cuRAND 10.4.5.25 and cuDNN 9.28.1.4. The two marine models passed raw tensor
 comparison on the bus fixture; this is numerical validation, not an accuracy
 assessment on marine imagery. CPU inference through the packaged core and
-missing-runtime fallback also passed. Native MIGraphX inference is untested. ROCm identifies the local Radeon 890M
-as `gfx1150`, but the required numerical libraries were not available. The
-ROCm 7.2.3 dependency download was stopped before completion; no native
-MIGraphX numerical result is claimed. Intel GPU inference is untested because
+missing-runtime fallback also passed. All seven models also passed the same two-run real-image comparison on the
+Radeon 890M (`gfx1150`) with ROCm/MIGraphX 7.2.3. No architecture override or
+reduced-precision mode was used. The required libraries were downloaded from
+the signed Nix binary cache and verified before use. The full AMD validation
+took about 23 minutes, including model compilation, warmups and CPU references.
+MIGraphX model loading can take several minutes; this test does not establish
+sustained live-stream performance. This result covers this GPU/runtime pair,
+not every Radeon device. Intel GPU inference is untested because
 there is no Intel GPU. With the matching OpenVINO runtime installed, its plugin
 loaded and correctly rejected this machine instead of using its CPU device.
 These providers require hardware validation with the
@@ -234,9 +330,10 @@ stable-version override. RPM bundling rejects SemVer prerelease strings; main
 now intentionally skips RPM releases for prereleases. No app version override
 was committed. Pinned linuxdeploy successfully processed the GPU
 libraries with the vendor dependency exclusions. A complete AppImage could not
-be built on this NixOS host: its GTK plugin could not locate the host GTK
-installation (after adapting copied helper scripts' `/bin/bash` shebangs for
-NixOS). The Ubuntu release workflow is configured but was not run here.
+be built on this NixOS host. Retrying with local helper copies adapted for NixOS
+and an explicit GTK library path reached GLib schema installation. The GTK
+plugin expects the `gio-2.0.pc` schema directory to contain distro-wide schemas;
+Nix stores those in separate package outputs, so that step still fails. The Ubuntu release workflow is configured but was not run here.
 ARM64 packaging and Windows/macOS runtime behavior were not exercised here.
 
 Publish verified model files and their required source materials before

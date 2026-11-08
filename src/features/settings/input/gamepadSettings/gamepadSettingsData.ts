@@ -1,6 +1,5 @@
 import type { GamepadBindings } from '@/stores/config';
 
-import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 
 type SelectItemOption = {
@@ -86,9 +85,7 @@ const BINDING_SECTIONS: BindingSection[] = [
     title: () => m.bindings_section_other(),
     fields: [
       { key: 'record', label: () => m.gamepad_record() },
-      ...(isMobile
-        ? []
-        : [{ key: 'objectDetection' as const, label: () => m.bindings_action_object_detection() }]),
+      { key: 'objectDetection' as const, label: () => m.bindings_action_object_detection() },
     ],
   },
 ];

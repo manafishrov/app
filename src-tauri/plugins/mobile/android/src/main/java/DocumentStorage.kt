@@ -60,10 +60,15 @@ internal class DocumentStorage(private val context: Context) {
   fun importToCache(source: Uri): File {
     val name = (displayName(source) ?: "import").replace('/', '_')
     val directory = File(context.cacheDir, "imports").apply { mkdirs() }
-    val target = File(directory, name)
-    val input = resolver.openInputStream(source) ?: throw IOException("Could not open $source")
-    input.use { stream -> target.outputStream().use { stream.copyTo(it) } }
-    return target
+    val target = File.createTempFile("import-", "-$name", directory)
+    try {
+      val input = resolver.openInputStream(source) ?: throw IOException("Could not open $source")
+      input.use { stream -> target.outputStream().use { stream.copyTo(it) } }
+      return target
+    } catch (error: Exception) {
+      target.delete()
+      throw error
+    }
   }
 
   private fun saveToSharedFolder(source: File, fileName: String, mimeType: String): String {

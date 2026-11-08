@@ -12,11 +12,16 @@ import {
 } from '@/tauri/detection';
 
 import { createDetectionController, toggleObjectDetection } from './controller';
+import { registerDetectionVideo } from './mobileCapture';
 
 const platform = vi.hoisted(() => ({ isMobile: false }));
 vi.mock('@/lib/platform', () => platform);
 
 vi.mock('@/lib/log', () => ({ logError: vi.fn(), logInfo: vi.fn(), logWarn: vi.fn() }));
+vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn().mockResolvedValue(vi.fn()) }));
+vi.mock('@/tauri/config', () => ({
+  setConfig: vi.fn().mockImplementation(() => Promise.resolve()),
+}));
 vi.mock('@/tauri/detection', () => ({
   detectionStreamUrl: (address: string): string => `rtsp://${address}:8554/cam`,
   listDetectionModels: vi.fn().mockResolvedValue([]),
@@ -27,6 +32,8 @@ vi.mock('@/tauri/detection', () => ({
 const RESTART_WAIT_MS = 500;
 const BURST_WAIT_MS = 200;
 const CONFIDENCE = 0.6;
+const RESUMED_SESSION_COUNT = 2;
+const HAVE_CURRENT_DATA = 2;
 const host = document.createElement('div');
 const cleanups: (() => void)[] = [];
 const running: DetectionEvent = {
@@ -71,6 +78,10 @@ const createDeferred = (): { promise: Promise<void>; resolve: () => void } => {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  Object.defineProperty(HTMLMediaElement, 'HAVE_CURRENT_DATA', {
+    value: HAVE_CURRENT_DATA,
+    configurable: true,
+  });
   vi.clearAllMocks();
   platform.isMobile = false;
   configure(true);
@@ -139,15 +150,73 @@ it('coalesces a burst of option changes into one start using the latest options'
   });
 });
 
-it('does not invoke desktop detection on mobile, even with an enabled imported config', () => {
+it('waits for a mounted mobile video before starting an enabled imported config', () => {
   platform.isMobile = true;
   mount();
-  return toggleObjectDetection()
-    .then(() => vi.advanceTimersByTimeAsync(RESTART_WAIT_MS))
+  return vi
+    .advanceTimersByTimeAsync(RESTART_WAIT_MS)
     .then(() => {
-      expect(listDetectionModels).not.toHaveBeenCalled();
+      expect(listDetectionModels).toHaveBeenCalledOnce();
       expect(startDetection).not.toHaveBeenCalled();
-      expect(stopDetection).not.toHaveBeenCalled();
-      expect(configStore.detection.enabled).toBe(true);
+      const video = document.createElement('video');
+      Object.defineProperties(video, {
+        paused: { value: false },
+        readyState: { value: HAVE_CURRENT_DATA },
+      });
+      const unregister = registerDetectionVideo(video);
+      cleanups.push(unregister);
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledOnce();
+      globalThis.dispatchEvent(new Event('pagehide'));
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(detectionStore.state).toBe('paused');
+      globalThis.dispatchEvent(new Event('pageshow'));
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledTimes(RESUMED_SESSION_COUNT);
+      const { calls } = vi.mocked(startDetection).mock;
+      const [first, second] = calls;
+      if (!first || !second) {
+        throw new Error('Expected two capture sessions');
+      }
+      expect(first[0].runId).not.toEqual(second[0].runId);
+    });
+});
+
+it('lets mobile input toggle detection using the existing config command', () => {
+  platform.isMobile = true;
+  return expect(toggleObjectDetection()).resolves.toBeUndefined();
+});
+
+it('releases the mobile worker while playback buffers and restarts on playing', () => {
+  platform.isMobile = true;
+  const video = document.createElement('video');
+  Object.defineProperties(video, {
+    paused: { value: false },
+    readyState: { value: HAVE_CURRENT_DATA },
+  });
+  const unregister = registerDetectionVideo(video);
+  mount();
+  cleanups.push(unregister);
+  return vi
+    .advanceTimersByTimeAsync(RESTART_WAIT_MS)
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledOnce();
+      video.dispatchEvent(new Event('waiting'));
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(detectionStore.state).toBe('paused');
+      expect(stopDetection).toHaveBeenCalledOnce();
+      video.dispatchEvent(new Event('playing'));
+      return vi.advanceTimersByTimeAsync(RESTART_WAIT_MS);
+    })
+    .then(() => {
+      expect(startDetection).toHaveBeenCalledTimes(RESUMED_SESSION_COUNT);
     });
 });

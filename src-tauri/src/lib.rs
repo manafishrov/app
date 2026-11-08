@@ -1,7 +1,6 @@
 mod commands;
 #[cfg(desktop)]
 mod constants;
-#[cfg(desktop)]
 mod detection;
 mod files;
 #[cfg(desktop)]
@@ -44,11 +43,10 @@ use commands::{
   save_recording, save_text_file, send_direction_vector, set_config, set_rov_config, stage_config,
   start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
-#[cfg(desktop)]
 use commands::{
   cancel_detection_model_download, delete_detection_model, download_detection_model,
   import_detection_model, list_detection_catalog, list_detection_execution_providers,
-  list_detection_models, start_detection, stop_detection,
+  list_detection_models, pick_detection_model, start_detection, stop_detection,
 };
 #[cfg(desktop)]
 use commands::{
@@ -84,7 +82,8 @@ fn setup_handlers(app: &mut App) {
   #[cfg(desktop)]
   app.manage(Arc::new(FlashControl::default()));
   app.manage(websocket::capabilities::CapabilityState::default());
-  #[cfg(desktop)]
+  #[cfg(mobile)]
+  detection::library::init_models_dir(app.handle());
   app.manage(detection::DetectionRuntime::default());
 
   let websocket_handle = app.app_handle().clone();
@@ -355,24 +354,18 @@ pub fn run() -> tauri::Result<()> {
       python_editor::send_python_editor,
       #[cfg(desktop)]
       python_editor::stop_python_editor,
-      #[cfg(desktop)]
       cancel_detection_model_download,
-      #[cfg(desktop)]
       delete_detection_model,
-      #[cfg(desktop)]
       download_detection_model,
-      #[cfg(desktop)]
       import_detection_model,
-      #[cfg(desktop)]
       list_detection_catalog,
-      #[cfg(desktop)]
       list_detection_execution_providers,
-      #[cfg(desktop)]
       list_detection_models,
-      #[cfg(desktop)]
       start_detection,
-      #[cfg(desktop)]
       stop_detection,
+      pick_detection_model,
+      #[cfg(mobile)]
+      commands::detection::submit_detection_frame,
       request_capability,
       import_custom_action_source,
       save_csv,
@@ -429,7 +422,49 @@ pub fn run() -> tauri::Result<()> {
       Ok(())
     });
 
-  builder.build(tauri::generate_context!())?.run(|_app_handle, _event| {});
+  builder.build(tauri::generate_context!())?.run(|app_handle, event| {
+    #[cfg(mobile)]
+    handle_detection_lifecycle(app_handle, &event);
+    #[cfg(desktop)]
+    let _ = (app_handle, event);
+  });
 
   Ok(())
+}
+
+#[cfg(mobile)]
+fn handle_detection_lifecycle(app: &tauri::AppHandle, event: &tauri::RunEvent) {
+  use tauri::{Emitter, RunEvent, WindowEvent};
+  let foreground = match event {
+    RunEvent::WindowEvent {
+      event: WindowEvent::Suspended,
+      ..
+    } => false,
+    RunEvent::WindowEvent {
+      event: WindowEvent::Resumed,
+      ..
+    } => true,
+    _ => return,
+  };
+  let runtime = app.state::<detection::DetectionRuntime>();
+  runtime.suspended.store(!foreground, std::sync::atomic::Ordering::Relaxed);
+  if !foreground {
+    // Signal without blocking the UI, even if another command is joining a worker.
+    if let Ok(runner) = runtime.runner.try_lock()
+      && let Some(runner) = runner.as_ref()
+    {
+      runner.request_stop();
+    }
+    let runners = std::sync::Arc::clone(&runtime.runner);
+    let suspended = std::sync::Arc::clone(&runtime.suspended);
+    tauri::async_runtime::spawn_blocking(move || {
+      if let Ok(mut runner) = runners.lock()
+        && suspended.load(std::sync::atomic::Ordering::Relaxed)
+        && let Some(runner) = runner.take()
+      {
+        runner.stop_and_wait();
+      }
+    });
+  }
+  let _ = app.emit("detection-foreground", foreground);
 }

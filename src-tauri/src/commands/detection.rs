@@ -1,3 +1,4 @@
+#[cfg(desktop)]
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -69,9 +70,64 @@ pub async fn list_detection_models() -> Result<Vec<DetectionModelInfo>, String> 
 /// Returns an error if the file is not a supported detection model or cannot
 /// be copied.
 pub async fn import_detection_model(path: String) -> Result<DetectionModelInfo, String> {
+  #[cfg(mobile)]
+  {
+    let _ = path;
+    Err("Use the model file picker to import into mobile storage".into())
+  }
+  #[cfg(desktop)]
   tauri::async_runtime::spawn_blocking(move || library::import(&PathBuf::from(path)))
     .await
     .map_err(|error| error.to_string())?
+}
+
+#[command]
+/// Imports a model using the platform picker, including sandboxed mobile copies.
+/// # Errors
+/// Returns an error if picking, copying or validating the model fails.
+pub async fn pick_detection_model(
+  app: tauri::AppHandle,
+) -> Result<Option<DetectionModelInfo>, String> {
+  let file_type = crate::files::FileType {
+    name: "ONNX model",
+    extension: "onnx",
+    mime_type: "*/*",
+  };
+  let Some(path) = crate::files::pick_file(&app, None, file_type).await? else {
+    return Ok(None);
+  };
+  tauri::async_runtime::spawn_blocking(move || {
+    let result = library::import(&path);
+    // Mobile pickers return a disposable local copy, never the original document.
+    #[cfg(mobile)]
+    let _ = std::fs::remove_file(&path);
+    result.map(Some)
+  })
+  .await
+  .map_err(|error| error.to_string())?
+}
+
+#[cfg(mobile)]
+#[command]
+/// Accepts a bounded raw frame packet; acknowledges it only after inference.
+/// # Errors
+/// Rejects malformed frames and stale/stopped capture sessions.
+pub async fn submit_detection_frame(
+  runtime: State<'_, DetectionRuntime>,
+  request: tauri::ipc::Request<'_>,
+) -> Result<(), String> {
+  let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+    return Err("Detection frames require a binary body".into());
+  };
+  let frame = crate::detection::mobile_frame::MobileFrame::parse(bytes)?;
+  let completion = runtime
+    .runner
+    .try_lock()
+    .map_err(|_| "Detection capture session is changing".to_string())?
+    .as_ref()
+    .ok_or("Detection is stopped")?
+    .submit(frame)?;
+  completion.await.map_err(|_| "Detection session ended".to_string())?
 }
 
 #[command]
@@ -107,12 +163,24 @@ pub async fn start_detection(
   on_event: Channel<DetectionEvent>,
 ) -> Result<(), String> {
   let runners = Arc::clone(&runtime.runner);
+  #[cfg(mobile)]
+  let suspended = Arc::clone(&runtime.suspended);
   tauri::async_runtime::spawn_blocking(move || {
     let mut runner = runners.lock().map_err(|error| error.to_string())?;
     if let Some(previous) = runner.take() {
       previous.stop_and_wait();
     }
+    #[cfg(mobile)]
+    if suspended.load(std::sync::atomic::Ordering::Relaxed) {
+      return Err("Detection is paused while the app is in the background".into());
+    }
     *runner = Some(DetectionRunner::start(options, on_event)?);
+    #[cfg(mobile)]
+    if suspended.load(std::sync::atomic::Ordering::Relaxed)
+      && let Some(runner) = runner.take()
+    {
+      runner.stop_and_wait();
+    }
     Ok(())
   })
   .await

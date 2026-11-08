@@ -32,9 +32,26 @@ pub struct DetectionModelInfo {
   pub description: ModelDescription,
 }
 
+#[cfg(mobile)]
+static MOBILE_MODELS_DIR: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+
+#[cfg(mobile)]
+pub fn init_models_dir(app: &tauri::AppHandle) {
+  use tauri::Manager;
+  if let Ok(directory) = app.path().app_data_dir() {
+    let _ = MOBILE_MODELS_DIR.set(directory.join("detection-models"));
+  }
+}
+
 /// # Errors
 /// Returns an error if the platform has no data directory.
 pub(super) fn models_dir() -> Result<PathBuf, String> {
+  #[cfg(mobile)]
+  return MOBILE_MODELS_DIR
+    .get()
+    .cloned()
+    .ok_or_else(|| "Model storage is not initialized".to_string());
+  #[cfg(desktop)]
   dirs::data_dir()
     .map(|base| base.join("manafish").join("detection-models"))
     .ok_or_else(|| "Could not find the app data directory".to_string())
@@ -157,6 +174,10 @@ fn import_named_into(
     }
   };
   check_cancelled()?;
+  let size = fs::metadata(source).map_err(|error| error.to_string())?.len();
+  if size == 0 || size > 512 * 1024 * 1024 {
+    return Err("Detection model files must be between 1 byte and 512 MiB".into());
+  }
   let staged = tempfile::NamedTempFile::new_in(dir).map_err(|error| error.to_string())?;
   fs::copy(source, staged.path()).map_err(|error| format!("Could not copy the model: {error}"))?;
   let id = hash_file(staged.path())?;
@@ -254,6 +275,18 @@ mod tests {
     fs::write(source.path(), b"not an ONNX model")?;
     let dir = tempfile::tempdir()?;
     assert!(import_into(source.path(), dir.path()).is_err());
+    assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+    Ok(())
+  }
+
+  #[test]
+  fn oversized_import_is_rejected_before_copying_into_the_library()
+  -> Result<(), Box<dyn std::error::Error>> {
+    let source = tempfile::NamedTempFile::new()?;
+    source.as_file().set_len(512 * 1024 * 1024 + 1)?;
+    let dir = tempfile::tempdir()?;
+    let error = import_into(source.path(), dir.path()).unwrap_err();
+    assert!(error.contains("512 MiB"));
     assert_eq!(fs::read_dir(dir.path())?.count(), 0);
     Ok(())
   }

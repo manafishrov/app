@@ -16,14 +16,22 @@ import {
   stopDetection,
 } from '@/tauri/detection';
 
+import { captureReady, captureVideo, startMobileCapture } from './mobileCapture';
+import { foreground, useMobileLifecycle } from './mobileLifecycle';
+
 /** Restarting reloads the model, so let bursts of changes (such as dragging a slider) settle. */
 const RESTART_DEBOUNCE_MS = 400;
+let captureSequence = 0;
 
 type StatusEvent = Extract<DetectionEvent, { type: 'status' }>;
 
 const resolveOptions = (): DetectionOptions | null => {
   const { detection, ipAddress } = configStore;
-  if (!detection.enabled || detection.modelId === null) {
+  if (
+    !detection.enabled ||
+    detection.modelId === null ||
+    (isMobile && (!foreground() || captureVideo() === null || !captureReady()))
+  ) {
     return null;
   }
   const classIds = detection.classFilters[detection.modelId];
@@ -64,9 +72,9 @@ const handleEvent = (event: DetectionEvent): void => {
   }
 };
 
-const resetRuntimeState = (): void => {
+const resetRuntimeState = (paused: boolean): void => {
   setDetectionStore({
-    state: 'stopped',
+    state: paused ? 'paused' : 'stopped',
     message: null,
     executionProvider: null,
     stats: null,
@@ -74,7 +82,28 @@ const resetRuntimeState = (): void => {
   });
 };
 
-const start = (options: DetectionOptions, isCurrent: () => boolean): Promise<void> => {
+type RestartState = {
+  timer: number;
+  generation: number;
+  pending: Promise<void>;
+  stopCapture: (() => void) | null;
+};
+
+const cancelCapture = (restart: RestartState): void => {
+  globalThis.clearTimeout(restart.timer);
+  if (restart.stopCapture) {
+    restart.stopCapture();
+  }
+  restart.stopCapture = null;
+};
+
+const start = (
+  options: DetectionOptions,
+  isCurrent: () => boolean,
+  restart: RestartState,
+): Promise<void> => {
+  captureSequence += 1;
+  const runId = captureSequence;
   setDetectionStore({
     state: 'loading',
     message: null,
@@ -82,34 +111,41 @@ const start = (options: DetectionOptions, isCurrent: () => boolean): Promise<voi
     stats: null,
     frame: null,
   });
-  return startDetection(options, (event) => {
+  return startDetection({ ...options, runId }, (event) => {
     if (isCurrent()) {
       handleEvent(event);
+      if (event.type === 'status' && event.state === 'error') {
+        cancelCapture(restart);
+      }
     }
-  }).catch((error: unknown) => {
-    if (isCurrent()) {
-      logError('Failed to start object detection:', error);
-      setDetectionStore({ state: 'error', message: String(error) });
-    }
-  });
+  })
+    .then(() => {
+      if (isMobile && isCurrent() && detectionStore.state !== 'error') {
+        restart.stopCapture = startMobileCapture(runId, options.modelId, isCurrent);
+      }
+    })
+    .catch((error: unknown) => {
+      if (isCurrent()) {
+        logError('Failed to start object detection:', error);
+        setDetectionStore({ state: 'error', message: String(error) });
+      }
+    });
 };
 
-type RestartState = { timer: number; generation: number; pending: Promise<void> };
-
 const scheduleRestart = (restart: RestartState): void => {
-  globalThis.clearTimeout(restart.timer);
+  cancelCapture(restart);
   restart.generation += 1;
   const { generation } = restart;
   const isCurrent = (): boolean => restart.generation === generation;
   const options = resolveOptions();
-  resetRuntimeState();
+  resetRuntimeState(isMobile && options === null && configStore.detection.enabled);
   if (options === null) {
     restart.pending = restart.pending.then(stopDetection).catch(logError);
     return;
   }
   restart.timer = globalThis.setTimeout(() => {
     restart.pending = restart.pending
-      .then(() => (isCurrent() ? start(options, isCurrent) : Promise.resolve()))
+      .then(() => (isCurrent() ? start(options, isCurrent, restart) : Promise.resolve()))
       .catch(logError);
   }, RESTART_DEBOUNCE_MS);
 };
@@ -125,11 +161,16 @@ export const refreshDetectionModels = (): Promise<void> =>
 
 /** Starts, restarts and stops detection to match the detection settings. */
 export const createDetectionController = (): void => {
-  if (isMobile) {
-    return;
-  }
-  const restart: RestartState = { timer: 0, generation: 0, pending: Promise.resolve() };
+  const restart: RestartState = {
+    timer: 0,
+    generation: 0,
+    pending: Promise.resolve(),
+    stopCapture: null,
+  };
 
+  if (isMobile) {
+    useMobileLifecycle();
+  }
   refreshDetectionModels().catch(logError);
 
   createEffect(
@@ -142,16 +183,13 @@ export const createDetectionController = (): void => {
   );
 
   onCleanup(() => {
-    globalThis.clearTimeout(restart.timer);
+    cancelCapture(restart);
     restart.generation += 1;
     restart.pending = restart.pending.then(stopDetection).catch(logError);
   });
 };
 
 export const toggleObjectDetection = (): Promise<void> => {
-  if (isMobile) {
-    return Promise.resolve();
-  }
   const detection = structuredClone(unwrap(configStore.detection));
   if (!detection.enabled && detection.modelId === null) {
     toast.create({

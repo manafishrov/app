@@ -6,11 +6,12 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
 use ffmpeg_next as ffmpeg;
-use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 
 use super::library;
-use super::model::{DetectionModel, ExecutionProvider, ExecutionProviderPreference};
+#[cfg(test)]
+use super::model::ExecutionProviderPreference;
+use super::model::{DetectionModel, ExecutionProvider};
 use super::postprocess::{DecodeOptions, Letterbox, decode};
 use super::stream::{self, LatestFrame, StreamState};
 use super::tracker::{Tracker, TrackerOptions};
@@ -24,67 +25,7 @@ const MAX_DETECTIONS: usize = 300;
 const LOW_CONFIDENCE_FLOOR: f32 = 0.1;
 const STATS_INTERVAL: Duration = Duration::from_secs(1);
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct DetectionOptions {
-  pub model_id: String,
-  pub execution_provider: ExecutionProviderPreference,
-  pub confidence_threshold: f32,
-  /// Class IDs to report; `None` reports every class.
-  pub class_ids: Option<Vec<u32>>,
-  pub stream_url: String,
-}
-
-#[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub enum DetectionState {
-  Loading,
-  Connecting,
-  Running,
-  Error,
-}
-
-#[derive(Serialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Detection {
-  pub track_id: u64,
-  pub class_id: u32,
-  pub label: String,
-  pub confidence: f32,
-  /// Box in 0..1 coordinates of the source frame, from the top-left corner.
-  pub left: f32,
-  pub top: f32,
-  pub width: f32,
-  pub height: f32,
-}
-
-#[derive(Serialize, Clone, Debug)]
-#[serde(
-  tag = "type",
-  rename_all = "camelCase",
-  rename_all_fields = "camelCase"
-)]
-pub enum DetectionEvent {
-  Status {
-    state: DetectionState,
-    message: Option<String>,
-    execution_provider: Option<ExecutionProvider>,
-  },
-  Detections {
-    /// Milliseconds since the Unix epoch when the frame was decoded.
-    captured_at: f64,
-    frame_width: u32,
-    frame_height: u32,
-    detections: Vec<Detection>,
-  },
-  Stats {
-    inference_fps: f32,
-    /// Preprocessing, inference and postprocessing for one frame.
-    inference_ms: f32,
-    /// From the frame being decoded to its results being sent.
-    latency_ms: f32,
-  },
-}
+pub use super::events::*;
 
 pub struct DetectionRunner {
   model_id: String,

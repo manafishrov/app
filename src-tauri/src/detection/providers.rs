@@ -39,7 +39,7 @@ fn gpu_providers() -> Vec<ExecutionProvider> {
       vec![ExecutionProvider::Cuda]
     }
   }
-  #[cfg(target_os = "macos")]
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
   {
     vec![ExecutionProvider::CoreMl]
   }
@@ -47,7 +47,17 @@ fn gpu_providers() -> Vec<ExecutionProvider> {
   {
     vec![ExecutionProvider::DirectMl]
   }
-  #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+  #[cfg(target_os = "android")]
+  {
+    vec![ExecutionProvider::Nnapi]
+  }
+  #[cfg(not(any(
+    target_os = "linux",
+    target_os = "macos",
+    target_os = "windows",
+    target_os = "android",
+    target_os = "ios"
+  )))]
   {
     Vec::new()
   }
@@ -91,6 +101,7 @@ pub fn select<T>(
 
 /// # Errors
 /// Returns an error if the bundled runtime cannot be found or loaded.
+#[cfg_attr(not(target_os = "linux"), allow(clippy::unnecessary_wraps))]
 pub fn init() -> Result<EnvironmentBuilder, String> {
   #[cfg(target_os = "linux")]
   {
@@ -162,6 +173,8 @@ pub fn build_session(
     let builder = Session::builder(environment)?
       .with_optimization_level(GraphOptimizationLevel::Level3)?
       .with_config_entry("session.record_ep_graph_assignment_info", "1")?;
+    #[cfg(mobile)]
+    let builder = builder.with_intra_threads(2)?.with_inter_threads(1)?;
     #[cfg(target_os = "windows")]
     let builder = builder.with_memory_pattern(false)?.with_parallel_execution(false)?;
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
@@ -183,6 +196,12 @@ pub fn build_session(
       ExecutionProvider::Cpu => ep::CPU::default().build(),
       #[cfg(target_os = "macos")]
       ExecutionProvider::CoreMl => ep::CoreML::default().build(),
+      #[cfg(target_os = "ios")]
+      ExecutionProvider::CoreMl => ep::CoreML::default()
+        .with_model_format(ep::coreml::ModelFormat::MLProgram)
+        .build(),
+      #[cfg(target_os = "android")]
+      ExecutionProvider::Nnapi => ep::NNAPI::default().with_disable_cpu(true).build(),
       #[cfg(target_os = "windows")]
       ExecutionProvider::DirectMl => ep::DirectML::default().build(),
       #[cfg(target_os = "linux")]
@@ -217,6 +236,12 @@ pub(super) fn requirements(provider: ExecutionProvider) -> &'static str {
     ExecutionProvider::OpenVino => {
       "OpenVINO requires a supported Intel GPU, Intel compute drivers and OpenVINO 2026.4.1 (libopenvino.so.2641). CPU/AUTO devices are not used."
     },
+    ExecutionProvider::Nnapi => {
+      "NNAPI requires a compatible Android GPU/NPU driver and supported model operators. NNAPI CPU devices are disabled."
+    },
+    ExecutionProvider::CoreMl => {
+      "Core ML requires a compatible Apple device and supported model operators."
+    },
     _ => "The model or execution provider could not load.",
   }
 }
@@ -238,6 +263,7 @@ fn verify_assignment(session: &Session, provider: ExecutionProvider) -> Result<(
     ExecutionProvider::Migraphx => "MIGraphXExecutionProvider",
     ExecutionProvider::OpenVino => "OpenVINOExecutionProvider",
     ExecutionProvider::CoreMl => "CoreMLExecutionProvider",
+    ExecutionProvider::Nnapi => "NnapiExecutionProvider",
     ExecutionProvider::DirectMl => "DmlExecutionProvider",
   };
   let mut subgraphs = ptr::null();

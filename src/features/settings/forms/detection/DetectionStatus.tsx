@@ -8,6 +8,9 @@ import { type DetectionStats, detectionStore } from '@/stores/detection';
 
 const runStateLabel = (): string => {
   switch (detectionStore.state) {
+    case 'paused': {
+      return m.detection_status_paused();
+    }
     case 'loading': {
       return m.detection_status_loading();
     }
@@ -41,6 +44,9 @@ const stateLabel = (): string => {
 
 const providerLabel = (): string => {
   switch (detectionStore.executionProvider) {
+    case 'nnapi': {
+      return 'NNAPI (GPU/NPU)';
+    }
     case 'coreMl': {
       return 'Core ML';
     }
