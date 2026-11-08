@@ -20,6 +20,7 @@ import BuildIcon from '~icons/material-symbols/build';
 import CodeIcon from '~icons/material-symbols/code';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
+import FilterCenterFocusIcon from '~icons/material-symbols/filter-center-focus';
 import KeyboardIcon from '~icons/material-symbols/keyboard';
 import MemoryIcon from '~icons/material-symbols/memory';
 import PaletteIcon from '~icons/material-symbols/palette';
@@ -36,14 +37,12 @@ import { isMobile } from '@/lib/platform';
 import * as m from '@/paraglide/messages';
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore } from '@/stores/rovConfig';
-
 type SidebarItem = {
   label: () => string;
   ariaLabel: () => string;
   to: NonNullable<ComponentProps<typeof Link>['to']>;
   Icon: Component<ComponentProps<'svg'>>;
 };
-
 const APPLICATION_ITEMS = [
   {
     label: (): string => m.settings_application_general(),
@@ -74,6 +73,12 @@ const APPLICATION_ITEMS = [
     ariaLabel: (): string => m.aria_labels_app_connection_button(),
     to: '/settings/app-connection',
     Icon: SettingsEthernetIcon,
+  },
+  {
+    label: (): string => m.settings_application_detection(),
+    ariaLabel: (): string => m.aria_labels_detection_button(),
+    to: '/settings/detection',
+    Icon: FilterCenterFocusIcon,
   },
 ] as const satisfies readonly SidebarItem[];
 
@@ -129,7 +134,6 @@ const ROV_ITEMS = [
 ] as const satisfies readonly SidebarItem[];
 
 const SLICE_LAST_CHAR = -1;
-
 const CUSTOM_ACTION_ITEMS = [
   {
     label: (): string => m.custom_action_scripts_title(),
@@ -144,10 +148,8 @@ const CUSTOM_ACTION_ITEMS = [
     Icon: TableIcon,
   },
 ] as const satisfies readonly SidebarItem[];
-
 const normalizePath = (path: string): string =>
   path !== '/' && path.endsWith('/') ? path.slice(0, SLICE_LAST_CHAR) : path;
-
 type SidebarLinkItemProps = {
   item:
     | (typeof APPLICATION_ITEMS)[number]
@@ -155,11 +157,9 @@ type SidebarLinkItemProps = {
     | (typeof CUSTOM_ACTION_ITEMS)[number];
   isActive: (path: string) => boolean;
 };
-
 type SettingsSidebarProps = {
   isFullscreen?: boolean | undefined;
 };
-
 const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => (
   <SidebarMenuItem>
     <SidebarMenuButton
@@ -179,7 +179,6 @@ const SidebarLinkItem: Component<SidebarLinkItemProps> = (props) => (
     />
   </SidebarMenuItem>
 );
-
 const SettingsSidebarHeader: Component<{ isFullscreen?: boolean | undefined }> = (props) => (
   <SidebarHeader {...(props.isFullscreen === true ? { class: 'mt-6' } : {})}>
     <SidebarMenu>
@@ -198,7 +197,6 @@ const SettingsSidebarHeader: Component<{ isFullscreen?: boolean | undefined }> =
     </SidebarMenu>
   </SidebarHeader>
 );
-
 const SettingsSidebarContent: Component<{
   isActive: (path: string) => boolean;
   isConnected: () => boolean;
@@ -232,7 +230,6 @@ const SettingsSidebarContent: Component<{
     </SidebarGroup>
   </SidebarContent>
 );
-
 const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> = (props) => (
   <SidebarFooter>
     <SidebarMenu>
@@ -267,16 +264,12 @@ const SettingsSidebarFooter: Component<{ isActive: (path: string) => boolean }> 
     </SidebarMenu>
   </SidebarFooter>
 );
-
 const isConnected = (): boolean => connectionStatusStore.isConnected;
-
 const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
   const [local] = splitProps(props, ['isFullscreen']);
   const location = useLocation();
-
   const isActive = (path: string): boolean =>
     normalizePath(location().pathname) === normalizePath(path);
-
   return (
     <Sidebar
       collapsible='icon'
@@ -290,5 +283,4 @@ const SettingsSidebar: Component<SettingsSidebarProps> = (props) => {
     </Sidebar>
   );
 };
-
 export { SettingsSidebar };

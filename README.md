@@ -92,6 +92,10 @@ Differences from desktop:
   sheet.
 - Custom-action scripts can be edited, but Python completion and checking are
   desktop-only.
+- Object detection runs locally on the playing video. Start with YOLO26n,
+  download models before connecting the tether, and use CPU if the phone's
+  accelerator cannot load a model. See [detection support](scripts/detection-models.md#android-and-ios)
+  for build targets and hardware validation limits.
 - No in-app updater or SD-card flashing.
 
 `nix develop .#mobile` provides the Rust mobile targets, the Android SDK, NDK
@@ -120,13 +124,23 @@ APPLE_DEVELOPMENT_TEAM=<team id> bun tauri ios dev --host
 
 ### Releases
 
-Release tags also attach `Manafish_<version>_android_aarch64.apk` and
-`Manafish_<version>_ios_unsigned.ipa`. The APK is signed with the release
-keystore from the `ANDROID_KEYSTORE` (base64), `ANDROID_KEYSTORE_PASSWORD`,
-`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` secrets; keep the keystore safe,
-since installed apps only accept updates signed with the same key. The IPA is
-unsigned, so install it with a tool that signs it for your device, such as
-AltStore or Sideloadly.
+Release tags upload the iOS build to TestFlight and the Android build to Play
+internal testing, and attach `Manafish_<version>_android_aarch64.apk` and
+`Manafish_<version>_ios.ipa` for sideloading. Install the IPA with a tool that
+re-signs it for your device, such as AltStore or Sideloadly.
+
+The stores get the version without its prerelease tag (`v1.1.0-rc.5` ships as
+1.1.0) and the release workflow's run number as the build number, so every tag
+is a new, higher build in both stores.
+
+Android builds are signed with the release keystore from the `ANDROID_KEYSTORE`
+(base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and
+`ANDROID_KEY_PASSWORD` secrets; keep the keystore safe, since installed apps
+only accept updates signed with the same key. Play uploads use the
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` secret. iOS builds are signed and uploaded
+with the App Store Connect API key in `APPLE_API_KEY`, `APPLE_API_ISSUER` and
+`APPLE_API_KEY_P8`, which needs the Admin role for cloud-managed signing, and
+the team ID in the `APPLE_DEVELOPMENT_TEAM` variable.
 
 ## Scripts
 

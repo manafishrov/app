@@ -145,6 +145,7 @@ type KeyboardBindings = {
   desiredDepthIncrease: NullableKeyboardInput;
   desiredDepthDecrease: NullableKeyboardInput;
   record: NullableKeyboardInput;
+  objectDetection: NullableKeyboardInput;
 };
 
 type GamepadBindings = {
@@ -170,6 +171,7 @@ type GamepadBindings = {
   desiredDepthIncrease: NullableGamepadInput;
   desiredDepthDecrease: NullableGamepadInput;
   record: NullableGamepadInput;
+  objectDetection: NullableGamepadInput;
 };
 
 type CustomActionBinding = {
@@ -177,6 +179,29 @@ type CustomActionBinding = {
   actionId: string;
   keyboard: NullableKeyboardInput;
   gamepad: Record<string, NullableGamepadInput>;
+};
+
+export const ExecutionProviderPreference = {
+  auto: 'auto',
+  gpu: 'gpu',
+  cuda: 'cuda',
+  migraphx: 'migraphx',
+  openVino: 'openVino',
+  cpu: 'cpu',
+} as const;
+
+export type ExecutionProviderPreference =
+  (typeof ExecutionProviderPreference)[keyof typeof ExecutionProviderPreference];
+
+type DetectionConfig = {
+  enabled: boolean;
+  modelId: string | null;
+  executionProvider: ExecutionProviderPreference;
+  confidenceThreshold: number;
+  // Visible class IDs per model ID; a model without an entry shows every class.
+  classFilters: Record<string, number[]>;
+  showLabels: boolean;
+  showTrackIds: boolean;
 };
 
 type Config = {
@@ -193,6 +218,7 @@ type Config = {
   customActions: CustomActionBinding[];
   selectedGamepadId: string | null;
   gamepad: Record<string, GamepadBindings>;
+  detection: DetectionConfig;
   dismissedCompatibilityWarnings: string[];
 };
 
@@ -204,5 +230,6 @@ export type {
   KeyboardBindings,
   GamepadBindings,
   CustomActionBinding,
+  DetectionConfig,
   Config,
 };

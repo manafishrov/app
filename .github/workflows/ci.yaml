@@ -57,6 +57,7 @@ jobs:
             librsvg2-dev \
             libudev-dev \
             pkg-config \
+            patchelf \
             libsdl2-dev \
             libavcodec-dev \
             libavdevice-dev \
@@ -83,6 +84,8 @@ jobs:
         run: cargo fmt --check
       - name: Prepare Python language server
         run: python3 ../scripts/prepare-python-editor.py
+      - name: Prepare Linux detection runtime
+        run: python3 ../scripts/prepare-linux-detection.py
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Run tests
@@ -110,6 +113,7 @@ jobs:
 
   check-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: src-tauri
@@ -138,10 +142,22 @@ jobs:
           export AR_aarch64_linux_android="$ndk_bin/llvm-ar"
           cargo clippy --target aarch64-linux-android --all-targets \
             -p manafish -p tauri-plugin-manafish-mobile -- -D warnings
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: latest
+      - name: Build debug APK with native detection
+        working-directory: .
+        run: |
+          bun install --frozen-lockfile
+          export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          bun run android:init
+          bun tauri android build --debug --apk --target aarch64 --ci
 
   # Also compiles the Swift side of the mobile plugin.
   check-ios:
     runs-on: macos-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: src-tauri
@@ -166,6 +182,17 @@ jobs:
         run: |
           cargo clippy --target aarch64-apple-ios --all-targets \
             -p manafish -p tauri-plugin-manafish-mobile -- -D warnings
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: latest
+      - name: Build unsigned iOS app with native detection
+        working-directory: .
+        run: |
+          bun install --frozen-lockfile
+          command -v xcodegen >/dev/null || brew install xcodegen
+          bun run ios:init
+          bun tauri ios build --no-sign --target aarch64
 
   ci:
     name: ci

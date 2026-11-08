@@ -1,0 +1,833 @@
+//! Runs detection on the live stream and reports results to the frontend.
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
+use std::time::{Duration, Instant, UNIX_EPOCH};
+
+use ffmpeg_next as ffmpeg;
+use tauri::ipc::Channel;
+
+use super::diagnostics::Diagnostics;
+use super::library;
+#[cfg(test)]
+use super::model::ExecutionProviderPreference;
+use super::model::{DetectionModel, ExecutionProvider};
+#[cfg(test)]
+use super::postprocess::DecodeOptions;
+use super::postprocess::{Letterbox, decode};
+use super::settings::{DetectionSettings, LiveSettings, SettingsTarget};
+use super::stream::{self, LatestFrame, StreamState};
+#[cfg(test)]
+use super::tracker::{Tracker, TrackerOptions};
+use crate::log_warn;
+
+#[cfg(test)]
+const IOU_THRESHOLD: f32 = 0.7;
+#[cfg(test)]
+const MAX_DETECTIONS: usize = 300;
+const STATS_INTERVAL: Duration = Duration::from_secs(1);
+
+pub use super::events::*;
+
+pub struct DetectionRunner {
+  model_id: String,
+  settings: LiveSettings,
+  run_id: u32,
+
+  stop: Arc<AtomicBool>,
+  thread: Option<JoinHandle<()>>,
+}
+
+impl DetectionRunner {
+  /// # Errors
+  /// Returns an error if the worker thread cannot be created.
+  pub fn start(options: DetectionOptions, events: Channel<DetectionEvent>) -> Result<Self, String> {
+    let mut initial = DetectionSettings::from_options(&options);
+    initial.validate()?;
+    let settings = Arc::new(std::sync::Mutex::new(initial));
+    let run_id = options.run_id;
+    let stop = Arc::new(AtomicBool::new(false));
+    let model_id = options.model_id.clone();
+    let thread = {
+      let stop = Arc::clone(&stop);
+      let settings = Arc::clone(&settings);
+      std::thread::Builder::new()
+        .name("detection".to_string())
+        .spawn(move || {
+          let events = Events {
+            channel: events,
+            stop: Arc::clone(&stop),
+          };
+          run(&options, &settings, &stop, &events);
+          stop.store(true, Ordering::Relaxed);
+        })
+        .map_err(|error| format!("Failed to start detection: {error}"))?
+    };
+    Ok(Self {
+      model_id,
+      settings,
+      run_id,
+      stop,
+      thread: Some(thread),
+    })
+  }
+
+  pub fn settings_target(&self) -> SettingsTarget {
+    SettingsTarget::new(self.run_id, Arc::clone(&self.stop), Arc::clone(&self.settings))
+  }
+
+  pub fn model_id(&self) -> &str {
+    &self.model_id
+  }
+
+  /// Signals the threads to stop and waits for them, so files they hold are
+  /// released.
+  pub fn stop_and_wait(mut self) {
+    self.stop.store(true, Ordering::Relaxed);
+    if let Some(thread) = self.thread.take() {
+      let _ = thread.join();
+    }
+  }
+}
+
+impl Drop for DetectionRunner {
+  fn drop(&mut self) {
+    self.stop.store(true, Ordering::Relaxed);
+  }
+}
+
+#[derive(Clone)]
+struct Events {
+  channel: Channel<DetectionEvent>,
+  stop: Arc<AtomicBool>,
+}
+
+impl Events {
+  fn send(&self, event: DetectionEvent) {
+    if self.channel.send(event).is_err() {
+      self.stop.store(true, Ordering::Relaxed);
+    }
+  }
+}
+
+fn send_status(
+  events: &Events,
+  state: DetectionState,
+  message: Option<String>,
+  execution_provider: Option<ExecutionProvider>,
+) {
+  events.send(DetectionEvent::Status {
+    state,
+    message,
+    execution_provider,
+  });
+}
+
+fn run(
+  options: &DetectionOptions,
+  settings: &LiveSettings,
+  stop: &Arc<AtomicBool>,
+  events: &Events,
+) {
+  send_status(events, DetectionState::Loading, None, None);
+  let loaded = library::model_path(&options.model_id)
+    .and_then(|path| DetectionModel::load(&path, options.execution_provider));
+  let (model, provider) = match loaded {
+    Ok(loaded) => loaded,
+    Err(error) => {
+      log_warn!("Failed to load detection model: {error}");
+      send_status(events, DetectionState::Error, Some(error), None);
+      return;
+    },
+  };
+
+  if stop.load(Ordering::Relaxed) {
+    return;
+  }
+  let latest = Arc::new(LatestFrame::default());
+  let reader = {
+    let url = options.stream_url.clone();
+    let stop = Arc::clone(stop);
+    let latest = Arc::clone(&latest);
+    let events = events.clone();
+    let last_state = Mutex::new(None);
+    std::thread::Builder::new().name("detection-stream".to_string()).spawn(move || {
+      stream::run(&url, &stop, &latest, &|state, message| {
+        let changed = last_state.lock().map_or(true, |mut last| last.replace(state) != Some(state));
+        if !changed && message.is_none() {
+          return;
+        }
+        let state = match state {
+          StreamState::Connecting => DetectionState::Connecting,
+          StreamState::Receiving => DetectionState::Running,
+        };
+        send_status(&events, state, message, Some(provider));
+      });
+    })
+  };
+  let reader = match reader {
+    Ok(reader) => reader,
+    Err(error) => {
+      send_status(events, DetectionState::Error, Some(error.to_string()), Some(provider));
+      return;
+    },
+  };
+
+  infer(model, provider, settings, stop, &latest, events);
+  stop.store(true, Ordering::Relaxed);
+  let _ = reader.join();
+}
+
+/// Converts decoded frames to RGB at the letterboxed size, rebuilt whenever
+/// the stream's format or resolution changes.
+struct Scaler {
+  context: ffmpeg::software::scaling::Context,
+  key: (ffmpeg::format::Pixel, u32, u32),
+  output: ffmpeg::frame::Video,
+}
+
+impl Scaler {
+  /// # Errors
+  /// Returns an error if FFmpeg cannot convert the frame's pixel format.
+  fn convert<'a>(
+    scaler: &'a mut Option<Self>,
+    frame: &ffmpeg::frame::Video,
+    (scaled_width, scaled_height): (u32, u32),
+  ) -> Result<&'a ffmpeg::frame::Video, String> {
+    let key = (frame.format(), frame.width(), frame.height());
+    if scaler.as_ref().is_none_or(|scaler| scaler.key != key) {
+      let context = ffmpeg::software::scaling::Context::get(
+        frame.format(),
+        frame.width(),
+        frame.height(),
+        ffmpeg::format::Pixel::RGB24,
+        scaled_width,
+        scaled_height,
+        ffmpeg::software::scaling::Flags::BILINEAR,
+      )
+      .map_err(|error| format!("Unsupported video format: {error}"))?;
+      *scaler = Some(Self {
+        context,
+        key,
+        output: ffmpeg::frame::Video::empty(),
+      });
+    }
+    let scaler = scaler.as_mut().ok_or("Scaler missing")?;
+    scaler
+      .context
+      .run(frame, &mut scaler.output)
+      .map_err(|error| format!("Could not convert the frame: {error}"))?;
+    Ok(&scaler.output)
+  }
+}
+
+#[derive(Default)]
+struct Stats {
+  frames: u32,
+  inference: Duration,
+  latency: Duration,
+  since: Option<Instant>,
+}
+
+impl Stats {
+  fn record(&mut self, inference: Duration, latency: Duration, events: &Events) {
+    let since = *self.since.get_or_insert_with(Instant::now);
+    self.frames += 1;
+    self.inference += inference;
+    self.latency += latency;
+    let elapsed = since.elapsed();
+    if elapsed < STATS_INTERVAL {
+      return;
+    }
+    let frames = self.frames as f32;
+    events.send(DetectionEvent::Stats {
+      inference_fps: frames / elapsed.as_secs_f32(),
+      inference_ms: self.inference.as_secs_f32() * 1000.0 / frames,
+      latency_ms: self.latency.as_secs_f32() * 1000.0 / frames,
+    });
+    *self = Self {
+      since: Some(Instant::now()),
+      ..Self::default()
+    };
+  }
+}
+
+fn infer(
+  mut model: DetectionModel,
+  provider: ExecutionProvider,
+  settings: &LiveSettings,
+  stop: &AtomicBool,
+  latest: &LatestFrame,
+  events: &Events,
+) {
+  let mut tracker = settings.lock().unwrap_or_else(std::sync::PoisonError::into_inner).tracker();
+  let classes = model.description().classes.clone();
+  let (input_width, input_height) =
+    (model.description().input_width, model.description().input_height);
+  let layout = model.layout();
+  let mut scaler: Option<Scaler> = None;
+  let mut stats = Stats::default();
+  let mut diagnostics = Diagnostics::default();
+  let mut last_error: Option<String> = None;
+
+  while !stop.load(Ordering::Relaxed) {
+    let Some(decoded) = latest.take(Duration::from_millis(200)) else {
+      continue;
+    };
+    let queue = decoded.decoded_at.elapsed();
+    let started = Instant::now();
+    let frame = &decoded.frame;
+    let (width, height) = (frame.width(), frame.height());
+    if width == 0 || height == 0 {
+      continue;
+    }
+    let letterbox = Letterbox::fit(width, height, input_width, input_height);
+    let (scaled_width, scaled_height) = letterbox.scaled_size();
+
+    let mut frame_settings = None;
+    let mut conversion = Duration::ZERO;
+    let output =
+      Scaler::convert(&mut scaler, frame, (scaled_width, scaled_height)).and_then(|rgb| {
+        conversion = started.elapsed();
+        #[allow(clippy::cast_sign_loss)] // Padding is never negative.
+        let padding = (letterbox.pad_x as u32, letterbox.pad_y as u32);
+        model
+          .run_with(
+            rgb.data(0),
+            rgb.stride(0),
+            scaled_width,
+            scaled_height,
+            padding.0,
+            padding.1,
+            |output| {
+              let settings = settings.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+              tracker.configure(settings.confidence_threshold, settings.class_ids.as_deref());
+              let found = decode(output, layout, &letterbox, &settings.decoder());
+              frame_settings = Some(settings);
+              found
+            },
+          )
+          .map_err(|error| format!("Inference failed: {error}"))
+      });
+    let output = match output {
+      Ok(output) => output,
+      Err(error) => {
+        report_once(&mut last_error, events, error);
+        continue;
+      },
+    };
+    if last_error.take().is_some() {
+      send_status(events, DetectionState::Running, None, Some(provider));
+    }
+
+    let found = output;
+    let tracking = Instant::now();
+    let detections = tracker
+      .update(&found)
+      .into_iter()
+      .map(|tracked| {
+        let [x1, y1, x2, y2] = tracked.detection.corners;
+        let class_id = tracked.detection.class_id;
+        Detection {
+          track_id: tracked.track_id,
+          class_id,
+          label: classes
+            .get(class_id as usize)
+            .cloned()
+            .unwrap_or_else(|| format!("Class {class_id}")),
+          confidence: tracked.detection.confidence,
+          left: x1,
+          top: y1,
+          width: x2 - x1,
+          height: y2 - y1,
+        }
+      })
+      .collect();
+
+    let mut timings = model.timings();
+    timings.preprocessing += conversion;
+    diagnostics.record(queue, timings, tracking.elapsed());
+    let captured_at = decoded
+      .captured_at
+      .duration_since(UNIX_EPOCH)
+      .map_or(0.0, |elapsed| elapsed.as_secs_f64() * 1000.0);
+    events.send(DetectionEvent::Detections {
+      captured_at,
+      frame_width: width,
+      frame_height: height,
+      detections,
+    });
+    // Publish old-settings results before acknowledging a newer update.
+    drop(frame_settings);
+    stats.record(started.elapsed(), decoded.decoded_at.elapsed(), events);
+  }
+}
+
+/// Reports a per-frame error once instead of on every frame.
+fn report_once(last_error: &mut Option<String>, events: &Events, message: String) {
+  if last_error.as_deref() == Some(message.as_str()) {
+    return;
+  }
+  log_warn!("Detection: {message}");
+  events.send(DetectionEvent::Status {
+    state: DetectionState::Error,
+    message: Some(message.clone()),
+    execution_provider: None,
+  });
+  *last_error = Some(message);
+}
+
+#[cfg(test)]
+mod tests {
+  #![allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
+
+  use super::*;
+
+  #[test]
+  #[ignore = "Requires MANA_FISH_TEST_MODELS and MANA_FISH_TEST_IMAGE (Ultralytics bus.jpg)"]
+  fn general_catalog_models_detect_and_track_objects_in_a_decoded_image() -> Result<(), String> {
+    let models = std::env::var("MANA_FISH_TEST_MODELS").map_err(|error| error.to_string())?;
+    let frame = test_image()?;
+    for entry in super::super::catalog::list()? {
+      if entry.experimental {
+        continue;
+      }
+      let asset = entry.asset.ok_or("No model asset")?;
+      let path = std::path::Path::new(&models).join(asset.file_name);
+      let (mut model, provider) = DetectionModel::load(&path, ExecutionProviderPreference::Cpu)?;
+      assert_eq!(provider, ExecutionProvider::Cpu);
+      let description = model.description();
+      let letterbox = Letterbox::fit(
+        frame.width(),
+        frame.height(),
+        description.input_width,
+        description.input_height,
+      );
+      let (width, height) = letterbox.scaled_size();
+      let mut scaler = None;
+      let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+      #[allow(clippy::cast_sign_loss)]
+      let output = model.run(
+        rgb.data(0),
+        rgb.stride(0),
+        width,
+        height,
+        letterbox.pad_x as u32,
+        letterbox.pad_y as u32,
+      )?;
+      let found = decode(
+        &output,
+        model.layout(),
+        &letterbox,
+        &DecodeOptions {
+          min_confidence: 0.4,
+          iou_threshold: IOU_THRESHOLD,
+          max_detections: MAX_DETECTIONS,
+          classes: None,
+        },
+      );
+      for label in ["person", "bus"] {
+        assert!(
+          found
+            .iter()
+            .any(|item| model.description().classes[item.class_id as usize] == label),
+          "{} did not detect {label}",
+          entry.id
+        );
+      }
+      for detection in &found {
+        assert!(
+          detection
+            .corners
+            .iter()
+            .all(|value| value.is_finite() && (0.0..=1.0).contains(value))
+        );
+      }
+      let mut tracker = Tracker::new(TrackerOptions {
+        high_confidence: 0.4,
+        match_iou: 0.2,
+        low_match_iou: 0.5,
+        max_missed_frames: 30,
+        min_hits: 2,
+      });
+      assert_eq!(tracker.update(&found).len(), 0);
+      let confirmed = tracker.update(&found);
+      assert_eq!(confirmed.len(), found.len(), "{} confirmed tracks", entry.id);
+      assert_eq!(
+        tracker.update(&found).iter().map(|item| item.track_id).collect::<Vec<_>>(),
+        confirmed.iter().map(|item| item.track_id).collect::<Vec<_>>()
+      );
+    }
+    Ok(())
+  }
+
+  fn test_image() -> Result<ffmpeg::frame::Video, String> {
+    let image = std::env::var("MANA_FISH_TEST_IMAGE").map_err(|error| error.to_string())?;
+    ffmpeg::init().map_err(|error| error.to_string())?;
+    let mut input = ffmpeg::format::input(&image).map_err(|error| error.to_string())?;
+    let stream = input.streams().best(ffmpeg::media::Type::Video).ok_or("No image stream")?;
+    let stream_index = stream.index();
+    let mut decoder = ffmpeg::codec::context::Context::from_parameters(stream.parameters())
+      .and_then(|context| context.decoder().video())
+      .map_err(|error| error.to_string())?;
+    let mut frame = ffmpeg::frame::Video::empty();
+    for (stream, packet) in input.packets() {
+      if stream.index() == stream_index {
+        decoder.send_packet(&packet).map_err(|error| error.to_string())?;
+        if decoder.receive_frame(&mut frame).is_ok() {
+          break;
+        }
+      }
+    }
+    assert!(frame.width() > 0 && frame.height() > 0, "Image did not decode");
+    Ok(frame)
+  }
+
+  #[test]
+  #[ignore = "Requires MANA_FISH_TEST_MODELS, MANA_FISH_TEST_IMAGE, MANA_FISH_TEST_PROVIDER and GPU runtimes"]
+  #[allow(
+    clippy::too_many_lines,
+    reason = "Real-model tensor, decoded detection and color-path parity in one fixture"
+  )]
+  fn catalog_models_match_cpu_on_requested_gpu() -> Result<(), String> {
+    use super::super::postprocess::OutputLayout;
+    let models = std::env::var("MANA_FISH_TEST_MODELS").map_err(|error| error.to_string())?;
+    let preference: ExecutionProviderPreference = serde_json::from_str(
+      &serde_json::to_string(
+        &std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|error| error.to_string())?,
+      )
+      .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    assert!(!matches!(
+      preference,
+      ExecutionProviderPreference::Auto | ExecutionProviderPreference::Cpu
+    ));
+    let frame = test_image()?;
+    for entry in super::super::catalog::list()? {
+      let asset = entry.asset.ok_or("No model asset")?;
+      let path = std::path::Path::new(&models).join(asset.file_name);
+      let (mut cpu, _) = DetectionModel::load(&path, ExecutionProviderPreference::Cpu)?;
+      let (mut gpu, provider) = DetectionModel::load(&path, preference)?;
+      assert_ne!(provider, ExecutionProvider::Cpu);
+      let description = cpu.description().clone();
+      let letterbox = Letterbox::fit(
+        frame.width(),
+        frame.height(),
+        description.input_width,
+        description.input_height,
+      );
+      let (width, height) = letterbox.scaled_size();
+      let mut scaler = None;
+      let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+      #[allow(clippy::cast_sign_loss)]
+      let run = |model: &mut DetectionModel| {
+        model.run(
+          rgb.data(0),
+          rgb.stride(0),
+          width,
+          height,
+          letterbox.pad_x as u32,
+          letterbox.pad_y as u32,
+        )
+      };
+      let reference = run(&mut cpu)?;
+      let mut rgba =
+        vec![114_u8; description.input_width as usize * description.input_height as usize * 4];
+      #[allow(clippy::cast_sign_loss)]
+      for row in 0..height as usize {
+        for column in 0..width as usize {
+          let source = row * rgb.stride(0) + column * 3;
+          let target = ((row + letterbox.pad_y as usize) * description.input_width as usize
+            + column
+            + letterbox.pad_x as usize)
+            * 4;
+          rgba[target..target + 3].copy_from_slice(&rgb.data(0)[source..source + 3]);
+        }
+      }
+      let direct = gpu.run_rgba_with(&rgba, <[f32]>::to_vec)?;
+      let via_rgb = run(&mut gpu)?;
+      assert!(
+        direct.iter().zip(&via_rgb).all(|(a, b)| (a - b).abs() < 0.0001),
+        "{} RGBA differs from RGB",
+        entry.id
+      );
+      for _ in 0..2 {
+        let actual = run(&mut gpu)?;
+        assert_eq!(actual.len(), reference.len(), "{} output length", entry.id);
+        assert!(actual.iter().all(|value| value.is_finite()), "{} finite output", entry.id);
+        // End-to-end models reorder top-k rows when nearly tied low scores
+        // differ. Compare their decoded detections instead of raw row order.
+        if !matches!(cpu.layout(), OutputLayout::EndToEnd { .. }) {
+          assert!(
+            reference
+              .iter()
+              .zip(&actual)
+              .all(|(a, b)| (a - b).abs() <= 0.05 + 0.001 * a.abs()),
+            "{} raw output disagrees with CPU",
+            entry.id
+          );
+        }
+        let options = DecodeOptions {
+          min_confidence: 0.25,
+          iou_threshold: IOU_THRESHOLD,
+          max_detections: MAX_DETECTIONS,
+          classes: None,
+        };
+        let expected = decode(&reference, cpu.layout(), &letterbox, &options);
+        let found = decode(&actual, gpu.layout(), &letterbox, &options);
+        assert_eq!(found.len(), expected.len(), "{} detection count", entry.id);
+        for item in &expected {
+          assert!(
+            found.iter().any(|other| item.class_id == other.class_id
+              && (item.confidence - other.confidence).abs() < 0.015
+              && item.corners.iter().zip(other.corners).all(|(a, b)| (a - b).abs() < 0.005)),
+            "{} detection disagrees with CPU: {item:?}",
+            entry.id
+          );
+        }
+        if !entry.experimental {
+          for label in ["person", "bus"] {
+            assert!(
+              found
+                .iter()
+                .any(|item| gpu.description().classes[item.class_id as usize] == label),
+              "{} did not detect {label}",
+              entry.id
+            );
+          }
+        }
+      }
+      eprintln!("{}: {provider:?} agrees with CPU on two real-image runs", entry.id);
+    }
+    Ok(())
+  }
+
+  #[test]
+  #[ignore = "Opt-in benchmark: MANA_FISH_TEST_MODELS, MANA_FISH_TEST_IMAGE, MANA_FISH_TEST_PROVIDER"]
+  fn benchmark_catalog_stage_latency() -> Result<(), String> {
+    let directory =
+      std::path::PathBuf::from(std::env::var("MANA_FISH_TEST_MODELS").map_err(|e| e.to_string())?);
+    let preference: ExecutionProviderPreference =
+      serde_json::from_value(serde_json::Value::String(
+        std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|e| e.to_string())?,
+      ))
+      .map_err(|e| e.to_string())?;
+    let frame = test_image()?;
+    for entry in super::super::catalog::list()? {
+      let path = directory.join(entry.asset.ok_or("Missing model asset")?.file_name);
+      let mut loads = Vec::new();
+      let mut warm = None;
+      // MIGraphX has no usable per-session cache API in the staged core. One
+      // load still measures startup plus warm executions without repeating
+      // minutes of compilation. CPU/CUDA also measure a second session load.
+      let load_count = if preference == ExecutionProviderPreference::Migraphx {
+        1
+      } else {
+        2
+      };
+      for _ in 0..load_count {
+        drop(warm.take());
+        let started = Instant::now();
+        let (model, provider) = DetectionModel::load(&path, preference)?;
+        if preference != ExecutionProviderPreference::Cpu {
+          assert_ne!(provider, ExecutionProvider::Cpu);
+        }
+        loads.push(started.elapsed().as_secs_f64() * 1000.0);
+        warm = Some(model);
+      }
+      let mut model = warm.ok_or("Missing benchmark session")?;
+      let (iw, ih) = (model.description().input_width, model.description().input_height);
+      let layout = model.layout();
+      let letterbox = Letterbox::fit(frame.width(), frame.height(), iw, ih);
+      let (width, height) = letterbox.scaled_size();
+      let mut scaler = None;
+      let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+      let settings = DetectionSettings {
+        confidence_threshold: 0.25,
+        class_ids: None,
+      };
+      let mut tracker = settings.tracker();
+      let mut stages = [Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+      // Warmups are included in startup above; report 24 sustained executions.
+      for _ in 0..24 {
+        let started = Instant::now();
+        #[allow(clippy::cast_sign_loss)]
+        let found = model.run_with(
+          rgb.data(0),
+          rgb.stride(0),
+          width,
+          height,
+          letterbox.pad_x as u32,
+          letterbox.pad_y as u32,
+          |output| decode(output, layout, &letterbox, &settings.decoder()),
+        )?;
+        let tracking = Instant::now();
+        std::hint::black_box(tracker.update(&found));
+        let tracking_ms = tracking.elapsed().as_secs_f64() * 1000.0;
+        let timings = model.timings();
+        for (samples, value) in stages.iter_mut().zip([
+          timings.preprocessing.as_secs_f64() * 1000.0,
+          timings.inference.as_secs_f64() * 1000.0,
+          timings.decode.as_secs_f64() * 1000.0,
+          tracking_ms,
+          started.elapsed().as_secs_f64() * 1000.0,
+        ]) {
+          samples.push(value);
+        }
+      }
+      let mut summary = serde_json::Map::new();
+      for (name, samples) in ["preprocessing", "ort", "decode", "tracking", "total"]
+        .into_iter()
+        .zip(&mut stages)
+      {
+        samples.sort_by(f64::total_cmp);
+        summary.insert(name.into(), serde_json::json!({"p50_ms": samples[12], "p95_ms": samples[22], "mean_ms": samples.iter().sum::<f64>() / samples.len() as f64}));
+      }
+      eprintln!(
+        "BENCHMARK {}",
+        serde_json::json!({"model":entry.id,"provider":preference,"session_load_ms":loads,"frames":24,"stages":summary,"input":[iw,ih],"profile":if cfg!(debug_assertions){"debug"}else{"release"}})
+      );
+    }
+    Ok(())
+  }
+
+  #[test]
+  #[ignore = "Opt-in 60-second execution test: model/image/provider environment as stage benchmark"]
+  fn benchmark_sustained_model_execution() -> Result<(), String> {
+    let directory =
+      std::path::PathBuf::from(std::env::var("MANA_FISH_TEST_MODELS").map_err(|e| e.to_string())?);
+    let id = std::env::var("MANA_FISH_TEST_MODEL").unwrap_or_else(|_| "yolo26n".into());
+    let entry = super::super::catalog::list()?
+      .into_iter()
+      .find(|entry| entry.id == id)
+      .ok_or("Unknown benchmark model")?;
+    let preference: ExecutionProviderPreference =
+      serde_json::from_value(serde_json::Value::String(
+        std::env::var("MANA_FISH_TEST_PROVIDER").map_err(|e| e.to_string())?,
+      ))
+      .map_err(|e| e.to_string())?;
+    let loaded = Instant::now();
+    let (mut model, provider) = DetectionModel::load(
+      &directory.join(entry.asset.ok_or("No model asset")?.file_name),
+      preference,
+    )?;
+    let load_ms = loaded.elapsed().as_secs_f64() * 1000.0;
+    if preference != ExecutionProviderPreference::Cpu {
+      assert_ne!(provider, ExecutionProvider::Cpu);
+    }
+    let frame = test_image()?;
+    let letterbox = Letterbox::fit(
+      frame.width(),
+      frame.height(),
+      model.description().input_width,
+      model.description().input_height,
+    );
+    let (width, height) = letterbox.scaled_size();
+    let layout = model.layout();
+    let settings = DetectionSettings {
+      confidence_threshold: 0.25,
+      class_ids: None,
+    };
+    let mut tracker = settings.tracker();
+    let mut scaler = None;
+    let rgb = Scaler::convert(&mut scaler, &frame, (width, height))?;
+    let mut expected: Option<Vec<super::super::postprocess::RawDetection>> = None;
+    let mut samples = Vec::new();
+    let rss = || {
+      std::fs::read_to_string("/proc/self/status").ok().and_then(|text| {
+        text
+          .lines()
+          .find(|line| line.starts_with("VmRSS:"))
+          .and_then(|line| line.split_whitespace().nth(1))
+          .and_then(|value| value.parse::<u64>().ok())
+      })
+    };
+    let initial_rss = rss();
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(60) || samples.len() < 24 {
+      let frame_started = Instant::now();
+      #[allow(clippy::cast_sign_loss)]
+      let found = model.run_with(
+        rgb.data(0),
+        rgb.stride(0),
+        width,
+        height,
+        letterbox.pad_x as u32,
+        letterbox.pad_y as u32,
+        |output| decode(output, layout, &letterbox, &settings.decoder()),
+      )?;
+      if let Some(expected) = &expected {
+        assert_eq!(found.len(), expected.len());
+        for item in expected {
+          assert!(
+            found.iter().any(|other| item.class_id == other.class_id
+              && (item.confidence - other.confidence).abs() < 0.01
+              && item.corners.iter().zip(other.corners).all(|(a, b)| (a - b).abs() < 0.005)),
+            "Sustained output drift for {id}"
+          );
+        }
+      } else {
+        if !entry.experimental {
+          for label in ["person", "bus"] {
+            assert!(
+              found
+                .iter()
+                .any(|item| model.description().classes[item.class_id as usize] == label)
+            );
+          }
+        }
+        expected = Some(found.clone());
+      }
+      std::hint::black_box(tracker.update(&found));
+      samples.push(frame_started.elapsed().as_secs_f64() * 1000.0);
+    }
+    let elapsed = started.elapsed().as_secs_f64();
+    samples.sort_by(f64::total_cmp);
+    eprintln!(
+      "SUSTAINED_BENCHMARK {}",
+      serde_json::json!({"model":id,"provider":preference,"frames":samples.len(),"duration_s":elapsed,"fps":samples.len() as f64/elapsed,"frame_work_p50_ms":samples[samples.len()/2],"frame_work_p95_ms":samples[(samples.len()*95/100).min(samples.len()-1)],"session_load_ms":load_ms,"rss_before_kib":initial_rss,"rss_after_kib":rss(),"output_stable":true})
+    );
+    Ok(())
+  }
+
+  #[test]
+  fn failed_channel_send_stops_the_worker() {
+    let stop = Arc::new(AtomicBool::new(false));
+    let events = Events {
+      channel: Channel::new(|_| Err(std::io::Error::other("closed webview").into())),
+      stop: Arc::clone(&stop),
+    };
+    send_status(&events, DetectionState::Running, None, None);
+    assert!(stop.load(Ordering::Relaxed));
+  }
+
+  #[test]
+  fn stopping_waits_until_the_worker_releases_its_resources() {
+    let stop = Arc::new(AtomicBool::new(false));
+    let released = Arc::new(AtomicBool::new(false));
+    let thread = {
+      let stop = Arc::clone(&stop);
+      let released = Arc::clone(&released);
+      std::thread::spawn(move || {
+        while !stop.load(Ordering::Relaxed) {
+          std::thread::yield_now();
+        }
+        released.store(true, Ordering::Relaxed);
+      })
+    };
+    DetectionRunner {
+      model_id: "test".to_string(),
+      run_id: 1,
+      settings: Arc::new(Mutex::new(DetectionSettings {
+        confidence_threshold: 0.4,
+        class_ids: None,
+      })),
+      stop,
+      thread: Some(thread),
+    }
+    .stop_and_wait();
+    assert!(released.load(Ordering::Relaxed));
+  }
+}

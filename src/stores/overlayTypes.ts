@@ -63,8 +63,6 @@ export type OverlayAnchor = (typeof OverlayAnchor)[keyof typeof OverlayAnchor];
  * a stored layout.
  */
 export type OverlayWidgetOptions = {
-  /** Legacy glow preference, converted into a standalone work widget. */
-  workIndicator?: boolean;
   sourceId?: string;
   sourceKind?: 'reading' | 'action';
   label?: string;
@@ -87,7 +85,7 @@ export type OverlayWidgetOptions = {
 export type OverlayWidget = {
   /** Stable instance id, so the same type can be placed more than once. */
   id: string;
-  type: OverlayWidgetType | 'stabilization' | 'depth' | 'temperature' | 'battery' | 'thrusterRpm';
+  type: OverlayWidgetType;
   /** 1-based grid anchor cell. */
   column: number;
   row: number;

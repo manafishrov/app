@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createSignal, onCleanup, onMount, type JSXElement } from 'solid-js';
 
+import { DetectionOverlay } from '@/features/detection/DetectionOverlay';
 import { MobileToolbar } from '@/features/header/MobileToolbar';
 import { Overlay } from '@/features/overlay';
 import { TouchControls } from '@/features/touchControls';
@@ -120,6 +121,9 @@ const HomePage = (): JSXElement => {
     >
       <CameraFrame class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-sm'>
         <VideoStream />
+        <Show when={!isMobile}>
+          <DetectionOverlay />
+        </Show>
         <Overlay />
       </CameraFrame>
       <Show when={isMobile}>

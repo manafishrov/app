@@ -1,4 +1,4 @@
-"""Release identities stay strict when uv normalizes release candidates."""
+"""Release identities must match the tag exactly in every embedded file."""
 
 import contextlib
 import importlib.util
@@ -20,8 +20,6 @@ PATHS = (
     "src-tauri/Cargo.lock",
     "src-tauri/tauri.conf.json",
     "src-tauri/com.manafishrov.manafish.metainfo.xml",
-    "src-yolo/pyproject.toml",
-    "src-yolo/uv.lock",
 )
 VERSION = "1.0.18-rc.1"
 
@@ -41,7 +39,7 @@ class ReleaseVersionTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 2)
         return errors.getvalue()
 
-    def test_exact_identity_in_all_six_files(self):
+    def test_exact_identity_in_all_files(self):
         for version in ("1.0.18", VERSION, "1.0.18-rc.12", "1.0.18-rc.1+build.4"):
             for prefix in ("", "v"):
                 with self.subTest(version=version, prefix=prefix):
@@ -49,15 +47,8 @@ class ReleaseVersionTests(unittest.TestCase):
                         self.validate(prefix + version, dict.fromkeys(PATHS, version)), 0
                     )
 
-    def test_uv_generated_rc_spelling_is_accepted(self):
-        for number in (1, 12):
-            version = f"1.0.18-rc.{number}"
-            versions = dict.fromkeys(PATHS, version)
-            versions["src-yolo/uv.lock"] = f"1.0.18rc{number}"
-            self.assertEqual(self.validate("v" + version, versions), 0)
-
-    def test_normalization_is_not_allowed_in_other_metadata(self):
-        for path in PATHS[:-1]:
+    def test_normalized_spellings_are_rejected(self):
+        for path in PATHS:
             with self.subTest(path=path):
                 versions = dict.fromkeys(PATHS, VERSION)
                 versions[path] = "1.0.18rc1"
@@ -70,20 +61,6 @@ class ReleaseVersionTests(unittest.TestCase):
                     versions = dict.fromkeys(PATHS, VERSION)
                     versions[path] = wrong
                     self.assertIn(path, self.assert_rejected(VERSION, versions))
-
-    def test_uv_mismatches_and_lossy_normalizations_are_rejected(self):
-        for wrong in (
-            "1.0.17rc1", "1.0.18rc2", "1.0.18rc01", "1.0.18a1", "1.0.18b1",
-            "1.0.18rc1.dev1", "1.0.18rc1.post1", "1.0.18rc1+build.4",
-            "1.0.18rc1\n", "1!1.0.18rc1", "1.0.18",
-        ):
-            with self.subTest(wrong=wrong):
-                versions = dict.fromkeys(PATHS, VERSION)
-                versions["src-yolo/uv.lock"] = wrong
-                self.assertIn("src-yolo/uv.lock", self.assert_rejected(VERSION, versions))
-        versions = dict.fromkeys(PATHS, VERSION + "+build.4")
-        versions["src-yolo/uv.lock"] = "1.0.18rc1"
-        self.assert_rejected(VERSION + "+build.4", versions)
 
     def test_noncanonical_tags_remain_rejected(self):
         for tag in ("1.0.18rc1", "1.0.18-rc.01", "1.0.18-rc1", "1.0.18-rc.0"):

@@ -17,6 +17,10 @@
     "externalBin": null,
     "android": {
       "minSdkVersion": 29
-    }
+    },
+    "resources": [
+      "licenses/onnxruntime",
+      "../LICENSE"
+    ]
   }
 }

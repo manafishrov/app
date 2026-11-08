@@ -73,7 +73,7 @@
       default = pkgs.mkShell {
         nativeBuildInputs =
           [pkgs.pkg-config]
-          ++ pkgs.lib.optionals isLinux [pkgs.wrapGAppsHook3];
+          ++ pkgs.lib.optionals isLinux [pkgs.wrapGAppsHook3 pkgs.patchelf];
         buildInputs =
           (with pkgs; [
             rustToolchain
@@ -94,7 +94,8 @@
         );
         env =
           pkgs.lib.optionalAttrs isLinux {
-            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg] ++ linuxLibs);
+            # ONNX Runtime, used for object detection, is C++ and links libstdc++.
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([pkgs.ffmpeg pkgs.stdenv.cc.cc.lib] ++ linuxLibs);
             GST_PLUGIN_SYSTEM_PATH_1_0 = gstPluginPath;
           };
       };
@@ -154,6 +155,9 @@
           ANDROID_SDK_ROOT = androidSdk;
           NDK_HOME = "${androidSdk}/ndk/28.2.13676358";
           JAVA_HOME = pkgs.jdk17.home;
+          # Inherited desktop libraries can override the JDK's glibc on NixOS.
+          # Mobile host tools carry their own runtime search paths.
+          LD_LIBRARY_PATH = "";
           # Gradle's bundled aapt2 is dynamically linked against a glibc
           # nixpkgs does not provide; use the SDK's patched one instead.
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/build-tools/36.0.0/aapt2";

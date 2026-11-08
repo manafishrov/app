@@ -23,8 +23,6 @@ import {
   type OverlayWidget,
 } from './overlayTypes';
 
-const [undef] = [] as undefined[];
-
 const widget = (overrides: Partial<OverlayWidget> = {}): OverlayWidget => ({
   id: 'battery',
   type: OverlayWidgetType.batteryLevel,
@@ -106,10 +104,10 @@ describe('resizeWidget and updateWidget', () => {
 
   it('patches options without touching placement', () => {
     const updated = updateWidget(layout([widget()]), 'battery', {
-      options: { workIndicator: true },
+      options: { label: 'Dive battery' },
     });
 
-    expect(updated.widgets[0]).toMatchObject({ options: { workIndicator: true }, column: 1 });
+    expect(updated.widgets[0]).toMatchObject({ options: { label: 'Dive battery' }, column: 1 });
   });
 });
 
@@ -179,46 +177,10 @@ describe('normaliseLayout', () => {
     expect(normaliseLayout(current)).toEqual(current);
   });
 
-  it('rescales a layout authored against a coarser grid', () => {
-    const coarse: OverlayLayout = {
-      ...layout([widget({ column: 4, row: 4, columnSpan: 2, rowSpan: 2 })]),
-      columns: 6,
-      rows: 4,
-    };
-
-    const result = normaliseLayout(coarse);
-
-    expect(result).toMatchObject({ columns: OVERLAY_GRID_COLUMNS, rows: OVERLAY_GRID_ROWS });
-
-    // A widget that sat mid-grid still sits mid-grid, and stays inside it.
-    const [placed] = result.widgets;
-    expect(placed).toMatchObject({ column: 33, columnSpan: 16, rowSpan: 4 });
-    expect(placed).toBeDefined();
-    if (placed !== undef) {
-      expect(placed.column + placed.columnSpan - 1).toBeLessThanOrEqual(OVERLAY_GRID_COLUMNS);
-    }
-  });
-
-  it('doubles a layout saved on the previous 32 by 24 grid exactly', () => {
-    const previous: OverlayLayout = {
-      ...layout([
-        widget({ column: 28, row: 24, columnSpan: 5, rowSpan: 1 }),
-        widget({
-          id: 'depth-hold',
-          type: OverlayWidgetType.depthHold,
-          column: 1,
-          row: 13,
-          columnSpan: 2,
-          rowSpan: 2,
-        }),
-      ]),
-      columns: 32,
-      rows: 24,
-    };
-
-    expect(normaliseLayout(previous).widgets).toMatchObject([
-      { id: 'battery', column: 55, row: 47, columnSpan: 10, rowSpan: 2 },
-      { id: 'depth-hold', column: 1, row: 25, columnSpan: 4, rowSpan: 4 },
-    ]);
+  it('fits unsupported sizes and clamps placements inside the current grid', () => {
+    const invalid = layout([widget({ column: 999, row: 999 })]);
+    const result = normaliseLayout(invalid);
+    expect(result.widgets).toMatchObject([{ column: 55, row: 47, columnSpan: 10, rowSpan: 2 }]);
+    expect(normaliseLayout(result)).toEqual(result);
   });
 });

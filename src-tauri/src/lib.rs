@@ -1,6 +1,7 @@
 mod commands;
 #[cfg(desktop)]
 mod constants;
+mod detection;
 mod files;
 #[cfg(desktop)]
 mod firmware;
@@ -42,6 +43,11 @@ use commands::{
   save_recording, save_text_file, send_direction_vector, set_config, set_rov_config, stage_config,
   start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
+use commands::{
+  cancel_detection_model_download, delete_detection_model, download_detection_model,
+  import_detection_model, list_detection_catalog, list_detection_execution_providers,
+  list_detection_models, pick_detection_model, start_detection, stop_detection,
+};
 #[cfg(desktop)]
 use commands::{
   cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_app_releases,
@@ -76,6 +82,10 @@ fn setup_handlers(app: &mut App) {
   #[cfg(desktop)]
   app.manage(Arc::new(FlashControl::default()));
   app.manage(websocket::capabilities::CapabilityState::default());
+  #[cfg(mobile)]
+  detection::library::init_models_dir(app.handle());
+  detection::cache::init(app.handle());
+  app.manage(detection::DetectionRuntime::default());
 
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
@@ -308,6 +318,16 @@ fn run_mobile() {
   }
 }
 
+fn setup_app(app: &mut App) {
+  #[cfg(target_os = "linux")]
+  fix_gtk_dpi();
+  #[cfg(mobile)]
+  config::init_config_dir(app.handle());
+  setup_handlers(app);
+  #[cfg(desktop)]
+  spawn_splashscreen_watchdog(app);
+}
+
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
@@ -335,6 +355,19 @@ pub fn run() -> tauri::Result<()> {
       python_editor::send_python_editor,
       #[cfg(desktop)]
       python_editor::stop_python_editor,
+      cancel_detection_model_download,
+      delete_detection_model,
+      download_detection_model,
+      import_detection_model,
+      list_detection_catalog,
+      list_detection_execution_providers,
+      list_detection_models,
+      start_detection,
+      commands::detection::update_detection_settings,
+      stop_detection,
+      pick_detection_model,
+      #[cfg(mobile)]
+      commands::detection::submit_detection_frame,
       request_capability,
       import_custom_action_source,
       save_csv,
@@ -387,17 +420,53 @@ pub fn run() -> tauri::Result<()> {
       describe_video_directory,
     ])
     .setup(|app| {
-      #[cfg(target_os = "linux")]
-      fix_gtk_dpi();
-      #[cfg(mobile)]
-      config::init_config_dir(app.handle());
-      setup_handlers(app);
-      #[cfg(desktop)]
-      spawn_splashscreen_watchdog(app);
+      setup_app(app);
       Ok(())
     });
 
-  builder.build(tauri::generate_context!())?.run(|_app_handle, _event| {});
+  builder.build(tauri::generate_context!())?.run(|app_handle, event| {
+    #[cfg(mobile)]
+    handle_detection_lifecycle(app_handle, &event);
+    #[cfg(desktop)]
+    let _ = (app_handle, event);
+  });
 
   Ok(())
+}
+
+#[cfg(mobile)]
+fn handle_detection_lifecycle(app: &tauri::AppHandle, event: &tauri::RunEvent) {
+  use tauri::{Emitter, RunEvent, WindowEvent};
+  let foreground = match event {
+    RunEvent::WindowEvent {
+      event: WindowEvent::Suspended,
+      ..
+    } => false,
+    RunEvent::WindowEvent {
+      event: WindowEvent::Resumed,
+      ..
+    } => true,
+    _ => return,
+  };
+  let runtime = app.state::<detection::DetectionRuntime>();
+  runtime.suspended.store(!foreground, std::sync::atomic::Ordering::Relaxed);
+  if !foreground {
+    // Signal without blocking the UI, even if another command is joining a worker.
+    if let Ok(runner) = runtime.runner.try_lock()
+      && let Some(runner) = runner.as_ref()
+    {
+      runner.request_stop();
+    }
+    let runners = std::sync::Arc::clone(&runtime.runner);
+    let suspended = std::sync::Arc::clone(&runtime.suspended);
+    tauri::async_runtime::spawn_blocking(move || {
+      if let Ok(mut runner) = runners.lock()
+        && suspended.load(std::sync::atomic::Ordering::Relaxed)
+        && let Some(runner) = runner.take()
+      {
+        runner.stop_and_wait();
+      }
+    });
+  }
+  let _ = app.emit("detection-foreground", foreground);
 }

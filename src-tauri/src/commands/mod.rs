@@ -2,6 +2,7 @@ pub mod app;
 #[cfg(desktop)]
 pub mod app_update;
 pub mod control;
+pub mod detection;
 #[cfg(desktop)]
 pub mod firmware;
 pub mod gamepad;
@@ -15,6 +16,11 @@ pub use app::{
 #[cfg(desktop)]
 pub use app_update::{fetch_app_releases, install_app_release};
 pub use control::{deactivate_direction_vector, send_direction_vector};
+pub use detection::{
+  cancel_detection_model_download, delete_detection_model, download_detection_model,
+  import_detection_model, list_detection_catalog, list_detection_execution_providers,
+  list_detection_models, pick_detection_model, start_detection, stop_detection,
+};
 #[cfg(desktop)]
 pub use firmware::{
   cancel_flash, cleanup_firmware_cache, download_firmware_update, fetch_firmware_manifest,

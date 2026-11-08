@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <!-- Only standard encryption (HTTPS, WebSocket TLS, WebRTC), which is exempt
+       from export compliance, so TestFlight skips the question per build. -->
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
   <!-- Recordings saved to the default location show up in the Files app. -->
   <key>UIFileSharingEnabled</key>
   <true/>

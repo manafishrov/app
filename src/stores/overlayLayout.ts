@@ -14,7 +14,7 @@ import {
   type OverlayWidgetType,
 } from '@/stores/overlayTypes';
 
-import { splitLegacyWidgets } from './overlayMigration';
+import { fitWidgetSize } from './overlayWidgetSizes';
 
 const [undef] = [] as undefined[];
 
@@ -166,32 +166,12 @@ export const replaceLayout = (overlay: OverlayConfig, layout: OverlayLayout): Ov
   layouts: overlay.layouts.map((existing) => (existing.id === layout.id ? layout : existing)),
 });
 
-/**
- * Rescale placements when a layout was authored against a different grid
- * resolution than this build uses, so stored layouts survive a constant change.
- */
+/** Keep placements and display-specific footprints inside the current grid. */
 export const normaliseLayout = (layout: OverlayLayout): OverlayLayout => {
-  const columnRatio = OVERLAY_GRID_COLUMNS / layout.columns;
-  const rowRatio = OVERLAY_GRID_ROWS / layout.rows;
-
-  const rescaled: OverlayLayout = {
-    ...layout,
-    columns: OVERLAY_GRID_COLUMNS,
-    rows: OVERLAY_GRID_ROWS,
-    widgets: layout.widgets.map((widget) => ({
-      ...widget,
-      column: Math.round((widget.column - 1) * columnRatio) + 1,
-      row: Math.round((widget.row - 1) * rowRatio) + 1,
-      columnSpan: Math.max(1, Math.round(widget.columnSpan * columnRatio)),
-      rowSpan: Math.max(1, Math.round(widget.rowSpan * rowRatio)),
-    })),
-  };
-
+  const current = { ...layout, columns: OVERLAY_GRID_COLUMNS, rows: OVERLAY_GRID_ROWS };
   const saved = new Map(
-    rescaled.widgets.map((widget) => [widget.id, clampWidget(widget, rescaled)] as const),
+    layout.widgets.map((widget) => [widget.id, clampWidget(widget, current)] as const),
   );
-  const widgets = splitLegacyWidgets(rescaled.widgets).map((widget) =>
-    clampWidget(widget, rescaled),
-  );
-  return { ...rescaled, widgets: separateRefitWidgets(widgets, saved) };
+  const widgets = layout.widgets.map((widget) => clampWidget(fitWidgetSize(widget), current));
+  return { ...current, widgets: separateRefitWidgets(widgets, saved) };
 };

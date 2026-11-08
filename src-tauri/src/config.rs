@@ -101,8 +101,7 @@ fn migrate_overlay(object: &mut serde_json::Map<String, serde_json::Value>) {
   widgets.retain(|widget| match widget.widget_type {
     OverlayWidgetType::AttitudeScientific => attitude_type.is_some(),
     // The RPM overlay used to be off by default and opt-in.
-    OverlayWidgetType::ThrusterRpm
-    | OverlayWidgetType::ThrusterRpm1
+    OverlayWidgetType::ThrusterRpm1
     | OverlayWidgetType::ThrusterRpm2
     | OverlayWidgetType::ThrusterRpm3
     | OverlayWidgetType::ThrusterRpm4
@@ -151,24 +150,17 @@ fn migrate_custom_action_bindings(object: &mut serde_json::Map<String, serde_jso
   });
 }
 
-fn apply_migrations(raw: serde_json::Value) -> serde_json::Value {
-  let stored_version = raw.get("appVersion").and_then(|v| v.as_str()).unwrap_or("0.0.0");
-
-  let _ = stored_version;
-
-  let mut raw = raw;
-  if let Some(object) = raw.as_object_mut()
-    && let Some(value) = object.remove("checkForUpdatesOnStartup")
-  {
-    object.insert("checkForAppUpdatesOnStartup".to_string(), value);
-  }
-
+/// Upgrade stable settings directly, without intermediate release-candidate layouts.
+fn apply_migrations(mut raw: serde_json::Value) -> serde_json::Value {
   if let Some(object) = raw.as_object_mut() {
+    // This update-key cleanup already shipped before v1.0.18.
+    if let Some(value) = object.remove("checkForUpdatesOnStartup") {
+      object.insert("checkForAppUpdatesOnStartup".to_string(), value);
+    }
     object.remove("checkForFirmwareUpdatesOnConnect");
     migrate_overlay(object);
     migrate_custom_action_bindings(object);
   }
-
   raw
 }
 
@@ -317,23 +309,10 @@ mod tests {
   use super::*;
   use serde_json::json;
 
-  fn sample_raw_config() -> serde_json::Value {
-    json!({
-      "appVersion": "99.0.0",
-      "overlayScale": 5,
-      "attitudeIndicator": "scientific",
-      "workIndicator": true,
-      "thrusterRpmOverlay": false,
-      "videoDirectory": "/tmp/manafish",
-        "checkForUpdatesOnStartup": true,
-        "ipAddress": "10.10.10.10",
-        "webrtcSignalingApiPort": 1984,
-        "webrtcSignalingApiPath": "/api/webrtc?src=cam",
-        "webSocketPort": 9000,
-        "keyboard": {},
-        "selectedGamepadId": null,
-        "gamepad": {}
-    })
+  fn sample_raw_config() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    // All persisted fields from v1.0.18, acc7c338f2dfb1d620b0086c1d4123ce0f45aa9e:
+    // src-tauri/src/models/config.rs, with non-default operator preferences.
+    Ok(serde_json::from_str(include_str!("fixtures/config-v1.0.18.json"))?)
   }
 
   /// # Panics
@@ -367,26 +346,99 @@ mod tests {
     }
   }
 
-  /// # Panics
-  /// Panics if migrations split the legacy update toggle incorrectly.
   #[test]
-  fn apply_migrations_splits_legacy_update_toggle() {
-    let raw = sample_raw_config();
+  fn stable_upgrade_preserves_all_retained_settings_and_adds_detection_defaults()
+  -> Result<(), Box<dyn std::error::Error>> {
+    let stable = sample_raw_config()?;
+    let upgraded = apply_migrations(stable.clone());
+    let config: Config = serde_json::from_value(upgraded.clone())?;
+    let saved = serde_json::to_value(config)?;
+    for (key, value) in stable.as_object().ok_or("stable object")? {
+      if matches!(
+        key.as_str(),
+        "overlayScale"
+          | "attitudeIndicator"
+          | "workIndicator"
+          | "thrusterRpmOverlay"
+          | "customActions"
+      ) {
+        continue;
+      }
+      if key == "keyboard" || key == "gamepad" {
+        continue;
+      }
+      assert_eq!(&saved[key], value, "retained stable setting {key}");
+    }
+    assert_eq!(saved["customActions"], json!([]));
+    let mut expected_keyboard = stable["keyboard"].clone();
+    expected_keyboard["objectDetection"] = json!({"key": "KeyV", "minValue": 0.0, "maxValue": 1.0});
+    assert_eq!(saved["keyboard"], expected_keyboard);
+    let mut expected_gamepad = stable["gamepad"].clone();
+    expected_gamepad["dive-controller"]["objectDetection"] = json!(null);
+    assert_eq!(saved["gamepad"], expected_gamepad);
+    assert_eq!(
+      saved["detection"],
+      serde_json::to_value(crate::models::config::DetectionConfig::default())?
+    );
+    assert_eq!(apply_migrations(upgraded.clone()), upgraded);
+    Ok(())
+  }
 
-    let result = apply_migrations(raw);
-
-    assert!(result.get("checkForUpdatesOnStartup").is_none());
-    assert_eq!(result.get("checkForAppUpdatesOnStartup"), Some(&json!(true)));
-    assert_eq!(result.get("checkForFirmwareUpdatesOnConnect"), None);
+  #[test]
+  fn stable_overlay_preferences_migrate_directly_to_current_widgets()
+  -> Result<(), Box<dyn std::error::Error>> {
+    for (style, expected) in [
+      ("scientific", Some(OverlayWidgetType::AttitudeScientific)),
+      ("model3D", Some(OverlayWidgetType::AttitudeModel3D)),
+      ("classic", Some(OverlayWidgetType::AttitudeClassic)),
+      ("disabled", None),
+    ] {
+      for work in [false, true] {
+        for rpm in [false, true] {
+          let mut raw = sample_raw_config()?;
+          raw["attitudeIndicator"] = json!(style);
+          raw["workIndicator"] = json!(work);
+          raw["thrusterRpmOverlay"] = json!(rpm);
+          let config: Config = serde_json::from_value(apply_migrations(raw))?;
+          let widgets = &config.overlay.layouts[0].widgets;
+          assert_eq!(
+            widgets
+              .iter()
+              .filter(|widget| matches!(
+                widget.widget_type,
+                OverlayWidgetType::AttitudeScientific
+                  | OverlayWidgetType::AttitudeModel3D
+                  | OverlayWidgetType::AttitudeClassic
+              ))
+              .count(),
+            usize::from(expected.is_some())
+          );
+          if let Some(expected) = expected {
+            assert!(widgets.iter().any(|widget| widget.widget_type == expected));
+          }
+          assert_eq!(
+            widgets
+              .iter()
+              .any(|widget| widget.widget_type == OverlayWidgetType::WorkIndicator),
+            work
+          );
+          assert_eq!(
+            widgets.iter().filter(|widget| widget.id.starts_with("thruster-rpm-")).count(),
+            if rpm { 8 } else { 0 }
+          );
+        }
+      }
+    }
+    Ok(())
   }
 
   /// # Panics
   /// Panics if the legacy overlay settings are not converted into an
   /// equivalent grid layout.
   #[test]
-  fn apply_migrations_converts_legacy_overlay_settings() {
-    let mut raw = sample_raw_config();
-    let object = raw.as_object_mut().expect("config is an object");
+  fn apply_migrations_converts_legacy_overlay_settings() -> Result<(), Box<dyn std::error::Error>> {
+    let mut raw = sample_raw_config()?;
+    let object = raw.as_object_mut().ok_or("config is an object")?;
     object.insert("attitudeIndicator".to_string(), json!("classic"));
     object.insert("workIndicator".to_string(), json!(true));
     object.insert("thrusterRpmOverlay".to_string(), json!(false));
@@ -399,15 +451,15 @@ mod tests {
     assert!(result.get("workIndicator").is_none());
     assert!(result.get("thrusterRpmOverlay").is_none());
 
-    let overlay = result.get("overlay").expect("overlay was created");
+    let overlay = result.get("overlay").ok_or("overlay was created")?;
     let layout = overlay
       .get("layouts")
       .and_then(|layouts| layouts.get(0))
-      .expect("a layout exists");
+      .ok_or("a layout exists")?;
     let widgets = layout
       .get("widgets")
       .and_then(serde_json::Value::as_array)
-      .expect("layout has widgets");
+      .ok_or("layout has widgets")?;
 
     let types: Vec<&str> = widgets
       .iter()
@@ -428,20 +480,22 @@ mod tests {
     let attitude = widgets
       .iter()
       .find(|widget| widget.get("type") == Some(&json!("attitudeClassic")))
-      .expect("attitude widget exists");
+      .ok_or("attitude widget exists")?;
     assert_eq!(attitude.get("options").and_then(|o| o.get("workIndicator")), None);
 
     // The migrated config round-trips through the strict `Config` type.
     let mut migrated = result;
     migrated["appVersion"] = json!(current_app_version());
     assert!(serde_json::from_value::<Config>(migrated).is_ok());
+    Ok(())
   }
 
   /// # Panics
   /// Panics if module-based bindings survive or capability bindings lose inputs.
   #[test]
-  fn apply_migrations_removes_module_custom_action_bindings() {
-    let mut raw = sample_raw_config();
+  fn apply_migrations_removes_module_custom_action_bindings()
+  -> Result<(), Box<dyn std::error::Error>> {
+    let mut raw = sample_raw_config()?;
     raw["customActions"] = json!([
       {"id": "legacy", "module": "example_action", "trigger": "tap",
         "keyboard": {"key": "KeyE", "minValue": 0, "maxValue": 1}, "gamepad": {}},
@@ -458,14 +512,16 @@ mod tests {
     );
     migrated["appVersion"] = json!(current_app_version());
     assert!(serde_json::from_value::<Config>(migrated).is_ok());
+    Ok(())
   }
 
   #[test]
-  fn migration_keeps_work_disabled_and_splits_enabled_rpms() {
-    let mut raw = sample_raw_config();
+  fn migration_keeps_work_disabled_and_splits_enabled_rpms()
+  -> Result<(), Box<dyn std::error::Error>> {
+    let mut raw = sample_raw_config()?;
     raw["workIndicator"] = json!(false);
     raw["thrusterRpmOverlay"] = json!(true);
-    let config: Config = serde_json::from_value(apply_migrations(raw)).expect("migrated config");
+    let config: Config = serde_json::from_value(apply_migrations(raw))?;
     let widgets = &config.overlay.layouts[0].widgets;
     assert!(
       !widgets
@@ -476,18 +532,16 @@ mod tests {
       widgets.iter().filter(|widget| widget.id.starts_with("thruster-rpm-")).count(),
       8
     );
+    Ok(())
   }
 
   /// # Panics
   /// Panics if a config that already has a layout gets it overwritten.
   #[test]
-  fn apply_migrations_keeps_an_existing_overlay_layout() {
-    let mut raw = sample_raw_config();
-    let object = raw.as_object_mut().expect("config is an object");
-    object.insert(
-      "overlay".to_string(),
-      serde_json::to_value(default_overlay_config()).expect("serialize overlay"),
-    );
+  fn apply_migrations_keeps_an_existing_overlay_layout() -> Result<(), Box<dyn std::error::Error>> {
+    let mut raw = sample_raw_config()?;
+    let object = raw.as_object_mut().ok_or("config is an object")?;
+    object.insert("overlay".to_string(), serde_json::to_value(default_overlay_config())?);
     object.insert("attitudeIndicator".to_string(), json!("disabled"));
 
     let result = apply_migrations(raw);
@@ -498,7 +552,7 @@ mod tests {
       .and_then(|layouts| layouts.get(0))
       .and_then(|layout| layout.get("widgets"))
       .and_then(serde_json::Value::as_array)
-      .expect("layout has widgets");
+      .ok_or("layout has widgets")?;
 
     // "disabled" did not strip the attitude widget from the stored layout.
     assert!(
@@ -506,24 +560,25 @@ mod tests {
         .iter()
         .any(|widget| widget.get("type") == Some(&json!("attitudeScientific")))
     );
+    Ok(())
   }
 
   /// # Panics
   /// Panics if stripping removes a recognised field, keeps an unknown field, or
   /// leaves a config that no longer deserializes.
   #[test]
-  fn strip_unknown_fields_drops_only_unrecognised_keys() {
+  fn strip_unknown_fields_drops_only_unrecognised_keys() -> Result<(), Box<dyn std::error::Error>> {
     // A config written by a newer app version: a valid default plus an extra
     // field this build doesn't know about.
-    let mut raw = serde_json::to_value(Config::default()).expect("serialize default");
+    let mut raw = serde_json::to_value(Config::default())?;
     raw
       .as_object_mut()
-      .expect("config is an object")
+      .ok_or("config is an object")?
       .insert("newFutureField".to_string(), json!({ "anything": 42 }));
 
     strip_unknown_fields(&mut raw);
 
-    let object = raw.as_object().expect("still an object");
+    let object = raw.as_object().ok_or("still an object")?;
     // The unknown field is gone...
     assert!(!object.contains_key("newFutureField"));
     // ...while recognised fields (including a flattened one) remain.
@@ -538,5 +593,6 @@ mod tests {
       serde_json::from_value::<Config>(raw).is_ok(),
       "stripped config should deserialize"
     );
+    Ok(())
   }
 }
