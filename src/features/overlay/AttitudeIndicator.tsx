@@ -7,11 +7,16 @@ import { rovTelemetryStore } from '@/stores/rovTelemetry';
 
 import { AttitudeStyle } from './attitudeStyle';
 import { ClassicAttitudeIndicator } from './classicAttitudeIndicator';
-import { Model3DAttitudeIndicator } from './model3DAttitudeIndicator';
 import { useOverlayContentVisible } from './OverlayPreview';
 import { ScientificAttitudeIndicator } from './scientificAttitudeIndicator';
 import { WIDGET_CELL_SIZE, WIDGET_GUTTER } from './widgets/WidgetContent';
 const PLACEHOLDER_SIZE_REM = 1;
+// Three.js loads only once a 3D indicator is shown, not with the home screen.
+const Model3DAttitudeIndicator = lazy(() =>
+  import('./model3DAttitudeIndicator').then((module) => ({
+    default: module.Model3DAttitudeIndicator,
+  })),
+);
 
 /** Render at a stable square size; WidgetContent fits it to the available cells. */
 const indicatorSize = (widget: OverlayWidget): number =>
@@ -48,7 +53,9 @@ const AttitudeStyles: Component<{ style: AttitudeStyle; shared: SharedAttitudePr
       />
     </Match>
     <Match when={props.style === AttitudeStyle.model3D}>
-      <Model3DAttitudeIndicator {...props.shared} />
+      <Suspense>
+        <Model3DAttitudeIndicator {...props.shared} />
+      </Suspense>
     </Match>
     <Match when={props.style === AttitudeStyle.classic}>
       <ClassicAttitudeIndicator
