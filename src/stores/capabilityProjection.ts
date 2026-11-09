@@ -92,23 +92,39 @@ const statusSchema = z.object({
   }),
 });
 
+const touches = (schema: z.ZodObject, values: Record<string, unknown>): boolean =>
+  Object.keys(values).some((key) => Object.hasOwn(schema.shape, key));
+
+const projectTelemetry = (values: Record<string, unknown>): void => {
+  const telemetry = telemetrySchema.safeParse({ ...rovTelemetryStore, ...values });
+  if (telemetry.success) {
+    setRovTelemetryStore(telemetry.data);
+  } else {
+    logWarn('Invalid built-in telemetry reading', telemetry.error.message);
+  }
+};
+
+const projectStatus = (values: Record<string, unknown>): void => {
+  const status = statusSchema.safeParse({ ...rovStatusStore, ...values });
+  if (status.success) {
+    setRovStatusStore(status.data);
+  } else {
+    logWarn('Invalid built-in status reading', status.error.message);
+  }
+};
+
 // Existing instruments consume typed views of the same samples as custom-action widgets.
+// Only a group with a sample in this batch is validated and reconciled again.
 export const projectBuiltinSamples = (samples: ReadingSample[]): void => {
   const values = Object.fromEntries(
     samples
       .filter((sample) => sample.id.startsWith('rov.'))
       .map((sample) => [sample.id.slice('rov.'.length), sample.value]),
   );
-  const telemetry = telemetrySchema.safeParse({ ...rovTelemetryStore, ...values });
-  const status = statusSchema.safeParse({ ...rovStatusStore, ...values });
-  if (telemetry.success) {
-    setRovTelemetryStore(telemetry.data);
-  } else {
-    logWarn('Invalid built-in telemetry reading', telemetry.error.message);
+  if (touches(telemetrySchema, values)) {
+    projectTelemetry(values);
   }
-  if (status.success) {
-    setRovStatusStore(status.data);
-  } else {
-    logWarn('Invalid built-in status reading', status.error.message);
+  if (touches(statusSchema, values)) {
+    projectStatus(values);
   }
 };
