@@ -177,15 +177,11 @@ const createLogRecord = (logEntry: LogEntry): Promise<void> =>
       timestamp: new Date(),
     };
 
-    return database
-      .add(LOG_STORE_NAME, newRecord)
-      .then((recordId) => database.get(LOG_STORE_NAME, recordId))
-      .then((fullRecord) => {
-        if (isStoredLogRecord(fullRecord)) {
-          dispatchLogAddedEvent(fullRecord);
-          scheduleLogRetention();
-        }
-      });
+    // The add shortcut resolves after its transaction commits; the record needs no read-back.
+    return database.add(LOG_STORE_NAME, newRecord).then((id) => {
+      dispatchLogAddedEvent({ ...newRecord, id });
+      scheduleLogRetention();
+    });
   });
 
 const writeLog = (level: LogLevel, ...args: unknown[]): void => {

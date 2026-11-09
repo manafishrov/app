@@ -61,13 +61,24 @@ it('does not reset the database on a failed maintenance transaction', async () =
   expect(deleteDB).not.toHaveBeenCalled();
 });
 
+// Runs while the module's retention scheduler is still idle.
+it('neither publishes nor schedules maintenance when the write fails', async () => {
+  const error = new DOMException('Quota exceeded', 'QuotaExceededError');
+  database.add.mockRejectedValue(error);
+  await expect(createLogRecord({ origin: 'mcu', level: 'info', message: 'lost' })).rejects.toBe(
+    error,
+  );
+  expect(globalThis.dispatchEvent).not.toHaveBeenCalled();
+  expect(vi.getTimerCount()).toBe(0);
+  expect(deleteDB).not.toHaveBeenCalled();
+});
+
 it('schedules maintenance after persistence, while export neither triggers nor waits for it', async () => {
   const record = { id: 1, timestamp: new Date(0), origin: 'mcu', level: 'info', message: 'old' };
   database.getAll.mockResolvedValue([record]);
   expect(await getStoredLogRecords()).toEqual([record]);
   expect(vi.getTimerCount()).toBe(0);
   database.add.mockResolvedValue(1);
-  database.get.mockResolvedValue(record);
   await createLogRecord({ origin: 'mcu', level: 'info', message: 'new' });
   expect(vi.getTimerCount()).toBe(1);
   expect(database.transaction).not.toHaveBeenCalled();
@@ -81,4 +92,20 @@ it('schedules maintenance after persistence, while export neither triggers nor w
   });
   await vi.advanceTimersByTimeAsync(RETENTION_BATCH_DELAY_MS);
   expect(database.transaction).toHaveBeenCalledTimes(1);
+});
+
+it('publishes the persisted record without reading it back', async () => {
+  database.add.mockResolvedValue(7);
+  const persisted = {
+    origin: 'firmware',
+    level: 'warn',
+    message: 'thruster stalled',
+    timestamp: new Date(),
+  } as const;
+  await createLogRecord({ origin: 'firmware', level: 'warn', message: 'thruster stalled' });
+  expect(database.add).toHaveBeenCalledExactlyOnceWith('logRecords', persisted);
+  expect(globalThis.dispatchEvent).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ type: 'log:added', detail: { ...persisted, id: 7 } }),
+  );
+  expect(database.get).not.toHaveBeenCalled();
 });
