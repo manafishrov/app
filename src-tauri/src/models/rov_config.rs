@@ -135,11 +135,11 @@ pub struct Camera {
 impl Default for Camera {
   fn default() -> Self {
     Self {
-      width: 1024,
-      height: 768,
+      width: 1440,
+      height: 1080,
       framerate: 30,
       crop_fov: false,
-      bitrate: 3_538_944,
+      bitrate: 13_996_800,
       keyframe_interval: 30,
       profile: H264Profile::Baseline,
       level: H264Level::Level42,
@@ -502,8 +502,8 @@ mod tests {
       return;
     };
 
-    assert_eq!(deserialized.camera.width, 1024);
-    assert_eq!(deserialized.camera.height, 768);
+    assert_eq!(deserialized.camera.width, 1440);
+    assert_eq!(deserialized.camera.height, 1080);
     assert_eq!(deserialized.camera.framerate, 30);
   }
 

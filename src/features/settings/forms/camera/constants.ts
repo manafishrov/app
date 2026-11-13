@@ -58,8 +58,8 @@ export const MIN_BITRATE_MBPS = 1;
 export const MAX_BITRATE_MBPS = 25;
 export const BITRATE_BPS_PER_MBPS = 1_000_000;
 
-// Bits-per-pixel target for the automatic bitrate calculation. 0.15 sits at the upper end of the typical H.264 range (0.1-0.2) because this stream uses the baseline profile (no B-frames/CABAC), which needs more bits than main/high for the same visual quality, and ROV footage is continuous-motion content.
-const BITS_PER_PIXEL = 0.15;
+// Bits-per-pixel target for the automatic bitrate calculation. 0.3 is well above the typical H.264 range (0.1-0.2) on purpose: this stream uses the baseline profile (no B-frames/CABAC), which needs more bits than main/high for the same visual quality, and underwater footage (suspended particles, murky water, continuous motion) is hard to compress, so lower targets gave visibly soft, blocky video. The tether has plenty of bandwidth; the real ceiling is the Pi encoder, and this still keeps Max at 40 fps (~19 Mbps) under MAX_BITRATE_MBPS.
+const BITS_PER_PIXEL = 0.3;
 
 // The bitrate that best matches a given resolution/framerate: enough bits to avoid encoder starvation (blocky, stuttering video), without so many that they just congest the link to the ROV for no visual benefit.
 export const computeAutomaticBitrateMbps = (

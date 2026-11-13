@@ -5,9 +5,9 @@ import { ResolutionKey } from './constants';
 
 const DEFAULT_FRAMERATE = 30;
 const UPDATED_FRAMERATE = 60;
-const EXPECTED_BITRATE_MBPS = 3;
+const EXPECTED_BITRATE_MBPS = 6;
 const MAX_FULL_FOV_FRAMERATE = 40;
-const DEFAULT_BITRATE_MBPS = 1;
+const DEFAULT_BITRATE_MBPS = 3;
 
 type FormState = {
   automaticBitrate: boolean;
