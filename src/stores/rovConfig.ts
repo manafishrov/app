@@ -223,13 +223,13 @@ const defaultRovConfig: RovConfig = {
     maxBatteryVoltage: 20.5,
   },
   camera: {
-    // A broadly supported default that leaves headroom for the Pi encoder.
-    width: 1024,
-    height: 768,
+    // The Max preset: the largest 4:3 size the Pi hardware encoder accepts.
+    width: 1440,
+    height: 1080,
     framerate: 30,
     cropFov: false,
-    // Width * height * framerate * 0.15 bits-per-pixel - the same formula camera/constants.ts uses to auto-tune the bitrate live.
-    bitrate: 3_538_944,
+    // Width * height * framerate * 0.3 bits-per-pixel - the same formula camera/constants.ts uses to auto-tune the bitrate live.
+    bitrate: 13_996_800,
     keyframeInterval: 30,
     profile: H264Profile.baseline,
     level: H264Level.level42,
