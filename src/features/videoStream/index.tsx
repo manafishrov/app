@@ -10,6 +10,7 @@ import { configStore } from '@/stores/config';
 import { recordingStore, setRecordingStore } from '@/stores/recording';
 
 import { createRecording } from './recording';
+import { ShutterFlash } from './ShutterFlash';
 import { createWebRTCConnection } from './stream';
 
 const [undef] = [] as undefined[];
@@ -87,6 +88,23 @@ const useDetectionVideo = (video: HTMLVideoElement, preview: boolean): void => {
   }
 };
 
+/** Shown over the video while it connects or after it drops. */
+const StreamStatus: Component<{ preview: boolean; loading: boolean }> = (props) => (
+  <div class='absolute inset-0 flex items-center justify-center'>
+    <div class='max-w-[50%] text-center text-xs text-white/50'>
+      <Show
+        when={props.preview}
+        fallback={
+          <p>{props.loading ? m.video_stream_connecting() : m.video_stream_reconnecting()}</p>
+        }
+      >
+        <p>{m.overlay_layout_offline()}</p>
+        <p class='mt-1'>{m.overlay_layout_offline_hint()}</p>
+      </Show>
+    </div>
+  </div>
+);
+
 const VideoStream: Component<{ preview?: boolean }> = (props) => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);
@@ -119,21 +137,10 @@ const VideoStream: Component<{ preview?: boolean }> = (props) => {
         playsinline
         muted
       />
-      {(isLoading() || hasError()) && (
-        <div class='absolute inset-0 flex items-center justify-center'>
-          <div class='max-w-[50%] text-center text-xs text-white/50'>
-            <Show
-              when={props.preview === true}
-              fallback={
-                <p>{isLoading() ? m.video_stream_connecting() : m.video_stream_reconnecting()}</p>
-              }
-            >
-              <p>{m.overlay_layout_offline()}</p>
-              <p class='mt-1'>{m.overlay_layout_offline_hint()}</p>
-            </Show>
-          </div>
-        </div>
-      )}
+      <ShutterFlash />
+      <Show when={isLoading() || hasError()}>
+        <StreamStatus preview={props.preview === true} loading={isLoading()} />
+      </Show>
     </>
   );
 };

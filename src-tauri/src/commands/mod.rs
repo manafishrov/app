@@ -6,6 +6,7 @@ pub mod detection;
 #[cfg(desktop)]
 pub mod firmware;
 pub mod gamepad;
+pub mod photos;
 pub mod recording;
 pub mod rov;
 
@@ -27,6 +28,9 @@ pub use firmware::{
   list_firmware_releases, list_flash_drives, prepare_flash, signal_flash_image,
 };
 pub use gamepad::{gamepad_vibrate, start_gamepad_stream};
+#[cfg(mobile)]
+pub use photos::describe_photo_directory;
+pub use photos::receive_photos;
 pub use recording::{append_recording_chunk, save_recording};
 #[cfg(mobile)]
 pub use recording::{describe_video_directory, pick_video_directory};

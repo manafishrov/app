@@ -31,6 +31,7 @@ const DEFAULT_PLACEMENTS: readonly DefaultPlacement[] = [
   ['recording', OverlayWidgetType.recording, 9, 1, 8, 2, OverlayAnchor.topRight],
   ['stabilization', OverlayWidgetType.autoStabilization, 1, 22, 3, 3, OverlayAnchor.left],
   ['depth-hold', OverlayWidgetType.depthHold, 1, 25, 3, 3, OverlayAnchor.left],
+  ['take-photo', OverlayWidgetType.takePhoto, 1, 28, 3, 3, OverlayAnchor.left],
   ['attitude', OverlayWidgetType.attitudeScientific, 1, 35, 14, 14, OverlayAnchor.bottomLeft],
   ['thruster-rpm-1', OverlayWidgetType.thrusterRpm1, 55, 17, 10, 2, OverlayAnchor.bottomRight],
   ['thruster-rpm-2', OverlayWidgetType.thrusterRpm2, 55, 19, 10, 2, OverlayAnchor.bottomRight],

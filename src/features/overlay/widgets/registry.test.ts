@@ -70,6 +70,7 @@ describe('default overlay layout', () => {
       ['recording', OverlayWidgetType.recording],
       ['stabilization', OverlayWidgetType.autoStabilization],
       ['depth-hold', OverlayWidgetType.depthHold],
+      ['take-photo', OverlayWidgetType.takePhoto],
       ['attitude', OverlayWidgetType.attitudeScientific],
       ['thruster-rpm-1', OverlayWidgetType.thrusterRpm1],
       ['thruster-rpm-2', OverlayWidgetType.thrusterRpm2],

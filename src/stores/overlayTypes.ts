@@ -32,6 +32,7 @@ export const OverlayWidgetType = {
   thrusterRpm8: 'thrusterRpm8',
   autoStabilization: 'autoStabilization',
   depthHold: 'depthHold',
+  takePhoto: 'takePhoto',
   currentDepth: 'currentDepth',
   desiredDepth: 'desiredDepth',
   waterTemperature: 'waterTemperature',

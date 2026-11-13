@@ -19,6 +19,7 @@ mod python_editor;
 #[cfg(desktop)]
 mod python_sdk;
 
+mod photos;
 mod recording;
 mod version;
 mod websocket;
@@ -39,9 +40,9 @@ use commands::{
   append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
   confirm_rov_config, deactivate_direction_vector, flash_esc_firmware, flash_mcu_firmware,
   gamepad_vibrate, get_config, import_custom_action_source, import_rov_config,
-  initialize_log_listener, open_text_file, request_capability, request_rov_config, save_csv,
-  save_recording, save_text_file, send_direction_vector, set_config, set_rov_config, stage_config,
-  start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  initialize_log_listener, open_text_file, receive_photos, request_capability, request_rov_config,
+  save_csv, save_recording, save_text_file, send_direction_vector, set_config, set_rov_config,
+  stage_config, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
 };
 use commands::{
   cancel_detection_model_download, delete_detection_model, download_detection_model,
@@ -55,7 +56,7 @@ use commands::{
   prepare_flash, signal_flash_image,
 };
 #[cfg(mobile)]
-use commands::{describe_video_directory, pick_video_directory};
+use commands::{describe_photo_directory, describe_video_directory, pick_video_directory};
 use config::ConfigSendChannelState;
 use log::log_init;
 use models::config::Config;
@@ -86,6 +87,8 @@ fn setup_handlers(app: &mut App) {
   detection::library::init_models_dir(app.handle());
   detection::cache::init(app.handle());
   app.manage(detection::DetectionRuntime::default());
+  app.manage(photos::PhotoReceiverState::default());
+  photos::start(app.app_handle().clone());
 
   let websocket_handle = app.app_handle().clone();
   let (config_tx, config_rx) = channel::<Config>(1);
@@ -328,17 +331,21 @@ fn setup_app(app: &mut App) {
   spawn_splashscreen_watchdog(app);
 }
 
+/// Runs the elevated SD card flasher instead of the app when started with `--flash`.
+#[cfg(desktop)]
+fn exit_if_flasher_cli() {
+  let raw_args: Vec<String> = std::env::args().collect();
+  if raw_args.iter().any(|arg| arg == "--flash") {
+    let exit_code = run_flasher_cli(&raw_args);
+    std::process::exit(exit_code);
+  }
+}
+
 /// # Errors
 /// Returns an error if the Tauri application cannot be built.
 pub fn run() -> tauri::Result<()> {
   #[cfg(desktop)]
-  {
-    let raw_args: Vec<String> = std::env::args().collect();
-    if raw_args.iter().any(|arg| arg == "--flash") {
-      let exit_code = run_flasher_cli(&raw_args);
-      std::process::exit(exit_code);
-    }
-  }
+  exit_if_flasher_cli();
   #[cfg(target_os = "linux")]
   setup_bundled_webkit();
 
@@ -371,6 +378,7 @@ pub fn run() -> tauri::Result<()> {
       request_capability,
       import_custom_action_source,
       save_csv,
+      receive_photos,
       close_splashscreen,
       start_gamepad_stream,
       gamepad_vibrate,
@@ -418,6 +426,8 @@ pub fn run() -> tauri::Result<()> {
       pick_video_directory,
       #[cfg(mobile)]
       describe_video_directory,
+      #[cfg(mobile)]
+      describe_photo_directory,
     ])
     .setup(|app| {
       setup_app(app);

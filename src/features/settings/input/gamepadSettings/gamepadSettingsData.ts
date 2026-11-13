@@ -86,6 +86,7 @@ const BINDING_SECTIONS: BindingSection[] = [
     fields: [
       { key: 'record', label: () => m.gamepad_record() },
       { key: 'objectDetection' as const, label: () => m.bindings_action_object_detection() },
+      { key: 'takePhoto', label: () => m.gamepad_take_photo() },
     ],
   },
 ];
