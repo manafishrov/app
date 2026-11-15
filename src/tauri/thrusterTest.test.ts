@@ -16,7 +16,7 @@ vi.mock('@/paraglide/messages', () => ({
   toasts_operation_timed_out: (): string => 'Timed out',
   toasts_thruster_test_title: (args: { pin: string }): string => `Testing ${args.pin}`,
   toasts_thruster_test_cancel_hint: (): string => 'Press Esc in Calibration to cancel.',
-  toasts_seconds_remaining: (): string => '3 seconds remaining',
+  toasts_seconds_remaining: (): string => '3 seconds remaining.',
   toasts_thruster_test_completed: (): string => 'Completed',
   toasts_thruster_test_cancelled: (): string => 'Cancelled',
   toasts_thruster_test_unavailable: (): string => 'Unavailable',
@@ -102,7 +102,7 @@ it('keeps the countdown and adds a calibration-scoped Escape hint to active test
       id: 'thruster-test',
       type: 'loading',
       title: 'Testing GP18',
-      description: '3 seconds remaining Press Esc in Calibration to cancel.',
+      description: '3 seconds remaining. Press Esc in Calibration to cancel.',
     });
     cleanup();
   });
@@ -129,7 +129,7 @@ it('leaves the Escape hint out on phones, where the Cancel button stops the test
       descriptionKey: 'toasts_seconds_remaining',
     });
     expect(mocks.createToast).toHaveBeenLastCalledWith(
-      expect.objectContaining({ description: '3 seconds remaining' }),
+      expect.objectContaining({ description: '3 seconds remaining.' }),
     );
     cleanup();
   });
@@ -146,7 +146,7 @@ it.each([
     deliverToast('info', messageKey, { descriptionKey: 'toasts_seconds_remaining', identifier });
     expect(mocks.createToast).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        description: '3 seconds remaining',
+        description: '3 seconds remaining.',
       }),
     );
     cleanup();

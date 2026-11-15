@@ -591,7 +591,7 @@
   "toasts_thruster_test_cancelled": "Thruster test cancelled",
   "toasts_thruster_test_unavailable": "Thruster test unavailable",
   "toasts_thruster_test_unavailable_description": "Wait for the MCU to connect and apply the thruster protocol, then try again.",
-  "toasts_seconds_remaining": "{seconds} seconds remaining",
+  "toasts_seconds_remaining": "{seconds} seconds remaining.",
   "aria_labels_select_video_directory": "Select Video Directory",
   "aria_labels_select_photo_directory": "Select Photo Directory",
   "aria_labels_back_button": "Back",
