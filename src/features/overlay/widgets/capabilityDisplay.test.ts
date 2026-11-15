@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { normaliseLayout } from '@/stores/overlayLayout';
 import {
@@ -14,6 +14,8 @@ import {
   normalisedLevel,
   readingDisplays,
 } from './capabilityDisplay';
+
+vi.mock('@/lib/log', () => ({ logWarn: vi.fn() }));
 
 /* oxlint-disable no-magic-numbers -- representative persisted grid and sensor values */
 it('normalises numeric readings and handles invalid ranges without infinities', () => {

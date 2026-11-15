@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createDefaultOverlayLayout } from '@/stores/overlayDefaults';
 import { OverlayWidgetType } from '@/stores/overlayTypes';
 
 import { getOverlayWidgetPlacement, overlayWidgetPlacements } from './definitions';
+
+vi.mock('@/lib/log', () => ({ logWarn: vi.fn() }));
 
 const [undef] = [] as undefined[];
 

@@ -1,5 +1,5 @@
 /* oxlint-disable no-magic-numbers -- Grid coordinates read clearer inline. */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   addWidget,
@@ -22,6 +22,8 @@ import {
   type OverlayLayout,
   type OverlayWidget,
 } from './overlayTypes';
+
+vi.mock('@/lib/log', () => ({ logWarn: vi.fn() }));
 
 const widget = (overrides: Partial<OverlayWidget> = {}): OverlayWidget => ({
   id: 'battery',

@@ -1,5 +1,7 @@
 import type { OverlayWidget, OverlayWidgetOptions, OverlayWidgetType } from './overlayTypes';
 
+import { capabilityStore } from './capabilities';
+
 export type WidgetFootprint = { columns: number; rows: number };
 type WidgetSizes = readonly [WidgetFootprint, ...WidgetFootprint[]];
 type CapabilityDisplay = NonNullable<OverlayWidgetOptions['display']>;
@@ -41,9 +43,11 @@ const attitude = [
   { columns: 20, rows: 20 },
   { columns: 24, rows: 24 },
 ] as const;
+/** A number list shown as text only fits on the widest line. */
+const listText = [{ columns: 48, rows: 2 }] as const;
 /** Capability widgets take the shape of how they display their source. */
 const capabilityDisplaySizes: Record<CapabilityDisplay, WidgetSizes> = {
-  // Wide single lines fit long strings and number lists shown as text.
+  // Wide single lines fit long strings.
   text: [...reading, { columns: 24, rows: 2 }, { columns: 48, rows: 2 }],
   array: [
     { columns: 24, rows: 6 },
@@ -111,12 +115,21 @@ const sizesByDisplay = new Map<string, readonly WidgetFootprint[]>(
 
 const [undef] = [] as undefined[];
 
+const isNumberList = (options: OverlayWidgetOptions | undefined): boolean =>
+  options !== undef &&
+  capabilityStore.catalog.readings.some(
+    (entry) => entry.id === options.sourceId && entry.valueType === 'numberArray',
+  );
+
 /** Footprints a widget may take; capability widgets depend on their display. */
 export const getWidgetSizes = (
   widget: Pick<OverlayWidget, 'type'> & { options?: OverlayWidgetOptions },
 ): readonly WidgetFootprint[] => {
   const display =
     widget.type === 'capability' && widget.options !== undef ? widget.options.display : undef;
+  if (display === 'text' && isNumberList(widget.options)) {
+    return listText;
+  }
   const byDisplay = display === undef ? undef : sizesByDisplay.get(display);
   return byDisplay ?? sizesByType.get(widget.type) ?? [];
 };

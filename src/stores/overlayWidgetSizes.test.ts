@@ -1,6 +1,7 @@
 /* oxlint-disable no-magic-numbers -- widget footprint fixtures */
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
+import { receiveCapabilityCatalog } from './capabilities';
 import { normaliseLayout } from './overlayLayout';
 import {
   OVERLAY_GRID_COLUMNS,
@@ -11,6 +12,8 @@ import {
   type OverlayWidget,
 } from './overlayTypes';
 import { fitWidgetSize, getWidgetSizes, overlayWidgetSizes } from './overlayWidgetSizes';
+
+vi.mock('@/lib/log', () => ({ logWarn: vi.fn() }));
 
 const widget = (type: OverlayWidgetType): OverlayWidget => ({
   id: 'sized',
@@ -71,4 +74,30 @@ it('moves a re-fitted widget aside instead of overlapping its neighbour', () => 
     { id: 'lower', column: 1, row: 5, columnSpan: 4, rowSpan: 8 },
   ]);
   expect(normaliseLayout(fitted)).toEqual(fitted);
+});
+
+it('offers number lists shown as text only the line that fits every value', () => {
+  receiveCapabilityCatalog({
+    version: 1,
+    readings: [
+      {
+        id: 'rov.thrusterRpms',
+        name: 'Thruster speeds',
+        valueType: 'numberArray',
+        customActionId: null,
+      },
+      { id: 'rov.depth', name: 'Depth', valueType: 'number', customActionId: null },
+    ],
+    actions: [],
+    customActions: [],
+  });
+  const source = (sourceId: string): OverlayWidget => ({
+    ...capability('text'),
+    options: { sourceId, sourceKind: 'reading', display: 'text' },
+  });
+
+  expect(getWidgetSizes(source('rov.thrusterRpms'))).toEqual([{ columns: 48, rows: 2 }]);
+  expect(fitWidgetSize(source('rov.thrusterRpms'))).toMatchObject({ columnSpan: 48, rowSpan: 2 });
+  expect(getWidgetSizes(source('rov.depth'))).toEqual(getWidgetSizes(capability('text')));
+  expect(getWidgetSizes(source('rov.depth'))).toContainEqual({ columns: 10, rows: 2 });
 });
