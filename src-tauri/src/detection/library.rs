@@ -16,6 +16,7 @@ use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
 
 use super::model::{DetectionModel, ExecutionProviderPreference, ModelDescription};
+use super::providers::NOT_ONNX_MODEL;
 
 const ID_LENGTH: usize = 16;
 static MUTATIONS: Mutex<()> = Mutex::new(());
@@ -202,7 +203,16 @@ fn import_named_into(
     str::to_owned,
   );
 
-  let (mut model, _) = DetectionModel::load(&staged, ExecutionProviderPreference::Cpu)?;
+  // Import only checks the model, so report a file that is not ONNX as such
+  // instead of as a failure to start the CPU backend.
+  let (mut model, _) =
+    DetectionModel::load(&staged, ExecutionProviderPreference::Cpu).map_err(|error| {
+      if error.contains(NOT_ONNX_MODEL) {
+        NOT_ONNX_MODEL.to_string()
+      } else {
+        error
+      }
+    })?;
   model.validate()?;
 
   let info = DetectionModelInfo {
@@ -278,7 +288,10 @@ mod tests {
     let source = tempfile::NamedTempFile::new()?;
     fs::write(source.path(), b"not an ONNX model")?;
     let dir = tempfile::tempdir()?;
-    assert!(import_into(source.path(), dir.path()).is_err());
+    assert_eq!(
+      import_into(source.path(), dir.path()).unwrap_err(),
+      "This file is not a valid ONNX model."
+    );
     assert_eq!(fs::read_dir(dir.path())?.count(), 0);
     Ok(())
   }

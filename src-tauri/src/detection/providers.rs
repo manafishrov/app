@@ -9,6 +9,9 @@ use ort::session::builder::GraphOptimizationLevel;
 
 use super::model::{ExecutionProvider, ExecutionProviderPreference};
 
+/// The file is not an ONNX model at all, so no backend is to blame.
+pub(super) const NOT_ONNX_MODEL: &str = "This file is not a valid ONNX model.";
+
 pub fn supported_preferences() -> Vec<ExecutionProviderPreference> {
   use ExecutionProviderPreference as P;
   let mut preferences = vec![P::Auto];
@@ -230,7 +233,13 @@ pub fn build_session(
       .with_execution_providers([dispatch.error_on_failure()])?
       .commit_from_file(path)
   };
-  let session = build().map_err(|error| format!("{} {error}", requirements(provider)))?;
+  let session = build().map_err(|error| {
+    if error.code() == ort::error::ErrorCode::InvalidProtobuf {
+      NOT_ONNX_MODEL.to_string()
+    } else {
+      format!("{} {error}", requirements(provider))
+    }
+  })?;
   if provider != ExecutionProvider::Cpu {
     verify_assignment(&session, provider)?;
   }
