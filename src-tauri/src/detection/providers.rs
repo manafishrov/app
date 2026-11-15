@@ -237,13 +237,33 @@ pub fn build_session(
     if error.code() == ort::error::ErrorCode::InvalidProtobuf {
       NOT_ONNX_MODEL.to_string()
     } else {
-      format!("{} {error}", requirements(provider))
+      provider_error(provider, &error)
     }
   })?;
   if provider != ExecutionProvider::Cpu {
     verify_assignment(&session, provider)?;
   }
   Ok(session)
+}
+
+/// What the backend needs, then ONNX Runtime's reason without the source
+/// location on the machine that built ONNX Runtime
+/// (`/home/runner/work/.../provider_bridge_ort.cc:2043`).
+pub(super) fn provider_error(provider: ExecutionProvider, error: &ort::Error) -> String {
+  let reason = error
+    .to_string()
+    .split(' ')
+    .filter(|word| !is_source_location(word))
+    .collect::<Vec<_>>()
+    .join(" ");
+  format!("{} {reason}", requirements(provider))
+}
+
+fn is_source_location(word: &str) -> bool {
+  word.starts_with('/')
+    && word
+      .rsplit_once(':')
+      .is_some_and(|(_, line)| !line.is_empty() && line.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
 pub(super) fn requirements(provider: ExecutionProvider) -> &'static str {
@@ -379,6 +399,17 @@ mod tests {
         .ok_or("CPU OpenVINO must not satisfy the GPU request")?;
     assert!(error.contains("OpenVINO did not discover an Intel GPU"), "{error}");
     Ok(())
+  }
+
+  #[test]
+  fn provider_errors_drop_the_onnx_runtime_build_path() {
+    let error = ort::Error::new(
+      "/home/runner/work/ort-artifacts/ort-artifacts/onnxruntime/onnxruntime/core/session/provider_bridge_ort.cc:2043 Provider &onnxruntime::ProviderLibrary::Get() [ONNXRuntimeError] : 1 : FAIL : Failed to load library /opt/manafish/libonnxruntime_providers_cuda.so with error: libcublasLt.so.13: cannot open shared object file: No such file or directory",
+    );
+    assert_eq!(
+      provider_error(ExecutionProvider::Cuda, &error),
+      "CUDA requires a supported NVIDIA GPU, driver, CUDA 13 and cuDNN 9 runtime libraries. Provider &onnxruntime::ProviderLibrary::Get() [ONNXRuntimeError] : 1 : FAIL : Failed to load library /opt/manafish/libonnxruntime_providers_cuda.so with error: libcublasLt.so.13: cannot open shared object file: No such file or directory"
+    );
   }
 
   #[test]

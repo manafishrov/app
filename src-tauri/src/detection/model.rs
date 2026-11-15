@@ -94,7 +94,7 @@ impl DetectionModel {
       #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
       if provider == ExecutionProvider::OpenVino {
         providers::openvino_device(environment)
-          .map_err(|error| format!("{} {error}", providers::requirements(provider)))?;
+          .map_err(|error| providers::provider_error(provider, &error))?;
       }
       let cache = super::cache::prepare(path, provider);
       let load = |cache: Option<&super::cache::CacheEntry>| {
