@@ -26,6 +26,7 @@ import {
   type ActionDescriptor,
   type ReadingDescriptor,
 } from '@/stores/capabilities';
+import { removedCapabilityIds } from '@/stores/overlayLayout';
 import {
   OverlayWidgetType,
   type OverlayWidget,
@@ -231,6 +232,25 @@ const actionDefinition = (
   };
 };
 
+/** ROV readings and actions that a built-in element already shows. */
+const builtInCapabilityIds: ReadonlySet<string> = new Set([
+  'rov.autoStabilization',
+  'rov.autoStabilization.toggle',
+  'rov.depthHold',
+  'rov.depthHold.toggle',
+  'rov.photo.capture',
+  'rov.depth',
+  'rov.desiredDepth',
+  'rov.waterTemperature',
+  'rov.electronicsTemperature',
+  'rov.batteryPercentage',
+  'rov.currentDraw',
+  'rov.workIndicatorPercentage',
+]);
+
+const isOffered = (id: string): boolean =>
+  !builtInCapabilityIds.has(id) && !removedCapabilityIds.has(id);
+
 /** Device capabilities use the same placements and renderer as every other widget. */
 export const availableWidgetDefinitions = (): readonly OverlayWidgetDefinition[] => {
   const base = definitionsByType.get(OverlayWidgetType.capability);
@@ -239,9 +259,10 @@ export const availableWidgetDefinitions = (): readonly OverlayWidgetDefinition[]
   }
   const readings = capabilityStore.catalog.readings
     .filter((reading) => ['boolean', 'number', 'string', 'numberArray'].includes(reading.valueType))
+    .filter((reading) => isOffered(reading.id))
     .map((reading) => readingDefinition(base, reading));
   const actions = capabilityStore.catalog.actions
-    .filter((action) => action.inputType === 'none')
+    .filter((action) => action.inputType === 'none' && isOffered(action.id))
     .map((action) => actionDefinition(base, action));
   return [
     ...definitions.filter((definition) => definition.type !== OverlayWidgetType.capability),
