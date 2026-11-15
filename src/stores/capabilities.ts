@@ -42,6 +42,8 @@ const [capabilityStore, setCapabilityStore] = createStore<CapabilityStore>({
   receivedAt: {},
 });
 export { capabilityStore };
+// Samples arrive at telemetry rate; look their readings up without scanning the catalogue.
+let readingsById = new Map<string, ReadingDescriptor>();
 
 const matchesType = (reading: ReadingDescriptor, sample: ReadingSample): boolean => {
   const { value } = sample;
@@ -67,7 +69,7 @@ const matchesType = (reading: ReadingDescriptor, sample: ReadingSample): boolean
 };
 
 const acceptSample = (sample: ReadingSample): boolean => {
-  const reading = capabilityStore.catalog.readings.find((item) => item.id === sample.id);
+  const reading = readingsById.get(sample.id);
   if (!reading || !matchesType(reading, sample)) {
     logWarn(`Ignored unknown or incorrectly typed reading '${sample.id}'`);
     return false;
@@ -107,12 +109,12 @@ export const receiveCapabilityCatalog = (payload: unknown): void => {
   if (!parsed.success) {
     throw new Error(`Invalid ROV capability catalogue: ${parsed.error.message}`);
   }
+  readingsById = new Map(parsed.data.readings.map((reading) => [reading.id, reading]));
   batch(() => {
     setCapabilityStore('catalog', reconcile(parsed.data));
-    const readings = new Map(parsed.data.readings.map((reading) => [reading.id, reading]));
     const retained = Object.fromEntries(
       Object.entries(capabilityStore.samples).filter(([id, sample]) => {
-        const reading = readings.get(id);
+        const reading = readingsById.get(id);
         return reading ? matchesType(reading, sample) : false;
       }),
     );
@@ -126,6 +128,7 @@ export const receiveCapabilityCatalog = (payload: unknown): void => {
 };
 
 export const resetCapabilities = (): void => {
+  readingsById = new Map();
   setCapabilityStore(
     reconcile({
       connected: false,

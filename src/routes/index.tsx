@@ -121,9 +121,7 @@ const HomePage = (): JSXElement => {
     >
       <CameraFrame class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-sm'>
         <VideoStream />
-        <Show when={!isMobile}>
-          <DetectionOverlay />
-        </Show>
+        <DetectionOverlay />
         <Overlay />
       </CameraFrame>
       <Show when={isMobile}>

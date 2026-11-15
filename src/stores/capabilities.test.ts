@@ -134,3 +134,48 @@ it('drops the old sample if an updated custom action changes a reading type', ()
   receiveCapabilityCatalog({ ...catalog, readings: [{ ...reading, valueType: 'number' }] });
   expect(capabilityStore.samples['water.wet']).toBeUndefined();
 });
+
+it('validates later samples against the replacement catalogue', () => {
+  receiveCapabilityCatalog(catalog);
+  receiveCapabilityCatalog({ ...catalog, readings: [{ ...reading, valueType: 'number' }] });
+  receiveCapabilitySamples({ version: 1, samples: [sample(1, true)] });
+  expect(capabilityStore.samples['water.wet']).toBeUndefined();
+  receiveCapabilitySamples({ version: 1, samples: [{ ...sample(2, true), value: 3 }] });
+  expect(capabilityStore.samples['water.wet'] && capabilityStore.samples['water.wet'].value).toBe(
+    3,
+  );
+  receiveCapabilityCatalog({ ...catalog, readings: [] });
+  receiveCapabilitySamples({ version: 1, samples: [{ ...sample(3, true), value: 4 }] });
+  expect(capabilityStore.samples).toEqual({});
+});
+
+it('rejects an invalid built-in group as a whole without blocking the other group', () => {
+  receiveCapabilityCatalog(firmwareCatalog);
+  const health = { ...rovStatusStore.health };
+  const battery = rovStatusStore.batteryPercentage;
+  receiveCapabilitySamples({
+    version: 1,
+    samples: [
+      { id: 'rov.pitch', value: 42, sequence: 100, timestamp: 100 },
+      { id: 'rov.batteryPercentage', value: battery + 1, sequence: 100, timestamp: 100 },
+      { id: 'rov.health', value: { imuHealthy: 'yes' }, sequence: 100, timestamp: 100 },
+    ],
+  });
+  expect(rovTelemetryStore.pitch).toBe(42);
+  expect(rovStatusStore.batteryPercentage).toBe(battery);
+  expect(rovStatusStore.health).toEqual(health);
+});
+
+it('projects an unavailable built-in reading as null', () => {
+  receiveCapabilityCatalog(firmwareCatalog);
+  receiveCapabilitySamples({
+    version: 1,
+    samples: [{ id: 'rov.currentDraw', value: 2.5, sequence: 101, timestamp: 101 }],
+  });
+  expect(rovStatusStore.currentDraw).toBe(2.5);
+  receiveCapabilitySamples({
+    version: 1,
+    samples: [{ id: 'rov.currentDraw', value: null, sequence: 102, timestamp: 102 }],
+  });
+  expect(rovStatusStore.currentDraw).toBeNull();
+});
