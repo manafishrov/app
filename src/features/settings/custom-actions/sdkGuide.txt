@@ -100,8 +100,10 @@ tolerant. Pins are BCM GPIO numbers.
   MISO GPIO9, SCLK GPIO11. Use `spidev`.
 - Addressable LED strips (WS2812/NeoPixel): connect Din to GPIO10 and send SPI
   at 2.4 MHz with three SPI bits per LED bit (`0` -> `100`, `1` -> `110`), GRB
-  byte order, followed by at least 300 µs of zero bytes. `rpi_ws281x` and
-  `neopixel` are not installed and would need root.
+  byte order, followed by at least 300 µs of zero bytes. A 5 V strip needs 3.5 V
+  data, so drive Din through a 3.3 V to 5 V level shifter and connect the strip's
+  ground to the Pi's. `rpi_ws281x` and `neopixel` are not installed and would
+  need root.
 - Hardware PWM: GPIO18 is `/sys/class/pwm/pwmchip0` channel 0, GPIO19 is channel 1.
   Write the channel to `export`, then `period` and `duty_cycle` in nanoseconds
   and `1` to `enable` under `pwm0/` or `pwm1/`. udev grants access shortly after
