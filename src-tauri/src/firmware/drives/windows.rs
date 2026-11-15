@@ -1,5 +1,3 @@
-use std::process::Command;
-
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -18,7 +16,7 @@ struct PsDisk {
 }
 
 fn run_powershell(script: &str) -> Result<String, String> {
-  let output = Command::new("powershell")
+  let output = crate::firmware::hidden_command("powershell")
     .args(["-NoProfile", "-NonInteractive", "-Command", script])
     .output()
     .map_err(|e| format!("Failed to run powershell: {e}"))?;

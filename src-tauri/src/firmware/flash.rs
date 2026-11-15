@@ -136,7 +136,6 @@ static WINDOWS_LAST_DISKPART_RUN: std::sync::OnceLock<std::sync::Mutex<Option<In
 #[cfg(target_os = "windows")]
 fn run_diskpart_script(context: &str, contents: &str) -> Result<(), String> {
   use std::io::Write as _;
-  use std::process::Command;
 
   let mut script =
     tempfile::NamedTempFile::new().map_err(|e| format!("Failed to create diskpart script: {e}"))?;
@@ -155,7 +154,7 @@ fn run_diskpart_script(context: &str, contents: &str) -> Result<(), String> {
     std::thread::sleep(duration);
   }
 
-  let output_result = Command::new("diskpart").arg("/s").arg(script.path()).output();
+  let output_result = super::hidden_command("diskpart").arg("/s").arg(script.path()).output();
   *last_run_guard = Some(Instant::now());
   let output = output_result.map_err(|e| format!("Failed to run diskpart: {e}"))?;
 
@@ -258,12 +257,10 @@ fn close_windows_volume_handles(handles: &mut Vec<windows::Win32::Foundation::HA
 
 #[cfg(target_os = "windows")]
 fn ensure_windows_disk_is_flash_target(drive_number: u32) -> Result<(), String> {
-  use std::process::Command;
-
   let script = format!(
     "$ErrorActionPreference = 'Stop'; $disk = Get-Disk -Number {drive_number}; if ($disk.IsBoot -or $disk.IsSystem) {{ Write-Error 'Refusing to flash a boot/system disk'; exit 10 }}; $bus = [string]$disk.BusType; if (@('USB', 'SD', 'MMC', 'Removable') -notcontains $bus) {{ Write-Error \"Refusing to flash non-removable disk with bus type $bus\"; exit 11 }}"
   );
-  let output = Command::new("powershell")
+  let output = super::hidden_command("powershell")
     .args(["-NoProfile", "-NonInteractive", "-Command", &script])
     .output()
     .map_err(|e| format!("Failed to validate selected Windows disk: {e}"))?;
@@ -370,12 +367,10 @@ fn lock_volume_with_retries(
 
 #[cfg(target_os = "windows")]
 fn enumerate_volumes_for_drive(drive_number: u32) -> Result<Vec<char>, String> {
-  use std::process::Command;
-
   let script = format!(
     "Get-Partition -DiskNumber {drive_number} | Where-Object {{ $_.DriveLetter }} | ForEach-Object {{ [string]$_.DriveLetter }}"
   );
-  let output = Command::new("powershell")
+  let output = super::hidden_command("powershell")
     .args(["-NoProfile", "-NonInteractive", "-Command", &script])
     .output()
     .map_err(|e| format!("powershell failed to spawn: {e}"))?;
