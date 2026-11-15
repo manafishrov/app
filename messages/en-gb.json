@@ -80,7 +80,7 @@
   "app_versions_install": "Install {version}",
   "app_versions_install_pending": "Installing…",
   "app_versions_install_confirm_title": "Install {version}?",
-  "app_versions_install_confirm_description": "This replaces your current app ({current}) with {version} and restarts the app to apply it.",
+  "app_versions_install_confirm_description": "This replaces your current app ({current}) with {version}. Restart the app afterwards to apply it.",
   "app_versions_install_confirm_prerelease": "{version} is a pre-release and may be unstable. Make sure it works with your drone firmware before relying on it.",
   "app_versions_install_confirm_downgrade": "{version} is older than your current app ({current}). Downgrading can cause issues if your config or firmware expects a newer version.",
   "app_versions_install_confirm_action": "Install",
