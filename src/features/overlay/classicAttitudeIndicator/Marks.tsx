@@ -35,26 +35,27 @@ const PitchLabel: Component<{
 );
 
 const PitchLine: Component<{ size: number; center: number; deg: number }> = (props) => {
-  const isLong = Math.abs(props.deg) % CONST.P_MOD === 0;
-  const width = isLong ? props.size * CONST.L_LONG : props.size * CONST.L_SHORT;
-  const posY = props.center - props.deg * getPitchScale(props.size);
+  // Derived lazily so the ladder follows the indicator when it is resized.
+  const isLong = (): boolean => Math.abs(props.deg) % CONST.P_MOD === 0;
+  const width = (): number => props.size * (isLong() ? CONST.L_LONG : CONST.L_SHORT);
+  const posY = (): number => props.center - props.deg * getPitchScale(props.size);
 
   return (
     <g>
       <line
-        x1={props.center - width / CONST.HALF}
-        y1={posY}
-        x2={props.center + width / CONST.HALF}
-        y2={posY}
+        x1={props.center - width() / CONST.HALF}
+        y1={posY()}
+        x2={props.center + width() / CONST.HALF}
+        y2={posY()}
         stroke='white'
         stroke-width={props.size * CONST.W_THIN}
       />
-      <Show when={isLong}>
+      <Show when={isLong()}>
         <PitchLabel
           size={props.size}
           center={props.center}
-          width={width}
-          posY={posY}
+          width={width()}
+          posY={posY()}
           deg={props.deg}
         />
       </Show>
