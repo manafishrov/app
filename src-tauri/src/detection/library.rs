@@ -178,9 +178,13 @@ fn import_named_into(
   if size == 0 || size > 512 * 1024 * 1024 {
     return Err("Detection model files must be between 1 byte and 512 MiB".into());
   }
-  let staged = tempfile::NamedTempFile::new_in(dir).map_err(|error| error.to_string())?;
-  fs::copy(source, staged.path()).map_err(|error| format!("Could not copy the model: {error}"))?;
-  let id = hash_file(staged.path())?;
+  // Close the staging file before ONNX Runtime opens it: on Windows it refuses
+  // files that another handle has open for writing.
+  let staged = tempfile::NamedTempFile::new_in(dir)
+    .map_err(|error| error.to_string())?
+    .into_temp_path();
+  fs::copy(source, &staged).map_err(|error| format!("Could not copy the model: {error}"))?;
+  let id = hash_file(&staged)?;
   let model_path = dir.join(format!("{id}.onnx"));
   let info_path = dir.join(format!("{id}.json"));
   if model_path.is_file()
@@ -198,13 +202,13 @@ fn import_named_into(
     str::to_owned,
   );
 
-  let (mut model, _) = DetectionModel::load(staged.path(), ExecutionProviderPreference::Cpu)?;
+  let (mut model, _) = DetectionModel::load(&staged, ExecutionProviderPreference::Cpu)?;
   model.validate()?;
 
   let info = DetectionModelInfo {
     id,
     name,
-    file_size: fs::metadata(staged.path()).map_or(0, |metadata| metadata.len()),
+    file_size: fs::metadata(&staged).map_or(0, |metadata| metadata.len()),
     imported_at: SystemTime::now()
       .duration_since(UNIX_EPOCH)
       .map_or(0, |elapsed| elapsed.as_millis() as u64),

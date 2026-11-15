@@ -157,9 +157,11 @@ impl ModelDownloads {
       return Err(CANCELLED.to_string());
     }
     progress(DownloadProgress::Validating);
+    // Close the download's handle so Windows lets the import read the file.
+    let staged = staged.into_temp_path();
     tauri::async_runtime::spawn_blocking(move || {
       // Keep the temporary file alive through validation and installation.
-      library::import_download(staged.path(), &model.name, &token, &directory)
+      library::import_download(&staged, &model.name, &token, &directory)
     })
     .await
     .map_err(|error| error.to_string())?
