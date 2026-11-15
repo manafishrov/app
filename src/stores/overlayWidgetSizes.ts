@@ -43,7 +43,8 @@ const attitude = [
 ] as const;
 /** Capability widgets take the shape of how they display their source. */
 const capabilityDisplaySizes: Record<CapabilityDisplay, WidgetSizes> = {
-  text: reading,
+  // Wide single lines fit long strings and number lists shown as text.
+  text: [...reading, { columns: 24, rows: 2 }, { columns: 48, rows: 2 }],
   array: [
     { columns: 24, rows: 6 },
     { columns: 32, rows: 8 },

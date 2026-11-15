@@ -100,7 +100,10 @@ const ReadingValue: Component<ValueProps> = (props) => {
           </Show>
         </span>
       </Show>
-      <span class='overlay-value' data-text={typeof props.value === 'string'}>
+      <span
+        class='overlay-value'
+        data-text={typeof props.value === 'string' || Array.isArray(props.value)}
+      >
         {formatReading(props.value)}
         <Show when={typeof props.value === 'number'}>
           <span class='overlay-unit'>{formatUnit(props.unit)}</span>
