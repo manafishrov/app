@@ -156,15 +156,19 @@
   container-type: size;
 }
 
+/*
+ * The remove button sits just outside the widget so it never hides the
+ * content, on the side with more room inside the clipped camera frame.
+ */
 .overlay-remove {
   opacity: 0;
   position: absolute;
-  top: 2px;
-  right: 2px;
+  bottom: 100%;
+  right: 0;
   z-index: 2;
   display: flex;
-  width: min(16px, calc(100cqh - 4px));
-  height: min(16px, calc(100cqh - 4px));
+  width: 16px;
+  height: 16px;
   padding: 0;
   align-items: center;
   justify-content: center;
@@ -188,10 +192,21 @@
   outline-offset: 2px;
 }
 
+.overlay-editor-widget[data-remove-below='true'] .overlay-remove {
+  top: 100%;
+  bottom: auto;
+}
+
 .overlay-editor-widget:hover .overlay-remove,
 .overlay-editor-widget:focus-within .overlay-remove,
 .overlay-editor-widget[data-selected='true'] .overlay-remove {
   opacity: 1;
+}
+/* Keep the outside button above neighbouring widgets. */
+.overlay-editor-widget:hover,
+.overlay-editor-widget:focus-within,
+.overlay-editor-widget[data-selected='true'] {
+  z-index: 1;
 }
 
 .overlay-control > span {
