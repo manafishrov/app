@@ -1,4 +1,4 @@
-import { logInfo } from '@/lib/log';
+import { logError, logInfo } from '@/lib/log';
 import { configStore } from '@/stores/config';
 import { setRecordingStore } from '@/stores/recording';
 
@@ -17,6 +17,7 @@ type WebRTCState = {
 type UiHandlers = {
   setHasError: (hasError: boolean) => unknown;
   setIsLoading: (isLoading: boolean) => unknown;
+  setIsUnsupported: (isUnsupported: boolean) => unknown;
 };
 type StreamOffer = { sdp: string; type: 'offer' };
 type ConnectContext = {
@@ -29,6 +30,8 @@ type ConnectContext = {
 const ignoreRejection = (): void => {
   Number.isNaN(Number.NaN);
 };
+const describeError = (error: unknown): string =>
+  error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 const clearRetryTimeout = (state: WebRTCState): void => {
   if (!('retryTimeout' in state)) {
     return;
@@ -157,6 +160,18 @@ const createPeerConnection = (context: ConnectContext): RTCPeerConnection => {
   capJitterBuffer(transceiver);
   return connection;
 };
+// WebKitGTK throws NotSupportedError when GStreamer lacks webrtcbin; retrying cannot fix that.
+const tryCreatePeerConnection = (context: ConnectContext): RTCPeerConnection | undefined => {
+  try {
+    return createPeerConnection(context);
+  } catch (error: unknown) {
+    closePeerConnection(context.state);
+    logError('WebRTC video is not supported by this system', describeError(error));
+    context.handlers.setIsUnsupported(true);
+    context.handlers.setIsLoading(false);
+    return;
+  }
+};
 const connectWebRTC = (context: ConnectContext): Promise<void> => {
   const signalingUrl = getSignalingUrl();
   if (context.state.disposed || signalingUrl.length === 0) {
@@ -164,7 +179,10 @@ const connectWebRTC = (context: ConnectContext): Promise<void> => {
   }
   setRecordingStore({ webrtcConnected: false });
   closePeerConnection(context.state);
-  const connection = createPeerConnection(context);
+  const connection = tryCreatePeerConnection(context);
+  if (!connection) {
+    return Promise.resolve();
+  }
   return createOffer(connection)
     .then((offer) => {
       if (!isActiveConnection(context.state, connection)) {
@@ -181,8 +199,7 @@ const connectWebRTC = (context: ConnectContext): Promise<void> => {
       if (!isActiveConnection(context.state, connection)) {
         return;
       }
-      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-      logInfo('WebRTC connection failed, retrying in 3 seconds...', detail);
+      logInfo('WebRTC connection failed, retrying in 3 seconds...', describeError(error));
       markDisconnected(context.handlers);
       scheduleRetry(context.state, context.setup);
     });
@@ -190,11 +207,9 @@ const connectWebRTC = (context: ConnectContext): Promise<void> => {
 
 export const createWebRTCConnection = (
   getVideo: () => HTMLVideoElement | undefined,
-  setIsLoading: (isLoading: boolean) => void,
-  setHasError: (hasError: boolean) => void,
+  handlers: UiHandlers,
 ): WebRTCConnection => {
   const state: WebRTCState = { disposed: false };
-  const handlers: UiHandlers = { setHasError, setIsLoading };
   const setup = (): void => {
     const context: ConnectContext = { getVideo, handlers, setup, state };
     connectWebRTC(context).catch(ignoreRejection);

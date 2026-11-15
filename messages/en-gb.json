@@ -492,6 +492,7 @@
   "appearance_page_description": "Arrange your camera view and choose the instruments you want to see.",
   "video_stream_connecting": "Connecting to Manafish ROV camera...",
   "video_stream_reconnecting": "Unable to connect to ROV camera. Retrying...",
+  "video_stream_unsupported": "Video is not supported on this system. Details are in Debug.",
   "validation_invalid_ip_address": "Invalid IP address",
   "validation_port_must_be_between": "Port must be between 1 and 65535",
   "validation_path_must_start_with_slash": "Path must start with a /",

@@ -89,18 +89,24 @@ const useDetectionVideo = (video: HTMLVideoElement, preview: boolean): void => {
 };
 
 /** Shown over the video while it connects or after it drops. */
-const StreamStatus: Component<{ preview: boolean; loading: boolean }> = (props) => (
+const StreamStatus: Component<{ preview: boolean; loading: boolean; unsupported: boolean }> = (
+  props,
+) => (
   <div class='absolute inset-0 flex items-center justify-center'>
     <div class='max-w-[50%] text-center text-xs text-white/50'>
-      <Show
-        when={props.preview}
+      <Switch
         fallback={
           <p>{props.loading ? m.video_stream_connecting() : m.video_stream_reconnecting()}</p>
         }
       >
-        <p>{m.overlay_layout_offline()}</p>
-        <p class='mt-1'>{m.overlay_layout_offline_hint()}</p>
-      </Show>
+        <Match when={props.unsupported}>
+          <p>{m.video_stream_unsupported()}</p>
+        </Match>
+        <Match when={props.preview}>
+          <p>{m.overlay_layout_offline()}</p>
+          <p class='mt-1'>{m.overlay_layout_offline_hint()}</p>
+        </Match>
+      </Switch>
     </div>
   </div>
 );
@@ -108,10 +114,15 @@ const StreamStatus: Component<{ preview: boolean; loading: boolean }> = (props) 
 const VideoStream: Component<{ preview?: boolean }> = (props) => {
   const [isLoading, setIsLoading] = createSignal(true);
   const [hasError, setHasError] = createSignal(false);
+  const [isUnsupported, setIsUnsupported] = createSignal(false);
 
   let video: HTMLVideoElement | undefined = undef;
 
-  const connection = createWebRTCConnection(() => video, setIsLoading, setHasError);
+  const connection = createWebRTCConnection(() => video, {
+    setHasError,
+    setIsLoading,
+    setIsUnsupported,
+  });
 
   useConnectionEffect(connection);
   if (props.preview === true) {
@@ -138,8 +149,12 @@ const VideoStream: Component<{ preview?: boolean }> = (props) => {
         muted
       />
       <ShutterFlash />
-      <Show when={isLoading() || hasError()}>
-        <StreamStatus preview={props.preview === true} loading={isLoading()} />
+      <Show when={isLoading() || hasError() || isUnsupported()}>
+        <StreamStatus
+          preview={props.preview === true}
+          loading={isLoading()}
+          unsupported={isUnsupported()}
+        />
       </Show>
     </>
   );
