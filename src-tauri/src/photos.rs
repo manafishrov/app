@@ -110,7 +110,29 @@ fn outbox_url(ip_address: &str) -> String {
 struct Receiver {
   /// Photos whose "receiving" toast is showing.
   announced: HashSet<String>,
+  /// What is already saved of each photo still in the ROV's outbox, so a
+  /// retry saves only what is missing and never saves a file twice.
+  progress: HashMap<String, Progress>,
   unreachable: bool,
+}
+
+/// How far one photo got on this PC.
+#[derive(Default)]
+struct Progress {
+  /// The folder and name every file of the photo is saved under, fixed by the
+  /// first attempt so a retry never splits the photo.
+  directory: Option<String>,
+  stem: Option<String>,
+  /// The ROV's names of the files saved so far.
+  saved: HashSet<String>,
+  /// Where the JPEG (or first file) went.
+  location: Option<String>,
+}
+
+impl Progress {
+  fn is_complete(&self, photo: &ReadyPhoto) -> bool {
+    self.location.is_some() && photo.files.iter().all(|file| self.saved.contains(&file.name))
+  }
 }
 
 impl Receiver {
@@ -147,21 +169,37 @@ impl Receiver {
     for id in &outbox.saving {
       self.announce(id);
     }
+    self.progress.retain(|id, _| outbox.ready.iter().any(|photo| &photo.id == id));
     for photo in &outbox.ready {
-      self.announce(&photo.id);
-      let stored = store_photo(app, client, &base, &config.photo_directory, photo).await;
-      self.announced.remove(&photo.id);
-      match stored {
-        Ok(location) => {
-          log_info!("Photo saved to {location}");
-          show_photo_saved(&photo.id, &location);
+      let already_saved = self.progress.get(&photo.id).is_some_and(|p| p.is_complete(photo));
+      if !already_saved {
+        self.announce(&photo.id);
+        let progress = self.progress.entry(photo.id.clone()).or_default();
+        let stored =
+          store_photo(app, client, &base, &config.photo_directory, photo, progress).await;
+        self.announced.remove(&photo.id);
+        match stored {
+          Ok(location) => {
+            log_info!("Photo saved to {location}");
+            show_photo_saved(&photo.id, &location);
+          },
+          Err(error) => {
+            // The photo stays in the ROV's outbox; try again later.
+            log_warn!("Failed to receive photo {}: {error}", photo.id);
+            show_photo_failed(&photo.id, &error);
+            return IDLE_POLL;
+          },
+        }
+      }
+      match delete(client, &base, &photo.id).await {
+        Ok(()) => {
+          self.progress.remove(&photo.id);
         },
-        Err(error) => {
-          // The photo stays in the ROV's outbox; try again later.
-          log_warn!("Failed to receive photo {}: {error}", photo.id);
-          show_photo_failed(&photo.id, &error);
-          return IDLE_POLL;
+        // Saved here already; only the deletion is retried at the next poll.
+        Err(error) if !already_saved => {
+          log_warn!("Photo {} is saved but still on the ROV: {error}", photo.id);
         },
+        Err(_) => {},
       }
     }
     if outbox.saving.is_empty() {
@@ -198,31 +236,116 @@ async fn delete(client: &Client, base: &str, id: &str) -> Result<(), String> {
     .map_err(|error| error.to_string())
 }
 
-/// Downloads every file of a photo, stores it under one shared name and only
-/// then removes it from the ROV. Returns where the JPEG (or first file) went.
+/// A photo file downloaded next to its destination.
+struct Downloaded {
+  /// The ROV's name for the file.
+  name: String,
+  temp: PathBuf,
+  extension: &'static str,
+}
+
+/// Downloads the files of a photo that are not saved yet and saves them under
+/// the photo's shared name. Returns where the JPEG (or first file) went.
 ///
 /// # Errors
-/// Returns network and file system errors; nothing is deleted on the ROV then.
+/// Returns network and file system errors.
 async fn store_photo(
   app: &AppHandle,
   client: &Client,
   base: &str,
   directory: &str,
   photo: &ReadyPhoto,
+  progress: &mut Progress,
 ) -> Result<String, String> {
-  let stem = photo_stem(SystemTime::now());
-  let mut location = None;
-  for file in &photo.files {
-    let extension = extension_of(&file.name)?;
-    let temp = temp_path(app, directory, &file.name)?;
-    download(client, &format!("{base}/{}", file.name), &temp).await?;
-    let saved = save(app, &temp, directory, &stem, extension).await;
-    let _ = tokio::fs::remove_file(&temp).await;
-    let saved = saved?;
-    location.get_or_insert(saved);
+  let directory = progress.directory.get_or_insert_with(|| directory.to_string()).clone();
+  let directory = directory.as_str();
+  let missing: Vec<&PhotoFile> =
+    photo.files.iter().filter(|file| !progress.saved.contains(&file.name)).collect();
+  let folder = temp_folder(app, directory)?;
+  let files = download_photo(client, base, &folder, &missing).await?;
+  let saved = save_photo(app, directory, &files, progress).await;
+  remove_files(&files).await;
+  saved?;
+  progress
+    .location
+    .clone()
+    .ok_or_else(|| "The ROV sent a photo without files".into())
+}
+
+/// Downloads every file before any of them is saved, so a transfer that fails
+/// part way leaves nothing in the photo folder to be saved again when it is
+/// retried.
+///
+/// # Errors
+/// Returns network and file system errors, after removing what it downloaded.
+async fn download_photo(
+  client: &Client,
+  base: &str,
+  folder: &Path,
+  photo_files: &[&PhotoFile],
+) -> Result<Vec<Downloaded>, String> {
+  tokio::fs::create_dir_all(folder)
+    .await
+    .map_err(|error| format!("Cannot create {}: {error}", folder.display()))?;
+  let mut files = Vec::with_capacity(photo_files.len());
+  for file in photo_files {
+    match download_file(client, base, folder, file).await {
+      Ok(downloaded) => files.push(downloaded),
+      Err(error) => {
+        remove_files(&files).await;
+        return Err(error);
+      },
+    }
   }
-  delete(client, base, &photo.id).await?;
-  location.ok_or_else(|| "The ROV sent a photo without files".into())
+  Ok(files)
+}
+
+/// # Errors
+/// Returns an unexpected file name, or network and file system errors after
+/// removing the partial download.
+async fn download_file(
+  client: &Client,
+  base: &str,
+  folder: &Path,
+  file: &PhotoFile,
+) -> Result<Downloaded, String> {
+  let extension = extension_of(&file.name)?;
+  let temp = folder.join(format!(".{}.part", file.name));
+  if let Err(error) = download(client, &format!("{base}/{}", file.name), &temp).await {
+    let _ = tokio::fs::remove_file(&temp).await;
+    return Err(error);
+  }
+  Ok(Downloaded {
+    name: file.name.clone(),
+    temp,
+    extension,
+  })
+}
+
+/// Saves the files one by one, recording each in `progress` as soon as it is
+/// saved, so a later failure does not make a retry save it again.
+///
+/// # Errors
+/// Returns file system errors.
+async fn save_photo(
+  app: &AppHandle,
+  directory: &str,
+  files: &[Downloaded],
+  progress: &mut Progress,
+) -> Result<(), String> {
+  let stem = progress.stem.get_or_insert_with(|| photo_stem(SystemTime::now())).clone();
+  for file in files {
+    let saved = save(app, &file.temp, directory, &stem, file.extension).await?;
+    progress.location.get_or_insert(saved);
+    progress.saved.insert(file.name.clone());
+  }
+  Ok(())
+}
+
+async fn remove_files(files: &[Downloaded]) {
+  for file in files {
+    let _ = tokio::fs::remove_file(&file.temp).await;
+  }
 }
 
 /// Only the files the camera writes are accepted, so a name from the ROV can
@@ -276,19 +399,10 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
   (year, month, day)
 }
 
-/// Where a file is downloaded before it gets its final name: next to the
+/// Where files are downloaded before they get their final name: next to the
 /// destination on desktop (so the final rename is instant), or the app cache
 /// on mobile, where folders are only reachable through the system.
 ///
-/// # Errors
-/// Returns an error if the folder cannot be created.
-fn temp_path(app: &AppHandle, directory: &str, name: &str) -> Result<PathBuf, String> {
-  let folder = temp_folder(app, directory)?;
-  std::fs::create_dir_all(&folder)
-    .map_err(|error| format!("Cannot create {}: {error}", folder.display()))?;
-  Ok(folder.join(format!(".{name}.part")))
-}
-
 /// # Errors
 /// Never fails on desktop; mobile can fail to find the cache folder.
 #[cfg(desktop)]
@@ -495,6 +609,61 @@ mod tests {
     assert!(saved.ends_with("Photo_1_2.jpg"));
     assert_eq!(std::fs::read(folder.path().join("Photo_1.jpg"))?, b"old");
     assert_eq!(std::fs::read(folder.path().join("Photo_1_2.jpg"))?, b"new");
+    Ok(())
+  }
+
+  /// Serves the JPEG, then fails the RAW like a dropped tether would.
+  ///
+  /// # Errors
+  /// Returns an error if the test server cannot listen.
+  async fn serve_jpeg_then_fail() -> Result<String, Box<dyn std::error::Error>> {
+    use tokio::io::AsyncReadExt;
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
+    let address = listener.local_addr()?;
+    tokio::spawn(async move {
+      for response in [
+        "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nConnection: close\r\n\r\njpeg",
+        "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+      ] {
+        let Ok((mut socket, _)) = listener.accept().await else {
+          return;
+        };
+        let mut request = [0_u8; 2048];
+        let _ = socket.read(&mut request).await;
+        let _ = socket.write_all(response.as_bytes()).await;
+      }
+    });
+    Ok(format!("http://{address}/photos"))
+  }
+
+  /// # Panics
+  /// Panics if a failed RAW download leaves files that a retry would save
+  /// again.
+  ///
+  /// # Errors
+  /// Returns errors from the test fixture.
+  #[tokio::test]
+  async fn a_failed_download_leaves_nothing_behind() -> Result<(), Box<dyn std::error::Error>> {
+    let folder = tempfile::tempdir()?;
+    let base = serve_jpeg_then_fail().await?;
+    let photo = ReadyPhoto {
+      id: "photo_1".into(),
+      files: vec![
+        PhotoFile {
+          name: "photo_1.jpg".into(),
+        },
+        PhotoFile {
+          name: "photo_1.dng".into(),
+        },
+      ],
+    };
+
+    let files: Vec<&PhotoFile> = photo.files.iter().collect();
+    let downloaded = download_photo(&Client::new(), &base, folder.path(), &files).await;
+
+    assert!(downloaded.is_err());
+    assert_eq!(std::fs::read_dir(folder.path())?.count(), 0);
     Ok(())
   }
 }
