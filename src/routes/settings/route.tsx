@@ -10,12 +10,12 @@ import {
 import { SidebarInset, SidebarLayout, SidebarProvider } from '@manafishrov/ui/sidebar';
 import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/solid-router';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { createEffect, createSignal, onCleanup, onMount, Show, type Component } from 'solid-js';
+import { createEffect, createSignal, onCleanup, onMount, type Component } from 'solid-js';
 
 import { SettingsSidebar } from '@/features/settings/SettingsSidebar';
 import { isMobile } from '@/lib/platform';
 import { connectionStatusStore } from '@/stores/connectionStatus';
-import { requestRovConfig, rovConfigRevision } from '@/tauri';
+import { requestRovConfig } from '@/tauri';
 
 const noop = function noop(): void {
   // Noop
@@ -88,13 +88,7 @@ const SettingsLayout: Component = () => {
             >
               <ScrollAreaContent class='@container'>
                 <div class='relative mx-auto w-full max-w-3xl p-4 md:p-8'>
-                  <Show when={rovConfigRevision()} keyed fallback={<Outlet />}>
-                    {(revision) => (
-                      <div class='contents' data-rov-config-revision={revision}>
-                        <Outlet />
-                      </div>
-                    )}
-                  </Show>
+                  <Outlet />
                 </div>
               </ScrollAreaContent>
             </ScrollAreaViewport>

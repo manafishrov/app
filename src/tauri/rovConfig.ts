@@ -1,5 +1,3 @@
-import { createSignal } from 'solid-js';
-
 import { connectionStatusStore } from '@/stores/connectionStatus';
 import { rovConfigStore, setRovConfigStore, type RovConfig } from '@/stores/rovConfig';
 import { createListener, invokeCommand } from '@/tauri/core';
@@ -11,7 +9,6 @@ const CONFIG_RESPONSE_TIMEOUT_MS = 12_000;
 
 const resolveVoid: () => void = () => 0;
 const noopCancel: (error: Error) => void = () => 0;
-const [rovConfigRevision, setRovConfigRevision] = createSignal(0);
 
 type ConfigResponse = {
   mutationId?: string;
@@ -63,7 +60,6 @@ const takeConfigWaiter = (mutationId: string): ConfigWaiter | undefined => {
 const applyRemoteRovConfig = (response: ConfigResponse): void => {
   const { config, mutationId } = response;
   setRovConfigStore(config);
-  setRovConfigRevision((revision) => revision + 1);
   if (typeof mutationId !== 'string' || mutationId === '') {
     return;
   }
@@ -168,5 +164,3 @@ export const setRovConfig = (
 
 export const importRovConfig = (payload: unknown): Promise<void> =>
   enqueueMutation((mutationId) => invokeCommand('import_rov_config', { payload, mutationId }));
-
-export { rovConfigRevision };

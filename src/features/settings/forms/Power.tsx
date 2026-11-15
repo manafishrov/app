@@ -22,6 +22,8 @@ import { rovConfigStore } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
 import { playConfirmHaptic } from '@/tauri/gamepad';
 
+import { saveRovConfigForm } from './rovConfigForm';
+
 const MAX_POWER = 100;
 const POWER_WARNING_THRESHOLD = 40;
 const SLIDER_CLASS =
@@ -251,17 +253,23 @@ const createHighPowerWarning = (form: {
   };
 };
 
+const getDefaultFormValues = (): z.infer<typeof formSchema> => ({
+  thrustersLimit: [rovConfigStore.power.thrustersLimit],
+  actionsLimit: [rovConfigStore.power.actionsLimit],
+  regulatorLimit: [rovConfigStore.power.regulatorLimit],
+  minBatteryVoltage: rovConfigStore.power.minBatteryVoltage,
+  maxBatteryVoltage: rovConfigStore.power.maxBatteryVoltage,
+});
+
 export const Power: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
-    defaultValues: {
-      thrustersLimit: [rovConfigStore.power.thrustersLimit],
-      actionsLimit: [rovConfigStore.power.actionsLimit],
-      regulatorLimit: [rovConfigStore.power.regulatorLimit],
-      minBatteryVoltage: rovConfigStore.power.minBatteryVoltage,
-      maxBatteryVoltage: rovConfigStore.power.maxBatteryVoltage,
-    },
-    onSubmit: ({ value }): Promise<void> => submitPowerSettings(value),
+    defaultValues: getDefaultFormValues(),
+    onSubmit: ({ value }): Promise<void> =>
+      saveRovConfigForm(form, value, {
+        save: submitPowerSettings,
+        readStored: getDefaultFormValues,
+      }),
   }));
 
   const warning = createHighPowerWarning(form);

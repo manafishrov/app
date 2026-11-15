@@ -14,6 +14,8 @@ import * as m from '@/paraglide/messages';
 import { FluidType, rovConfigStore, type RovConfig } from '@/stores/rovConfig';
 import { setRovConfig } from '@/tauri';
 
+import { saveRovConfigForm } from './rovConfigForm';
+
 type SelectOption = { value: string; label: string; disabled?: boolean };
 type SelectCollection = ReturnType<typeof createListCollection<SelectOption>>;
 
@@ -130,7 +132,11 @@ export const System: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
-    onSubmit: ({ value }: { value: SystemFormValues }): Promise<void> => submitSystemConfig(value),
+    onSubmit: ({ value }: { value: SystemFormValues }): Promise<void> =>
+      saveRovConfigForm(form, value, {
+        save: submitSystemConfig,
+        readStored: getDefaultFormValues,
+      }),
   }));
 
   return (

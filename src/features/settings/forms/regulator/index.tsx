@@ -12,6 +12,7 @@ import {
 } from '@/stores/rovConfig';
 import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
 
+import { saveRovConfigForm } from '../rovConfigForm';
 import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS, hasRegulatorSuggestions } from './AxisFieldset';
 import { AUTO_TUNING_TIMEOUT_MS } from './constants';
 import { DirectionCoefficientsFieldset } from './DirectionCoefficientsFieldset';
@@ -55,7 +56,7 @@ const getFormDefaultValues = (): FormValues => ({
   sway: rovConfigStore.directionCoefficients.sway,
 });
 
-const handleFormSubmit = ({ value }: { value: FormValues }): Promise<void> => {
+const submitRegulatorConfig = (value: FormValues): Promise<void> => {
   const regulator: RegulatorType = {
     pitch: toAxisConfig(value.pitch, rovConfigStore.regulator.pitch.rate),
     yaw: toAxisConfig(value.yaw, rovConfigStore.regulator.yaw.rate),
@@ -166,8 +167,9 @@ export const Regulator: Component = () => {
     },
     defaultValues: getFormDefaultValues(),
     onSubmit: ({ value }: { value: FormValues }): Promise<void> =>
-      handleFormSubmit({ value }).then(() => {
-        form.reset(value);
+      saveRovConfigForm(form, value, {
+        save: submitRegulatorConfig,
+        readStored: getFormDefaultValues,
       }),
   }));
   const handleAutoTuning = createAutoTuningHandler(setAutoTuningDisabled);

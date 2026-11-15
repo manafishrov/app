@@ -13,6 +13,7 @@ import { setRovConfig } from '@/tauri';
 
 import type { ThrusterPresetRow } from './thrusterPresets';
 
+import { saveRovConfigForm } from '../rovConfigForm';
 import { CalibrationFormLayout } from './CalibrationFormLayout';
 import {
   DECIMAL_PRECISION_FACTOR,
@@ -206,8 +207,9 @@ export const Calibration: Component = (): JSXElement => {
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: createCalibrationFormValues(),
     onSubmit: ({ value }: { value: FormValues }): Promise<void> =>
-      submitCalibrationForm(value).then(() => {
-        form.reset(value);
+      saveRovConfigForm(form, value, {
+        save: submitCalibrationForm,
+        readStored: createCalibrationFormValues,
       }),
   }));
 

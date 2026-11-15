@@ -5,6 +5,7 @@ import { useAppForm } from '@manafishrov/ui/form';
 import { configStore, setConfig } from '@/stores/config';
 import { setRovConfig } from '@/tauri';
 
+import { saveRovConfigForm } from '../rovConfigForm';
 import { ImageFieldset } from './ImageFieldset';
 import {
   type CameraFormValues,
@@ -35,9 +36,7 @@ export const CameraSettingsForm: Component = () => {
     },
     defaultValues: getCameraFormValues(),
     onSubmit: ({ value }: { value: CameraFormValues }): Promise<void> =>
-      submitCameraConfig(value).then(() => {
-        form.reset(value);
-      }),
+      saveRovConfigForm(form, value, { save: submitCameraConfig, readStored: getCameraFormValues }),
   }));
 
   return (

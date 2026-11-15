@@ -25,6 +25,7 @@ import {
 } from './mcu/schema';
 import { updateMcuConfig, type ResolvedMcuConfig } from './mcu/update';
 import { mcuConfigMatches } from './mcu/verify';
+import { saveRovConfigForm } from './rovConfigForm';
 
 const resolveFormValues = (value: McuFormValues): ResolvedMcuConfig => ({
   mcuBoard: value.mcuBoard[0] ?? rovConfigStore.mcuBoard,
@@ -168,7 +169,8 @@ export const Mcu: Component = () => {
   const form = useAppForm(() => ({
     validators: { onChange: formSchema, onSubmit: formSchema },
     defaultValues: getDefaultFormValues(),
-    onSubmit: ({ value }): Promise<void> => submitMcuConfig(value),
+    onSubmit: ({ value }): Promise<void> =>
+      saveRovConfigForm(form, value, { save: submitMcuConfig, readStored: getDefaultFormValues }),
   }));
   const selectedMcuBoard = form.useSelector(
     (state) => state.values.mcuBoard[0] ?? rovConfigStore.mcuBoard,
