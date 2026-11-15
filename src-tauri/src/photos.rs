@@ -8,8 +8,9 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
+use chrono::{DateTime, Datelike, Local, TimeZone, Timelike};
 use futures_util::StreamExt;
 use reqwest::Client;
 use serde::Deserialize;
@@ -333,7 +334,7 @@ async fn save_photo(
   files: &[Downloaded],
   progress: &mut Progress,
 ) -> Result<(), String> {
-  let stem = progress.stem.get_or_insert_with(|| photo_stem(SystemTime::now())).clone();
+  let stem = progress.stem.get_or_insert_with(|| photo_stem(&Local::now())).clone();
   for file in files {
     let saved = save(app, &file.temp, directory, &stem, file.extension).await?;
     progress.location.get_or_insert(saved);
@@ -365,38 +366,18 @@ fn extension_of(name: &str) -> Result<&'static str, String> {
   }
 }
 
-/// `Photo_YYYY-MM-DD_HH-MM-SS` in UTC, like recordings. The PC's clock names
-/// photos because the ROV has no battery-backed clock.
-fn photo_stem(now: SystemTime) -> String {
-  let seconds = now.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-  let days = i64::try_from(seconds / 86_400).unwrap_or_default();
-  let time = seconds % 86_400;
-  let (year, month, day) = civil_from_days(days);
+/// `Photo_YYYY-MM-DD_HH-MM-SS` in local time, like recordings. The PC's clock
+/// names photos because the ROV has no battery-backed clock.
+fn photo_stem<Tz: TimeZone>(now: &DateTime<Tz>) -> String {
   format!(
-    "Photo_{year:04}-{month:02}-{day:02}_{:02}-{:02}-{:02}",
-    time / 3600,
-    time / 60 % 60,
-    time % 60
+    "Photo_{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
+    now.year(),
+    now.month(),
+    now.day(),
+    now.hour(),
+    now.minute(),
+    now.second()
   )
-}
-
-/// Gregorian date of a day count since 1970-01-01 (Howard Hinnant's algorithm).
-fn civil_from_days(days: i64) -> (i64, i64, i64) {
-  let z = days + 719_468;
-  let era = z.div_euclid(146_097);
-  let day_of_era = z.rem_euclid(146_097);
-  let year_of_era =
-    (day_of_era - day_of_era / 1460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
-  let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-  let shifted_month = (5 * day_of_year + 2) / 153;
-  let day = day_of_year - (153 * shifted_month + 2) / 5 + 1;
-  let month = if shifted_month < 10 {
-    shifted_month + 3
-  } else {
-    shifted_month - 9
-  };
-  let year = year_of_era + era * 400 + i64::from(month <= 2);
-  (year, month, day)
 }
 
 /// Where files are downloaded before they get their final name: next to the
@@ -543,19 +524,24 @@ fn show_photo_failed(photo_id: &str, error: &str) {
 mod tests {
   use super::*;
 
+  /// # Errors
+  /// Returns an error if a test time cannot be built.
+  ///
   /// # Panics
-  /// Panics if photo names do not follow the PC's UTC clock.
+  /// Panics if photo names do not follow the PC's local clock.
   #[test]
-  fn photo_names_use_the_pc_clock_in_utc() {
-    // 2026-11-05 14:03:22 UTC
-    let time = UNIX_EPOCH + Duration::from_secs(1_793_887_402);
-    assert_eq!(photo_stem(time), "Photo_2026-11-05_14-03-22");
-    assert_eq!(photo_stem(UNIX_EPOCH), "Photo_1970-01-01_00-00-00");
-    // Leap day.
+  fn photo_names_use_the_pc_clock_in_local_time() -> Result<(), String> {
+    let at = |seconds| DateTime::from_timestamp(seconds, 0).ok_or("invalid test time");
+    let pacific = chrono::FixedOffset::west_opt(8 * 3600).ok_or("invalid offset")?;
+    // 2026-11-15 13:25:59 UTC is 05:25:59 in Pacific Standard Time.
     assert_eq!(
-      photo_stem(UNIX_EPOCH + Duration::from_secs(951_827_696)),
-      "Photo_2000-02-29_12-34-56"
+      photo_stem(&at(1_794_749_159)?.with_timezone(&pacific)),
+      "Photo_2026-11-15_05-25-59"
     );
+    assert_eq!(photo_stem(&at(0)?), "Photo_1970-01-01_00-00-00");
+    // Leap day.
+    assert_eq!(photo_stem(&at(951_827_696)?), "Photo_2000-02-29_12-34-56");
+    Ok(())
   }
 
   /// # Panics

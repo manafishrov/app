@@ -11,6 +11,7 @@ import { setRecordingStore } from '@/stores/recording';
 import { invokeCommand } from '@/tauri/core';
 
 const TIMESTAMP_LENGTH = 19;
+const MS_PER_MINUTE = 60_000;
 const MAX_CONSECUTIVE_CHUNK_FAILURES = 3;
 const TEMP_MARKER = '_temp.';
 
@@ -69,7 +70,9 @@ export const ensureVideoDirectory = (): Promise<void> =>
     });
 
 export const createRecordingPath = (mimeType: string): Promise<string> => {
-  const timestamp = new Date()
+  // Shifted by the time zone offset so the ISO text shows local time.
+  const now = new Date();
+  const timestamp = new Date(now.getTime() - now.getTimezoneOffset() * MS_PER_MINUTE)
     .toISOString()
     .replace('T', '_')
     .replaceAll(/[:.]/g, '-')

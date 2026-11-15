@@ -50,6 +50,7 @@ futures-util = "0.3.31"
 bytes = "1.10.1"
 percent-encoding = "2.3.2"
 tempfile = "3.21.0"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "download-binaries", "copy-dylibs", "tls-rustls", "api-31"] }
 reqwest = { version = "0.13.0", default-features = false, features = ["json", "rustls", "stream"] }
