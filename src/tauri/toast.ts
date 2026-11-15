@@ -12,6 +12,7 @@ import * as thrusterTest from '@/tauri/thrusterTest';
 
 const EVENT = 'show_toast';
 const EMPTY_TOAST_ARGS: Record<string, never> = {};
+const [undef] = [] as undefined[];
 
 type ToastKeyArgs = Record<string, string | number | boolean>;
 type DynamicMessageResolver = (args?: Record<string, unknown>) => string;
@@ -63,11 +64,9 @@ type ToastCreateOptions = {
   id?: string;
   title: string;
   type: ToastRenderType;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  // Explicitly undefined clears what an earlier toast with the same id showed.
+  description: string | undefined;
+  action: { label: string; onClick: () => void } | undefined;
 };
 
 const activeLoadingToasts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -187,6 +186,8 @@ const scheduleLoadingTimeout = (toastId: string): void => {
         m.toasts_operation_timed_out(),
       ),
       type: ToastRenderType.error,
+      description: undef,
+      action: undef,
     });
     activeLoadingToasts.delete(toastId);
   }, LOADING_TOAST_TIMEOUT_MS);
@@ -199,7 +200,7 @@ const createBaseToastOptions = (payload: ToastPayload): ToastCreateOptions => {
   const variant = payload.variant ?? ToastPayloadVariant.info;
   const type = toastTypeMap[variant] ?? ToastRenderType.info;
   const title = createToastTitle(payload.content);
-  const options: ToastCreateOptions = { title, type };
+  const options: ToastCreateOptions = { title, type, description: undef, action: undef };
 
   if (toastId.length > 0) {
     options.id = toastId;
