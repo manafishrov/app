@@ -146,6 +146,7 @@ type KeyboardBindings = {
   desiredDepthDecrease: NullableKeyboardInput;
   record: NullableKeyboardInput;
   objectDetection: NullableKeyboardInput;
+  takePhoto: NullableKeyboardInput;
 };
 
 type GamepadBindings = {
@@ -172,6 +173,7 @@ type GamepadBindings = {
   desiredDepthDecrease: NullableGamepadInput;
   record: NullableGamepadInput;
   objectDetection: NullableGamepadInput;
+  takePhoto: NullableGamepadInput;
 };
 
 type CustomActionBinding = {
@@ -208,6 +210,7 @@ type Config = {
   appVersion: string;
   overlay: OverlayConfig;
   videoDirectory: string;
+  photoDirectory: string;
   checkForAppUpdatesOnStartup: boolean;
   ipAddress: string;
   webrtcSignalingApiPort: number;

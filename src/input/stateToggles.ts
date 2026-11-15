@@ -20,6 +20,7 @@ import {
 import { isInputSuppressed } from '@/stores/inputState';
 import { rovTelemetryStore } from '@/stores/rovTelemetry';
 import { playConfirmHaptic } from '@/tauri/gamepad';
+import { takePhoto } from '@/tauri/photo';
 import { toggleAutoStabilization, toggleDepthHold } from '@/tauri/stabilization';
 type ToggleState = {
   autoStabilization: boolean;
@@ -27,6 +28,7 @@ type ToggleState = {
   desiredDepthEntry: boolean;
   record: boolean;
   objectDetection: boolean;
+  takePhoto: boolean;
 };
 type ToggleContext = {
   config: Config;
@@ -160,7 +162,7 @@ const handleDesiredDepthAdjust = (
 };
 const handleHapticToggle = (
   ctx: ToggleContext,
-  state: 'autoStabilization' | 'depthHold' | 'objectDetection',
+  state: 'autoStabilization' | 'depthHold' | 'objectDetection' | 'takePhoto',
   action: () => Promise<void>,
 ): void => {
   const isPressed = isInputPressed({
@@ -237,6 +239,7 @@ const handleDefaultFrame = (
   });
   handleRecordingInput(ctx);
   handleHapticToggle(ctx, 'objectDetection', toggleObjectDetection);
+  handleHapticToggle(ctx, 'takePhoto', takePhoto);
 };
 
 type ToggleLoopInputs = [Config, Set<string>, () => boolean, () => boolean];
@@ -250,6 +253,7 @@ export const createStateToggleLoop = (
     desiredDepthEntry: false,
     record: false,
     objectDetection: false,
+    takePhoto: false,
   };
   const desiredDepthRepeatState: DesiredDepthRepeatState = {
     desiredDepthIncrease: 0,

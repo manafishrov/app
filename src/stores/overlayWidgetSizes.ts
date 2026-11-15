@@ -93,6 +93,7 @@ export const overlayWidgetSizes: Record<OverlayWidgetType, WidgetSizes> = {
   thrusterRpm8: reading,
   autoStabilization: control,
   depthHold: control,
+  takePhoto: control,
   currentDepth: reading,
   desiredDepth: reading,
   waterTemperature: reading,
