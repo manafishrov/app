@@ -159,6 +159,9 @@ jobs:
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         run: |
           sudo apt-get update
+          # The AppImage copies every plugin in this host's gstreamer-1.0
+          # directory (bundleMediaFramework), so list each one WebKit's
+          # WebRTC playback needs, not only what the deb/rpm Depends name.
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev \
             libappindicator3-dev \
@@ -172,6 +175,8 @@ jobs:
             libavutil-dev \
             libswresample-dev \
             libswscale-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-gl \
             gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad \
             gstreamer1.0-libav \
@@ -227,7 +232,8 @@ jobs:
           # across distro versions. The denylist holds everything that must
           # come from the host instead: the GTK/WebKit/GL desktop stack,
           # libsoup (loads host gio modules), libgst* (must match the host's
-          # gstreamer plugins, pulled in via the deb/rpm Depends) and
+          # gstreamer plugins, pulled in via the deb/rpm Depends; the AppImage
+          # instead ships this host's core and plugins together) and
           # libssl/libcrypto (host gst plugins like gstdtls link the host
           # openssl pair; pinning an older bundled libcrypto breaks the
           # symbol-versioning contract and crashes WebRTC's DTLS path).
@@ -425,7 +431,10 @@ jobs:
       # Linux AppImage: a direct download, so the in-app updater stays on.
       # LD_LIBRARY_PATH makes the AppImage bundler resolve libwebkit2gtk to
       # OUR WebRTC build instead of the host one (which AppRun would otherwise
-      # shadow it with, losing WebRTC).
+      # shadow it with, losing WebRTC). linuxdeploy also bundles this host's
+      # libgstreamer, so bundleMediaFramework (tauri.conf.json) ships the
+      # matching plugins and points GStreamer only at them: host plugins of
+      # another version cannot load into the bundled core.
       - name: Build and upload AppImage
         if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
