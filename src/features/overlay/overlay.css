@@ -220,6 +220,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Text values, such as number lists, take the room the label does not need. */
+.overlay-capability:has(> .overlay-value[data-text='true']) > .overlay-label:first-child {
+  flex: 0 1 auto;
+  max-width: 50%;
+}
 .overlay-capability > .overlay-value {
   flex-shrink: 0;
 }
