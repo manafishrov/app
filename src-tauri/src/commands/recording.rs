@@ -82,5 +82,5 @@ pub async fn describe_video_directory(
 ) -> Result<String, String> {
   use tauri_plugin_manafish_mobile::MobileExt;
 
-  app.mobile().describe_directory(&directory).await
+  app.mobile().describe_directory(&directory, "video").await
 }

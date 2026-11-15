@@ -14,6 +14,7 @@ import BatteryFullIcon from '~icons/material-symbols/battery-full';
 import ThermostatIcon from '~icons/material-symbols/device-thermostat';
 import ExploreIcon from '~icons/material-symbols/explore';
 import FiberManualRecordIcon from '~icons/material-symbols/fiber-manual-record';
+import PhotoCameraIcon from '~icons/material-symbols/photo-camera';
 import StraightenIcon from '~icons/material-symbols/straighten';
 import TuneIcon from '~icons/material-symbols/tune';
 import ViewInArIcon from '~icons/material-symbols/view-in-ar';
@@ -36,6 +37,7 @@ import { AttitudeStyle } from '../attitudeStyle';
 import { BatteryIndicator } from '../BatteryIndicator';
 import { ConnectionStatusIndicator } from '../ConnectionStatusIndicator';
 import { DepthIndicator } from '../DepthIndicator';
+import { PhotoIndicator } from '../PhotoIndicator';
 import { RecordingIndicator } from '../RecordingIndicator';
 import { StabilizationIndicator } from '../StabilizationIndicator';
 import { TemperatureIndicator } from '../TemperatureIndicator';
@@ -115,6 +117,11 @@ const entries: Record<OverlayWidgetType, RegistryEntry> = {
     label: () => m.overlay_widget_depth_hold(),
     Icon: TuneIcon,
     Render: () => <StabilizationIndicator depthHold={true} />,
+  },
+  [OverlayWidgetType.takePhoto]: {
+    label: () => m.overlay_widget_take_photo(),
+    Icon: PhotoCameraIcon,
+    Render: () => <PhotoIndicator />,
   },
   [OverlayWidgetType.thrusterRpm1]: thrusterEntry(0),
   [OverlayWidgetType.thrusterRpm2]: thrusterEntry(1),

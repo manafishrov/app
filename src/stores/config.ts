@@ -35,6 +35,7 @@ const createNullKeyboardBindings = (): KeyboardBindings => ({
   desiredDepthDecrease: null,
   record: null,
   objectDetection: null,
+  takePhoto: null,
 });
 
 const createNullGamepadBindings = (): GamepadBindings => ({
@@ -61,12 +62,14 @@ const createNullGamepadBindings = (): GamepadBindings => ({
   desiredDepthDecrease: null,
   record: null,
   objectDetection: null,
+  takePhoto: null,
 });
 
 const defaultConfig: Config = {
   appVersion: m.common_not_available(),
   overlay: createDefaultOverlayConfig(m.overlay_layout_default_name()),
   videoDirectory: '~/Movies/Manafish',
+  photoDirectory: '~/Pictures/Manafish',
   checkForAppUpdatesOnStartup: true,
   ipAddress: '10.10.10.10',
   webrtcSignalingApiPort: 1984,

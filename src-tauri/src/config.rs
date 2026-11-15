@@ -372,9 +372,12 @@ mod tests {
     assert_eq!(saved["customActions"], json!([]));
     let mut expected_keyboard = stable["keyboard"].clone();
     expected_keyboard["objectDetection"] = json!({"key": "KeyV", "minValue": 0.0, "maxValue": 1.0});
+    // Photos came later; existing setups get the key unbound rather than P.
+    expected_keyboard["takePhoto"] = json!(null);
     assert_eq!(saved["keyboard"], expected_keyboard);
     let mut expected_gamepad = stable["gamepad"].clone();
     expected_gamepad["dive-controller"]["objectDetection"] = json!(null);
+    expected_gamepad["dive-controller"]["takePhoto"] = json!(null);
     assert_eq!(saved["gamepad"], expected_gamepad);
     assert_eq!(
       saved["detection"],

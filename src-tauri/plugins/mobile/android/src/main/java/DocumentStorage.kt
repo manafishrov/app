@@ -16,7 +16,8 @@ private const val DEFAULT_FOLDER = "Manafish"
 /**
  * File access through the Storage Access Framework. A directory token is the
  * URI of a folder the user picked (with persisted access), or empty for the
- * default shared folder (Movies/Manafish or Download/Manafish, by type).
+ * default shared folder (Movies/Manafish, Pictures/Manafish or
+ * Download/Manafish, by type).
  */
 internal class DocumentStorage(private val context: Context) {
   private val resolver = context.contentResolver
@@ -29,9 +30,11 @@ internal class DocumentStorage(private val context: Context) {
     return tree.toString()
   }
 
-  fun describeDirectory(directory: String): String {
+  fun describeDirectory(directory: String, kind: String = "video"): String {
     if (directory.isEmpty()) {
-      return "${Environment.DIRECTORY_MOVIES}/$DEFAULT_FOLDER"
+      val folder =
+        if (kind == "photo") Environment.DIRECTORY_PICTURES else Environment.DIRECTORY_MOVIES
+      return "$folder/$DEFAULT_FOLDER"
     }
     val tree = Uri.parse(directory)
     return displayName(treeDocument(tree)) ?: tree.lastPathSegment ?: directory
@@ -72,12 +75,18 @@ internal class DocumentStorage(private val context: Context) {
   }
 
   private fun saveToSharedFolder(source: File, fileName: String, mimeType: String): String {
-    val video = mimeType.startsWith("video/")
-    val folder =
-      if (video) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_DOWNLOADS
-    val collection =
-      if (video) MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-      else MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    val (folder, collection) =
+      when {
+        mimeType.startsWith("video/") ->
+          Environment.DIRECTORY_MOVIES to
+            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        mimeType.startsWith("image/") ->
+          Environment.DIRECTORY_PICTURES to
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else ->
+          Environment.DIRECTORY_DOWNLOADS to
+            MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+      }
     val values =
       ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)

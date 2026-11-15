@@ -51,6 +51,8 @@ struct RovAddressArgs<'a> {
 #[serde(rename_all = "camelCase")]
 struct DirectoryArgs<'a> {
   directory: &'a str,
+  /// `video` or `photo`; picks the default folder an empty token stands for.
+  kind: &'a str,
 }
 
 #[derive(Serialize)]
@@ -169,13 +171,13 @@ impl<R: Runtime> Mobile<R> {
   }
 
   /// Human-readable name of a stored directory token; an empty token is the
-  /// platform default location.
+  /// platform default location for `kind` (`video` or `photo`).
   ///
   /// # Errors
   /// Returns an error if the token can no longer be resolved.
-  pub async fn describe_directory(&self, directory: &str) -> Result<String, String> {
+  pub async fn describe_directory(&self, directory: &str, kind: &str) -> Result<String, String> {
     self
-      .run::<NameResponse>("describeDirectory", DirectoryArgs { directory })
+      .run::<NameResponse>("describeDirectory", DirectoryArgs { directory, kind })
       .await
       .map(|response| response.name)
   }

@@ -60,6 +60,10 @@ impl CapabilityState {
     }
   }
 
+  pub fn is_connected(&self) -> bool {
+    self.connected.load(Ordering::Acquire)
+  }
+
   pub fn is_pending(&self, id: &str) -> bool {
     self.pending.lock().is_ok_and(|pending| pending.contains_key(id))
   }

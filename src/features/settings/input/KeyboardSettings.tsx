@@ -88,6 +88,7 @@ const BINDING_SECTIONS: BindingSection[] = [
     fields: [
       { key: 'record', label: () => m.keyboard_record() },
       { key: 'objectDetection' as const, label: () => m.bindings_action_object_detection() },
+      { key: 'takePhoto', label: () => m.keyboard_take_photo() },
     ],
   },
 ];
