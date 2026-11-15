@@ -35,9 +35,8 @@ pub use recording::{append_recording_chunk, save_recording};
 #[cfg(mobile)]
 pub use recording::{describe_video_directory, pick_video_directory};
 pub use rov::{
-  cancel_regulator_auto_tuning, cancel_thruster_test, confirm_rov_config, flash_esc_firmware,
-  flash_mcu_firmware, import_rov_config, request_rov_config, set_rov_config,
-  start_regulator_auto_tuning, start_thruster_test,
+  cancel_thruster_test, confirm_rov_config, flash_esc_firmware, flash_mcu_firmware,
+  import_rov_config, request_rov_config, set_rov_config, start_thruster_test,
 };
 
 pub mod capabilities;

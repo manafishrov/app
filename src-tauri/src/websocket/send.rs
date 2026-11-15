@@ -215,32 +215,6 @@ pub async fn handle_cancel_thruster_test(
 
 /// # Errors
 /// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_start_regulator_auto_tuning(
-  state: &State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  send_message(
-    &state.tx,
-    WebsocketMessage::StartRegulatorAutoTuning,
-    "StartRegulatorAutoTuning",
-  )
-  .await
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
-pub async fn handle_cancel_regulator_auto_tuning(
-  state: &State<'_, MessageSendChannelState>,
-) -> Result<(), String> {
-  send_message(
-    &state.tx,
-    WebsocketMessage::CancelRegulatorAutoTuning,
-    "CancelRegulatorAutoTuning",
-  )
-  .await
-}
-
-/// # Errors
-/// Returns an error if the websocket send channel is unavailable.
 pub async fn handle_flash_mcu_firmware(
   state: &State<'_, MessageSendChannelState>,
   payload: McuBoard,

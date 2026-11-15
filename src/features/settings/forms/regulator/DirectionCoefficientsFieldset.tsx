@@ -4,7 +4,7 @@ import { withForm } from '@manafishrov/ui/form';
 import * as m from '@/paraglide/messages';
 
 import { MAX_PID_VALUE } from './constants';
-import { FieldSuggestionActions } from './FieldSuggestionActions';
+import { FieldResetButton } from './FieldResetButton';
 import { REGULATOR_FORM_DEFAULT_VALUES } from './schema';
 
 type DirectionName = 'surge' | 'heave' | 'sway';
@@ -13,7 +13,6 @@ type DirectionFieldProps = {
   label: string;
   description: string;
   defaultValue: number;
-  hasSuggestions: boolean;
 };
 
 const DEFAULT_DIRECTION_FIELD_PROPS: DirectionFieldProps = {
@@ -21,7 +20,6 @@ const DEFAULT_DIRECTION_FIELD_PROPS: DirectionFieldProps = {
   label: '',
   description: '',
   defaultValue: 0,
-  hasSuggestions: false,
 };
 
 const DirectionField = withForm({
@@ -37,7 +35,7 @@ const DirectionField = withForm({
           max={MAX_PID_VALUE}
           step={1}
           trailingAddon={
-            <FieldSuggestionActions
+            <FieldResetButton
               defaultValue={props.defaultValue}
               onChange={field().handleChange}
               label={`${props.label} ${m.regulator_direction_coefficients_title()}`}
@@ -51,9 +49,7 @@ const DirectionField = withForm({
 
 export const DirectionCoefficientsFieldset = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,
-  props: {
-    hasSuggestions: false,
-  },
+  props: {},
   render: (props) => (
     <Fieldset>
       <FieldLegend>{m.regulator_direction_coefficients_title()}</FieldLegend>
@@ -67,7 +63,6 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_surge()}
           description={m.calibration_thruster_allocation_surge_tooltip()}
           defaultValue={REGULATOR_FORM_DEFAULT_VALUES.surge}
-          hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
           form={props.form}
@@ -75,7 +70,6 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_heave()}
           description={m.calibration_thruster_allocation_heave_tooltip()}
           defaultValue={REGULATOR_FORM_DEFAULT_VALUES.heave}
-          hasSuggestions={props.hasSuggestions}
         />
         <DirectionField
           form={props.form}
@@ -83,7 +77,6 @@ export const DirectionCoefficientsFieldset = withForm({
           label={m.regulator_direction_coefficients_sway()}
           description={m.calibration_thruster_allocation_sway_tooltip()}
           defaultValue={REGULATOR_FORM_DEFAULT_VALUES.sway}
-          hasSuggestions={props.hasSuggestions}
         />
       </div>
     </Fieldset>

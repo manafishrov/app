@@ -3,7 +3,6 @@ use tokio_tungstenite::tungstenite::Message;
 
 use crate::log_warn;
 use crate::models::log::LogEntry;
-use crate::models::rov_config::RegulatorSuggestions;
 use crate::models::toast::Toast;
 use crate::websocket::message::ConfigResponse;
 
@@ -25,14 +24,6 @@ pub fn handle_show_toast(app: &AppHandle, payload: &Toast) -> Option<Message> {
 
 pub fn handle_config(app: &AppHandle, payload: &ConfigResponse) -> Option<Message> {
   emit_event(app, "rov_config_received", payload);
-  None
-}
-
-pub fn handle_regulator_suggestions(
-  app: &AppHandle,
-  payload: &RegulatorSuggestions,
-) -> Option<Message> {
-  emit_event(app, "regulator_suggestions_received", payload);
   None
 }
 

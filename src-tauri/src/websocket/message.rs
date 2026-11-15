@@ -2,9 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::capabilities::{CapabilityRequest, CapabilityResponse};
 use crate::models::log::LogEntry;
-use crate::models::rov_config::{
-  McuBoard, PartialRovConfig, RegulatorSuggestions, RovConfig, ThrusterTest,
-};
+use crate::models::rov_config::{McuBoard, PartialRovConfig, RovConfig, ThrusterTest};
 use crate::models::toast::Toast;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,9 +36,6 @@ pub enum WebsocketMessage {
   ConfirmConfig(String),
   StartThrusterTest(ThrusterTest),
   CancelThrusterTest(ThrusterTest),
-  StartRegulatorAutoTuning,
-  CancelRegulatorAutoTuning,
-  RegulatorSuggestions(RegulatorSuggestions),
   ShowToast(Toast),
   LogMessage(LogEntry),
   FlashMcuFirmware(McuBoard),
@@ -61,5 +56,28 @@ mod tests {
         .expect("serialize"),
       serde_json::json!({"type": "confirmConfig", "payload": "mutation-1"})
     );
+  }
+
+  #[test]
+  /// # Panics
+  ///
+  /// Panics if messages from firmware that still has regulator auto-tuning stop parsing.
+  fn firmware_with_auto_tuning_stays_compatible() {
+    let toast = serde_json::json!({"type": "showToast", "payload": {
+      "identifier": "auto-tuning",
+      "variant": "loading",
+      "content": {"messageKey": "toasts_auto_tuning_starting"},
+      "action": {"messageType": "cancelRegulatorAutoTuning", "labelKey": "common_cancel"},
+    }});
+    assert!(matches!(
+      serde_json::from_value::<WebsocketMessage>(toast),
+      Ok(WebsocketMessage::ShowToast(_))
+    ));
+    // The handler logs and ignores messages it no longer knows.
+    let axis = serde_json::json!({"kp": 1.0, "ki": 0.0, "kd": 0.0, "rate": 1.0});
+    let suggestions = serde_json::json!({"type": "regulatorSuggestions", "payload": {
+      "pitch": axis, "roll": axis, "yaw": axis, "depth": axis,
+    }});
+    assert!(serde_json::from_value::<WebsocketMessage>(suggestions).is_err());
   }
 }

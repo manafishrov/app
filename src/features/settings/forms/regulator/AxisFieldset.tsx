@@ -3,17 +3,14 @@ import type { ComponentProps, JSX } from 'solid-js';
 import { FieldLegend, Fieldset } from '@manafishrov/ui/field';
 import { withForm } from '@manafishrov/ui/form';
 
-import type { RegulatorSuggestions } from '@/stores/rovConfig';
-
 import * as m from '@/paraglide/messages';
 
 import { DEPTH_RATE_STEP, MAX_DEPTH_RATE, MAX_PID_VALUE, MAX_TURN_RATE } from './constants';
-import { FieldSuggestionActions } from './FieldSuggestionActions';
+import { FieldResetButton } from './FieldResetButton';
 import { REGULATOR_FORM_DEFAULT_VALUES } from './schema';
 
 type AxisName = 'pitch' | 'yaw' | 'roll' | 'depth';
 type AxisNumberKey = 'kp' | 'ki' | 'kd';
-type AxisSuggestionValues = Pick<RegulatorSuggestions[AxisName], AxisNumberKey>;
 
 type AxisNumberFieldProps = {
   axisName: AxisName;
@@ -21,7 +18,6 @@ type AxisNumberFieldProps = {
   label: string;
   title: string;
   defaultValue: number;
-  suggestionValue?: number | undefined;
 };
 
 type AxisRateFieldProps = {
@@ -32,8 +28,6 @@ type AxisFieldsetProps = {
   title: string;
   description: string;
   axisName: AxisName;
-  suggestions: RegulatorSuggestions;
-  hasSuggestions: boolean;
   defaultKp: number;
   defaultKi: number;
   defaultKd: number;
@@ -43,39 +37,6 @@ type AxisNumberFieldConfig = {
   fieldName: AxisNumberKey;
   label: string;
   defaultValue: number;
-  suggestionValue: number | undefined;
-};
-
-const EMPTY_AXIS_CONFIG = { kp: 0, ki: 0, kd: 0, rate: 0 };
-
-export const EMPTY_REGULATOR_SUGGESTIONS: RegulatorSuggestions = {
-  pitch: EMPTY_AXIS_CONFIG,
-  yaw: EMPTY_AXIS_CONFIG,
-  roll: EMPTY_AXIS_CONFIG,
-  depth: EMPTY_AXIS_CONFIG,
-};
-
-export const hasRegulatorSuggestions = (suggestions: RegulatorSuggestions | undefined): boolean => {
-  if (!suggestions) {
-    return false;
-  }
-
-  return Object.values(suggestions).some(
-    (axis) => axis.kp !== 0 || axis.ki !== 0 || axis.kd !== 0 || axis.rate !== 0,
-  );
-};
-
-const getAxisSuggestions = (
-  suggestions: RegulatorSuggestions,
-  axisName: AxisName,
-): AxisSuggestionValues => suggestions[axisName];
-
-const getSuggestionValue = (hasSuggestions: boolean, value: number): number | undefined => {
-  if (hasSuggestions) {
-    return value;
-  }
-
-  return;
 };
 
 const AXIS_NUMBER_FIELD_DEFAULT_PROPS: AxisNumberFieldProps = {
@@ -124,8 +85,6 @@ const AXIS_FIELDSET_DEFAULT_PROPS: AxisFieldsetProps = {
   title: '',
   description: '',
   axisName: 'pitch',
-  suggestions: EMPTY_REGULATOR_SUGGESTIONS,
-  hasSuggestions: false,
   defaultKp: 0,
   defaultKi: 0,
   defaultKd: 0,
@@ -143,9 +102,8 @@ const AxisNumberField = withForm({
           max={MAX_PID_VALUE}
           step={1}
           trailingAddon={
-            <FieldSuggestionActions
+            <FieldResetButton
               defaultValue={props.defaultValue}
-              suggestionValue={props.suggestionValue}
               onChange={field().handleChange}
               label={`${props.title} ${props.label}`}
             />
@@ -168,7 +126,6 @@ const renderAxisNumberField = (
     label={config.label}
     title={props.title}
     defaultValue={config.defaultValue}
-    suggestionValue={config.suggestionValue}
   />
 );
 
@@ -197,38 +154,28 @@ const AxisRateField = withForm({
 export const AxisFieldset = withForm({
   defaultValues: REGULATOR_FORM_DEFAULT_VALUES,
   props: AXIS_FIELDSET_DEFAULT_PROPS,
-  render: (props) => {
-    const suggestions = getAxisSuggestions(props.suggestions, props.axisName);
-    const kpSuggestionValue = getSuggestionValue(props.hasSuggestions, suggestions.kp);
-    const kiSuggestionValue = getSuggestionValue(props.hasSuggestions, suggestions.ki);
-    const kdSuggestionValue = getSuggestionValue(props.hasSuggestions, suggestions.kd);
-
-    return (
-      <Fieldset>
-        <FieldLegend>{props.title}</FieldLegend>
-        <p class='mb-4 text-sm text-muted-foreground'>{props.description}</p>
-        <div class='space-y-4'>
-          {renderAxisNumberField(props, {
-            fieldName: 'kp',
-            label: m.regulator_pid_kp(),
-            defaultValue: props.defaultKp,
-            suggestionValue: kpSuggestionValue,
-          })}
-          {renderAxisNumberField(props, {
-            fieldName: 'ki',
-            label: m.regulator_pid_ki(),
-            defaultValue: props.defaultKi,
-            suggestionValue: kiSuggestionValue,
-          })}
-          {renderAxisNumberField(props, {
-            fieldName: 'kd',
-            label: m.regulator_pid_kd(),
-            defaultValue: props.defaultKd,
-            suggestionValue: kdSuggestionValue,
-          })}
-          <AxisRateField form={props.form} axisName={props.axisName} />
-        </div>
-      </Fieldset>
-    );
-  },
+  render: (props) => (
+    <Fieldset>
+      <FieldLegend>{props.title}</FieldLegend>
+      <p class='mb-4 text-sm text-muted-foreground'>{props.description}</p>
+      <div class='space-y-4'>
+        {renderAxisNumberField(props, {
+          fieldName: 'kp',
+          label: m.regulator_pid_kp(),
+          defaultValue: props.defaultKp,
+        })}
+        {renderAxisNumberField(props, {
+          fieldName: 'ki',
+          label: m.regulator_pid_ki(),
+          defaultValue: props.defaultKi,
+        })}
+        {renderAxisNumberField(props, {
+          fieldName: 'kd',
+          label: m.regulator_pid_kd(),
+          defaultValue: props.defaultKd,
+        })}
+        <AxisRateField form={props.form} axisName={props.axisName} />
+      </div>
+    </Fieldset>
+  ),
 });

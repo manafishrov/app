@@ -166,12 +166,20 @@ export const replaceLayout = (overlay: OverlayConfig, layout: OverlayLayout): Ov
   layouts: overlay.layouts.map((existing) => (existing.id === layout.id ? layout : existing)),
 });
 
+/** ROV controls for features that no longer exist. Older firmware still lists them. */
+export const removedCapabilityIds: ReadonlySet<string> = new Set([
+  'rov.regulatorAutoTuning.start',
+  'rov.regulatorAutoTuning.cancel',
+]);
+
+const isRemovedWidget = (widget: OverlayWidget): boolean =>
+  widget.options.sourceId !== undef && removedCapabilityIds.has(widget.options.sourceId);
+
 /** Keep placements and display-specific footprints inside the current grid. */
 export const normaliseLayout = (layout: OverlayLayout): OverlayLayout => {
   const current = { ...layout, columns: OVERLAY_GRID_COLUMNS, rows: OVERLAY_GRID_ROWS };
-  const saved = new Map(
-    layout.widgets.map((widget) => [widget.id, clampWidget(widget, current)] as const),
-  );
-  const widgets = layout.widgets.map((widget) => clampWidget(fitWidgetSize(widget), current));
+  const kept = layout.widgets.filter((widget) => !isRemovedWidget(widget));
+  const saved = new Map(kept.map((widget) => [widget.id, clampWidget(widget, current)] as const));
+  const widgets = kept.map((widget) => clampWidget(fitWidgetSize(widget), current));
   return { ...current, widgets: separateRefitWidgets(widgets, saved) };
 };

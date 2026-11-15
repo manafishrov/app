@@ -161,13 +161,6 @@ type RovConfig = {
   websocketPort: number;
 };
 
-type RegulatorSuggestions = {
-  pitch: AxisConfig;
-  roll: AxisConfig;
-  yaw: AxisConfig;
-  depth: AxisConfig;
-};
-
 /* oxlint-disable no-magic-numbers */
 const createDefaultPitchRollYawAxisConfig = (): AxisConfig => ({
   kp: 6,
@@ -276,6 +269,5 @@ export {
   type NullspaceVectors,
   type Power,
   type Camera,
-  type RegulatorSuggestions,
   type Row,
 };

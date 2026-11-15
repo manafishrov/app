@@ -181,15 +181,6 @@ pub struct RovConfig {
 
 pub type ThrusterTest = u8;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RegulatorSuggestions {
-  pub pitch: AxisConfig,
-  pub roll: AxisConfig,
-  pub yaw: AxisConfig,
-  pub depth: AxisConfig,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct PartialRovConfig {

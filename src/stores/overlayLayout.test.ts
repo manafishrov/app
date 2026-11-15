@@ -183,4 +183,16 @@ describe('normaliseLayout', () => {
     expect(result.widgets).toMatchObject([{ column: 55, row: 47, columnSpan: 10, rowSpan: 2 }]);
     expect(normaliseLayout(result)).toEqual(result);
   });
+
+  it('drops buttons for removed ROV controls', () => {
+    const kept = widget({ columnSpan: 10, rowSpan: 2 });
+    const removed = widget({
+      id: 'tuning',
+      type: OverlayWidgetType.capability,
+      columnSpan: 8,
+      rowSpan: 4,
+      options: { sourceId: 'rov.regulatorAutoTuning.start', display: 'button' },
+    });
+    expect(normaliseLayout(layout([kept, removed])).widgets).toEqual([kept]);
+  });
 });

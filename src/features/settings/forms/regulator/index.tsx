@@ -1,6 +1,5 @@
 import type { Component, ComponentProps } from 'solid-js';
 
-import { Button } from '@manafishrov/ui/button';
 import { useAppForm } from '@manafishrov/ui/form';
 
 import * as m from '@/paraglide/messages';
@@ -10,11 +9,10 @@ import {
   type Regulator as RegulatorType,
   rovConfigStore,
 } from '@/stores/rovConfig';
-import { regulatorSuggestions, setRovConfig, startRegulatorAutoTuning } from '@/tauri';
+import { setRovConfig } from '@/tauri';
 
 import { saveRovConfigForm } from '../rovConfigForm';
-import { AxisFieldset, EMPTY_REGULATOR_SUGGESTIONS, hasRegulatorSuggestions } from './AxisFieldset';
-import { AUTO_TUNING_TIMEOUT_MS } from './constants';
+import { AxisFieldset } from './AxisFieldset';
 import { DirectionCoefficientsFieldset } from './DirectionCoefficientsFieldset';
 import { createFormSchema, type FormValues } from './schema';
 
@@ -74,38 +72,8 @@ const submitRegulatorConfig = (value: FormValues): Promise<void> => {
   return setRovConfig({ regulator, directionCoefficients });
 };
 
-const createAutoTuningHandler =
-  (setAutoTuningDisabled: (value: boolean) => unknown): (() => void) =>
-  (): void => {
-    setAutoTuningDisabled(true);
-    startRegulatorAutoTuning()
-      .then(() => {
-        setTimeout(() => {
-          setAutoTuningDisabled(false);
-        }, AUTO_TUNING_TIMEOUT_MS);
-      })
-      .catch(() => {
-        setTimeout(() => {
-          setAutoTuningDisabled(false);
-        }, AUTO_TUNING_TIMEOUT_MS);
-      });
-  };
-
-const RegulatorActions: Component<{
-  autoTuningDisabled: boolean;
-  onAutoTuning: () => void;
-}> = (props) => (
-  <div class='mt-6 flex items-center gap-4'>
-    <Button variant='outline' onClick={props.onAutoTuning} disabled={props.autoTuningDisabled}>
-      {m.regulator_pid_run_auto_tuning()}
-    </Button>
-  </div>
-);
-
 type AxisFieldsetsProps = {
   form: ComponentProps<typeof AxisFieldset>['form'];
-  suggestions: ComponentProps<typeof AxisFieldset>['suggestions'];
-  hasSuggestions: ComponentProps<typeof AxisFieldset>['hasSuggestions'];
 };
 
 const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
@@ -115,8 +83,6 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       title={m.regulator_pid_pitch_title()}
       description={m.regulator_pid_pitch_description()}
       axisName='pitch'
-      suggestions={props.suggestions}
-      hasSuggestions={props.hasSuggestions}
       defaultKp={3}
       defaultKi={2}
       defaultKd={0.5}
@@ -126,8 +92,6 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       title={m.regulator_direction_coefficients_yaw()}
       description={m.regulator_pid_yaw_description()}
       axisName='yaw'
-      suggestions={props.suggestions}
-      hasSuggestions={props.hasSuggestions}
       defaultKp={3}
       defaultKi={2}
       defaultKd={0.5}
@@ -137,8 +101,6 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       title={m.regulator_pid_roll_title()}
       description={m.regulator_pid_roll_description()}
       axisName='roll'
-      suggestions={props.suggestions}
-      hasSuggestions={props.hasSuggestions}
       defaultKp={3}
       defaultKi={2}
       defaultKd={0.5}
@@ -148,8 +110,6 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
       title={m.regulator_pid_depth_title()}
       description={m.regulator_pid_depth_description()}
       axisName='depth'
-      suggestions={props.suggestions}
-      hasSuggestions={props.hasSuggestions}
       defaultKp={2}
       defaultKi={0.5}
       defaultKd={0.1}
@@ -158,7 +118,6 @@ const AxisFieldsets: Component<AxisFieldsetsProps> = (props) => (
 );
 
 export const Regulator: Component = () => {
-  const [autoTuningDisabled, setAutoTuningDisabled] = createSignal(true);
   const formSchema = createFormSchema();
   const form = useAppForm(() => ({
     validators: {
@@ -172,7 +131,6 @@ export const Regulator: Component = () => {
         readStored: getFormDefaultValues,
       }),
   }));
-  const handleAutoTuning = createAutoTuningHandler(setAutoTuningDisabled);
 
   return (
     <form.AppForm>
@@ -186,21 +144,9 @@ export const Regulator: Component = () => {
           )}
         </form.AppField>
 
-        <AxisFieldsets
-          form={form}
-          suggestions={regulatorSuggestions() ?? EMPTY_REGULATOR_SUGGESTIONS}
-          hasSuggestions={hasRegulatorSuggestions(regulatorSuggestions())}
-        />
+        <AxisFieldsets form={form} />
 
-        <RegulatorActions
-          autoTuningDisabled={autoTuningDisabled()}
-          onAutoTuning={handleAutoTuning}
-        />
-
-        <DirectionCoefficientsFieldset
-          form={form}
-          hasSuggestions={hasRegulatorSuggestions(regulatorSuggestions())}
-        />
+        <DirectionCoefficientsFieldset form={form} />
 
         <form.AutoSubmit debounce={500} />
       </form.Form>

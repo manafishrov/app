@@ -37,12 +37,12 @@ use std::sync::atomic::AtomicU64;
 #[cfg(desktop)]
 use commands::firmware::FlashControl;
 use commands::{
-  append_recording_chunk, cancel_regulator_auto_tuning, cancel_thruster_test, close_splashscreen,
-  confirm_rov_config, deactivate_direction_vector, flash_esc_firmware, flash_mcu_firmware,
-  gamepad_vibrate, get_config, import_custom_action_source, import_rov_config,
-  initialize_log_listener, open_text_file, receive_photos, request_capability, request_rov_config,
-  save_csv, save_recording, save_text_file, send_direction_vector, set_config, set_rov_config,
-  stage_config, start_gamepad_stream, start_regulator_auto_tuning, start_thruster_test,
+  append_recording_chunk, cancel_thruster_test, close_splashscreen, confirm_rov_config,
+  deactivate_direction_vector, flash_esc_firmware, flash_mcu_firmware, gamepad_vibrate, get_config,
+  import_custom_action_source, import_rov_config, initialize_log_listener, open_text_file,
+  receive_photos, request_capability, request_rov_config, save_csv, save_recording, save_text_file,
+  send_direction_vector, set_config, set_rov_config, stage_config, start_gamepad_stream,
+  start_thruster_test,
 };
 use commands::{
   cancel_detection_model_download, delete_detection_model, download_detection_model,
@@ -394,8 +394,6 @@ pub fn run() -> tauri::Result<()> {
       confirm_rov_config,
       start_thruster_test,
       cancel_thruster_test,
-      start_regulator_auto_tuning,
-      cancel_regulator_auto_tuning,
       deactivate_direction_vector,
       send_direction_vector,
       append_recording_chunk,
