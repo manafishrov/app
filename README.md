@@ -31,7 +31,9 @@ APPLE_DEVELOPMENT_TEAM=<team id> bun tauri ios dev --host
 
 Pushing a `vX.Y.Z` tag builds the desktop installers and the Android APK into a
 draft GitHub release, and uploads the mobile builds to TestFlight and Google
-Play internal testing.
+Play internal testing. Publishing the release hands those builds to external
+testers with its notes: Play closed and open testing, and every TestFlight
+group after beta review.
 
 ## License
 
