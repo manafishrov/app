@@ -23,9 +23,10 @@ import { flashEscFirmware } from '@/tauri';
 const getEscFirmwareVersions = (): EscFirmwareVersions =>
   rovStatusStore.deviceInfo.escFirmwareVersions;
 
+// Empty ESC slots report no version; only connected ESCs must agree.
 const getCommonEscFirmwareVersion = (): string | null => {
-  const versions = getEscFirmwareVersions();
-  const [first] = versions;
+  const versions = getEscFirmwareVersions().filter((version) => version !== null);
+  const [first = null] = versions;
   return first !== null && versions.every((version) => version === first) ? first : null;
 };
 
