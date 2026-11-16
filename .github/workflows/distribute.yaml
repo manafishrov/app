@@ -1,0 +1,108 @@
+name: Release Distribution
+
+# Publishing a GitHub release hands its mobile builds, which Release Build
+# already put on Play internal testing and TestFlight, to external testers with
+# the release notes. Re-run it after editing the notes, or dispatch it for a
+# release published before this workflow existed.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || inputs.tag }}
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  wait-for-build:
+    name: Wait for Mobile Builds
+    runs-on: ubuntu-26.04
+    outputs:
+      build_number: ${{ steps.wait.outputs.build_number }}
+    steps:
+      # Release Build runs are named after their tag, and the run number is the
+      # Play version code and TestFlight build number.
+      - name: Wait for the tag's Android and iOS builds
+        id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # A dispatch can name any tag; only published releases go to testers.
+          if [[ "$(gh release view "$TAG" -R "$REPO" --json isDraft -q .isDraft)" != false ]]; then
+            echo "::error::$TAG is not a published release"
+            exit 1
+          fi
+          for _ in $(seq 120); do
+            run="$(gh run list -R "$REPO" -w build.yaml -b "$TAG" -e push -L 1 --json databaseId,number -q '.[0] // empty')"
+            if [[ -n "$run" ]]; then
+              conclusions="$(gh run view "$(jq -r .databaseId <<<"$run")" -R "$REPO" --json jobs \
+                -q '[.jobs[] | select(.name == "Build Android" or .name == "Build iOS") | .conclusion]')"
+              if jq -e 'length == 2 and all(. == "success")' <<<"$conclusions" >/dev/null; then
+                echo "build_number=$(jq -r .number <<<"$run")" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              if jq -e 'any(. != "" and . != "success")' <<<"$conclusions" >/dev/null; then
+                echo "::error::The mobile builds for $TAG did not succeed: $conclusions"
+                exit 1
+              fi
+            fi
+            sleep 30
+          done
+          echo "::error::The mobile builds for $TAG did not finish within an hour"
+          exit 1
+
+  play:
+    name: Play Closed and Open Testing
+    needs: wait-for-build
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Promote to closed and open testing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BUILD_NUMBER: ${{ needs.wait-for-build.outputs.build_number }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)"
+          export RELEASE_NOTES
+          python3 scripts/distribute-release.py play
+
+  testflight:
+    name: TestFlight Groups
+    needs: wait-for-build
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Give the build to every TestFlight group
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BUILD_NUMBER: ${{ needs.wait-for-build.outputs.build_number }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)"
+          export RELEASE_NOTES
+          python3 scripts/distribute-release.py testflight

@@ -549,7 +549,7 @@ jobs:
           packageName: com.manafishrov.manafish
           releaseFiles: ${{ env.SIGNED_BUNDLE }}
           releaseName: ${{ github.ref_name }}
-          track: internal
+          tracks: internal
           status: completed
 
   # iOS: an App Store Connect IPA, uploaded to TestFlight and attached to the
