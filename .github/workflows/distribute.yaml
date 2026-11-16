@@ -80,8 +80,9 @@ jobs:
           BUILD_NUMBER: ${{ needs.wait-for-build.outputs.build_number }}
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
-          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)" \
-            python3 scripts/distribute-release.py play
+          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)"
+          export RELEASE_NOTES
+          python3 scripts/distribute-release.py play
 
   testflight:
     name: TestFlight Groups
@@ -102,5 +103,6 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: |
-          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)" \
-            python3 scripts/distribute-release.py testflight
+          RELEASE_NOTES="$(gh release view "$TAG" -R "$REPO" --json body -q .body)"
+          export RELEASE_NOTES
+          python3 scripts/distribute-release.py testflight

@@ -37,6 +37,7 @@ PLAY_NOTES_LIMIT = 500
 APPLE_API = "https://api.appstoreconnect.apple.com/v1"
 TESTFLIGHT_NOTES_LIMIT = 4000
 POLL_INTERVAL_SECONDS = 30
+REQUEST_TIMEOUT_SECONDS = 60
 PROCESSING_TIMEOUT_SECONDS = 60 * 60
 
 
@@ -121,7 +122,8 @@ def request(
         data = json.dumps(body).encode()
     try:
         with urllib.request.urlopen(
-            urllib.request.Request(url, method=method, data=data, headers=headers)
+            urllib.request.Request(url, method=method, data=data, headers=headers),
+            timeout=REQUEST_TIMEOUT_SECONDS,
         ) as response:
             payload = response.read()
     except urllib.error.HTTPError as error:
