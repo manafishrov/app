@@ -61,7 +61,7 @@ reqwest = { version = "0.13.0", default-features = false, features = ["json", "r
 tauri-plugin-updater = "2.9.0"
 minisign-verify = "0.3.0"
 ruzstd = "0.9.0"
-sdl2 = { version = "0.38.0", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.39.0", features = ["bundled", "static-link"] }
 ffmpeg-next = "9.0.0"
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
@@ -78,7 +78,7 @@ runas = "1.2.0"
 # load-dynamic permits multiple providers without ort's single-provider download resolver.
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["load-dynamic", "cuda", "migraphx", "openvino"] }
 libc = "0.2.181"
-nix = { version = "0.31.0", features = ["mount"] }
+nix = { version = "0.32.0", features = ["mount"] }
 gtk = "0.18.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
