@@ -15,7 +15,7 @@ const DebugSettingsPage: Component = () => (
       </div>
     </div>
     <div class='relative left-1/2 w-[100cqw] -translate-x-1/2 px-4 md:px-8'>
-      <LogViewer class='h-[calc(100svh-12rem)]' />
+      <LogViewer class='h-[calc(100svh-12rem)] min-h-96' />
     </div>
   </>
 );
