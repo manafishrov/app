@@ -99,7 +99,7 @@ export const TouchControls: Component<{ axes: TouchAxes }> = (props) => {
 
   return (
     <Show when={!gamepadActive()}>
-      <div class='pointer-events-none absolute inset-0 z-40 flex items-end justify-between pt-3 pr-[max(0.75rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))]'>
+      <div class='pointer-events-none absolute inset-0 z-40 flex items-end justify-between pt-3 pr-[max(0.75rem,var(--main-inset-right))] pb-[max(0.75rem,var(--main-inset-bottom))] pl-[max(0.75rem,var(--main-inset-left))]'>
         <MoveCluster setAxis={setAxis} />
         <TurnCluster setAxis={setAxis} />
       </div>

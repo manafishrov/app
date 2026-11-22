@@ -72,10 +72,11 @@ const SettingsLayout: Component = () => {
   return (
     <SidebarProvider defaultOpen>
       <SidebarLayout
+        // On mobile the sidebar colour fills the strips kept clear of the notch or camera cutout.
         class={cn(
           'size-full',
           isMobile
-            ? 'pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]'
+            ? 'bg-sidebar pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]'
             : !isFullscreen() && 'pt-7',
         )}
       >

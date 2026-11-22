@@ -2,7 +2,7 @@ import { toast } from '@manafishrov/ui/toaster';
 import { RouterProvider, createRouter } from '@tanstack/solid-router';
 import { render } from 'solid-js/web';
 
-import { isMobile } from '@/lib/platform';
+import { isAndroid, isMobile } from '@/lib/platform';
 import { routeTree } from '@/routeTree.gen';
 import '@/styles.css';
 
@@ -13,11 +13,16 @@ if (isMobile) {
   // Centred toasts stretch between the side offsets, so keep a 24rem column.
   toast.attrs.placement = 'top';
   toast.attrs.offsets = {
-    top: '1rem',
+    top: 'calc(1rem + env(safe-area-inset-top))',
     bottom: '1rem',
     left: 'calc(50vw - 12rem)',
     right: 'calc(50vw - 12rem)',
   };
+}
+
+// Lets styles.css ignore the camera cutout in the piloting view.
+if (isAndroid) {
+  document.documentElement.dataset['platform'] = 'android';
 }
 
 /**

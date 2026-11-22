@@ -90,20 +90,27 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
     // must not sleep while piloting.
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     hideSystemBars()
-    // Keep the web content clear of camera cutouts, bars the user swipes in
-    // and the on-screen keyboard, so the UI never needs to know about Android
-    // insets. Edge-to-edge windows do not resize for the keyboard by themselves.
+    window.attributes =
+      window.attributes.apply {
+        layoutInDisplayCutoutMode =
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+          } else {
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+          }
+      }
+    // Keep the web content clear of bars the user swipes in and the on-screen
+    // keyboard. Edge-to-edge windows do not resize for the keyboard by
+    // themselves. The web view still covers camera cutouts and reports them
+    // to CSS as env(safe-area-inset-*), so each screen decides whether to
+    // avoid them.
     ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
       val covered =
-        insets.getInsets(
-          WindowInsetsCompat.Type.systemBars() or
-            WindowInsetsCompat.Type.displayCutout() or
-            WindowInsetsCompat.Type.ime()
-        )
+        insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
       view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
         setMargins(covered.left, covered.top, covered.right, covered.bottom)
       }
-      WindowInsetsCompat.CONSUMED
+      ViewCompat.onApplyWindowInsets(view, insets.inset(covered))
     }
     gamepads.attach(window)
   }

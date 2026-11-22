@@ -116,7 +116,7 @@ const HomePage = (): JSXElement => {
            instruments: beside it in landscape (phones already have room next
            to the 4:3 picture), below it in portrait. */
         isMobile &&
-          '[--stick-size:clamp(7rem,32vh,10rem)] portrait:items-start portrait:pt-[calc(3.75rem+env(safe-area-inset-top))] portrait:pb-[calc(var(--stick-size)+clamp(5rem,24vh,8rem)+2.25rem+env(safe-area-inset-bottom))] landscape:pr-[calc(var(--stick-size)+1.5rem+env(safe-area-inset-right))] landscape:pl-[calc(var(--stick-size)+1.5rem+env(safe-area-inset-left))]',
+          '[--stick-size:clamp(7rem,32vh,10rem)] portrait:items-start portrait:pt-[calc(3.75rem+var(--main-inset-top))] portrait:pb-[calc(var(--stick-size)+clamp(5rem,24vh,8rem)+2.25rem+var(--main-inset-bottom))] landscape:pr-[calc(var(--stick-size)+1.5rem+var(--main-inset-right))] landscape:pl-[calc(var(--stick-size)+1.5rem+var(--main-inset-left))]',
       )}
     >
       <CameraFrame class='relative h-[min(100cqh,calc(100cqw*3/4))] w-[min(100cqw,calc(100cqh*4/3))] rounded-sm'>
