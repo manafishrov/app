@@ -77,6 +77,29 @@ impl MobileFrame {
   }
 }
 
+/// Frame packet from a `submit_detection_frame` body. iOS sends raw bytes;
+/// Android's IPC only carries JSON, so it sends `{ "frame": "<base64>" }`.
+///
+/// # Errors
+/// Rejects JSON bodies without a valid base64 `frame` string.
+pub fn packet_from_body(body: &tauri::ipc::InvokeBody) -> Result<Cow<'_, [u8]>, String> {
+  use base64::Engine;
+
+  match body {
+    tauri::ipc::InvokeBody::Raw(bytes) => Ok(Cow::Borrowed(bytes)),
+    tauri::ipc::InvokeBody::Json(value) => {
+      let encoded = value
+        .get("frame")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("Detection frame body needs a base64 frame")?;
+      base64::engine::general_purpose::STANDARD
+        .decode(encoded)
+        .map(Cow::Owned)
+        .map_err(|_| "Detection frame is not valid base64".into())
+    },
+  }
+}
+
 #[cfg(test)]
 mod tests {
   #![allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
@@ -103,6 +126,27 @@ mod tests {
     let frame = MobileFrame::parse(packet)?;
     assert_eq!(frame.rgba().as_ptr(), pointer.wrapping_add(HEADER_BYTES));
     assert_eq!(MobileFrame::parse(frame.packet.as_slice())?.rgba(), frame.rgba());
+    Ok(())
+  }
+
+  #[test]
+  fn reads_raw_and_android_base64_json_bodies() -> Result<(), String> {
+    use base64::Engine;
+    use tauri::ipc::InvokeBody;
+
+    let raw = InvokeBody::Raw(packet());
+    assert!(matches!(packet_from_body(&raw)?, Cow::Borrowed(_)));
+    let encoded = base64::engine::general_purpose::STANDARD.encode(packet());
+    let json = InvokeBody::Json(serde_json::json!({ "frame": encoded }));
+    let frame = MobileFrame::parse(packet_from_body(&json)?)?;
+    assert_eq!((frame.run_id, frame.rgba()), (7, [10, 20, 30, 255].as_slice()));
+    for body in [
+      serde_json::json!({ "frame": "not base64!" }),
+      serde_json::json!({ "frame": 1 }),
+      serde_json::json!([1, 2, 3]),
+    ] {
+      assert!(packet_from_body(&InvokeBody::Json(body)).is_err());
+    }
     Ok(())
   }
 

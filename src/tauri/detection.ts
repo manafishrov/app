@@ -2,6 +2,9 @@ import { Channel, invoke } from '@tauri-apps/api/core';
 
 import type { ExecutionProviderPreference } from '@/stores/configTypes';
 
+import { encodeBase64 } from '@/lib/base64';
+import { isAndroid } from '@/lib/platform';
+
 export type ExecutionProvider =
   | 'cpu'
   | 'nnapi'
@@ -143,5 +146,9 @@ export const stopDetection = (): Promise<void> => invoke('stop_detection');
 export const pickDetectionModel = (): Promise<DetectionModelInfo | null> =>
   invoke('pick_detection_model');
 
+/*
+ * The packet goes as a raw IPC body on iOS. Android's IPC only carries JSON, so
+ * the packet goes as base64 instead of a ~10x larger JSON number array.
+ */
 export const submitDetectionFrame = (bytes: Uint8Array): Promise<void> =>
-  invoke('submit_detection_frame', bytes);
+  invoke('submit_detection_frame', isAndroid ? { frame: encodeBase64(bytes) } : bytes);

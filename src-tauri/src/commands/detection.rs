@@ -109,17 +109,17 @@ pub async fn pick_detection_model(
 
 #[cfg(mobile)]
 #[command]
-/// Accepts a bounded raw frame packet; acknowledges it only after inference.
+/// Accepts a bounded frame packet (raw, or base64 JSON on Android);
+/// acknowledges it only after inference.
 /// # Errors
 /// Rejects malformed frames and stale/stopped capture sessions.
 pub async fn submit_detection_frame(
   runtime: State<'_, DetectionRuntime>,
   request: tauri::ipc::Request<'_>,
 ) -> Result<(), String> {
-  let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
-    return Err("Detection frames require a binary body".into());
-  };
-  let frame = crate::detection::mobile_frame::MobileFrame::parse(bytes.as_slice())?;
+  use crate::detection::mobile_frame::{MobileFrame, packet_from_body};
+
+  let frame = MobileFrame::parse(packet_from_body(request.body())?)?;
   let completion = runtime
     .runner
     .try_lock()
