@@ -3,6 +3,8 @@ import { configStore } from '@/stores/config';
 import { setRecordingStore } from '@/stores/recording';
 
 const RETRY_DELAY_MS = 3000;
+// Long enough for go2rtc to start the camera before it answers.
+const SIGNALING_TIMEOUT_MS = 15_000;
 // Cap how far the receiver's jitter buffer is allowed to grow, since left unbounded the browser lets it balloon under transient jitter and never fully re-tightens, so latency creeps up over a connection's life instead of recovering.
 // A low cap forces the browser to keep catching up to near-live, trading occasional stutter for bounded latency.
 const JITTER_BUFFER_TARGET_MS = 50;
@@ -111,17 +113,31 @@ const createOffer = (connection: RTCPeerConnection): Promise<StreamOffer> =>
     .then((offer) =>
       connection.setLocalDescription(offer).then(() => ({ sdp: offer.sdp ?? '', type: 'offer' })),
     );
-const negotiateOffer = (signalingUrl: string, offer: StreamOffer): Promise<string> =>
-  fetch(signalingUrl, {
+/*
+ * A request sent before Android binds the app to the ROV tether leaves over
+ * Wi-Fi and hangs until the OS gives up on it, so abort it and retry instead.
+ */
+const negotiateOffer = (signalingUrl: string, offer: StreamOffer): Promise<string> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, SIGNALING_TIMEOUT_MS);
+  return fetch(signalingUrl, {
     body: offer.sdp,
     headers: { 'Content-Type': 'application/sdp' },
     method: 'POST',
-  }).then((response) => {
-    if (!response.ok) {
-      throw new Error('Failed to connect to stream');
-    }
-    return response.text();
-  });
+    signal: controller.signal,
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to connect to stream');
+      }
+      return response.text();
+    })
+    .finally(() => {
+      clearTimeout(timeout);
+    });
+};
 const isActiveConnection = (state: WebRTCState, connection: RTCPeerConnection): boolean =>
   !state.disposed && state.peerConnection === connection;
 const markDisconnected = (handlers: UiHandlers): void => {
