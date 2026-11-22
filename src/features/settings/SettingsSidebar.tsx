@@ -18,6 +18,7 @@ import ArrowBackIcon from '~icons/material-symbols/arrow-back';
 import BugReportIcon from '~icons/material-symbols/bug-report';
 import BuildIcon from '~icons/material-symbols/build';
 import CodeIcon from '~icons/material-symbols/code';
+import DashboardCustomizeIcon from '~icons/material-symbols/dashboard-customize';
 import Drone2Icon from '~icons/material-symbols/drone-2';
 import ExploreIcon from '~icons/material-symbols/explore';
 import FilterCenterFocusIcon from '~icons/material-symbols/filter-center-focus';
@@ -118,6 +119,12 @@ const ROV_ITEMS = [
     ariaLabel: (): string => m.aria_labels_camera_button(),
     to: '/settings/rov/camera',
     Icon: PhotoCameraIcon,
+  },
+  {
+    label: (): string => m.settings_rov_view(),
+    ariaLabel: (): string => m.aria_labels_view_button(),
+    to: '/settings/rov/view',
+    Icon: DashboardCustomizeIcon,
   },
   {
     label: (): string => m.settings_rov_power(),

@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 
-import { configStore } from '@/stores/config';
 import { getActiveLayout, normaliseLayout } from '@/stores/overlayLayout';
+import { getRovOverlay } from '@/stores/rovConfig';
 
 import { OverlayGrid } from './OverlayGrid';
 
@@ -9,7 +9,7 @@ const [undef] = [] as undefined[];
 
 const Overlay: Component = () => {
   const layout = createMemo(() => {
-    const active = getActiveLayout(configStore.overlay);
+    const active = getActiveLayout(getRovOverlay());
     return active === undef ? undef : normaliseLayout(active);
   });
 

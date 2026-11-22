@@ -23,8 +23,6 @@ type DefaultPlacement = [
 /* oxlint-disable no-magic-numbers -- grid coordinates are the data itself */
 /**
  * Instruments sit around the edge, leaving the camera centre clear.
- *
- * Mirrored in `src-tauri/src/models/config.rs`; keep the two in step.
  */
 const DEFAULT_PLACEMENTS: readonly DefaultPlacement[] = [
   ['connection-status', OverlayWidgetType.connectionStatus, 1, 1, 8, 2, OverlayAnchor.topRight],

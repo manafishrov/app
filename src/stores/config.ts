@@ -6,7 +6,6 @@ import type { Config, GamepadBindings, KeyboardBindings } from '@/stores/configT
 
 import { logError } from '@/lib/log';
 import * as m from '@/paraglide/messages';
-import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
 export { ExecutionProviderPreference } from '@/stores/configTypes';
 
 const ignoreInvokeResult: (_result: unknown) => void = () => Number.NaN;
@@ -67,7 +66,6 @@ const createNullGamepadBindings = (): GamepadBindings => ({
 
 const defaultConfig: Config = {
   appVersion: m.common_not_available(),
-  overlay: createDefaultOverlayConfig(m.overlay_layout_default_name()),
   videoDirectory: '~/Movies/Manafish',
   photoDirectory: '~/Pictures/Manafish',
   checkForAppUpdatesOnStartup: true,

@@ -29,6 +29,7 @@ import { Route as SettingsRovMcuIndexRouteImport } from './routes/settings/rov/m
 import { Route as SettingsRovPowerIndexRouteImport } from './routes/settings/rov/power/index'
 import { Route as SettingsRovRegulatorIndexRouteImport } from './routes/settings/rov/regulator/index'
 import { Route as SettingsRovSystemIndexRouteImport } from './routes/settings/rov/system/index'
+import { Route as SettingsRovViewIndexRouteImport } from './routes/settings/rov/view/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -137,6 +138,11 @@ const SettingsRovSystemIndexRoute = SettingsRovSystemIndexRouteImport.update({
   path: '/rov/system/',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsRovViewIndexRoute = SettingsRovViewIndexRouteImport.update({
+  id: '/rov/view/',
+  path: '/rov/view/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
+  '/settings/rov/view/': typeof SettingsRovViewIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/settings/rov/power': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system': typeof SettingsRovSystemIndexRoute
+  '/settings/rov/view': typeof SettingsRovViewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/settings/rov/power/': typeof SettingsRovPowerIndexRoute
   '/settings/rov/regulator/': typeof SettingsRovRegulatorIndexRoute
   '/settings/rov/system/': typeof SettingsRovSystemIndexRoute
+  '/settings/rov/view/': typeof SettingsRovViewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
     | '/settings/rov/system/'
+    | '/settings/rov/view/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/settings/rov/power'
     | '/settings/rov/regulator'
     | '/settings/rov/system'
+    | '/settings/rov/view'
   id:
     | '__root__'
     | '/'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/settings/rov/power/'
     | '/settings/rov/regulator/'
     | '/settings/rov/system/'
+    | '/settings/rov/view/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -419,6 +431,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SettingsRovSystemIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/rov/view/': {
+      id: '/settings/rov/view/'
+      path: '/rov/view'
+      fullPath: '/settings/rov/view/'
+      preLoaderRoute: typeof SettingsRovViewIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
   }
 }
 
@@ -441,6 +460,7 @@ interface SettingsRouteRouteChildren {
   SettingsRovPowerIndexRoute: typeof SettingsRovPowerIndexRoute
   SettingsRovRegulatorIndexRoute: typeof SettingsRovRegulatorIndexRoute
   SettingsRovSystemIndexRoute: typeof SettingsRovSystemIndexRoute
+  SettingsRovViewIndexRoute: typeof SettingsRovViewIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
@@ -462,6 +482,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsRovPowerIndexRoute: SettingsRovPowerIndexRoute,
   SettingsRovRegulatorIndexRoute: SettingsRovRegulatorIndexRoute,
   SettingsRovSystemIndexRoute: SettingsRovSystemIndexRoute,
+  SettingsRovViewIndexRoute: SettingsRovViewIndexRoute,
 }
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(

@@ -1,5 +1,3 @@
-import type { OverlayConfig } from '@/stores/overlayTypes';
-
 type KeyboardKey =
   | 'KeyA'
   | 'KeyB'
@@ -208,7 +206,6 @@ type DetectionConfig = {
 
 type Config = {
   appVersion: string;
-  overlay: OverlayConfig;
   videoDirectory: string;
   photoDirectory: string;
   checkForAppUpdatesOnStartup: boolean;

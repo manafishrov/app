@@ -1,6 +1,9 @@
 import { createStore, reconcile } from 'solid-js/store';
 
+import type { OverlayConfig } from '@/stores/overlayTypes';
+
 import * as m from '@/paraglide/messages';
+import { createDefaultOverlayConfig } from '@/stores/overlayDefaults';
 
 const McuBoard = {
   pico: 'pico',
@@ -159,6 +162,8 @@ type RovConfig = {
   camera: Camera;
   ipAddress: string;
   websocketPort: number;
+  /** Camera overlay layout for this ROV; null until one is saved on it. */
+  overlay: OverlayConfig | null;
 };
 
 /* oxlint-disable no-magic-numbers */
@@ -239,6 +244,7 @@ const defaultRovConfig: RovConfig = {
   },
   ipAddress: '10.10.10.10',
   websocketPort: 9000,
+  overlay: null,
 };
 /* oxlint-enable no-magic-numbers */
 
@@ -248,9 +254,14 @@ const setRovConfigStore = (value: RovConfig): void => {
   setRovConfigStoreInternal(reconcile(value));
 };
 
+/** The ROV's overlay, or the default layout until one is saved on it. */
+const getRovOverlay = (): OverlayConfig =>
+  rovConfigStore.overlay ?? createDefaultOverlayConfig(m.overlay_layout_default_name());
+
 export {
   rovConfigStore,
   setRovConfigStore,
+  getRovOverlay,
   FluidType,
   DshotSpeed,
   McuBoard,

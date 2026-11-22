@@ -12,7 +12,6 @@ import type {
 import { sizedPlacement } from '@/features/overlay/widgets/definitions';
 import { getOverlayWidgetDefinition } from '@/features/overlay/widgets/Registry';
 import { logError } from '@/lib/log';
-import { configStore, setConfig } from '@/stores/config';
 import { createDefaultOverlayLayout } from '@/stores/overlayDefaults';
 import {
   addWidget,
@@ -29,14 +28,10 @@ import {
   type GridSpan,
 } from '@/stores/overlayLayout';
 import { fitWidgetSize } from '@/stores/overlayWidgetSizes';
+import { getRovOverlay } from '@/stores/rovConfig';
+import { setRovConfig } from '@/tauri';
 
 const [undef] = [] as undefined[];
-
-const persist = (layout: OverlayLayout): void => {
-  setConfig({ overlay: replaceLayout(configStore.overlay, layout) }).catch((error: unknown) => {
-    logError('Failed to save overlay layout:', error);
-  });
-};
 
 /** Builds a new widget of this type on the first free cell it fits. */
 const buildWidget = (
@@ -78,7 +73,7 @@ export type LayoutDraft = {
   selectedId: Accessor<string | undefined>;
   setSelectedId: Setter<string | undefined>;
   selectedWidget: Accessor<OverlayWidget | undefined>;
-  /** Drag-time update; not written to disk until `commit`. */
+  /** Drag-time update; not saved to the ROV until `commit`. */
   moveTo: (widgetId: string, cell: GridCell) => void;
   commit: () => void;
   add: (type: OverlayWidgetType, options?: OverlayWidgetOptions) => void;
@@ -117,7 +112,7 @@ const createPlacementOperations = (context: DraftContext): PlacementOperations =
     },
 
     commit: () => {
-      persist(current());
+      apply(current(), true);
     },
 
     add: (type, options) => {
@@ -179,21 +174,43 @@ const createSelectionOperations = (context: DraftContext): SelectionOperations =
   };
 };
 
+/** Saves layouts to the ROV and counts the saves it has not confirmed yet. */
+const createLayoutSaver = (): {
+  pendingSaves: Accessor<number>;
+  persist: (layout: OverlayLayout) => void;
+} => {
+  const [pendingSaves, setPendingSaves] = createSignal(0);
+  const persist = (layout: OverlayLayout): void => {
+    setPendingSaves((count) => count + 1);
+    setRovConfig({ overlay: replaceLayout(getRovOverlay(), layout) })
+      .catch((error: unknown) => {
+        logError('Failed to save overlay layout:', error);
+      })
+      .finally(() => {
+        setPendingSaves((count) => count - 1);
+      });
+  };
+  return { pendingSaves, persist };
+};
+
 /**
  * Editable copy of the stored overlay layout.
  *
  * Mutations land on the draft first and are persisted on commit, so a drag does
- * not write to disk on every pointer move.
+ * not write to the ROV on every pointer move. While saves are in flight the
+ * draft ignores the ROV's echoes of earlier saves, then settles on whatever the
+ * ROV confirmed last.
  */
 export const createLayoutDraft = (): LayoutDraft => {
   const [draft, setDraft] = createStore<{ layout: OverlayLayout }>({
     layout: createDefaultOverlayLayout(''),
   });
   const [selectedId, setSelectedId] = createSignal<string>();
+  const { pendingSaves, persist } = createLayoutSaver();
 
   createEffect(() => {
-    const active = getActiveLayout(configStore.overlay);
-    if (active !== undef) {
+    const active = getActiveLayout(getRovOverlay());
+    if (pendingSaves() === 0 && active !== undef) {
       setDraft('layout', reconcile(normaliseLayout(active)));
     }
   });

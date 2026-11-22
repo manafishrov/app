@@ -177,6 +177,10 @@ pub struct RovConfig {
   pub camera: Camera,
   pub ip_address: String,
   pub websocket_port: u16,
+  /// Camera overlay layout. Its schema and defaults belong to the frontend;
+  /// `None` until one is saved on the ROV.
+  #[serde(default)]
+  pub overlay: Option<serde_json::Value>,
 }
 
 pub type ThrusterTest = u8;
@@ -216,6 +220,8 @@ pub struct PartialRovConfig {
   pub ip_address: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub websocket_port: Option<u16>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub overlay: Option<serde_json::Value>,
 }
 
 #[cfg(test)]
@@ -329,6 +335,7 @@ mod tests {
       camera: sample_camera(),
       ip_address: "10.10.10.10".to_string(),
       websocket_port: 9000,
+      overlay: Some(json!({"activeLayoutId": "default", "layouts": []})),
     }
   }
 
@@ -557,6 +564,7 @@ mod tests {
     assert!(partial.power.is_none());
     assert!(partial.ip_address.is_none());
     assert!(partial.websocket_port.is_none());
+    assert!(partial.overlay.is_none());
 
     let serialized = serde_json::to_value(&partial);
     assert!(serialized.is_ok(), "PartialRovConfig serialization failed: {serialized:?}");

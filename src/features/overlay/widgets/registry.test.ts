@@ -65,8 +65,7 @@ describe('default overlay layout', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  // Mirrors the Rust default placement.
-  it('matches the Rust-side default placement', () => {
+  it('keeps the default placement order', () => {
     expect(layout.widgets.map((widget) => [widget.id, widget.type])).toEqual([
       ['connection-status', OverlayWidgetType.connectionStatus],
       ['recording', OverlayWidgetType.recording],
