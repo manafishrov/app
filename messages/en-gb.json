@@ -686,7 +686,7 @@
   "overlay_layout_camera": "Camera preview",
   "overlay_layout_keyboard_hint": "Drag to move · Arrow keys to nudge · Delete to remove",
   "overlay_layout_offline": "Camera offline",
-  "overlay_layout_offline_hint": "Connect to preview your layout over the live feed.",
+  "overlay_layout_offline_hint": "Your layout will show over the live feed once the camera is streaming.",
   "overlay_attitude_pitch": "P",
   "overlay_attitude_roll": "R",
   "overlay_layout_add_widget": "Add {name}",
