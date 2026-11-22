@@ -14,6 +14,7 @@ describe('compatibility', () => {
   it('matches verified pairs regardless of tag prefix and build metadata', () => {
     expect(isVerifiedPair('1.0.18+4.gabc1234', 'v1.1.6')).toBe(true);
     expect(isVerifiedPair('1.0.18', '1.2.0')).toBe(false);
+    expect(isVerifiedPair('1.1.0', 'v1.2.0')).toBe(true);
     expect(isVerifiedPair('1.1.0-rc.3', '1.2.0-rc.3')).toBe(false);
     expect(compatibilityKey('1.0.18+4.gabc1234', 'v1.1.6')).toBe('1.0.18@1.1.6');
   });
@@ -27,7 +28,7 @@ describe('compatibility', () => {
 
   it('lists the apps verified with a firmware release', () => {
     expect(compatibleApps('v1.1.6')).toContain('1.0.18');
-    expect(compatibleApps('v1.2.0')).toEqual([]);
+    expect(compatibleApps('v1.2.0')).toEqual(['1.1.0']);
   });
 
   it('flags app updates that leave the legacy release', () => {
