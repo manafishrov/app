@@ -2,7 +2,6 @@ package com.manafishrov.mobile
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.view.ViewGroup
@@ -90,7 +89,6 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
     // The ROV stops its thrusters when control input stops, so the screen
     // must not sleep while piloting.
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     hideSystemBars()
     // Keep the web content clear of camera cutouts, bars the user swipes in
     // and the on-screen keyboard, so the UI never needs to know about Android

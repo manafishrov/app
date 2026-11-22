@@ -11,16 +11,19 @@
   <true/>
   <key>LSSupportsOpeningDocumentsInPlace</key>
   <true/>
-  <!-- The piloting view needs landscape; iPad must opt out of multitasking to lock it. -->
+  <!-- The piloting view needs the whole screen, so iPad opts out of Split View and Slide Over. -->
   <key>UIRequiresFullScreen</key>
   <true/>
   <key>UISupportedInterfaceOrientations</key>
   <array>
+    <string>UIInterfaceOrientationPortrait</string>
     <string>UIInterfaceOrientationLandscapeLeft</string>
     <string>UIInterfaceOrientationLandscapeRight</string>
   </array>
   <key>UISupportedInterfaceOrientations~ipad</key>
   <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
     <string>UIInterfaceOrientationLandscapeLeft</string>
     <string>UIInterfaceOrientationLandscapeRight</string>
   </array>

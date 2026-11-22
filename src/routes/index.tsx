@@ -114,7 +114,7 @@ const HomePage = (): JSXElement => {
         !isMobile && !isFullscreen() && 'mt-8',
         /* Keep the camera view clear of the touch sticks so they never cover
            instruments: beside it in landscape (phones already have room next
-           to the 4:3 picture), below it on tablets Android keeps in portrait. */
+           to the 4:3 picture), below it in portrait. */
         isMobile &&
           '[--stick-size:clamp(7rem,32vh,10rem)] portrait:items-start portrait:pt-[calc(3.75rem+env(safe-area-inset-top))] portrait:pb-[calc(var(--stick-size)+clamp(5rem,24vh,8rem)+2.25rem+env(safe-area-inset-bottom))] landscape:pr-[calc(var(--stick-size)+1.5rem+env(safe-area-inset-right))] landscape:pl-[calc(var(--stick-size)+1.5rem+env(safe-area-inset-left))]',
       )}
