@@ -2,9 +2,7 @@ import type { Component } from 'solid-js';
 
 import { LocaleProvider, ThemeProvider } from '@manafishrov/ui';
 import { Toaster } from '@manafishrov/ui/toaster';
-import { TanStackDevtools } from '@tanstack/solid-devtools';
 import { HeadContent, Outlet, createRootRoute } from '@tanstack/solid-router';
-import { TanStackRouterDevtoolsPanel } from '@tanstack/solid-router-devtools';
 
 import { CompatibilityWarningAlertDialog } from '@/features/compatibility/CompatibilityWarningAlertDialog';
 import { createDetectionController } from '@/features/detection/controller';
@@ -80,14 +78,6 @@ const RootLayout: Component = () => {
           <CompatibilityWarningAlertDialog />
         </LocaleProvider>
       </ThemeProvider>
-      <TanStackDevtools
-        plugins={[
-          {
-            name: 'TanStack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-        ]}
-      />
     </>
   );
 };
