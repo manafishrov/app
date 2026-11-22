@@ -32,6 +32,9 @@ DISTRIBUTIONS = {
         "cuda13,tensorrt,nvrtx": "40c6f87b145b1fbe7df73f92c5ef3cbb886c6a45133ac1a3bd5177987ef72c75",
     },
 }
+# ONNX Runtime 1.31.0's notices, vendored so builds do not depend on the
+# upstream repository being reachable. Identical to the copies in its wheels.
+NOTICES_DIR = Path(__file__).resolve().parent / "onnxruntime-notices"
 NOTICES = {
     "LICENSE": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
     "ThirdPartyNotices.txt": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
@@ -139,7 +142,9 @@ def prepare(arch, output, cache):
             subprocess.run(["patchelf", "--set-rpath", "$ORIGIN", str(path)], check=True)
         check_core(staging / "libonnxruntime.so")
         for name, sha256 in NOTICES.items():
-            source = download(f"https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.0/{name}", sha256, cache)
+            source = NOTICES_DIR / name
+            if digest(source) != sha256:
+                raise ValueError(f"Vendored ONNX Runtime notice {name} does not match its pinned digest")
             shutil.copyfile(source, staging / name)
         manifest = {"ort": "2.0.0-rc.15", "onnxruntime": "1.31.0", "arch": arch,
                     "distributions": distributions,

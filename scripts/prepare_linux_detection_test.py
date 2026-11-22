@@ -77,6 +77,10 @@ class LinuxDetectionRuntimeTests(unittest.TestCase):
                 result = prepare.download("https://example.invalid/runtime", expected, root)
             self.assertEqual(result.read_bytes(), b"good")
 
+    def test_vendored_notices_match_their_pinned_digests(self):
+        for name, sha256 in prepare.NOTICES.items():
+            self.assertEqual(prepare.digest(prepare.NOTICES_DIR / name), sha256, name)
+
 
 if __name__ == "__main__":
     unittest.main()
