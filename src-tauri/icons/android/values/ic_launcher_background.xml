@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Sampled from the icon tile around the logo so the cut-out edge blends in. -->
+  <color name="ic_launcher_background">#F2F2F2</color>
+</resources>
