@@ -3,10 +3,14 @@ package com.manafishrov.mobile
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.os.Build
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.WebView
 import androidx.activity.result.ActivityResult
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -68,11 +72,18 @@ class ImportFileArgs {
   lateinit var mimeTypes: Array<String>
 }
 
+// Android 17 silently drops traffic to local addresses, the ROV tether
+// included, from apps without this runtime permission.
+private const val ACCESS_LOCAL_NETWORK = "android.permission.ACCESS_LOCAL_NETWORK"
+private const val ANDROID_17 = 37
+private const val LOCAL_NETWORK_REQUEST_CODE = 4917
+
 @TauriPlugin
 class MobilePlugin(private val activity: Activity) : Plugin(activity) {
   private val gamepads = GamepadInput(activity)
   private val rovNetwork = RovNetwork(activity)
   private val storage = DocumentStorage(activity)
+  @Volatile private var localNetworkRequested = false
 
   override fun load(webView: WebView) {
     val window = activity.window
@@ -134,8 +145,30 @@ class MobilePlugin(private val activity: Activity) : Plugin(activity) {
   @Command
   fun setRovAddress(invoke: Invoke) {
     val args = invoke.parseArgs(RovAddressArgs::class.java)
+    requestLocalNetworkAccess()
     rovNetwork.setAddress(args.address)
     invoke.resolve()
+  }
+
+  // Ask once per launch. The WebSocket client keeps retrying, so it connects
+  // as soon as the permission is granted.
+  private fun requestLocalNetworkAccess() {
+    if (Build.VERSION.SDK_INT < ANDROID_17 || localNetworkRequested) {
+      return
+    }
+    localNetworkRequested = true
+    val granted =
+      ContextCompat.checkSelfPermission(activity, ACCESS_LOCAL_NETWORK) ==
+        PackageManager.PERMISSION_GRANTED
+    if (!granted) {
+      activity.runOnUiThread {
+        ActivityCompat.requestPermissions(
+          activity,
+          arrayOf(ACCESS_LOCAL_NETWORK),
+          LOCAL_NETWORK_REQUEST_CODE,
+        )
+      }
+    }
   }
 
   @Command

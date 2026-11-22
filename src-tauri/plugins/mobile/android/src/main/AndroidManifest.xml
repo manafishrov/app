@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- Finds the USB-C ethernet tether to the ROV. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Android 17 drops the app's traffic to the ROV without it. -->
+  <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
   <!-- Controller rumble. -->
   <uses-permission android:name="android.permission.VIBRATE" />
 
