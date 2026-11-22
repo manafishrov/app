@@ -13,6 +13,9 @@ use crate::models::toast::ToastContent;
 use crate::toast::{toast_error, toast_loading, toast_success};
 use crate::{log_error, log_info};
 
+#[cfg(any(mobile, test))]
+mod mp4_duration;
+
 static RECORDING_FILES: LazyLock<Mutex<HashMap<String, fs::File>>> =
   LazyLock::new(|| Mutex::new(HashMap::new()));
 
@@ -385,6 +388,21 @@ fn mobile_output_for(temp_path: &str) -> (String, &'static str) {
   (format!("{stem}.{extension}"), mime_type)
 }
 
+/// `MediaRecorder` MP4s are fragmented with a zero header duration, which
+/// players show as a few seconds. Fixes the header, or keeps the file as is.
+#[cfg(mobile)]
+async fn write_mp4_duration(temp_path: String) {
+  let result = tokio::task::spawn_blocking(move || {
+    mp4_duration::write_duration(std::path::Path::new(&temp_path))
+  })
+  .await
+  .map_err(|error| error.to_string())
+  .flatten();
+  if let Err(error) = result {
+    crate::log_warn!("Saving recording without fixing its MP4 duration: {error}");
+  }
+}
+
 /// Copies a finished recording into the configured folder (the platform
 /// default when none is chosen) and removes the temp file.
 ///
@@ -399,6 +417,9 @@ pub async fn save(app: &tauri::AppHandle, temp_path: String) -> Result<(), Strin
   close_cached_file(&temp_path);
 
   let (file_name, mime_type) = mobile_output_for(&temp_path);
+  if mime_type == "video/mp4" {
+    write_mp4_duration(temp_path.clone()).await;
+  }
   let directory = crate::config::get_config_from_file().video_directory;
   let location = app
     .mobile()
