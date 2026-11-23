@@ -56,11 +56,16 @@ impl StatusWriter {
   /// # Errors
   /// Returns an error if the status file cannot be opened or written.
   pub fn write(&mut self, status: &FlashStatus) -> Result<(), String> {
-    let mut file = OpenOptions::new()
-      .create(true)
-      .append(true)
-      .open(&self.path)
-      .map_err(|e| e.to_string())?;
+    let mut options = OpenOptions::new();
+    options.create(true).append(true);
+    // The flasher runs elevated: never follow a symlink planted at this path.
+    // The default mode is kept so the unprivileged app can still read it.
+    #[cfg(unix)]
+    {
+      use std::os::unix::fs::OpenOptionsExt;
+      options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let mut file = options.open(&self.path).map_err(|e| e.to_string())?;
     let line = serde_json::to_string(status).map_err(|e| e.to_string())?;
     writeln!(file, "{line}").map_err(|e| e.to_string())
   }

@@ -30,6 +30,9 @@ use crate::constants::FLASH_PROGRESS_EVENT;
 pub struct FlashControl {
   pub cancel_flag_path: Mutex<Option<std::path::PathBuf>>,
   pub signal_file_path: Mutex<Option<std::path::PathBuf>>,
+  /// Private directory holding the files shared with the elevated flasher.
+  /// Replacing it at the next `prepare_flash` deletes the previous one.
+  session_dir: Mutex<Option<tempfile::TempDir>>,
 }
 
 #[derive(Deserialize)]
@@ -167,12 +170,6 @@ fn current_binary_path() -> Result<std::path::PathBuf, String> {
   std::env::current_exe().map_err(|e| format!("Could not resolve current binary: {e}"))
 }
 
-/// Directory used for the status/cancel/signal coordination files shared
-/// between the app and the (possibly elevated) flasher subprocess.
-fn flasher_temp_dir() -> std::path::PathBuf {
-  std::env::temp_dir().join("manafish-flasher")
-}
-
 /// Fail with an actionable error if the elevation launcher is missing, rather
 /// than hanging. A packaged GUI app has no terminal, so `pkexec` is required.
 ///
@@ -306,15 +303,19 @@ pub async fn prepare_flash(
   ensure_elevation_available()?;
 
   let binary = current_binary_path()?;
-  let temp_dir = flasher_temp_dir();
-  std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
-  let pid = std::process::id();
-  let status_file = temp_dir.join(format!("status-{pid}.jsonl"));
-  let cancel_file = temp_dir.join(format!("cancel-{pid}.flag"));
-  let signal_file = temp_dir.join(format!("signal-{pid}.json"));
-  let _ = std::fs::remove_file(&status_file);
-  let _ = std::fs::remove_file(&cancel_file);
-  let _ = std::fs::remove_file(&signal_file);
+  // The elevated flasher writes into this directory as root, so it must not be
+  // a shared, predictable path another local user could pre-create or fill
+  // with symlinks. `tempdir` creates a fresh, randomly named, owner-only one.
+  let session_dir = tempfile::Builder::new()
+    .prefix("manafish-flasher-")
+    .tempdir()
+    .map_err(|e| format!("Failed to create flasher session directory: {e}"))?;
+  let status_file = session_dir.path().join("status.jsonl");
+  let cancel_file = session_dir.path().join("cancel.flag");
+  let signal_file = session_dir.path().join("signal.json");
+  if let Ok(mut guard) = state.session_dir.lock() {
+    *guard = Some(session_dir);
+  }
 
   if let Ok(mut guard) = state.cancel_flag_path.lock() {
     *guard = Some(cancel_file.clone());
