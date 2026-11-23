@@ -68,6 +68,27 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
   Ok(DeviceHandle { file })
 }
 
+/// Whether `source` is the whole disk `device` or one of its partitions.
+///
+/// Partitions append a number (`/dev/sda1`), or `p` and a number when the disk
+/// name already ends in a digit (`/dev/mmcblk0p1`). A bare prefix match would
+/// also catch other disks such as `/dev/sdaa1` and unmount them.
+#[cfg(any(target_os = "linux", test))]
+fn is_device_or_partition(source: &str, device: &str) -> bool {
+  let Some(suffix) = source.strip_prefix(device) else {
+    return false;
+  };
+  if suffix.is_empty() {
+    return true;
+  }
+  let number = if device.ends_with(|c: char| c.is_ascii_digit()) {
+    suffix.strip_prefix('p').unwrap_or("")
+  } else {
+    suffix
+  };
+  !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit())
+}
+
 #[cfg(target_os = "linux")]
 /// # Errors
 ///
@@ -83,9 +104,7 @@ fn open_device(device: &str) -> Result<DeviceHandle, String> {
   for line in mounts.lines() {
     let mut parts = line.split_whitespace();
     if let (Some(source), Some(target)) = (parts.next(), parts.next())
-      && (source == device
-        || source.starts_with(&format!("{device}p"))
-        || source.starts_with(device))
+      && is_device_or_partition(source, device)
     {
       targets.push(target.to_string());
     }
@@ -605,4 +624,32 @@ pub fn run_deferred(device_path: &str, status_file: &str, signal_file: &str) -> 
   status.write(&FlashStatus::Starting)?;
   let mut device = open_device(device_path)?;
   flash_image(&mut status, &mut device, &signal.image, signal.image_size, false)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::is_device_or_partition;
+
+  /// # Panics
+  /// Panics if a disk or one of its partitions is not matched.
+  #[test]
+  fn matches_the_disk_and_its_partitions() {
+    assert!(is_device_or_partition("/dev/sda", "/dev/sda"));
+    assert!(is_device_or_partition("/dev/sda1", "/dev/sda"));
+    assert!(is_device_or_partition("/dev/sda12", "/dev/sda"));
+    assert!(is_device_or_partition("/dev/mmcblk0p1", "/dev/mmcblk0"));
+    assert!(is_device_or_partition("/dev/nvme0n1p2", "/dev/nvme0n1"));
+  }
+
+  /// # Panics
+  /// Panics if another disk sharing the name prefix is matched.
+  #[test]
+  fn rejects_other_disks_that_share_a_prefix() {
+    assert!(!is_device_or_partition("/dev/sdaa", "/dev/sda"));
+    assert!(!is_device_or_partition("/dev/sdaa1", "/dev/sda"));
+    assert!(!is_device_or_partition("/dev/mmcblk01", "/dev/mmcblk0"));
+    assert!(!is_device_or_partition("/dev/mmcblk0p", "/dev/mmcblk0"));
+    assert!(!is_device_or_partition("/dev/loop10", "/dev/loop1"));
+    assert!(!is_device_or_partition("/dev/sdb1", "/dev/sda"));
+  }
 }
