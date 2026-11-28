@@ -47,7 +47,7 @@
     "codemirror": "6.0.2",
     "dompurify": "3.4.17",
     "idb": "8.0.4",
-    "solid-js": "1.9.17",
+    "solid-js": "2.0.4",
     "three": "0.186.1",
     "vscode-languageserver-protocol": "3.18.5",
     "zod": "4.6.7"
